@@ -25,8 +25,10 @@ Sudah ada dan **sudah dites jalan end-to-end** (migrate + seed + API beneran que
 - `apps/api/prisma/seed.ts` — data awal sesuai harga final (tier, add-on, tarif sewa media, 1 kupon contoh).
 - `apps/web` — masih scaffold default create-next-app, belum ada halaman custom.
 
+- `apps/api/src/auth/` — Auth selesai: email+OTP (Resend) & Google ID token, JWT bearer via `jose`, validasi body pakai `zod`. Pakai `@UseGuards(AuthGuard)` + `@CurrentUser()` (+ `@Roles('ADMIN')`) di endpoint yang wajib akun; `AuthModule` global. Sudah dites: unit test + HTTP test (Prisma di-mock) dan alur nyata ke Postgres lokal (request OTP → verify → `/auth/me`, kode tidak bisa dipakai ulang); migrasi `20260919100000_auth` sudah ter-apply. Login HP+OTP (WhatsApp/Fonnte) belum ada.
+
 Belum dikerjakan (urutan disarankan, lihat README bagian "Belum dikerjakan"):
-1. Auth (anonim boleh browsing/edit, wajib akun saat checkout — email/HP+OTP atau Google)
+1. ~~Auth~~ (lihat di atas)
 2. Order + kalkulator harga (formula persis di dokumen Bagian 7.1)
 3. Integrasi Midtrans/Xendit
 4. Editor undangan di frontend (form dinamis dari `layoutSchema` template + live preview penuh dengan watermark)

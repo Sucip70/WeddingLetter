@@ -72,18 +72,34 @@ enum MediaStatus {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  phone        String?
-  passwordHash String?
-  role         Role     @default(USER)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String    @id @default(cuid())
+  name            String
+  email           String    @unique
+  phone           String?
+  passwordHash    String?
+  googleId        String?   @unique
+  emailVerifiedAt DateTime?
+  role            Role      @default(USER)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   orders Order[]
 
   @@map("users")
+}
+
+// Kode OTP login (email). Disimpan sebagai HMAC, bukan plaintext.
+model OtpCode {
+  id         String    @id @default(cuid())
+  email      String
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email, createdAt])
+  @@map("otp_codes")
 }
 
 model Template {

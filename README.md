@@ -58,10 +58,12 @@ WeddingLetter/
 - Modul `PrismaService` (koneksi database, driver adapter `@prisma/adapter-pg` sesuai Prisma 7) dan modul `Templates` (endpoint `GET /templates`, `GET /templates/:id`) sebagai contoh pola untuk modul-modul berikutnya (Auth, Order, AddOn, Coupon, Invitation, RSVP).
 - Seed data mengikuti harga final: tier Basic/Standard/Premium, add-on flat, tarif sewa media Rp700/MB/minggu, perpanjangan Rp10.000/minggu, kupon contoh `TEMANKELUARGA`.
 
+- Modul `Auth` (`apps/api/src/auth/`): login email+OTP (`POST /auth/otp/request`, `POST /auth/otp/verify`), login Google (`POST /auth/google` dengan ID token), `GET /auth/me`. Sesi = JWT bearer (`Authorization: Bearer <accessToken>`). Endpoint tanpa guard tetap terbuka untuk anonim; endpoint yang wajib akun (checkout/order) cukup pakai `@UseGuards(AuthGuard)` + `@CurrentUser()`, dan `@Roles('ADMIN')` untuk panel admin. Env baru: `GOOGLE_CLIENT_ID`, `MAIL_FROM`. Tanpa `RESEND_API_KEY` di dev, kode OTP dicetak ke log server.
+
 ## Belum dikerjakan (langkah berikutnya)
 
 Urutan yang disarankan, mengikuti roadmap Bagian 9 di dokumen:
-1. Modul Auth (registrasi/login email+OTP atau Google, sesuai keputusan Bagian 4 — anonim sampai checkout)
+1. ~~Modul Auth~~ (selesai; belum ada login HP+OTP WhatsApp, menunggu Fonnte — lihat modul notifikasi)
 2. Modul Order + kalkulator harga (tier + add-on + sewa media ukuran×durasi + kupon, formula persis di Bagian 7.1)
 3. Integrasi Midtrans/Xendit untuk pembayaran
 4. Editor undangan di frontend (form dinamis berdasar `layoutSchema` template, live preview)
