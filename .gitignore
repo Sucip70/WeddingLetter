@@ -3,6 +3,7 @@ node_modules/
 dist/
 build/
 generated/
+*.tsbuildinfo
 .env
 .env.local
 *.log
