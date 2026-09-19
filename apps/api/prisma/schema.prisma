@@ -1,0 +1,229 @@
+// WeddingLetter database schema
+// Mirrors the entity design in the project plan doc, Bagian 8 & 10.
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TemplateStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum TemplateTier {
+  BASIC
+  STANDARD
+  PREMIUM
+}
+
+enum AddOnType {
+  FLAT
+  PER_UNIT
+}
+
+enum CouponType {
+  PERCENT
+  NOMINAL
+}
+
+enum CouponStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+}
+
+enum InvitationStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  EXPIRED_GRACE
+  DELETED
+}
+
+enum MediaType {
+  PHOTO
+  VIDEO
+  SONG
+}
+
+enum MediaStatus {
+  ACTIVE
+  PAUSED
+  EXPIRED_GRACE
+  DELETED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String?
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders Order[]
+
+  @@map("users")
+}
+
+model Template {
+  id           String         @id @default(cuid())
+  name         String
+  category     String
+  tier         TemplateTier
+  price        Int
+  status       TemplateStatus @default(DRAFT)
+  layoutSchema Json
+  thumbnailUrl String?
+  createdById  String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  invitations Invitation[]
+  orders      Order[]
+
+  @@map("templates")
+}
+
+model AddOn {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  name      String
+  type      AddOnType
+  price     Int
+  unit      String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  orderAddOns OrderAddOn[]
+
+  @@map("add_ons")
+}
+
+model Coupon {
+  id        String       @id @default(cuid())
+  code      String       @unique
+  type      CouponType
+  value     Int
+  quota     Int?
+  usedCount Int          @default(0)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  status    CouponStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  orders Order[]
+
+  @@map("coupons")
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  userId         String
+  templateId     String
+  couponId       String?
+  subtotal       Int
+  addOnTotal     Int         @default(0)
+  couponDiscount Int         @default(0)
+  totalAmount    Int
+  status         OrderStatus @default(PENDING)
+  paymentRef     String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  user       User         @relation(fields: [userId], references: [id])
+  template   Template     @relation(fields: [templateId], references: [id])
+  coupon     Coupon?      @relation(fields: [couponId], references: [id])
+  addOns     OrderAddOn[]
+  invitation Invitation?
+
+  @@map("orders")
+}
+
+model OrderAddOn {
+  id              String   @id @default(cuid())
+  orderId         String
+  addOnId         String
+  quantity        Int      @default(1)
+  priceAtPurchase Int
+  createdAt       DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+  addOn AddOn @relation(fields: [addOnId], references: [id])
+
+  @@map("order_add_ons")
+}
+
+model Invitation {
+  id            String           @id @default(cuid())
+  orderId       String           @unique
+  templateId    String
+  data          Json
+  slug          String           @unique
+  status        InvitationStatus @default(DRAFT)
+  expiresAt     DateTime?
+  remainingDays Int?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  order      Order       @relation(fields: [orderId], references: [id])
+  template   Template    @relation(fields: [templateId], references: [id])
+  mediaFiles MediaFile[]
+  guests     RsvpGuest[]
+
+  @@map("invitations")
+}
+
+model MediaFile {
+  id            String      @id @default(cuid())
+  invitationId  String
+  type          MediaType
+  url           String
+  sizeMb        Float
+  rentedWeeks   Int
+  rentalPrice   Int
+  status        MediaStatus @default(ACTIVE)
+  expiresAt     DateTime
+  remainingDays Int?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  invitation Invitation @relation(fields: [invitationId], references: [id])
+
+  @@map("media_files")
+}
+
+model RsvpGuest {
+  id           String   @id @default(cuid())
+  invitationId String
+  name         String
+  attending    Boolean?
+  guestCount   Int      @default(1)
+  message      String?
+  createdAt    DateTime @default(now())
+
+  invitation Invitation @relation(fields: [invitationId], references: [id])
+
+  @@map("rsvp_guests")
+}
