@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
+/* Desain WeddingLetter: hangat, romantis, tetap modern. Mode terang saja. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fbf7f1;
+  --foreground: #2b2420;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-ivory: #fbf7f1;
+  --color-paper: #ffffff;
+  --color-ink: #2b2420;
+  --color-ink-soft: #6d625b;
+  --color-line: #e8dfd4;
+  --color-rose: #b4533c;
+  --color-rose-dark: #963f2a;
+  --color-rose-soft: #f7e6de;
+  --color-sage: #5f7a63;
+  --color-sage-soft: #e4ede5;
+  --color-gold: #b8964f;
+  --color-gold-soft: #f4ecd9;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdeceb;
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-script: var(--font-script), cursive;
+  --font-invitation: var(--font-cormorant), ui-serif, Georgia, serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-rose-soft);
+}
+
+/* Fokus yang jelas untuk navigasi keyboard */
+:focus-visible {
+  outline: 2px solid var(--color-rose);
+  outline-offset: 2px;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-fade-up {
+    animation: none;
+  }
+}
+
+/* Scrollbar tipis untuk bingkai ponsel pratinjau */
+.thin-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 999px;
 }

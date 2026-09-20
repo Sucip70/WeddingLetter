@@ -48,6 +48,13 @@ enum OrderStatus {
   PAID
   EXPIRED
   CANCELLED
+  REFUNDED
+}
+
+// NEW = pembelian template baru, EXTENSION = perpanjangan masa aktif undangan yang sudah ada.
+enum OrderKind {
+  NEW
+  EXTENSION
 }
 
 enum InvitationStatus {
@@ -64,7 +71,11 @@ enum MediaType {
   SONG
 }
 
+// PENDING = sudah dideklarasikan (dan dihitung harganya) tapi file belum diunggah,
+// UPLOADED = file sudah ada di storage, menunggu undangan dipublikasikan.
 enum MediaStatus {
+  PENDING
+  UPLOADED
   ACTIVE
   PAUSED
   EXPIRED_GRACE
@@ -103,17 +114,19 @@ model OtpCode {
 }
 
 model Template {
-  id           String         @id @default(cuid())
-  name         String
-  category     String
-  tier         TemplateTier
-  price        Int
-  status       TemplateStatus @default(DRAFT)
-  layoutSchema Json
-  thumbnailUrl String?
-  createdById  String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id            String         @id @default(cuid())
+  name          String
+  category      String
+  tier          TemplateTier
+  price         Int
+  // Berapa minggu masa aktif yang sudah termasuk di harga dasar template (perpanjangan: add-on EXTEND_ACTIVE_WEEK).
+  includedWeeks Int            @default(4)
+  status        TemplateStatus @default(DRAFT)
+  layoutSchema  Json
+  thumbnailUrl  String?
+  createdById   String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   invitations Invitation[]
   orders      Order[]
@@ -155,25 +168,37 @@ model Coupon {
 }
 
 model Order {
-  id             String      @id @default(cuid())
-  userId         String
-  templateId     String
-  couponId       String?
-  subtotal       Int
-  addOnTotal     Int         @default(0)
-  couponDiscount Int         @default(0)
-  totalAmount    Int
-  status         OrderStatus @default(PENDING)
-  paymentRef     String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  id                  String      @id @default(cuid())
+  kind                OrderKind   @default(NEW)
+  userId              String
+  templateId          String
+  couponId            String?
+  // Hanya untuk kind = EXTENSION: undangan yang diperpanjang.
+  extendsInvitationId String?
+  // Total minggu masa aktif yang dibeli (NEW: termasuk minggu bawaan template; EXTENSION: minggu tambahan).
+  activeWeeks         Int         @default(4)
+  subtotal            Int
+  addOnTotal          Int         @default(0)
+  couponDiscount      Int         @default(0)
+  totalAmount         Int
+  status              OrderStatus @default(PENDING)
+  paymentRef          String?
+  paymentProvider     String?
+  paymentToken        String?
+  paymentUrl          String?
+  paidAt              DateTime?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 
-  user       User         @relation(fields: [userId], references: [id])
-  template   Template     @relation(fields: [templateId], references: [id])
-  coupon     Coupon?      @relation(fields: [couponId], references: [id])
-  addOns     OrderAddOn[]
-  invitation Invitation?
+  user              User         @relation(fields: [userId], references: [id])
+  template          Template     @relation(fields: [templateId], references: [id])
+  coupon            Coupon?      @relation(fields: [couponId], references: [id])
+  extendsInvitation Invitation?  @relation("InvitationExtensions", fields: [extendsInvitationId], references: [id])
+  addOns            OrderAddOn[]
+  invitation        Invitation?  @relation("InvitationOrigin")
 
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
   @@map("orders")
 }
 
@@ -192,22 +217,34 @@ model OrderAddOn {
 }
 
 model Invitation {
-  id            String           @id @default(cuid())
-  orderId       String           @unique
-  templateId    String
-  data          Json
-  slug          String           @unique
-  status        InvitationStatus @default(DRAFT)
-  expiresAt     DateTime?
-  remainingDays Int?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id             String           @id @default(cuid())
+  orderId        String           @unique
+  templateId     String
+  // Isi undangan: { [sectionId]: { [fieldKey]: nilai } } sesuai layoutSchema template.
+  data           Json
+  // Fitur tambahan hasil add-on, mis. { rsvp: true, envelope: true, english: true }.
+  features       Json             @default("{}")
+  // Snapshot skema template (tema, section, kuota) saat dibeli, supaya perubahan template oleh admin
+  // tidak merusak undangan yang sudah dibayar.
+  layout         Json             @default("{}")
+  slug           String           @unique
+  status         InvitationStatus @default(DRAFT)
+  publishedAt    DateTime?
+  expiresAt      DateTime?
+  pausedAt       DateTime?
+  remainingDays  Int?
+  reminderSentAt DateTime?
+  viewCount      Int              @default(0)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
-  order      Order       @relation(fields: [orderId], references: [id])
-  template   Template    @relation(fields: [templateId], references: [id])
-  mediaFiles MediaFile[]
-  guests     RsvpGuest[]
+  order           Order       @relation("InvitationOrigin", fields: [orderId], references: [id])
+  template        Template    @relation(fields: [templateId], references: [id])
+  extensionOrders Order[]     @relation("InvitationExtensions")
+  mediaFiles      MediaFile[]
+  guests          RsvpGuest[]
 
+  @@index([status, expiresAt])
   @@map("invitations")
 }
 
@@ -215,18 +252,28 @@ model MediaFile {
   id            String      @id @default(cuid())
   invitationId  String
   type          MediaType
+  storageKey    String
   url           String
+  contentType   String
+  // Ukuran yang dideklarasikan saat order (dan dibayar); dicek ulang saat konfirmasi upload.
+  sizeBytes     Int
   sizeMb        Float
+  // false = kena tarif sewa ukuran x durasi (Bagian 7.1); true = termasuk kuota tier / paket foto.
+  included      Boolean     @default(true)
   rentedWeeks   Int
   rentalPrice   Int
-  status        MediaStatus @default(ACTIVE)
-  expiresAt     DateTime
+  // Bila diisi: file ini pengganti media lain (mengganti foto/video/lagu setelah pembelian).
+  replacesId    String?
+  status        MediaStatus @default(PENDING)
+  expiresAt     DateTime?
   remainingDays Int?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
   invitation Invitation @relation(fields: [invitationId], references: [id])
 
+  @@index([invitationId])
+  @@index([status, expiresAt])
   @@map("media_files")
 }
 
@@ -241,5 +288,6 @@ model RsvpGuest {
 
   invitation Invitation @relation(fields: [invitationId], references: [id])
 
+  @@index([invitationId, createdAt])
   @@map("rsvp_guests")
 }

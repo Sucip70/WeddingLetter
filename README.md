@@ -1,78 +1,118 @@
 # WeddingLetter
 
-Platform undangan digital — user bisa bangun undangan sendiri dari template berbayar (mulai Rp20.000) atau minta jasa custom. Rancangan lengkap (biaya operasional, tech stack, alur pengguna, skema database, roadmap, kebijakan bisnis) ada di dokumen proyek: lihat link yang dibagikan di percakapan Claude.
+Platform undangan pernikahan digital (Indonesia). Pengguna membuat undangan sendiri dari template berbayar (mulai Rp20.000) atau memesan jasa custom. Harga transparan dan dihitung sesuai pemakaian: template + masa aktif + add-on + sewa media besar (ukuran × lama tayang).
 
-## Struktur monorepo
+Rancangan lengkap (biaya, tech stack, alur, skema, kebijakan) ada di dokumen proyek yang tertaut di [CLAUDE.md](./CLAUDE.md).
+
+## Struktur monorepo (npm workspaces)
 
 ```
-WeddingLetter/
-├── apps/
-│   ├── web/   Next.js (TypeScript + Tailwind) — katalog template, editor undangan, halaman publik
-│   └── api/   NestJS + Prisma + PostgreSQL — auth, template builder, order, payment, RSVP
-├── docker-compose.yml   PostgreSQL lokal
-└── package.json         npm workspaces root
+apps/
+  api/   NestJS 12 + Prisma 7 + PostgreSQL — auth, template, harga, order, pembayaran, media, undangan, admin, job
+  web/   Next.js 16 (App Router) + Tailwind 4 — katalog, editor, checkout, dashboard, halaman undangan, panel admin
+docker-compose.yml   PostgreSQL lokal (opsional)
 ```
 
-## Setup awal
+## Setup lokal
 
-1. Install dependencies (dari root, workspaces otomatis meng-cover kedua app):
+Prasyarat: Node 24+, PostgreSQL 16 (Docker **atau** instalasi lokal **atau** `npx prisma dev`).
+
+1. Install dependency dari root:
    ```
    npm install
    ```
-2. Siapkan database lokal — pilih salah satu:
-   - **Docker** (disarankan, sama dengan setup produksi di Bagian 2 & 3 dokumen):
-     ```
-     docker compose up -d
-     ```
-   - **Tanpa Docker** (pakai database lokal bawaan Prisma):
-     ```
-     cd apps/api
-     npx prisma dev
-     ```
-     Salin connection string yang tercetak ke `DATABASE_URL` di `apps/api/.env`.
-3. Copy env contoh lalu isi kredensial nyata (Midtrans/Xendit, Cloudflare R2, Fonnte, dll) saat sudah tersedia:
+2. Database — pilih salah satu:
+   - Docker: `docker compose up -d` (user/password/db `weddingletter`)
+   - Tanpa Docker: `cd apps/api && npx prisma dev` lalu salin connection string yang tercetak
+   - PostgreSQL lokal: buat database kosong `weddingletter`
+3. Environment:
    ```
-   cp apps/api/.env.example apps/api/.env
-   cp apps/web/.env.example apps/web/.env
+   cp apps/api/.env.example apps/api/.env      # sesuaikan DATABASE_URL
+   cp apps/web/.env.example apps/web/.env.local
    ```
-4. Jalankan migrasi & seed data awal (tier template, add-on, tarif sewa media, contoh kupon — sesuai harga yang sudah diputuskan):
+4. Migrasi + data awal (tier, add-on, tarif, kupon contoh). Untuk membuat **akun admin pertama** isi `ADMIN_EMAIL`:
    ```
    cd apps/api
    npx prisma migrate deploy
-   npx prisma db seed
+   ADMIN_EMAIL=email-anda@contoh.com npx prisma db seed
    ```
-5. Jalankan kedua app (dari root, dua terminal terpisah):
+5. Jalankan (dua terminal):
    ```
-   npm run dev:api   # http://localhost:4000
-   npm run dev:web   # http://localhost:3000
+   npm run dev:api    # http://localhost:4000
+   npm run dev:web    # http://localhost:3000
    ```
-6. Cek API sudah nyambung ke database:
-   ```
-   curl http://localhost:4000/templates
-   ```
-   Harus mengembalikan 3 template hasil seed (Basic Rustic, Standard Floral, Premium Elegant).
+
+### Mencoba alurnya secara lokal (tanpa kredensial apa pun)
+
+- **Login**: masukkan email → kode OTP 6 digit **dicetak di log server API** (tanpa `RESEND_API_KEY`). Login dengan `ADMIN_EMAIL` di atas untuk membuka `/admin`.
+- **Upload media**: tanpa kredensial R2, file disimpan di `apps/api/uploads` (driver disk lokal, khusus development).
+- **Pembayaran**: tanpa `MIDTRANS_SERVER_KEY`, checkout diarahkan ke halaman **simulasi bayar** `/dev/pay/...` (dinonaktifkan otomatis di production).
+- **Notifikasi** (email/WhatsApp): hanya dicetak di log.
+
+Alur uji: `/templates` → pilih template → isi (harga live di kanan) → Checkout → login → unggah otomatis → simulasi bayar → `/dashboard` → Publikasikan → buka `/u/<slug>?to=Nama+Tamu`.
 
 ## Yang sudah ada
 
-- Skema database (`apps/api/prisma/schema.prisma`) mencakup seluruh entitas dari dokumen: User, Template, AddOn, Coupon, Order, OrderAddOn, Invitation, MediaFile, RsvpGuest — lengkap dengan status pause/expired_grace untuk fitur sewa media berdurasi.
-- Modul `PrismaService` (koneksi database, driver adapter `@prisma/adapter-pg` sesuai Prisma 7) dan modul `Templates` (endpoint `GET /templates`, `GET /templates/:id`) sebagai contoh pola untuk modul-modul berikutnya (Auth, Order, AddOn, Coupon, Invitation, RSVP).
-- Seed data mengikuti harga final: tier Basic/Standard/Premium, add-on flat, tarif sewa media Rp700/MB/minggu, perpanjangan Rp10.000/minggu, kupon contoh `TEMANKELUARGA`.
+**Pengguna**
+- Katalog & demo template interaktif, halaman harga + kalkulator sewa media.
+- Editor berbasis skema template: form dinamis, pratinjau ponsel langsung (berwatermark sebelum bayar), draf otomatis di browser, kompres foto otomatis (≤2000px), kalkulator harga live (server = sumber kebenaran).
+- Akun hanya diminta saat checkout (email + OTP, atau Google bila dikonfigurasi) tanpa meninggalkan editor.
+- Checkout: buat pesanan → unggah file langsung ke storage (URL bertanda tangan, ukuran diverifikasi server) → bayar (Midtrans Snap).
+- Dashboard: daftar undangan/pesanan, publikasi, link personal per tamu (`?to=`) + kirim WhatsApp, edit isi, **ganti foto/video/lagu tanpa biaya**, rekap RSVP + unduh CSV, perpanjang masa aktif / aktifkan kembali dari masa tenggang.
+- Halaman undangan publik: sampul, mempelai, cerita, acara + simpan ke Google Calendar, hitung mundur, galeri + lightbox, video, musik latar, RSVP, amplop digital, buku tamu, toggle ID/EN.
 
-- Modul `Auth` (`apps/api/src/auth/`): login email+OTP (`POST /auth/otp/request`, `POST /auth/otp/verify`), login Google (`POST /auth/google` dengan ID token), `GET /auth/me`. Sesi = JWT bearer (`Authorization: Bearer <accessToken>`). Endpoint tanpa guard tetap terbuka untuk anonim; endpoint yang wajib akun (checkout/order) cukup pakai `@UseGuards(AuthGuard)` + `@CurrentUser()`, dan `@Roles('ADMIN')` untuk panel admin. Env baru: `GOOGLE_CLIENT_ID`, `MAIL_FROM`. Tanpa `RESEND_API_KEY` di dev, kode OTP dicetak ke log server.
+**Admin (`/admin`)**
+- Ringkasan bisnis, pesanan (cari/filter, tandai lunas manual, refund), undangan (jeda/lanjutkan + bonus hari, perpanjang gratis, atur tanggal berakhir, hapus), pengguna & peran.
+- **Template builder**: aktif/urut section, field wajib/label, tema (preset + warna + font), kuota foto/video, lagu bawaan, pratinjau langsung, publish/arsip.
+- Harga per komponen (add-on, tarif Rp/MB/minggu, perpanjangan) dan kupon — langsung berlaku.
 
-## Belum dikerjakan (langkah berikutnya)
+**Sistem**
+- Siklus hidup: `DRAFT → ACTIVE → EXPIRED_GRACE (30 hari) → DELETED`, `PAUSED` menyimpan sisa hari. Job tiap jam (idempotent): kedaluwarsa, hapus permanen (file storage ikut), tutup pesanan >24 jam (kupon dikembalikan), pengingat H-3 (email + WhatsApp Fonnte).
+- Kupon di-reserve atomik saat order dibuat, dikembalikan bila batal/kedaluwarsa.
+- Pembayaran idempoten; webhook Midtrans diverifikasi signature + nominal.
 
-Urutan yang disarankan, mengikuti roadmap Bagian 9 di dokumen:
-1. ~~Modul Auth~~ (selesai; belum ada login HP+OTP WhatsApp, menunggu Fonnte — lihat modul notifikasi)
-2. Modul Order + kalkulator harga (tier + add-on + sewa media ukuran×durasi + kupon, formula persis di Bagian 7.1)
-3. Integrasi Midtrans/Xendit untuk pembayaran
-4. Editor undangan di frontend (form dinamis berdasar `layoutSchema` template, live preview)
-5. Panel admin (template builder, kelola harga, daftar pesanan — Bagian 5)
-6. Upload media ke Cloudflare R2 + job harian untuk expire/grace period media (Bagian 7.1 & 8)
-7. Notifikasi WhatsApp (Fonnte) untuk reminder perpanjangan
+## Testing
+
+```
+npm test --workspace apps/api          # 70 unit test (kalkulator harga, skema/validasi, webhook, storage, dst.)
+```
+
+Smoke test alur penuh (user + admin + job) terhadap API & **database khusus tes** — script ini membuat user/order, jangan arahkan ke database dev Anda:
+
+```
+cd apps/api && npm run build
+DATABASE_URL=postgresql://.../weddingletter_test JWT_SECRET=smoke-secret APP_PORT=4100 node dist/main.js   # terminal 1 (setelah migrate deploy + seed di DB tes)
+API_URL=http://localhost:4100 DATABASE_URL=postgresql://.../weddingletter_test JWT_SECRET=smoke-secret node scripts/smoke.mjs   # terminal 2
+```
+
+## Konfigurasi production
+
+| Variabel (apps/api) | Fungsi |
+|---|---|
+| `DATABASE_URL`, `JWT_SECRET` | wajib; `JWT_SECRET` harus diganti dari `change-me` |
+| `WEB_BASE_URL`, `APP_BASE_URL` | asal web (CORS + link) & URL publik API |
+| `MIDTRANS_SERVER_KEY`, `MIDTRANS_IS_PRODUCTION` | pembayaran. Set URL notifikasi Midtrans ke `POST {APP_BASE_URL}/payments/midtrans/notification` |
+| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL` | storage media (Cloudflare R2). Aktifkan CORS bucket: `PUT` dari `WEB_BASE_URL`, header `Content-Type`. |
+| `RESEND_API_KEY`, `MAIL_FROM` | email OTP & notifikasi |
+| `FONNTE_TOKEN` | WhatsApp (pengingat perpanjangan) |
+| `GOOGLE_CLIENT_ID` (+ `NEXT_PUBLIC_GOOGLE_CLIENT_ID` di web) | login Google |
+| `TRUST_PROXY=1` | bila di belakang Nginx/Cloudflare (IP tamu asli untuk pembatas RSVP) |
+| `DISABLE_JOBS=true` | matikan job berkala (mis. bila dijalankan di instance terpisah) |
+
+Web: `API_URL` (alamat API dari server Next), `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SUPPORT_WHATSAPP`.
+
+Di production tanpa kredensial Midtrans/R2/Resend, endpoint terkait **menolak** (503), bukan jatuh ke mode simulasi.
+
+## Asumsi yang perlu dikonfirmasi
+
+- **Masa aktif termasuk per template** (`Template.includedWeeks`, default 4 minggu, bisa diubah di builder). Perpanjangan Rp10.000/minggu (dapat diubah admin).
+- **Publikasi eksplisit**: setelah bayar undangan berstatus draf; masa aktif mulai saat "Publikasikan" (selaras kebijakan refund: penuh hanya sebelum publish & ≤48 jam). Refund dieksekusi admin; pengembalian uang manual di dashboard Midtrans.
+- **Batas gratis per file**: foto ≤5 MB, video ≤20 MB dalam kuota template; di atasnya sewa ukuran×minggu. Lagu custom flat, maks. 8 MB. Batas keras foto 30 MB / video 500 MB.
+- Lagu bawaan (preset) belum ada isinya — unggah dari template builder (butuh lagu berlisensi/royalty-free).
+- Waktu acara diperlakukan sebagai WIB.
 
 ## Catatan teknis
 
-- Prisma di-pin ke versi stabil `7.10.0` (bukan `8.0.0-rc.x` yang jadi tag `latest` di npm saat ini) supaya tidak jalan di atas release candidate.
-- Prisma 7 mewajibkan driver adapter (`@prisma/adapter-pg`) — sudah di-set di `PrismaService` dan `prisma/seed.ts`.
-- npm di mesin ini memblokir sebagian install script secara default (pesan `npm warn allow-scripts`). Prisma tetap berfungsi normal (sudah divalidasi end-to-end: migrate, seed, dan endpoint API), tapi kalau nanti ada package lain yang butuh postinstall script dan terasa "rusak", itu kemungkinan penyebabnya — jalankan `npm approve-scripts` untuk review manual.
+- **Prisma dipin di `7.10.0`** (tag `latest` npm menunjuk `8.0.0-rc.x`). Prisma 7 wajib driver adapter (`@prisma/adapter-pg`). Client digenerate ke `apps/api/src/generated/prisma` (harus di dalam `src/`).
+- Hanya satu server `next dev` per folder `.next`. Untuk server kedua: `NEXT_DIST_DIR=.next-verify npx next dev -p 3100` (Next akan menambah entri `.next-verify` ke `tsconfig.json`; jangan di-commit).
+- npm di mesin dev awal memblokir sebagian install script (`allow-scripts`); Prisma tetap berfungsi.

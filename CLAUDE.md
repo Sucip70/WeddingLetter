@@ -18,23 +18,21 @@ Setup lengkap ada di [README.md](./README.md) — install, jalankan database, mi
 
 ## Status implementasi saat ini
 
-Sudah ada dan **sudah dites jalan end-to-end** (migrate + seed + API beneran query ke database):
-- `apps/api/prisma/schema.prisma` — seluruh entitas: User, Template, AddOn, Coupon, Order, OrderAddOn, Invitation, MediaFile, RsvpGuest.
-- `apps/api/src/prisma/` — `PrismaService`/`PrismaModule`, pola koneksi database untuk seluruh modul berikutnya.
-- `apps/api/src/templates/` — modul contoh (`GET /templates`, `GET /templates/:id`), **pakai ini sebagai pola** untuk modul Order, AddOn, Coupon, Invitation, RSVP, Auth.
-- `apps/api/prisma/seed.ts` — data awal sesuai harga final (tier, add-on, tarif sewa media, 1 kupon contoh).
-- `apps/web` — masih scaffold default create-next-app, belum ada halaman custom.
+Semua fitur inti dari rancangan **sudah diimplementasikan dan diverifikasi**: 70 unit test API, smoke test alur penuh terhadap Postgres sungguhan (`apps/api/scripts/smoke.mjs`, 107 pengecekan: user + admin + job pemeliharaan), dan alur UI dicoba langsung di browser. Cara menjalankan ada di README.
 
-- `apps/api/src/auth/` — Auth selesai: email+OTP (Resend) & Google ID token, JWT bearer via `jose`, validasi body pakai `zod`. Pakai `@UseGuards(AuthGuard)` + `@CurrentUser()` (+ `@Roles('ADMIN')`) di endpoint yang wajib akun; `AuthModule` global. Sudah dites: unit test + HTTP test (Prisma di-mock) dan alur nyata ke Postgres lokal (request OTP → verify → `/auth/me`, kode tidak bisa dipakai ulang); migrasi `20260919100000_auth` sudah ter-apply. Login HP+OTP (WhatsApp/Fonnte) belum ada.
+**API (`apps/api/src`)** — pola tiap modul: controller tipis + service + zod (`parseBody`) + `@UseGuards(AuthGuard)`/`@Roles('ADMIN')`.
+- `auth/` email+OTP & Google, JWT bearer (dari sesi lain).
+- `templates/layout.ts` — **template engine berbasis skema**: `SECTION_REGISTRY` (section & field yang dikenali renderer), `normalizeLayout` (toleran skema lama), `effectiveSections` (section + add-on + musik), `validateInvitationData` (mode `lenient` untuk kalkulator), `toAuthoring` (untuk builder admin).
+- `pricing/` — `pricing.calculator.ts` murni (rumus Bagian 6/7/7.1, teruji), `pricing.service.ts` (validasi + kupon), `POST /pricing/quote` publik.
+- `orders/` (buat order + draf undangan + slot upload; perpanjangan = order `EXTENSION`), `payments/` (Midtrans Snap + webhook bertanda tangan; `DevProvider` hanya non-production), `media/` (presign/confirm/**replace**), `storage/` (R2 via S3 SDK, fallback disk lokal dev), `invitations/` (owner + publik + RSVP, `lifecycle.service.ts` = publish/pause/resume/extend/expire/purge), `admin/`, `jobs/maintenance.service.ts` (tiap jam), `notifications/` (Resend, Fonnte).
+- Migrasi: `20260919033052_init`, `20260919100000_auth`, `20260920113934_orders_payments_media`.
 
-Belum dikerjakan (urutan disarankan, lihat README bagian "Belum dikerjakan"):
-1. ~~Auth~~ (lihat di atas)
-2. Order + kalkulator harga (formula persis di dokumen Bagian 7.1)
-3. Integrasi Midtrans/Xendit
-4. Editor undangan di frontend (form dinamis dari `layoutSchema` template + live preview penuh dengan watermark)
-5. Panel admin (template builder, kelola harga per komponen, daftar pesanan)
-6. Upload media ke Cloudflare R2 + job harian expire/grace period
-7. Notifikasi WhatsApp (Fonnte) untuk reminder perpanjangan
+**Web (`apps/web/src`)** — Next 16 App Router, Tailwind 4, tanpa library UI. Grup rute `(site)` memakai header/footer; `u/[slug]` bare.
+- Token sesi di **cookie httpOnly** lewat `app/api/auth/[action]` (login) dan `app/api/backend/[...path]` (proxy ke API). Browser memakai `lib/client-api.ts`; server component memakai `lib/api.ts` + `lib/session.ts`.
+- `components/invitation/invitation-view.tsx` = renderer undangan (dipakai halaman publik, demo template, editor, dashboard, builder). `phone-frame.tsx` merender pada 390px lalu diskalakan.
+- `components/editor/*` editor + checkout; `components/admin/template-builder.tsx`; dashboard di `(site)/dashboard`; admin di `(site)/admin`.
+
+**Belum ada / ide lanjutan**: login HP+OTP (WhatsApp), lagu bawaan royalty-free (admin harus mengunggah), penambahan file baru setelah beli (saat ini hanya *mengganti*), SEO/OG image, i18n web selain chrome undangan, tes otomatis frontend, CI, deployment (Docker/Nginx), rate limit global.
 
 ## Keputusan bisnis penting (jangan diubah tanpa alasan kuat — ini sudah diputuskan user)
 
@@ -57,4 +55,7 @@ Belum dikerjakan (urutan disarankan, lihat README bagian "Belum dikerjakan"):
 - Import path ke generated client dari `src/prisma/` atau `src/templates/` adalah `'../generated/prisma/client.js'` (satu level, bukan dua — sempat salah, sudah diperbaiki).
 - Environment aslinya **tidak ada Docker Desktop** terpasang. `docker-compose.yml` tetap disiapkan untuk siapa pun yang punya Docker; alternatif tanpa Docker: `cd apps/api && npx prisma dev` (database Postgres lokal bawaan Prisma, tanpa install apa pun).
 - npm di lingkungan pengembangan awal memblokir sebagian install script (`npm warn allow-scripts`) — Prisma tetap berfungsi normal meski begitu (sudah divalidasi), tapi kalau nanti ada package lain yang perilakunya aneh setelah install, cek ini duluan.
-- Belum ada commit git — semua masih di working directory saat file ini ditulis.
+- **Hanya satu `next dev` per folder `.next`.** Untuk server kedua pakai `NEXT_DIST_DIR=.next-verify npx next dev -p 3100` (Next akan menyisipkan entri `.next-verify` ke `apps/web/tsconfig.json` dan memformat ulang file itu — jangan di-commit). ESLint sudah mengabaikan `.next-*`.
+- Tes/verifikasi selalu pakai **database terpisah** (mis. `weddingletter_verify`), jangan database dev pengguna. Saat menyunting timestamp lewat SQL, pakai `(now() at time zone 'utc')` — Prisma menyimpan UTC tanpa zona (sesi Postgres lokal berzona WIB).
+- Aturan teknis yang mudah terlewat: nilai tanggal-jam undangan disimpan sebagai waktu setempat WIB `YYYY-MM-DDTHH:mm`; media di `data` undangan dirujuk lewat id (di editor sementara lewat `clientId` lalu di-remap server saat order dibuat); `Invitation.layout` adalah **snapshot** skema saat beli (perubahan template oleh admin tidak merusak undangan yang sudah dibayar); kupon di-reserve atomik saat order dibuat.
+- Saat menulis file lewat skrip `node -e`/heredoc di shell ini, backslash regex mudah hilang — pakai tool Edit/Write untuk kode berisi regex (pernah menyebabkan bug validasi tanggal).
