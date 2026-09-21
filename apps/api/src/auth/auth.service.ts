@@ -14,6 +14,13 @@ import { TokenService } from './token.service.js';
 const OTP_TTL_MINUTES = 10;
 const OTP_RESEND_COOLDOWN_SECONDS = 60;
 const OTP_MAX_ATTEMPTS = 5;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Batas pengiriman kode (menjaga kuota layanan email & mencegah penyalahgunaan). Bisa diubah lewat env.
+const envInt = (name: string, fallback: number) => {
+  const n = Number(process.env[name]);
+  return Number.isInteger(n) && n > 0 ? n : fallback;
+};
 
 const googleJwks = createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
 
@@ -38,6 +45,19 @@ export class AuthService {
           HttpStatus.TOO_MANY_REQUESTS,
         );
       }
+    }
+
+    // Batas per email dan batas total per hari. Total default 90 < kuota harian paket gratis Resend (100).
+    const since = new Date(Date.now() - DAY_MS);
+    const [forEmail, total] = await Promise.all([
+      this.prisma.otpCode.count({ where: { email, createdAt: { gt: since } } }),
+      this.prisma.otpCode.count({ where: { createdAt: { gt: since } } }),
+    ]);
+    if (forEmail >= envInt('OTP_PER_EMAIL_DAILY', 8)) {
+      throw new HttpException('Terlalu banyak permintaan kode untuk email ini. Coba lagi besok atau masuk dengan Google.', HttpStatus.TOO_MANY_REQUESTS);
+    }
+    if (total >= envInt('OTP_DAILY_LIMIT', 90)) {
+      throw new HttpException('Pengiriman kode hari ini sudah penuh. Masuk dengan Google, atau coba lagi besok.', HttpStatus.TOO_MANY_REQUESTS);
     }
 
     const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
@@ -131,6 +151,11 @@ export class AuthService {
         });
 
     return this.session(user);
+  }
+
+  // Sesi bergulir: token baru untuk user yang masih login (dipanggil web sekali sehari saat user aktif).
+  async refresh(userId: string) {
+    return { accessToken: await this.tokens.sign(userId) };
   }
 
   private async session(user: { id: string; name: string; email: string; phone: string | null; role: string }) {

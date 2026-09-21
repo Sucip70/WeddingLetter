@@ -31,6 +31,13 @@ export class AuthController {
     return this.auth.loginWithGoogle(parseBody(googleLoginSchema, body).idToken);
   }
 
+  @Post('refresh')
+  @HttpCode(200)
+  @UseGuards(AuthGuard)
+  refresh(@CurrentUser() user: AuthUser) {
+    return this.auth.refresh(user.id);
+  }
+
   @Get('me')
   @UseGuards(AuthGuard)
   me(@CurrentUser() user: AuthUser) {

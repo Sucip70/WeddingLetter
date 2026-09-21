@@ -75,7 +75,7 @@ Alur uji: `/templates` → pilih template → isi (harga live di kanan) → Chec
 ## Testing
 
 ```
-npm test --workspace apps/api          # 89 unit test (kalkulator harga, skema/validasi, webhook, storage, dst.)
+npm test --workspace apps/api          # 94 unit test (kalkulator harga, skema/validasi, webhook, storage, dst.)
 ```
 
 Smoke test alur penuh (user + admin + job) terhadap API & **database khusus tes** — script ini membuat user/order, jangan arahkan ke database dev Anda:
@@ -94,11 +94,19 @@ API_URL=http://localhost:4100 DATABASE_URL=postgresql://.../weddingletter_test J
 | `WEB_BASE_URL`, `APP_BASE_URL` | asal web (CORS + link) & URL publik API |
 | `MIDTRANS_SERVER_KEY`, `MIDTRANS_IS_PRODUCTION` | pembayaran. Set URL notifikasi Midtrans ke `POST {APP_BASE_URL}/payments/midtrans/notification` |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL` | storage media (Cloudflare R2). Aktifkan CORS bucket: `PUT` dari `WEB_BASE_URL`, header `Content-Type`. |
-| `RESEND_API_KEY`, `MAIL_FROM` | email OTP & notifikasi |
+| `RESEND_API_KEY`, `MAIL_FROM` | email OTP & notifikasi. Paket gratis Resend: 100 email/hari, 3.000/bulan; tanpa domain terverifikasi hanya bisa mengirim ke email pemilik akun Resend |
+| `JWT_EXPIRES_IN` | lama sesi login, bawaan `30d`. Bergulir: web memperpanjang sesi sekali sehari selama user aktif, jadi OTP hanya diminta saat login pertama atau setelah 30 hari tidak aktif |
+| `OTP_DAILY_LIMIT` (90), `OTP_PER_EMAIL_DAILY` (8) | batas kode OTP per 24 jam (total & per email) untuk menjaga kuota email. Web juga membatasi 10 permintaan/jam per IP |
 | `FONNTE_TOKEN` | WhatsApp (pengingat perpanjangan) |
-| `GOOGLE_CLIENT_ID` (+ `NEXT_PUBLIC_GOOGLE_CLIENT_ID` di web) | login Google |
+| `GOOGLE_CLIENT_ID` (+ `NEXT_PUBLIC_GOOGLE_CLIENT_ID` di web) | login Google (gratis, tanpa email); cara membuatnya di bawah |
 | `TRUST_PROXY=1` | bila di belakang Nginx/Cloudflare (IP tamu asli untuk pembatas RSVP) |
 | `DISABLE_JOBS=true` | matikan job berkala (mis. bila dijalankan di instance terpisah) |
+
+**Login Google (opsional, disarankan):** buka console.cloud.google.com, buat proyek, lalu:
+1. *APIs & Services → OAuth consent screen*: tipe External, isi nama aplikasi & email, tambahkan email Anda sebagai Test user selama masih mode Testing.
+2. *Credentials → Create credentials → OAuth client ID → Web application*. Pada **Authorized JavaScript origins** isi `http://localhost:3000` (dan domain produksi nanti). Redirect URI tidak dipakai.
+3. Salin **Client ID** ke `apps/api/.env` (`GOOGLE_CLIENT_ID`) dan `apps/web/.env.local` (`NEXT_PUBLIC_GOOGLE_CLIENT_ID`, nilainya sama), lalu **restart** API dan `next dev` (variabel `NEXT_PUBLIC_` dibaca saat start).
+Tombol "Lanjutkan dengan Google" otomatis tampil di atas form email begitu Client ID terisi. Akun OTP yang emailnya sama otomatis tertaut.
 
 Web: `API_URL` (alamat API dari server Next), `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SUPPORT_WHATSAPP`.
 

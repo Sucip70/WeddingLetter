@@ -18,10 +18,10 @@ Setup lengkap ada di [README.md](./README.md) — install, jalankan database, mi
 
 ## Status implementasi saat ini
 
-Semua fitur inti dari rancangan **sudah diimplementasikan dan diverifikasi**: 89 unit test API, smoke test alur penuh terhadap Postgres sungguhan (`apps/api/scripts/smoke.mjs`, 143 pengecekan: user + admin + job pemeliharaan), dan alur UI dicoba langsung di browser. Cara menjalankan ada di README.
+Semua fitur inti dari rancangan **sudah diimplementasikan dan diverifikasi**: 94 unit test API, smoke test alur penuh terhadap Postgres sungguhan (`apps/api/scripts/smoke.mjs`, 143 pengecekan: user + admin + job pemeliharaan), dan alur UI dicoba langsung di browser. Cara menjalankan ada di README.
 
 **API (`apps/api/src`)** — pola tiap modul: controller tipis + service + zod (`parseBody`) + `@UseGuards(AuthGuard)`/`@Roles('ADMIN')`.
-- `auth/` email+OTP & Google, JWT bearer (dari sesi lain).
+- `auth/` email+OTP & Google, JWT bearer (dari sesi lain). Sesi 30 hari **bergulir** (`POST /auth/refresh`, dipanggil `session-keepalive.tsx` sekali sehari) supaya OTP email (berbayar) jarang dikirim; batas OTP `OTP_DAILY_LIMIT`/`OTP_PER_EMAIL_DAILY` di API + 10/jam per IP di `app/api/auth/[action]`.
 - `templates/themes.ts` (registry 34 desain + palet: `DESIGNS`, `BASIC_PALETTES`, `autoPalettes`). Katalog = desain x paket (`prisma/seed.ts` membangun 69 baris; category = grup tema). Semua paket `musik.allowed = true`; lagu bawaan TIDAK ada di seed/skema template, melainkan dari tabel `MusicTrack` (modul `music/`, Admin → Musik, `minTier` BASIC/STANDARD/PREMIUM) yang digabung lewat `withLibrary()` di `templates.service` dan `pricing.service` (rujukan `preset:<id>`, `findPreset()`). Basic hanya desain `rustic` (8 warna); Standard/Premium semua desain, `theme.fx` = `standard`/`premium`.
 - `templates/layout.ts` — **template engine berbasis skema** (juga `theme.motif`/`theme.fx`, `palettes`, `applyPalette` untuk warna pilihan pembeli; `GET /templates` sengaja ringan, detail lengkap di `GET /templates/:id`): `SECTION_REGISTRY` (section & field yang dikenali renderer), `normalizeLayout` (toleran skema lama), `effectiveSections` (section + add-on + musik), `validateInvitationData` (mode `lenient` untuk kalkulator), `toAuthoring` (untuk builder admin).
 - `pricing/` — `pricing.calculator.ts` murni (rumus Bagian 6/7/7.1, teruji), `pricing.service.ts` (validasi + kupon), `POST /pricing/quote` publik.

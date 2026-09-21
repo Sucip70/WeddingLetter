@@ -101,6 +101,14 @@ export function LoginPanel({ onSuccess }: { onSuccess: (user: SessionUser) => vo
 
   return (
     <div className="space-y-5">
+      {GOOGLE_CLIENT_ID && step === 'email' && (
+        <>
+          <GoogleButton onCredential={google} />
+          <div className="flex items-center gap-3 text-xs text-ink-soft">
+            <span className="h-px flex-1 bg-line" /> atau dengan kode email <span className="h-px flex-1 bg-line" />
+          </div>
+        </>
+      )}
       {step === 'email' ? (
         <form onSubmit={requestCode} className="space-y-4">
           <Field label="Email" required>
@@ -143,14 +151,6 @@ export function LoginPanel({ onSuccess }: { onSuccess: (user: SessionUser) => vo
         </form>
       )}
 
-      {GOOGLE_CLIENT_ID && step === 'email' && (
-        <>
-          <div className="flex items-center gap-3 text-xs text-ink-soft">
-            <span className="h-px flex-1 bg-line" /> atau <span className="h-px flex-1 bg-line" />
-          </div>
-          <GoogleButton onCredential={google} />
-        </>
-      )}
     </div>
   );
 }
