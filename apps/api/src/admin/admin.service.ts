@@ -6,7 +6,9 @@ import { EXT_BY_TYPE, newId } from '../orders/orders.service.js';
 import { PaymentsService } from '../payments/payments.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
-import { SECTION_REGISTRY, THEME_DEFINITIONS, THEME_PRESETS, layoutIncludes, normalizeLayout, toAuthoring } from '../templates/layout.js';
+import { SECTION_REGISTRY, layoutIncludes, normalizeLayout, toAuthoring } from '../templates/layout.js';
+import { TRACKS } from '../templates/music-library.js';
+import { BASIC_PALETTES, DESIGNS, GROUP_LABEL, GROUP_ORDER, autoPalettes } from '../templates/themes.js';
 import type { z } from 'zod';
 import type { assetPresignSchema, couponCreateSchema, couponUpdateSchema, listQuerySchema, templateCreateSchema, templateUpdateSchema } from './admin.dto.js';
 
@@ -57,15 +59,20 @@ export class AdminService {
 
   builderMeta() {
     return {
-      themePresets: THEME_PRESETS,
-      themes: THEME_DEFINITIONS,
+      // palettes = usulan palet pembeli untuk desain itu (rustic memakai 8 warna Basic, lainnya 2 varian otomatis)
+      designs: DESIGNS.map((design) => ({ ...design, palettes: design.id === 'rustic' ? BASIC_PALETTES : autoPalettes(design) })),
+      groups: GROUP_ORDER.map((id) => ({ id, label: GROUP_LABEL[id] })),
+      tracks: TRACKS,
       sections: Object.entries(SECTION_REGISTRY).map(([id, def]) => ({ id, title: def.title, fields: def.fields })),
     };
   }
 
   async listTemplates() {
     const rows = await this.prisma.template.findMany({ orderBy: [{ price: 'asc' }, { createdAt: 'asc' }], include: { _count: { select: { orders: true } } } });
-    return rows.map(({ layoutSchema, _count, ...t }) => ({ ...t, orders: _count.orders, sections: normalizeLayout(layoutSchema, t.category).sections.map((s) => s.id) }));
+    return rows.map(({ layoutSchema, _count, ...t }) => {
+      const layout = normalizeLayout(layoutSchema, t.category);
+      return { ...t, orders: _count.orders, sections: layout.sections.map((s) => s.id), theme: layout.theme };
+    });
   }
 
   async getTemplate(id: string) {

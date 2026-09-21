@@ -8,7 +8,7 @@ import { OrdersService } from '../orders/orders.service.js';
 import { extensionInputSchema } from '../pricing/pricing.dto.js';
 import { InvitationsService, rsvpSchema } from './invitations.service.js';
 
-const updateSchema = z.object({ data: z.record(z.string(), z.unknown()) });
+const updateSchema = z.object({ data: z.record(z.string(), z.unknown()), palette: z.string().max(40).optional() });
 
 @Controller('invitations')
 @UseGuards(AuthGuard)
@@ -30,7 +30,8 @@ export class InvitationsController {
 
   @Patch(':id')
   update(@CurrentUser() user: AuthUser, @Param('id') id: string, @Body() body: unknown) {
-    return this.invitations.updateData(user.id, id, parseBody(updateSchema, body).data);
+    const input = parseBody(updateSchema, body);
+    return this.invitations.updateData(user.id, id, input.data, input.palette);
   }
 
   @Get(':id/preview')

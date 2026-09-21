@@ -17,6 +17,13 @@ export default async function PricingPage() {
   } catch {
     failed = true;
   }
+  // Harga per paket sama untuk semua desain: satu kartu per paket (bukan per template).
+  const tiers = (['BASIC', 'STANDARD', 'PREMIUM'] as const)
+    .map((tier) => {
+      const rows = templates.filter((t) => t.tier === tier);
+      return { t: rows[0]!, designs: new Set(rows.map((r) => r.design?.id ?? r.id)).size };
+    })
+    .filter((x) => x.t);
   const rate = addOns.find((a) => a.code === 'MEDIA_RENTAL_WEEK')?.price ?? 700;
   const extend = addOns.find((a) => a.code === 'EXTEND_ACTIVE_WEEK')?.price ?? 10000;
 
@@ -27,19 +34,19 @@ export default async function PricingPage() {
 
       <section aria-labelledby="tpl">
         <h2 id="tpl" className="font-display text-2xl text-ink">Template</h2>
-        <p className="mt-1 text-sm text-ink-soft">Sekali bayar. Sudah termasuk kuota foto dan masa aktif awal.</p>
+        <p className="mt-1 text-sm text-ink-soft">Sekali bayar, harga sama untuk semua desain di paket yang sama. Sudah termasuk kuota foto dan masa aktif awal.</p>
         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {templates.map((t) => (
+          {tiers.map(({ t, designs }) => (
             <Card key={t.id} className="flex flex-col p-6">
               <div className="flex items-center justify-between gap-3">
-                <p className="font-semibold text-ink">{t.name}</p>
-                <Badge tone={t.tier === 'PREMIUM' ? 'gold' : t.tier === 'STANDARD' ? 'rose' : 'neutral'}>{TIER_LABEL[t.tier]}</Badge>
+                <p className="font-semibold text-ink">Paket {TIER_LABEL[t.tier]}</p>
+                <Badge tone={t.tier === 'PREMIUM' ? 'gold' : t.tier === 'STANDARD' ? 'rose' : 'neutral'}>{designs} desain</Badge>
               </div>
               <p className="mt-3 font-display text-4xl text-rose">{rupiah(t.price)}</p>
               <ul className="mt-4 flex-1 space-y-1.5 text-sm text-ink-soft">
                 {templateFeatures(t).map((f) => <li key={f}>✓ {f}</li>)}
               </ul>
-              <LinkButton href={`/templates/${t.id}`} variant="secondary" size="sm" className="mt-5">Lihat demo</LinkButton>
+              <LinkButton href={`/templates?tier=${t.tier.toLowerCase()}`} variant="secondary" size="sm" className="mt-5">Lihat desain {TIER_LABEL[t.tier]}</LinkButton>
             </Card>
           ))}
         </div>

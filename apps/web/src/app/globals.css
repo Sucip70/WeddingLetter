@@ -81,3 +81,128 @@ body {
   background: rgba(0, 0, 0, 0.18);
   border-radius: 999px;
 }
+
+/* ===== Animasi undangan (efek dibatasi per level fx: none / standard / premium) ===== */
+
+/* Partikel: posisi & ukuran dari inline style, gerak dari keyframes di bawah. --h = tinggi lapisan. */
+.wl-particle {
+  position: absolute;
+  top: 0;
+  will-change: transform, opacity;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.wl-fall { animation-name: wl-fall; }
+.wl-rise { animation-name: wl-rise; }
+.wl-twinkle { animation-name: wl-twinkle; animation-timing-function: ease-in-out; }
+.wl-drift { animation-name: wl-drift; animation-timing-function: ease-in-out; }
+
+@keyframes wl-fall {
+  0% { transform: translate3d(0, -40px, 0) rotate(0deg); opacity: 0; }
+  8% { opacity: var(--o, 0.85); }
+  92% { opacity: var(--o, 0.85); }
+  100% { transform: translate3d(var(--sway, 30px), calc(var(--h, 100svh) + 40px), 0) rotate(var(--rot, 180deg)); opacity: 0; }
+}
+@keyframes wl-rise {
+  0% { transform: translate3d(0, calc(var(--h, 100svh) + 40px), 0) rotate(0deg); opacity: 0; }
+  10% { opacity: var(--o, 0.85); }
+  90% { opacity: var(--o, 0.85); }
+  100% { transform: translate3d(var(--sway, 30px), -60px, 0) rotate(var(--rot, 0deg)); opacity: 0; }
+}
+@keyframes wl-twinkle {
+  0%, 100% { opacity: 0.1; transform: scale(0.6); }
+  50% { opacity: var(--o, 0.95); transform: scale(1.15); }
+}
+@keyframes wl-drift {
+  0%, 100% { transform: translate3d(0, 0, 0); opacity: 0.15; }
+  25% { transform: translate3d(var(--sway, 30px), -22px, 0); opacity: var(--o, 0.95); }
+  50% { transform: translate3d(calc(var(--sway, 30px) * -0.6), -46px, 0); opacity: 0.25; }
+  75% { transform: translate3d(calc(var(--sway, 30px) * 0.4), -20px, 0); opacity: var(--o, 0.95); }
+}
+
+/* Muncul saat digulir: hanya aktif setelah JS "mempersenjatai" root (data-armed), jadi tanpa JS semuanya tetap terlihat. */
+.wl-root[data-armed] .wl-reveal { opacity: 0; transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1), filter 0.9s ease; transition-delay: var(--d, 0ms); }
+.wl-root[data-armed][data-reveal='rise'] .wl-reveal { transform: translateY(28px); }
+.wl-root[data-armed][data-reveal='zoom'] .wl-reveal { transform: scale(0.88); }
+.wl-root[data-armed][data-reveal='blur'] .wl-reveal { transform: translateY(14px); filter: blur(8px); }
+.wl-root[data-armed][data-reveal='slide'] .wl-reveal { transform: translateX(-36px); }
+.wl-root[data-armed][data-reveal='slide'] .wl-reveal:nth-child(even) { transform: translateX(36px); }
+.wl-root[data-armed] .wl-reveal.is-in { opacity: 1; transform: none; filter: none; }
+
+/* Masuk sampul: bertahap dengan var(--d) */
+.wl-enter { animation: wl-enter 1s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: var(--d, 0ms); }
+@keyframes wl-enter {
+  from { opacity: 0; transform: translateY(22px) scale(0.97); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+
+/* Kilau pada nama (premium) */
+.wl-shimmer {
+  background-image: linear-gradient(100deg, var(--p) 20%, color-mix(in srgb, var(--s) 70%, #fff) 45%, var(--p) 70%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  animation: wl-shimmer 5.5s ease-in-out infinite;
+}
+@keyframes wl-shimmer {
+  0%, 100% { background-position: 100% 0; }
+  50% { background-position: 0% 0; }
+}
+
+.wl-breathe { animation: wl-breathe 6s ease-in-out infinite; transform-origin: center; }
+@keyframes wl-breathe {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+.wl-float { animation: wl-float 5s ease-in-out infinite; }
+@keyframes wl-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.wl-pulse { animation: wl-pulse 2.4s ease-in-out infinite; }
+@keyframes wl-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--p) 45%, transparent), 0 10px 24px -8px rgba(0, 0, 0, 0.35); }
+  50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--p) 0%, transparent), 0 10px 24px -8px rgba(0, 0, 0, 0.35); }
+}
+.wl-tick { animation: wl-tick 1s ease-out; }
+@keyframes wl-tick {
+  from { transform: translateY(-40%); opacity: 0.2; }
+  to { transform: none; opacity: 1; }
+}
+
+/* Efek latar sampul */
+.wl-aurora { animation: wl-aurora 14s ease-in-out infinite alternate; background-size: 180% 180%; }
+@keyframes wl-aurora {
+  from { background-position: 0% 30%; }
+  to { background-position: 100% 70%; }
+}
+.wl-rays { animation: wl-spin 70s linear infinite; }
+@keyframes wl-spin { to { transform: rotate(360deg); } }
+.wl-scan { animation: wl-scan 8s linear infinite; }
+@keyframes wl-scan { from { background-position: 0 0; } to { background-position: 0 100px; } }
+.wl-spot { animation: wl-spot 9s ease-in-out infinite alternate; }
+@keyframes wl-spot {
+  from { transform: translateX(-18%); }
+  to { transform: translateX(18%); }
+}
+.wl-cloud { animation: wl-cloud linear infinite; }
+@keyframes wl-cloud {
+  from { transform: translateX(-30%); }
+  to { transform: translateX(130%); }
+}
+.wl-curtain-l { animation: wl-curtain-l 2.2s cubic-bezier(0.6, 0, 0.2, 1) 0.3s both; }
+.wl-curtain-r { animation: wl-curtain-r 2.2s cubic-bezier(0.6, 0, 0.2, 1) 0.3s both; }
+@keyframes wl-curtain-l { to { transform: translateX(-102%); } }
+@keyframes wl-curtain-r { to { transform: translateX(102%); } }
+
+/* Hormati preferensi "kurangi gerakan": semuanya statis dan langsung terlihat. */
+@media (prefers-reduced-motion: reduce) {
+  .wl-particle, .wl-shimmer, .wl-breathe, .wl-float, .wl-pulse, .wl-aurora, .wl-rays, .wl-scan, .wl-spot, .wl-cloud, .wl-enter, .wl-tick,
+  .wl-curtain-l, .wl-curtain-r {
+    animation: none !important;
+  }
+  .wl-curtain-l, .wl-curtain-r { display: none; }
+  .wl-root[data-armed] .wl-reveal { opacity: 1 !important; transform: none !important; filter: none !important; transition: none; }
+  .wl-shimmer { color: var(--p) !important; background: none; }
+}

@@ -18,21 +18,23 @@ Setup lengkap ada di [README.md](./README.md) — install, jalankan database, mi
 
 ## Status implementasi saat ini
 
-Semua fitur inti dari rancangan **sudah diimplementasikan dan diverifikasi**: 70 unit test API, smoke test alur penuh terhadap Postgres sungguhan (`apps/api/scripts/smoke.mjs`, 107 pengecekan: user + admin + job pemeliharaan), dan alur UI dicoba langsung di browser. Cara menjalankan ada di README.
+Semua fitur inti dari rancangan **sudah diimplementasikan dan diverifikasi**: 81 unit test API, smoke test alur penuh terhadap Postgres sungguhan (`apps/api/scripts/smoke.mjs`, 126 pengecekan: user + admin + job pemeliharaan), dan alur UI dicoba langsung di browser. Cara menjalankan ada di README.
 
 **API (`apps/api/src`)** — pola tiap modul: controller tipis + service + zod (`parseBody`) + `@UseGuards(AuthGuard)`/`@Roles('ADMIN')`.
 - `auth/` email+OTP & Google, JWT bearer (dari sesi lain).
-- `templates/layout.ts` — **template engine berbasis skema**: `SECTION_REGISTRY` (section & field yang dikenali renderer), `normalizeLayout` (toleran skema lama), `effectiveSections` (section + add-on + musik), `validateInvitationData` (mode `lenient` untuk kalkulator), `toAuthoring` (untuk builder admin).
+- `templates/themes.ts` (registry 34 desain + palet: `DESIGNS`, `BASIC_PALETTES`, `autoPalettes`) dan `templates/music-library.ts` (20 lagu bawaan orisinal). Katalog = desain x paket (`prisma/seed.ts` membangun 69 baris; category = grup tema). Basic hanya desain `rustic` (8 warna); Standard/Premium semua desain, `theme.fx` = `standard`/`premium`.
+- `templates/layout.ts` — **template engine berbasis skema** (juga `theme.motif`/`theme.fx`, `palettes`, `applyPalette` untuk warna pilihan pembeli; `GET /templates` sengaja ringan, detail lengkap di `GET /templates/:id`): `SECTION_REGISTRY` (section & field yang dikenali renderer), `normalizeLayout` (toleran skema lama), `effectiveSections` (section + add-on + musik), `validateInvitationData` (mode `lenient` untuk kalkulator), `toAuthoring` (untuk builder admin).
 - `pricing/` — `pricing.calculator.ts` murni (rumus Bagian 6/7/7.1, teruji), `pricing.service.ts` (validasi + kupon), `POST /pricing/quote` publik.
 - `orders/` (buat order + draf undangan + slot upload; perpanjangan = order `EXTENSION`), `payments/` (Midtrans Snap + webhook bertanda tangan; `DevProvider` hanya non-production), `media/` (presign/confirm/**replace**), `storage/` (R2 via S3 SDK, fallback disk lokal dev), `invitations/` (owner + publik + RSVP, `lifecycle.service.ts` = publish/pause/resume/extend/expire/purge), `admin/`, `jobs/maintenance.service.ts` (tiap jam), `notifications/` (Resend, Fonnte).
 - Migrasi: `20260919033052_init`, `20260919100000_auth`, `20260920113934_orders_payments_media`.
 
 **Web (`apps/web/src`)** — Next 16 App Router, Tailwind 4, tanpa library UI. Grup rute `(site)` memakai header/footer; `u/[slug]` bare.
 - Token sesi di **cookie httpOnly** lewat `app/api/auth/[action]` (login) dan `app/api/backend/[...path]` (proxy ke API). Browser memakai `lib/client-api.ts`; server component memakai `lib/api.ts` + `lib/session.ts`.
+- `components/invitation/motifs.ts` (paket motif per desain, kunci = `theme.motif`), `effects.tsx` (partikel, pola, efek sampul, bingkai foto, reveal saat gulir), `ornaments.tsx` (6 jenis ornamen). Animasi digerbangi `theme.fx`; `fx: none` harus tetap tampil seperti desain Basic lama. Lagu bawaan dibuat `apps/web/scripts/generate-music.mjs` -> `public/audio/`.
 - `components/invitation/invitation-view.tsx` = renderer undangan (dipakai halaman publik, demo template, editor, dashboard, builder). `phone-frame.tsx` merender pada 390px lalu diskalakan.
 - `components/editor/*` editor + checkout; `components/admin/template-builder.tsx`; dashboard di `(site)/dashboard`; admin di `(site)/admin`.
 
-**Belum ada / ide lanjutan**: login HP+OTP (WhatsApp), lagu bawaan royalty-free (admin harus mengunggah), penambahan file baru setelah beli (saat ini hanya *mengganti*), SEO/OG image, i18n web selain chrome undangan, tes otomatis frontend, CI, deployment (Docker/Nginx), rate limit global.
+**Belum ada / ide lanjutan**: login HP+OTP (WhatsApp), penambahan file baru setelah beli (saat ini hanya *mengganti*), SEO/OG image, i18n web selain chrome undangan, tes otomatis frontend, CI, deployment (Docker/Nginx), rate limit global.
 
 ## Keputusan bisnis penting (jangan diubah tanpa alasan kuat — ini sudah diputuskan user)
 
@@ -56,6 +58,7 @@ Semua fitur inti dari rancangan **sudah diimplementasikan dan diverifikasi**: 70
 - Environment aslinya **tidak ada Docker Desktop** terpasang. `docker-compose.yml` tetap disiapkan untuk siapa pun yang punya Docker; alternatif tanpa Docker: `cd apps/api && npx prisma dev` (database Postgres lokal bawaan Prisma, tanpa install apa pun).
 - npm di lingkungan pengembangan awal memblokir sebagian install script (`npm warn allow-scripts`) — Prisma tetap berfungsi normal meski begitu (sudah divalidasi), tapi kalau nanti ada package lain yang perilakunya aneh setelah install, cek ini duluan.
 - **Hanya satu `next dev` per folder `.next`.** Untuk server kedua pakai `NEXT_DIST_DIR=.next-verify npx next dev -p 3100` (Next akan menyisipkan entri `.next-verify` ke `apps/web/tsconfig.json` dan memformat ulang file itu — jangan di-commit). ESLint sudah mengabaikan `.next-*`.
+- Smoke test: API uji harus dijalankan dengan `APP_BASE_URL=http://localhost:4100` (URL upload lokal memakai nilai ini; kalau tertinggal di 4000 upload mengenai server dev dan gagal 403). Browser pane tidak menggambar saat tersembunyi: IntersectionObserver/transition baru berjalan setelah screenshot.
 - Tes/verifikasi selalu pakai **database terpisah** (mis. `weddingletter_verify`), jangan database dev pengguna. Saat menyunting timestamp lewat SQL, pakai `(now() at time zone 'utc')` — Prisma menyimpan UTC tanpa zona (sesi Postgres lokal berzona WIB).
 - Aturan teknis yang mudah terlewat: nilai tanggal-jam undangan disimpan sebagai waktu setempat WIB `YYYY-MM-DDTHH:mm`; media di `data` undangan dirujuk lewat id (di editor sementara lewat `clientId` lalu di-remap server saat order dibuat); `Invitation.layout` adalah **snapshot** skema saat beli (perubahan template oleh admin tidak merusak undangan yang sudah dibayar); kupon di-reserve atomik saat order dibuat.
 - Saat menulis file lewat skrip `node -e`/heredoc di shell ini, backslash regex mudah hilang — pakai tool Edit/Write untuk kode berisi regex (pernah menyebabkan bug validasi tanggal).

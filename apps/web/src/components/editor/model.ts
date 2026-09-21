@@ -31,6 +31,7 @@ export interface LocalFile {
 }
 
 export interface Draft {
+  palette?: string;
   data: InvitationData;
   weeks: number;
   addOns: Selectable[];

@@ -17,21 +17,48 @@ export interface SectionDef {
   fields: FieldDef[];
 }
 
+export type FxLevel = 'none' | 'standard' | 'premium';
+export type HeadingFont = 'script' | 'serif' | 'sans' | 'display' | 'cinzel' | 'pixel' | 'round';
+export type BodyFont = 'serif' | 'sans' | 'round';
+
 export interface Theme {
   preset: string;
+  // Kunci paket motif visual (ornamen, partikel, bingkai, dst.) di components/invitation/motifs.ts.
+  motif: string;
+  fx: FxLevel;
   primary: string;
   secondary: string;
   background: string;
   text: string;
-  headingFont: 'script' | 'serif' | 'sans';
-  bodyFont: 'serif' | 'sans';
+  headingFont: HeadingFont;
+  bodyFont: BodyFont;
+}
+
+export interface Palette {
+  id: string;
+  name: string;
+  primary: string;
+  secondary: string;
+  background: string;
+  text: string;
+}
+
+export type ThemeGroup = 'klasik' | 'suku' | 'agama' | 'perayaan' | 'kartun' | 'game' | 'film' | 'musim';
+
+export interface DesignInfo {
+  id: string;
+  name: string;
+  group: ThemeGroup;
+  blurb: string;
 }
 
 export interface Layout {
   theme: Theme;
   sections: SectionDef[];
   galeri: { maxPhotos: number; maxVideos: number };
-  musik: { allowed: boolean; presets: { name: string; url: string }[] };
+  // `count` hanya ada di daftar katalog (presets dikosongkan supaya ringan).
+  musik: { allowed: boolean; presets: { name: string; url: string }[]; count?: number };
+  palettes: Palette[];
 }
 
 export type Tier = 'BASIC' | 'STANDARD' | 'PREMIUM';
@@ -45,6 +72,7 @@ export interface Template {
   includedWeeks: number;
   status: string;
   thumbnailUrl: string | null;
+  design: DesignInfo | null;
   layout: Layout;
 }
 
@@ -67,6 +95,7 @@ export interface InvitationFeatures {
   rsvp?: boolean;
   envelope?: boolean;
   english?: boolean;
+  palette?: string;
 }
 
 export interface MediaRef {

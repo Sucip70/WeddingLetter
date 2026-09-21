@@ -230,7 +230,11 @@ function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: Invitatio
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
   const editable = inv.order.status === 'PAID' && ['DRAFT', 'ACTIVE', 'PAUSED'].includes(inv.status);
-  const dirty = JSON.stringify(data) !== JSON.stringify(inv.data);
+  const palettes = useMemo(() => inv.layout.palettes ?? [], [inv.layout.palettes]);
+  // Palet yang sedang dipakai: yang tersimpan di fitur, atau yang warnanya sama dengan tema saat ini.
+  const currentPalette = inv.features.palette ?? palettes.find((p) => p.primary.toLowerCase() === inv.layout.theme.primary.toLowerCase() && p.background.toLowerCase() === inv.layout.theme.background.toLowerCase())?.id ?? '';
+  const [paletteId, setPaletteId] = useState(currentPalette);
+  const dirty = JSON.stringify(data) !== JSON.stringify(inv.data) || paletteId !== currentPalette;
   const mediaById = useMemo(() => Object.fromEntries(inv.media.map((m) => [m.id, m])), [inv.media]);
 
   const onChange = useCallback((section: string, key: string, value: string | string[] | undefined) => {
@@ -257,27 +261,33 @@ function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: Invitatio
     [inv, setInv],
   );
 
+  const theme = useMemo(() => {
+    const p = palettes.find((x) => x.id === paletteId);
+    return p ? { ...inv.layout.theme, primary: p.primary, secondary: p.secondary, background: p.background, text: p.text } : inv.layout.theme;
+  }, [inv.layout.theme, palettes, paletteId]);
+
   const view: InvitationViewData = useMemo(
     () => ({
       slug: inv.slug,
       templateName: inv.templateName,
-      layout: { theme: inv.layout.theme, sections: inv.layout.sections, musik: { presets: inv.layout.musik.presets } },
+      layout: { theme, sections: inv.layout.sections, musik: { presets: inv.layout.musik.presets } },
       features: inv.features,
       data,
       media: Object.fromEntries(inv.media.filter((m) => ['UPLOADED', 'ACTIVE', 'PAUSED', 'EXPIRED_GRACE'].includes(m.status)).map((m) => [m.id, { url: m.url, type: m.type }])),
       rsvpEnabled: inv.layout.sections.some((s) => s.id === 'rsvp'),
       guestbook: [],
     }),
-    [inv, data],
+    [inv, data, theme],
   );
 
   async function save() {
     setSaving(true);
     setMessage(null);
     try {
-      const updated = await api<InvitationDetail>(`invitations/${inv.id}`, { method: 'PATCH', body: { data } });
+      const updated = await api<InvitationDetail>(`invitations/${inv.id}`, { method: 'PATCH', body: { data, palette: paletteId && paletteId !== currentPalette ? paletteId : undefined } });
       setInv(updated);
       setData(updated.data);
+      setPaletteId(updated.features.palette ?? paletteId);
       setMessage({ tone: 'success', text: 'Perubahan tersimpan.' });
     } catch (e) {
       setMessage({ tone: 'danger', text: errorMessage(e) });
@@ -290,6 +300,29 @@ function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: Invitatio
     <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-4">
         {!editable && <Alert tone="warn">Undangan ini tidak bisa diedit saat berstatus {inv.status === 'EXPIRED_GRACE' ? 'berakhir. Perpanjang dulu' : 'ini'}.</Alert>}
+        {palettes.length > 1 && (
+          <Card className="p-5">
+            <h2 className="font-semibold text-ink">Warna undangan</h2>
+            <div className={cn('mt-4 flex flex-wrap gap-3', !editable && 'pointer-events-none opacity-60')} role="radiogroup" aria-label="Warna undangan">
+              {palettes.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={p.id === paletteId}
+                  onClick={() => {
+                    setPaletteId(p.id);
+                    setMessage(null);
+                  }}
+                  className={cn('flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3.5 text-sm transition-colors', p.id === paletteId ? 'border-rose bg-rose-soft/50 text-ink' : 'border-line text-ink-soft hover:border-ink/30 hover:text-ink')}
+                >
+                  <span className="h-6 w-6 rounded-full ring-1 ring-black/10" style={{ background: `linear-gradient(135deg, ${p.primary} 50%, ${p.secondary} 50%)` }} />
+                  {p.name}
+                </button>
+              ))}
+            </div>
+          </Card>
+        )}
         {inv.layout.sections.filter((s) => s.fields.length > 0).map((section) => (
           <Card key={section.id} className="p-5">
             <h2 className="font-semibold text-ink">{section.title}</h2>
@@ -336,7 +369,18 @@ function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: Invitatio
 
         <div className="sticky bottom-4 z-10 flex items-center gap-3 rounded-2xl border border-line bg-paper/95 p-3 shadow-lg backdrop-blur">
           <Button onClick={save} loading={saving} disabled={!editable || !dirty}>Simpan perubahan</Button>
-          {dirty && <Button variant="ghost" onClick={() => setData(inv.data)} disabled={saving}>Batalkan</Button>}
+          {dirty && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setData(inv.data);
+                setPaletteId(currentPalette);
+              }}
+              disabled={saving}
+            >
+              Batalkan
+            </Button>
+          )}
           {message && <span className={cn('text-sm', message.tone === 'success' ? 'text-sage' : 'text-danger')} role="status">{message.text}</span>}
         </div>
       </div>

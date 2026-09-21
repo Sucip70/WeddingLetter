@@ -62,6 +62,17 @@ step('Katalog & harga add-on');
 const { json: templates } = await call('GET', '/templates', { expect: 200 });
 const basic = templates.find((t) => t.tier === 'BASIC');
 ok(templates.length >= 3 && basic.layout.sections.length > 0, 'katalog memuat template dengan skema ter-normalisasi');
+eq(templates.length, 69, 'katalog 69 template (1 Basic + 34 Standard + 34 Premium)');
+eq(basic.layout.palettes.length, 8, 'Basic punya 8 pilihan warna');
+const premium = templates.find((t) => t.name === 'Premium Batik Jawa');
+ok(premium.design.group === 'suku' && premium.layout.theme.fx === 'premium' && premium.layout.musik.presets.length === 0 && premium.layout.musik.count === 20, 'daftar katalog ringan: info desain + jumlah lagu, tanpa daftar lagu');
+const premiumFull = (await call('GET', `/templates/${premium.id}`, { expect: 200 })).json;
+ok(premiumFull.layout.musik.presets.length === 20 && premiumFull.layout.musik.presets[0].url.startsWith('/audio/'), 'detail Premium memuat 20 lagu bawaan');
+eq(premiumFull.layout.palettes.map((p) => p.id), ['bawaan', 'hangat', 'sejuk'], 'desain non-Basic punya palet bawaan + 2 varian otomatis');
+const standardJawa = templates.find((t) => t.name === 'Standard Batik Jawa');
+eq(standardJawa.layout.theme.fx, 'standard', 'Standard = animasi standar');
+const rusticTiers = templates.filter((t) => t.design?.id === 'rustic').map((t) => t.tier).sort();
+eq(rusticTiers, ['BASIC', 'PREMIUM', 'STANDARD'], 'desain Basic (rustic) juga tersedia di Standard & Premium');
 const { json: addOns } = await call('GET', '/pricing/add-ons', { expect: 200 });
 ok(addOns.some((a) => a.code === 'MEDIA_RENTAL_WEEK' && a.price === 700), 'tarif sewa media Rp700/MB/minggu');
 
@@ -72,6 +83,7 @@ const media = [
 ];
 const orderBody = {
   templateId: basic.id,
+  palette: 'lavender',
   weeks: 6,
   addOns: ['RSVP_ONLINE'],
   couponCode: 'temankeluarga',
@@ -90,6 +102,9 @@ const { json: quote } = await call('POST', '/pricing/quote', { body: orderBody, 
 eq(quote.subtotal, 20000 + 20000 + 8000 + 8400 + 10000, 'subtotal 66.400');
 eq(quote.discount, 13280, 'diskon 20% = 13.280');
 eq(quote.total, 53120, 'total 53.120');
+
+await call('POST', '/pricing/quote', { body: { ...orderBody, palette: 'tidak-ada' }, expect: 400 });
+ok(true, 'palet yang tidak tersedia ditolak (400)');
 
 step('Kalkulator mode lenient: form belum lengkap tetap bisa dihitung');
 const { json: lenient } = await call('POST', '/pricing/quote', { body: { templateId: basic.id, weeks: 4, data: {}, media: [] }, expect: 200 });
@@ -136,6 +151,9 @@ step('Undangan: draft -> edit -> publish');
 const detail = (await call('GET', `/invitations/${invitationId}`, { token: user, expect: 200 })).json;
 eq(detail.status, 'DRAFT', 'setelah bayar masih DRAFT (belum publik)');
 ok(detail.refundEligible, 'masih memenuhi syarat refund (belum publish, dalam 48 jam)');
+eq(detail.features.palette, 'lavender', 'palet pilihan tersimpan di fitur undangan');
+eq(detail.layout.theme.primary, '#7b6aa8', 'snapshot tema memakai warna palet Lavender');
+eq(detail.layout.palettes.length, 8, 'undangan menyimpan daftar palet untuk ganti warna nanti');
 await call('GET', `/public/invitations/${detail.slug}`, { expect: 404 });
 ok(true, 'halaman publik belum bisa dibuka sebelum publish');
 const mediaIds = detail.media.map((m) => m.id);
@@ -148,6 +166,11 @@ const edited = await call('PATCH', `/invitations/${invitationId}`, {
 });
 eq(edited.json.data.cover.pembuka, 'Dengan hormat', 'edit teks berhasil');
 await call('PATCH', `/invitations/${invitationId}`, { token: user, body: { data: { ...detail.data, cover: { foto: 'ngawur' } } }, expect: 400 });
+const recolored = await call('PATCH', `/invitations/${invitationId}`, { token: user, body: { data: edited.json.data, palette: 'merah-marun' }, expect: 200 });
+eq(recolored.json.layout.theme.primary, '#7a2233', 'ganti warna setelah beli: tema snapshot ikut berubah');
+eq(recolored.json.features.palette, 'merah-marun', 'palet baru tersimpan');
+await call('PATCH', `/invitations/${invitationId}`, { token: user, body: { data: edited.json.data, palette: 'tidak-ada' }, expect: 400 });
+ok(true, 'ganti ke palet yang tidak ada ditolak');
 ok(true, 'edit dengan referensi file asing ditolak');
 await call('POST', `/invitations/${invitationId}/publish`, { token: other, expect: 404 });
 const pub = await call('POST', `/invitations/${invitationId}/publish`, { token: user, expect: 200 });
@@ -195,9 +218,11 @@ ok(stats.revenue.total >= 53120 + 22800 && stats.invitations.ACTIVE >= 1, 'stati
 
 step('Admin: template builder');
 const meta = (await call('GET', '/admin/builder-meta', { token: admin, expect: 200 })).json;
-ok(meta.themes.islami.primary === '#2f6f5e' && meta.sections.length === 10, 'builder-meta memuat definisi tema & 10 section');
+ok(meta.designs.length === 34 && meta.groups.length === 8 && meta.tracks.length === 20 && meta.sections.length === 10, 'builder-meta memuat 34 desain, 8 grup, 20 lagu & 10 section');
+ok(meta.designs.every((d) => d.palettes.length >= 0) && meta.designs.find((d) => d.id === 'rustic').palettes.length === 8, 'usulan palet per desain tersedia');
 const authoring = (await call('GET', `/admin/templates/${basic.id}`, { token: admin, expect: 200 })).json;
 eq(authoring.layout.sections.length, 9, 'builder memuat semua 9 section (aktif & nonaktif)');
+eq(authoring.layout.palettes.length, 8, 'builder memuat palet template');
 eq(authoring.layout.sections[0].id, 'cover', 'section aktif tampil lebih dulu sesuai urutan');
 ok(authoring.layout.sections.find((s) => s.id === 'rsvp').enabled === false, 'RSVP nonaktif di Basic');
 const newTpl = (
@@ -216,7 +241,9 @@ await call('PATCH', `/admin/templates/${newTpl.id}`, {
   body: {
     status: 'PUBLISHED',
     layoutSchema: {
-      theme: { preset: 'minimalis', primary: '#112233' },
+      theme: { preset: 'jawa', motif: 'bali', fx: 'premium', primary: '#112233' },
+      palettes: [{ id: 'malam', name: 'Malam', primary: '#0a1a33', secondary: '#88aacc', background: '#f4f8ff', text: '#0a1a33' }],
+      musik: { allowed: true, presets: [{ name: 'Uji', url: '/audio/kalimba-taman.mp3' }] },
       sections: [{ id: 'cover' }, { id: 'mempelai' }, { id: 'tanggal_lokasi', fields: [{ key: 'akad_lokasi', required: false }, { key: 'akad_maps', enabled: false }] }],
     },
   },
@@ -224,6 +251,10 @@ await call('PATCH', `/admin/templates/${newTpl.id}`, {
 });
 const pubDetail = (await call('GET', `/templates/${newTpl.id}`, { expect: 200 })).json;
 eq(pubDetail.layout.theme.primary, '#112233', 'tema kustom tersimpan');
+ok(pubDetail.layout.theme.motif === 'bali' && pubDetail.layout.theme.fx === 'premium', 'motif & level animasi tersimpan');
+eq(pubDetail.layout.palettes.map((p) => p.id), ['bawaan', 'malam'], 'palet kustom tersimpan + Bawaan otomatis');
+await call('PATCH', `/admin/templates/${newTpl.id}`, { token: admin, body: { layoutSchema: { musik: { allowed: true, presets: [{ name: 'x', url: 'javascript:alert(1)' }] } } }, expect: 400 });
+ok(true, 'URL lagu bawaan yang berbahaya ditolak');
 ok(!pubDetail.layout.sections.find((s) => s.id === 'tanggal_lokasi').fields.some((f) => f.key === 'akad_maps'), 'field yang dinonaktifkan tidak muncul');
 eq((await call('POST', '/pricing/quote', { body: { templateId: newTpl.id, weeks: 2, data: {} }, expect: 200 })).json.total, 25000, 'template baru bisa dihitung harganya (masa aktif bawaan 2 minggu)');
 await call('PATCH', `/admin/templates/${newTpl.id}`, { token: admin, body: { layoutSchema: { theme: { primary: 'merah' } } }, expect: 400 });

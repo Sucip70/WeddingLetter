@@ -54,7 +54,8 @@ Alur uji: `/templates` → pilih template → isi (harga live di kanan) → Chec
 ## Yang sudah ada
 
 **Pengguna**
-- Katalog & demo template interaktif, halaman harga + kalkulator sewa media.
+- Katalog **34 desain x 3 paket** (69 template): dikelompokkan per tema (klasik, suku & budaya, religi, perayaan, kartun, video game, film, musim). Demo interaktif dengan ganti warna dan dengar lagu bawaan; halaman harga + kalkulator sewa media.
+- **Basic** = desain Rustic dengan 8 pilihan warna (tanpa animasi). Desain yang sama juga tersedia di Standard & Premium. **Standard** = animasi sedang + 4 lagu rekomendasi; **Premium** = animasi penuh + seluruh pustaka 20 lagu. Warna dipilih pembeli gratis (di editor dan bisa diganti lagi di dashboard).
 - Editor berbasis skema template: form dinamis, pratinjau ponsel langsung (berwatermark sebelum bayar), draf otomatis di browser, kompres foto otomatis (≤2000px), kalkulator harga live (server = sumber kebenaran).
 - Akun hanya diminta saat checkout (email + OTP, atau Google bila dikonfigurasi) tanpa meninggalkan editor.
 - Checkout: buat pesanan → unggah file langsung ke storage (URL bertanda tangan, ukuran diverifikasi server) → bayar (Midtrans Snap).
@@ -63,7 +64,7 @@ Alur uji: `/templates` → pilih template → isi (harga live di kanan) → Chec
 
 **Admin (`/admin`)**
 - Ringkasan bisnis, pesanan (cari/filter, tandai lunas manual, refund), undangan (jeda/lanjutkan + bonus hari, perpanjang gratis, atur tanggal berakhir, hapus), pengguna & peran.
-- **Template builder**: aktif/urut section, field wajib/label, tema (preset + warna + font), kuota foto/video, lagu bawaan, pratinjau langsung, publish/arsip.
+- **Template builder**: aktif/urut section, field wajib/label, desain (34 pilihan, per grup) + warna + font + level animasi, palet warna untuk pembeli, kuota foto/video, lagu bawaan (unggah sendiri atau ambil dari pustaka), pratinjau langsung, publish/arsip.
 - Harga per komponen (add-on, tarif Rp/MB/minggu, perpanjangan) dan kupon — langsung berlaku.
 
 **Sistem**
@@ -74,14 +75,14 @@ Alur uji: `/templates` → pilih template → isi (harga live di kanan) → Chec
 ## Testing
 
 ```
-npm test --workspace apps/api          # 70 unit test (kalkulator harga, skema/validasi, webhook, storage, dst.)
+npm test --workspace apps/api          # 81 unit test (kalkulator harga, skema/validasi, webhook, storage, dst.)
 ```
 
 Smoke test alur penuh (user + admin + job) terhadap API & **database khusus tes** — script ini membuat user/order, jangan arahkan ke database dev Anda:
 
 ```
 cd apps/api && npm run build
-DATABASE_URL=postgresql://.../weddingletter_test JWT_SECRET=smoke-secret APP_PORT=4100 node dist/main.js   # terminal 1 (setelah migrate deploy + seed di DB tes)
+DATABASE_URL=postgresql://.../weddingletter_test JWT_SECRET=smoke-secret APP_PORT=4100 APP_BASE_URL=http://localhost:4100 node dist/main.js   # terminal 1 (setelah migrate deploy + seed di DB tes)
 API_URL=http://localhost:4100 DATABASE_URL=postgresql://.../weddingletter_test JWT_SECRET=smoke-secret node scripts/smoke.mjs   # terminal 2
 ```
 
@@ -114,5 +115,8 @@ Di production tanpa kredensial Midtrans/R2/Resend, endpoint terkait **menolak** 
 ## Catatan teknis
 
 - **Prisma dipin di `7.10.0`** (tag `latest` npm menunjuk `8.0.0-rc.x`). Prisma 7 wajib driver adapter (`@prisma/adapter-pg`). Client digenerate ke `apps/api/src/generated/prisma` (harus di dalam `src/`).
+- **Tema & animasi**: satu desain = entri di `apps/api/src/templates/themes.ts` (warna, font, lagu rekomendasi) + paket motif di `apps/web/src/components/invitation/motifs.ts` (ornamen, pola, partikel, bingkai foto, gaya hitung mundur, efek sampul, teks pengganti), kuncinya sama dengan id desain. Level animasi ada di `theme.fx` (`none` / `standard` / `premium`) dan diatur per template. Menambah desain baru: tambahkan di kedua file itu lalu `npx prisma db seed` (idempotent; harga yang sudah diubah admin tidak ditimpa).
+- Tema kartun/game/film hanya **terinspirasi gaya umum** (palet, ornamen, teks) dan tidak memakai karakter, logo, atau nama berhak cipta. Jangan menambahkan nama/karakter merek dagang ke desain.
+- **Lagu bawaan** (20 trek) dibuat orisinal lewat kode: `npm run music -w web` menghasilkan `apps/web/public/audio/*.mp3` (hasilnya di-commit, ±4,7 MB). Daftar id ada di `apps/api/src/templates/music-library.ts`. Lagu berlisensi lain bisa ditambahkan admin lewat builder.
 - Hanya satu server `next dev` per folder `.next`. Untuk server kedua: `NEXT_DIST_DIR=.next-verify npx next dev -p 3100` (Next akan menambah entri `.next-verify` ke `tsconfig.json`; jangan di-commit).
 - npm di mesin dev awal memblokir sebagian install script (`allow-scripts`); Prisma tetap berfungsi.

@@ -1,6 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { z } from 'zod';
 import { ADDON, LIMITS } from '../config/constants.js';
+import { DESIGNS, baseColors } from './themes.js';
+import type { BodyFont, HeadingFont, Palette } from './themes.js';
 
 // Template engine berbasis skema (Bagian 5): admin menyusun *skema* (section, field, tema, kuota media),
 // bukan HTML. Daftar section & field yang dikenali renderer ada di SECTION_REGISTRY; admin hanya
@@ -37,14 +39,21 @@ export interface SectionDef {
   fields: FieldDef[];
 }
 
+export type FxLevel = 'none' | 'standard' | 'premium';
+export const FX_LEVELS: FxLevel[] = ['none', 'standard', 'premium'];
+
 export interface ThemeDef {
+  // Kunci desain di registry (themes.ts) dan paket motif di web.
   preset: string;
+  motif: string;
+  // Tingkat animasi: none (Basic), standard (reveal + partikel), premium (efek lengkap).
+  fx: FxLevel;
   primary: string;
   secondary: string;
   background: string;
   text: string;
-  headingFont: 'script' | 'serif' | 'sans';
-  bodyFont: 'serif' | 'sans';
+  headingFont: HeadingFont;
+  bodyFont: BodyFont;
 }
 
 export interface TemplateLayout {
@@ -52,6 +61,8 @@ export interface TemplateLayout {
   sections: SectionDef[];
   galeri: { maxPhotos: number; maxVideos: number };
   musik: { allowed: boolean; presets: { name: string; url: string }[] };
+  // Pilihan warna yang bisa dipilih pembeli (kosong = tanpa pemilih warna).
+  palettes: Palette[];
 }
 
 const f = (
@@ -126,17 +137,29 @@ export const ADDON_SECTIONS: Partial<Record<string, SectionId>> = {
   [ADDON.DIGITAL_ENVELOPE]: 'amplop_digital',
 };
 
-const THEMES: Record<string, Omit<ThemeDef, 'preset'>> = {
-  rustic: { primary: '#8a5a3c', secondary: '#c9a27e', background: '#fbf6ef', text: '#3b2a20', headingFont: 'serif', bodyFont: 'sans' },
-  floral: { primary: '#c4587a', secondary: '#e9b7c6', background: '#fff7f9', text: '#4a2c38', headingFont: 'script', bodyFont: 'sans' },
-  elegant: { primary: '#b08d3c', secondary: '#1f2a44', background: '#f7f5f0', text: '#1f2a44', headingFont: 'serif', bodyFont: 'serif' },
-  minimalis: { primary: '#222222', secondary: '#9a9a9a', background: '#ffffff', text: '#222222', headingFont: 'sans', bodyFont: 'sans' },
-  islami: { primary: '#2f6f5e', secondary: '#c9b26a', background: '#f6faf7', text: '#1f3b33', headingFont: 'serif', bodyFont: 'sans' },
-};
-export const THEME_PRESETS = Object.keys(THEMES);
+// Nilai bawaan tema diturunkan dari registry desain.
+const THEMES: Record<string, Pick<ThemeDef, 'primary' | 'secondary' | 'background' | 'text' | 'headingFont' | 'bodyFont'>> = Object.fromEntries(
+  DESIGNS.map((x) => [x.id, { ...baseColors(x), headingFont: x.headingFont, bodyFont: x.bodyFont }]),
+);
+export const THEME_PRESETS = DESIGNS.map((x) => x.id);
 export const THEME_DEFINITIONS = THEMES;
 
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Warna harus format #RRGGBB');
+
+export const paletteSchema = z.object({
+  id: z.string().regex(/^[a-z0-9-]{2,30}$/, 'ID palet: huruf kecil, angka, tanda hubung'),
+  name: z.string().trim().min(1).max(40),
+  primary: hex,
+  secondary: hex,
+  background: hex,
+  text: hex,
+});
+
+// Lagu bawaan: URL https penuh atau berkas pustaka di web (/audio/<id>.mp3).
+const presetUrl = z
+  .string()
+  .max(500)
+  .refine((u) => /^https?:\/\/\S+$/.test(u) || /^\/audio\/[a-z0-9-]+\.mp3$/.test(u), 'URL lagu harus https atau /audio/<nama>.mp3');
 
 const fieldOverride = z.object({
   key: z.string(),
@@ -160,14 +183,17 @@ export const layoutInputSchema = z.object({
   theme: z
     .object({
       preset: z.string().optional(),
+      motif: z.string().max(40).optional(),
+      fx: z.enum(['none', 'standard', 'premium']).optional(),
       primary: hex.optional(),
       secondary: hex.optional(),
       background: hex.optional(),
       text: hex.optional(),
-      headingFont: z.enum(['script', 'serif', 'sans']).optional(),
-      bodyFont: z.enum(['serif', 'sans']).optional(),
+      headingFont: z.enum(['script', 'serif', 'sans', 'display', 'cinzel', 'pixel', 'round']).optional(),
+      bodyFont: z.enum(['serif', 'sans', 'round']).optional(),
     })
     .optional(),
+  palettes: z.array(paletteSchema).max(16).optional(),
   sections: z.array(sectionInput).max(20).optional(),
   galeri: z
     .object({
@@ -178,7 +204,7 @@ export const layoutInputSchema = z.object({
   musik: z
     .object({
       allowed: z.boolean().optional(),
-      presets: z.array(z.object({ name: z.string().trim().min(1).max(80), url: z.string().url().max(500) })).max(30).optional(),
+      presets: z.array(z.object({ name: z.string().trim().min(1).max(80), url: presetUrl })).max(40).optional(),
     })
     .optional(),
   rsvp: z.object({ allowed: z.boolean().optional() }).optional(), // legacy: diabaikan
@@ -206,6 +232,8 @@ export function normalizeLayout(raw: unknown, category = 'rustic'): TemplateLayo
   const base = THEMES[preset]!;
   const theme: ThemeDef = {
     preset,
+    motif: input.theme?.motif ?? preset,
+    fx: input.theme?.fx ?? 'none',
     primary: input.theme?.primary ?? base.primary,
     secondary: input.theme?.secondary ?? base.secondary,
     background: input.theme?.background ?? base.background,
@@ -229,7 +257,27 @@ export function normalizeLayout(raw: unknown, category = 'rustic'): TemplateLayo
     sections,
     galeri: { maxPhotos: input.galeri?.maxPhotos ?? 4, maxVideos: input.galeri?.maxVideos ?? 0 },
     musik: { allowed: musikAllowed, presets: input.musik?.presets ?? [] },
+    palettes: buildPalettes(theme, input.palettes ?? []),
   };
+}
+
+const sameColor = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
+
+// Daftar palet selalu memuat warna bawaan template (id "bawaan") bila ada palet tambahan, supaya pembeli bisa kembali ke aslinya.
+function buildPalettes(theme: ThemeDef, custom: Palette[]): Palette[] {
+  if (custom.length === 0) return [];
+  const matchesBase = (p: Palette) =>
+    sameColor(p.primary, theme.primary) && sameColor(p.secondary, theme.secondary) && sameColor(p.background, theme.background) && sameColor(p.text, theme.text);
+  if (custom.some(matchesBase)) return custom;
+  return [{ id: 'bawaan', name: 'Bawaan', primary: theme.primary, secondary: theme.secondary, background: theme.background, text: theme.text }, ...custom];
+}
+
+// Menerapkan palet pilihan pembeli ke skema (dipakai saat membuat snapshot undangan).
+export function applyPalette(layout: TemplateLayout, paletteId: string | undefined): TemplateLayout {
+  if (!paletteId) return layout;
+  const p = layout.palettes.find((x) => x.id === paletteId);
+  if (!p) throw new BadRequestException('Warna yang dipilih tidak tersedia untuk template ini');
+  return { ...layout, theme: { ...layout.theme, primary: p.primary, secondary: p.secondary, background: p.background, text: p.text } };
 }
 
 function buildSection(id: SectionId, title?: string, overrides?: z.infer<typeof fieldOverride>[]): SectionDef {
@@ -268,6 +316,8 @@ export interface InvitationFeatures {
   rsvp?: boolean;
   envelope?: boolean;
   english?: boolean;
+  // Id palet warna pilihan pembeli.
+  palette?: string;
 }
 
 export type InvitationData = Record<string, Record<string, string | string[]>>;
@@ -439,5 +489,6 @@ export function toAuthoring(raw: unknown, category = 'rustic') {
       }),
     };
   });
-  return { theme: norm.theme, sections, galeri: norm.galeri, musik: norm.musik };
+  // Palet mentah (tanpa "bawaan" otomatis) supaya round-trip dengan builder tidak menyimpan entri turunan.
+  return { theme: norm.theme, sections, galeri: norm.galeri, musik: norm.musik, palettes: input.palettes ?? [] };
 }

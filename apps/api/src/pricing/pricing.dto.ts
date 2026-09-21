@@ -19,6 +19,8 @@ export const orderInputSchema = z.object({
   media: z.array(mediaDeclSchema).max(LIMITS.maxMediaPerInvitation).default([]),
   addOns: z.array(z.enum(USER_SELECTABLE_ADDONS)).max(USER_SELECTABLE_ADDONS.length).default([]),
   couponCode: z.string().trim().min(1).max(40).optional(),
+  // Palet warna pilihan (id dari layout.palettes template).
+  palette: z.string().max(40).optional(),
   // Slug/link custom (butuh add-on CUSTOM_DOMAIN).
   customSlug: z
     .string()

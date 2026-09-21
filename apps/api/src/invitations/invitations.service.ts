@@ -6,7 +6,7 @@ import { PricingService } from '../pricing/pricing.service.js';
 import type { ExtensionOrderInput } from '../pricing/pricing.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
-import { validateInvitationData } from '../templates/layout.js';
+import { applyPalette, validateInvitationData } from '../templates/layout.js';
 import type { InvitationFeatures, SectionDef, TemplateLayout } from '../templates/layout.js';
 import { LifecycleService } from './lifecycle.service.js';
 
@@ -92,7 +92,7 @@ export class InvitationsService {
       templateName: inv.template.name,
       data: inv.data,
       features: inv.features as InvitationFeatures,
-      layout: { theme: layout.theme, sections: layout.sections, galeri: layout.galeri, musik: layout.musik },
+      layout: { theme: layout.theme, sections: layout.sections, galeri: layout.galeri, musik: layout.musik, palettes: layout.palettes ?? [] },
       publishedAt: inv.publishedAt,
       expiresAt: inv.expiresAt,
       pausedAt: inv.pausedAt,
@@ -120,7 +120,7 @@ export class InvitationsService {
 
   // Mengubah isi undangan yang sudah dibayar. Set file media tidak berubah (harga sudah dihitung dari
   // file yang diunggah); user boleh menata ulang pemakaian file yang sudah ada.
-  async updateData(userId: string, id: string, rawData: unknown) {
+  async updateData(userId: string, id: string, rawData: unknown, palette?: string) {
     const inv = await this.owned(userId, id);
     if (inv.order.status !== 'PAID') throw new ConflictException('Undangan baru bisa diedit setelah pembayaran selesai');
     if (!['DRAFT', 'ACTIVE', 'PAUSED'].includes(inv.status)) throw new ConflictException('Undangan yang sudah berakhir tidak bisa diedit, perpanjang dulu');
@@ -141,7 +141,15 @@ export class InvitationsService {
     const all = [...refs.photos, ...refs.videos, ...refs.songs];
     if (new Set(all).size !== all.length) throw new BadRequestException('Satu file hanya boleh dipakai di satu tempat');
 
-    await this.prisma.invitation.update({ where: { id: inv.id }, data: { data: validated.data as object } });
+    // Ganti warna: harus salah satu palet yang disediakan template (tersimpan di snapshot).
+    const recolored = palette && palette !== (inv.features as InvitationFeatures).palette ? applyPalette(layout, palette) : null;
+    await this.prisma.invitation.update({
+      where: { id: inv.id },
+      data: {
+        data: validated.data as object,
+        ...(recolored ? { layout: recolored as object, features: { ...(inv.features as object), palette } } : {}),
+      },
+    });
     return this.getMine(userId, id);
   }
 

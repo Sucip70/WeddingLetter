@@ -3,10 +3,10 @@ import { InvitationView } from '@/components/invitation/invitation-view';
 import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { TemplateThumb } from '@/components/template-thumb';
 import { Badge, LinkButton } from '@/components/ui';
-import { TIER_LABEL, getAddOns, getTemplates, templateFeatures } from '@/lib/catalog';
+import { GROUP_LABEL, TIER_LABEL, getAddOns, getTemplate, getTemplates, groupByDesign, templateFeatures } from '@/lib/catalog';
 import { rupiah, whatsappLink } from '@/lib/format';
 import { sampleView } from '@/lib/sample';
-import type { AddOn, Template } from '@/lib/types';
+import type { AddOn, Template, TemplateDetail, ThemeGroup } from '@/lib/types';
 
 const STEPS = [
   { n: '01', title: 'Pilih template', body: 'Jelajahi desain dengan harga yang tertulis jelas di setiap kartu. Mulai dari Rp20.000.' },
@@ -35,17 +35,27 @@ const FAQ = [
 export default async function HomePage() {
   let templates: Template[] = [];
   let addOns: AddOn[] = [];
+  let heroA: TemplateDetail | undefined;
+  let heroB: TemplateDetail | undefined;
   try {
     [templates, addOns] = await Promise.all([getTemplates(), getAddOns()]);
+    // Daftar katalog sengaja ringan (tanpa field & lagu), jadi demo hero mengambil detail lengkapnya.
+    const premium = templates.filter((t) => t.tier === 'PREMIUM');
+    const pick = (design: string) => premium.find((t) => t.design?.id === design) ?? premium[0] ?? templates[templates.length - 1];
+    const [a, b] = [pick('sakura-anime'), pick('jawa')];
+    [heroA, heroB] = await Promise.all([a ? getTemplate(a.id) : undefined, b ? getTemplate(b.id) : undefined]);
   } catch {
     // API belum jalan: halaman tetap tampil tanpa bagian yang butuh data.
   }
 
+  // Satu contoh desain per grup tema untuk etalase.
+  const showcase = (['suku', 'kartun', 'game', 'film', 'perayaan', 'musim'] as const)
+    .map((g) => groupByDesign(templates).find((e) => e.group === g))
+    .filter((e): e is NonNullable<typeof e> => !!e);
+
   const tiers = (['BASIC', 'STANDARD', 'PREMIUM'] as const)
     .map((tier) => templates.find((t) => t.tier === tier))
     .filter((t): t is Template => !!t);
-  const heroA = templates.find((t) => t.tier === 'PREMIUM') ?? templates[templates.length - 1];
-  const heroB = templates.find((t) => t.tier === 'STANDARD') ?? templates[0];
   const rentalRate = addOns.find((a) => a.code === 'MEDIA_RENTAL_WEEK')?.price ?? 700;
 
   return (
@@ -95,7 +105,7 @@ export default async function HomePage() {
               </div>
             ) : (
               <div className="h-80 w-56 overflow-hidden rounded-3xl border border-line shadow-xl">
-                <TemplateThumb theme={{ preset: 'floral', primary: '#c4587a', secondary: '#e9b7c6', background: '#fff7f9', text: '#4a2c38', headingFont: 'script', bodyFont: 'sans' }} />
+                <TemplateThumb theme={{ preset: 'floral', motif: 'floral', fx: 'none', primary: '#c4587a', secondary: '#e9b7c6', background: '#fff7f9', text: '#4a2c38', headingFont: 'script', bodyFont: 'sans' }} />
               </div>
             )}
           </div>
@@ -122,30 +132,33 @@ export default async function HomePage() {
       </section>
 
       {/* Template */}
-      {templates.length > 0 && (
+      {showcase.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-widest text-rose">Template</p>
-              <h2 className="mt-3 font-display text-3xl text-ink sm:text-4xl">Pilih gaya yang paling menggambarkan Anda berdua.</h2>
+              <h2 className="mt-3 font-display text-3xl text-ink sm:text-4xl">Pilih tema yang paling menggambarkan Anda berdua: budaya, religi, perayaan, kartun, game, film, atau musim.</h2>
             </div>
             <LinkButton href="/templates" variant="secondary">Semua template →</LinkButton>
           </div>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {templates.slice(0, 3).map((t) => (
-              <Link key={t.id} href={`/templates/${t.id}`} className="group overflow-hidden rounded-3xl border border-line bg-paper transition-shadow hover:shadow-xl hover:shadow-ink/5">
-                <div className="aspect-[4/5] overflow-hidden">
-                  <TemplateThumb theme={t.layout.theme} imageUrl={t.thumbnailUrl} className="transition-transform duration-500 group-hover:scale-[1.03]" />
-                </div>
-                <div className="flex items-center justify-between gap-3 p-5">
-                  <div>
-                    <p className="font-semibold text-ink">{t.name}</p>
-                    <p className="text-sm text-ink-soft">{TIER_LABEL[t.tier]} · {templateFeatures(t).slice(0, 2).join(' · ')}</p>
+            {showcase.map((e) => {
+              const first = e.rows[0]!;
+              return (
+                <Link key={e.key} href={`/templates/${first.id}`} className="group overflow-hidden rounded-3xl border border-line bg-paper transition-shadow hover:shadow-xl hover:shadow-ink/5">
+                  <div className="aspect-[4/5] overflow-hidden">
+                    <TemplateThumb theme={first.layout.theme} imageUrl={first.thumbnailUrl} className="transition-transform duration-500 group-hover:scale-[1.03]" />
                   </div>
-                  <p className="font-display text-xl text-rose">{rupiah(t.price)}</p>
-                </div>
-              </Link>
-            ))}
+                  <div className="flex items-center justify-between gap-3 p-5">
+                    <div>
+                      <p className="font-semibold text-ink">{e.name}</p>
+                      <p className="text-sm text-ink-soft">{GROUP_LABEL[e.group as ThemeGroup] ?? e.group} · {e.rows.map((r) => TIER_LABEL[r.tier]).join(' / ')}</p>
+                    </div>
+                    <p className="text-right text-sm text-ink-soft">mulai<br /><span className="font-display text-xl text-rose">{rupiah(first.price)}</span></p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}

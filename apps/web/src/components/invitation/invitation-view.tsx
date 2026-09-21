@@ -1,13 +1,17 @@
 'use client';
 
 /* eslint-disable @next/next/no-img-element */
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { CSSProperties, FormEvent, ReactNode } from 'react';
 import { formatLocalDate, formatLocalTime, localToInstant, parseLocal } from '@/lib/format';
 import type { InvitationViewData } from '@/lib/types';
 import { STRINGS } from './i18n';
 import type { Lang, Strings } from './i18n';
-import { Corner, Divider, PauseIcon, PlayIcon, Sprig } from './ornaments';
+import { CoverFx, Particles, PatternLayer, PhotoFrame, Reveal, useReveal } from './effects';
+import { BODY, HEADING, RADIUS, motifFor } from './motifs';
+import type { CountdownKind, Motif } from './motifs';
+import { ORNAMENTS, PauseIcon, PlayIcon } from './ornaments';
+import type { OrnamentSet } from './ornaments';
 
 export interface InvitationViewProps {
   view: InvitationViewData;
@@ -19,8 +23,20 @@ export interface InvitationViewProps {
   placeholders?: boolean;
 }
 
-const HEADING_FONT = { script: 'var(--font-script)', serif: 'var(--font-cormorant)', sans: 'var(--font-jakarta)' } as const;
-const BODY_FONT = { serif: 'var(--font-cormorant)', sans: 'var(--font-jakarta)' } as const;
+// Konteks tema untuk sub-komponen (ornamen, gaya sudut, level animasi) tanpa oper-prop berlapis.
+interface ThemeCtx {
+  orn: OrnamentSet;
+  motif: Motif;
+  fx: 'none' | 'standard' | 'premium';
+  radius: (typeof RADIUS)[keyof typeof RADIUS];
+  sectionFont: CSSProperties;
+}
+const ThemeContext = createContext<ThemeCtx | null>(null);
+const useTheme = () => {
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error('ThemeContext belum tersedia');
+  return ctx;
+};
 
 type Data = InvitationViewData['data'];
 const str = (data: Data, section: string, key: string) => {
@@ -55,9 +71,20 @@ function gcalLink(title: string, start: string, location: string) {
   return `https://calendar.google.com/calendar/render?${q}`;
 }
 
+const EMBED_HEIGHT = 810; // tinggi logis PhoneFrame
+
 export function InvitationView({ view, mode = 'live', embedded = false, placeholders = false }: InvitationViewProps) {
   const { theme } = view.layout;
   const { data } = view;
+  // Snapshot lama (sebelum ada motif/fx) tetap dirender: motif mengikuti preset, tanpa animasi.
+  const motif = motifFor(theme.motif ?? theme.preset);
+  const fx = theme.fx ?? 'none';
+  const orn = ORNAMENTS[motif.ornament];
+  const radius = RADIUS[motif.radius];
+  const hf = HEADING[theme.headingFont] ?? HEADING.serif;
+  const bf = BODY[theme.bodyFont] ?? BODY.serif;
+  const layerHeight = embedded ? EMBED_HEIGHT : '100svh';
+
   const [lang, setLang] = useState<Lang>('id');
   const t = STRINGS[lang] as Strings;
   const [playing, setPlaying] = useState(false);
@@ -113,13 +140,22 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     '--s': theme.secondary,
     '--bg': theme.background,
     '--tx': theme.text,
+    '--r': radius.card,
+    '--rb': radius.button,
+    '--rf': radius.field,
     background: theme.background,
     color: theme.text,
-    fontFamily: BODY_FONT[theme.bodyFont],
+    fontFamily: bf.family,
   } as CSSProperties;
-  const headingStyle: CSSProperties = { fontFamily: HEADING_FONT[theme.headingFont], color: 'var(--p)' };
+  const headingStyle: CSSProperties = {
+    fontFamily: hf.family,
+    color: 'var(--p)',
+    letterSpacing: hf.tracking,
+    textTransform: hf.upper ? 'uppercase' : undefined,
+  };
+  const sectionFont: CSSProperties = { ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 500 };
   const soft = 'color-mix(in srgb, var(--p) 9%, var(--bg))';
-  const bodyText = theme.bodyFont === 'serif' ? 'text-[17px] leading-relaxed' : 'text-sm leading-relaxed';
+  const bodyText = bf.className;
 
   const coverPhoto = url(str(data, 'cover', 'foto'));
 
@@ -152,257 +188,320 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     }
   });
 
+  useReveal(rootRef, fx !== 'none', embedded, visible.map((s) => s.id).join(',') + galleryPhotos.length);
+
+  const themeCtx: ThemeCtx = { orn, motif, fx, radius, sectionFont };
+  const animated = fx !== 'none';
+  // Animasi masuk sampul bertahap (var(--d)); tanpa efek: langsung tampil.
+  const enter = (ms: number) => (animated ? { className: 'wl-enter', style: { '--d': `${ms}ms` } as CSSProperties } : { className: '', style: undefined });
+  const kicker = (lang === 'id' && motif.copy?.kicker) || t.weddingOf;
+  const openLabel = (lang === 'id' && motif.copy?.open) || t.open;
+  const particleCount = fx === 'premium' ? motif.particles.count : Math.round(motif.particles.count * 0.6);
+  const coverInk = coverPhoto ? '#fff' : 'var(--p)';
+  const cornerCls = `absolute w-24 ${fx === 'premium' ? 'wl-breathe' : ''}`;
+
   return (
-    <div ref={rootRef} style={rootStyle} className={embedded ? 'thin-scroll h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-hidden shadow-[0_0_60px_rgba(0,0,0,0.08)]'}>
-      {musicUrl && <audio ref={audioRef} src={musicUrl} loop preload="none" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />}
-
-      {/* ===== Sampul ===== */}
-      <section
-        ref={coverRef}
-        className="relative flex flex-col items-center justify-center overflow-hidden px-8 text-center"
-        style={embedded ? { height: '100%' } : { minHeight: '100svh' }}
+    <ThemeContext.Provider value={themeCtx}>
+      <div
+        ref={rootRef}
+        style={rootStyle}
+        data-reveal={motif.reveal}
+        // Terpasang sejak render server: keadaan awal "tersembunyi" sudah aktif sebelum hidrasi, jadi tidak ada kedipan.
+        data-armed={animated ? '' : undefined}
+        className={`wl-root ${embedded ? 'thin-scroll h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}
       >
-        {coverPhoto ? (
-          <>
-            <img src={coverPhoto} alt="" className="absolute inset-0 h-full w-full object-cover" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15) 40%, rgba(0,0,0,.6))' }} />
-          </>
-        ) : (
-          <div
-            className="absolute inset-0"
-            style={{ background: 'linear-gradient(165deg, color-mix(in srgb, var(--p) 20%, var(--bg)), var(--bg) 52%, color-mix(in srgb, var(--p) 10%, color-mix(in srgb, var(--s) 12%, var(--bg))))' }}
-          />
+        {animated && (
+          <noscript>
+            <style>{'.wl-root[data-armed] .wl-reveal{opacity:1!important;transform:none!important;filter:none!important}'}</style>
+          </noscript>
         )}
-        {!coverPhoto && (
-          <>
-            <Corner className="absolute left-2 top-2 w-24" rotate={0} />
-            <Corner className="absolute right-2 top-2 w-24" rotate={90} />
-            <Corner className="absolute bottom-2 right-2 w-24" rotate={180} />
-            <Corner className="absolute bottom-2 left-2 w-24" rotate={270} />
-          </>
-        )}
-        <div className="absolute inset-0 pointer-events-none" style={{ color: coverPhoto ? '#fff' : 'var(--p)' }} />
+        {musicUrl && <audio ref={audioRef} src={musicUrl} loop preload="none" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />}
 
-        {view.features.english && (
-          <button
-            onClick={() => setLang((l) => (l === 'id' ? 'en' : 'id'))}
-            className="absolute right-4 top-4 z-10 rounded-full border px-3 py-1 text-xs font-medium backdrop-blur"
-            style={{ borderColor: coverPhoto ? 'rgba(255,255,255,.6)' : 'var(--p)', color: coverPhoto ? '#fff' : 'var(--p)' }}
-            aria-label="Ganti bahasa / Switch language"
-          >
-            {lang === 'id' ? 'ID · EN' : 'EN · ID'}
-          </button>
+        {/* Premium: partikel melayang di seluruh halaman (lapisan lengket seukuran layar) */}
+        {fx === 'premium' && (
+          <div className="pointer-events-none sticky top-0 z-[5] h-0" aria-hidden>
+            <div className="relative" style={{ height: layerHeight }}>
+              <Particles kind={motif.particles.kind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />
+            </div>
+          </div>
         )}
 
-        <div className="relative z-[1] flex flex-col items-center" style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
-          <p className="text-xs uppercase tracking-[0.35em] opacity-80">{t.weddingOf}</p>
-          <h1 className="mt-5 text-6xl leading-[1.05]" style={{ ...headingStyle, color: coverPhoto ? '#fff' : 'var(--p)', fontSize: theme.headingFont === 'script' ? '4rem' : '3rem', fontWeight: theme.headingFont === 'script' ? 400 : 600 }}>
-            {names}
-          </h1>
-          {shortDate && <p className="mt-5 text-sm tracking-[0.3em]">{shortDate}</p>}
-          <Divider className="mt-6 w-32 opacity-80" />
-          {(mode === 'live' || placeholders) && (
-            <div className="mt-8 text-sm">
-              <p className="opacity-80">{t.dear}</p>
-              <p className="mt-1 text-lg font-semibold">{guest ?? t.guestFallback}</p>
+        {/* ===== Sampul ===== */}
+        <section
+          ref={coverRef}
+          className="relative flex flex-col items-center justify-center overflow-hidden px-8 text-center"
+          style={embedded ? { height: '100%' } : { minHeight: '100svh' }}
+        >
+          {coverPhoto ? (
+            <>
+              <img src={coverPhoto} alt="" className="absolute inset-0 h-full w-full object-cover" />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15) 40%, rgba(0,0,0,.6))' }} />
+            </>
+          ) : (
+            <div
+              className="absolute inset-0"
+              style={{ background: 'linear-gradient(165deg, color-mix(in srgb, var(--p) 20%, var(--bg)), var(--bg) 52%, color-mix(in srgb, var(--p) 10%, color-mix(in srgb, var(--s) 12%, var(--bg))))' }}
+            />
+          )}
+          {animated && !coverPhoto && <PatternLayer kind={motif.pattern} opacity={0.1} />}
+          {animated && <CoverFx kind={motif.cover} animate />}
+          {fx === 'standard' && <Particles kind={motif.particles.kind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />}
+          {!coverPhoto && (
+            <div className="pointer-events-none absolute inset-0" style={{ color: 'var(--p)' }} aria-hidden>
+              <orn.Corner className={`${cornerCls} left-2 top-2`} rotate={0} />
+              <orn.Corner className={`${cornerCls} right-2 top-2`} rotate={90} />
+              <orn.Corner className={`${cornerCls} bottom-2 right-2`} rotate={180} />
+              <orn.Corner className={`${cornerCls} bottom-2 left-2`} rotate={270} />
             </div>
           )}
-          <button
-            onClick={open}
-            className="mt-10 rounded-full px-7 py-3 text-sm font-medium tracking-wide shadow-lg transition-transform hover:scale-[1.03]"
-            style={{ background: coverPhoto ? '#fff' : 'var(--p)', color: coverPhoto ? '#222' : '#fff' }}
-          >
-            {t.open}
-          </button>
-        </div>
-      </section>
 
-      {/* ===== Isi ===== */}
-      {visible.map((section) => {
-        switch (section.id) {
-          case 'mempelai':
-            return (
-              <Block key="mempelai" title={t.couple} headingStyle={headingStyle}>
-                <div className="space-y-12">
-                  {(['pria', 'wanita'] as const).map((who, i) => {
-                    const nick = str(data, 'mempelai', `${who}_nama`) || (placeholders ? (who === 'pria' ? 'Andi' : 'Sinta') : '');
-                    if (!nick) return null;
-                    const full = str(data, 'mempelai', `${who}_lengkap`);
-                    const parents = str(data, 'mempelai', `${who}_ortu`);
-                    const photo = url(str(data, 'mempelai', `${who}_foto`));
-                    return (
-                      <div key={who} className="flex flex-col items-center text-center">
-                        <div className="relative">
-                          <Arch src={photo} placeholders={placeholders} label={nick} />
-                          <Sprig className={`absolute -bottom-3 w-20 ${i ? '-right-6' : '-left-6'}`} flip={!!i} />
-                        </div>
-                        <p className="mt-6 text-xs uppercase tracking-[0.3em] opacity-60">{who === 'pria' ? t.groom : t.bride}</p>
-                        <h3 className="mt-2 text-4xl" style={{ ...headingStyle, fontWeight: theme.headingFont === 'script' ? 400 : 600 }}>
-                          {full || nick}
-                        </h3>
-                        {parents && <p className={`mt-2 max-w-[18rem] opacity-80 ${bodyText}`}>{parents}</p>}
-                      </div>
-                    );
-                  })}
-                </div>
-              </Block>
-            );
+          {view.features.english && (
+            <button
+              onClick={() => setLang((l) => (l === 'id' ? 'en' : 'id'))}
+              className="absolute right-4 top-4 z-10 rounded-full border px-3 py-1 text-xs font-medium backdrop-blur"
+              style={{ borderColor: coverPhoto ? 'rgba(255,255,255,.6)' : 'var(--p)', color: coverInk }}
+              aria-label="Ganti bahasa / Switch language"
+            >
+              {lang === 'id' ? 'ID · EN' : 'EN · ID'}
+            </button>
+          )}
 
-          case 'cerita': {
-            const quote = str(data, 'cerita', 'kutipan') || (placeholders ? 'Di antara sekian banyak pilihan, hatiku memilihmu.' : '');
-            const story = str(data, 'cerita', 'cerita');
-            return (
-              <Block key="cerita" title={t.story} headingStyle={headingStyle} tint={soft}>
-                {quote && <blockquote className="text-center text-xl italic leading-relaxed" style={{ fontFamily: 'var(--font-cormorant)' }}>“{quote}”</blockquote>}
-                {story && <p className={`mt-6 whitespace-pre-line text-center ${bodyText}`}>{story}</p>}
-              </Block>
-            );
-          }
+          <div className="relative z-[4] flex flex-col items-center" style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
+            <p className={`text-xs uppercase tracking-[0.35em] opacity-80 ${enter(100).className}`} style={enter(100).style}>{kicker}</p>
+            <h1
+              className={`mt-5 leading-[1.1] ${enter(250).className} ${fx === 'premium' && !coverPhoto ? 'wl-shimmer' : ''}`}
+              style={{ ...headingStyle, ...enter(250).style, color: coverInk, fontSize: hf.size, fontWeight: hf.weight }}
+            >
+              {names}
+            </h1>
+            {shortDate && <p className={`mt-5 text-sm tracking-[0.3em] ${enter(450).className}`} style={enter(450).style}>{shortDate}</p>}
+            <div className={enter(600).className} style={{ ...enter(600).style, color: coverInk }}>
+              <orn.Divider className="mt-6 w-32 opacity-80" />
+            </div>
+            {(mode === 'live' || placeholders) && (
+              <div className={`mt-8 text-sm ${enter(750).className}`} style={enter(750).style}>
+                <p className="opacity-80">{t.dear}</p>
+                <p className="mt-1 text-lg font-semibold">{guest ?? t.guestFallback}</p>
+              </div>
+            )}
+            <button
+              onClick={open}
+              className={`mt-10 px-7 py-3 text-sm font-medium tracking-wide shadow-lg transition-transform hover:scale-[1.03] ${fx === 'premium' ? 'wl-pulse' : ''} ${enter(900).className}`}
+              style={{ ...enter(900).style, borderRadius: 'var(--rb)', background: coverPhoto ? '#fff' : 'var(--p)', color: coverPhoto ? '#222' : '#fff' }}
+            >
+              {openLabel}
+            </button>
+          </div>
+        </section>
 
-          case 'tanggal_lokasi':
-            return (
-              <Block key="tanggal_lokasi" title={t.event} headingStyle={headingStyle} tint={soft}>
-                <div className="space-y-6">
-                  {(['akad', 'resepsi'] as const).map((ev) => {
-                    const when = str(data, 'tanggal_lokasi', `${ev}_tanggal`) || (placeholders && ev === 'akad' ? '2027-01-16T10:00' : '');
-                    if (!when) return null;
-                    const place = str(data, 'tanggal_lokasi', `${ev}_lokasi`) || (placeholders ? 'Gedung Serbaguna Cahaya' : '');
-                    const address = str(data, 'tanggal_lokasi', `${ev}_alamat`);
-                    const maps = str(data, 'tanggal_lokasi', `${ev}_maps`);
-                    const cal = gcalLink(`${ev === 'akad' ? t.akad : t.reception} ${names}`, when, [place, address].filter(Boolean).join(', '));
-                    return (
-                      <div key={ev} className="rounded-3xl border p-7 text-center" style={{ borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)', background: 'var(--bg)' }}>
-                        <h3 className="text-3xl" style={{ ...headingStyle, fontWeight: theme.headingFont === 'script' ? 400 : 600 }}>{ev === 'akad' ? t.akad : t.reception}</h3>
-                        <p className="mt-4 text-lg font-semibold">{formatLocalDate(when, lang)}</p>
-                        <p className="opacity-80">{formatLocalTime(when)}</p>
-                        <Divider className="mx-auto my-4 w-24 opacity-70" />
-                        {place && <p className="font-semibold">{place}</p>}
-                        {address && <p className={`mt-1 opacity-80 ${bodyText}`}>{address}</p>}
-                        <div className="mt-5 flex flex-wrap justify-center gap-2">
-                          {maps && (
-                            <a href={maps} target="_blank" rel="noopener noreferrer" className="rounded-full px-4 py-2 text-xs font-medium text-white" style={{ background: 'var(--p)' }}>
-                              {t.openMaps}
-                            </a>
-                          )}
-                          {cal && (
-                            <a href={cal} target="_blank" rel="noopener noreferrer" className="rounded-full border px-4 py-2 text-xs font-medium" style={{ borderColor: 'var(--p)', color: 'var(--p)' }}>
-                              {t.saveDate}
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Block>
-            );
-
-          case 'countdown':
-            return <Countdown key="countdown" target={mainDate} t={t} headingStyle={headingStyle} />;
-
-          case 'galeri':
-            return (
-              <Block key="galeri" title={t.gallery} headingStyle={headingStyle}>
-                {galleryPhotos.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {galleryPhotos.map((src, i) => (
-                      <button key={src} onClick={() => setLightbox(i)} className={`overflow-hidden rounded-xl ${i % 3 === 0 ? 'col-span-2 aspect-[16/10]' : 'aspect-[4/5]'}`} aria-label={`Foto ${i + 1}`}>
-                        <img src={src} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
-                      </button>
-                    ))}
+        {/* ===== Isi ===== */}
+        {visible.map((section) => {
+          switch (section.id) {
+            case 'mempelai':
+              return (
+                <Block key="mempelai" title={t.couple} headingStyle={headingStyle}>
+                  <div className="space-y-12">
+                    {(['pria', 'wanita'] as const).map((who, i) => {
+                      const nick = str(data, 'mempelai', `${who}_nama`) || (placeholders ? (who === 'pria' ? 'Andi' : 'Sinta') : '');
+                      if (!nick) return null;
+                      const full = str(data, 'mempelai', `${who}_lengkap`);
+                      const parents = str(data, 'mempelai', `${who}_ortu`);
+                      const photo = url(str(data, 'mempelai', `${who}_foto`));
+                      return (
+                        <Reveal key={who} delay={i * 120} className="flex flex-col items-center text-center">
+                          <div className={`relative ${fx === 'premium' ? 'wl-float' : ''}`} style={fx === 'premium' ? { animationDelay: `${i * -2}s` } : undefined}>
+                            <PhotoFrame frame={motif.frame} src={photo} label={nick} placeholders={placeholders} letterFont="var(--font-script)" tilt={i ? 2.5 : -2.5} photoRadius={radius.photo} />
+                            <div className={`absolute -bottom-3 w-20 ${i ? '-right-6' : '-left-6'}`} style={{ color: 'var(--p)' }}>
+                              <orn.Sprig className="w-20" flip={!!i} />
+                            </div>
+                          </div>
+                          <p className="mt-6 text-xs uppercase tracking-[0.3em] opacity-60">{who === 'pria' ? t.groom : t.bride}</p>
+                          <h3 className="mt-2" style={{ ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 600 }}>
+                            {full || nick}
+                          </h3>
+                          {parents && <p className={`mt-2 max-w-[18rem] opacity-80 ${bodyText}`}>{parents}</p>}
+                        </Reveal>
+                      );
+                    })}
                   </div>
-                ) : (
-                  placeholders && (
+                </Block>
+              );
+
+            case 'cerita': {
+              const quote = str(data, 'cerita', 'kutipan') || (placeholders ? 'Di antara sekian banyak pilihan, hatiku memilihmu.' : '');
+              const story = str(data, 'cerita', 'cerita');
+              return (
+                <Block key="cerita" title={t.story} headingStyle={headingStyle} tint={soft}>
+                  {quote && <blockquote className="text-center text-xl italic leading-relaxed" style={{ fontFamily: 'var(--font-cormorant)' }}>“{quote}”</blockquote>}
+                  {story && <p className={`mt-6 whitespace-pre-line text-center ${bodyText}`}>{story}</p>}
+                </Block>
+              );
+            }
+
+            case 'tanggal_lokasi':
+              return (
+                <Block key="tanggal_lokasi" title={t.event} headingStyle={headingStyle} tint={soft}>
+                  <div className="space-y-6">
+                    {(['akad', 'resepsi'] as const).map((ev, i) => {
+                      const when = str(data, 'tanggal_lokasi', `${ev}_tanggal`) || (placeholders && ev === 'akad' ? '2027-01-16T10:00' : '');
+                      if (!when) return null;
+                      const place = str(data, 'tanggal_lokasi', `${ev}_lokasi`) || (placeholders ? 'Gedung Serbaguna Cahaya' : '');
+                      const address = str(data, 'tanggal_lokasi', `${ev}_alamat`);
+                      const maps = str(data, 'tanggal_lokasi', `${ev}_maps`);
+                      const cal = gcalLink(`${ev === 'akad' ? t.akad : t.reception} ${names}`, when, [place, address].filter(Boolean).join(', '));
+                      return (
+                        <Reveal key={ev} delay={i * 120}>
+                          <div className="border p-7 text-center" style={{ borderRadius: 'var(--r)', borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)', background: 'var(--bg)' }}>
+                            <h3 style={{ ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 600 }}>{ev === 'akad' ? t.akad : t.reception}</h3>
+                            <p className="mt-4 text-lg font-semibold">{formatLocalDate(when, lang)}</p>
+                            <p className="opacity-80">{formatLocalTime(when)}</p>
+                            <div style={{ color: 'var(--p)' }}>
+                              <orn.Divider className="mx-auto my-4 w-24 opacity-70" />
+                            </div>
+                            {place && <p className="font-semibold">{place}</p>}
+                            {address && <p className={`mt-1 opacity-80 ${bodyText}`}>{address}</p>}
+                            <div className="mt-5 flex flex-wrap justify-center gap-2">
+                              {maps && (
+                                <a href={maps} target="_blank" rel="noopener noreferrer" className="px-4 py-2 text-xs font-medium text-white" style={{ background: 'var(--p)', borderRadius: 'var(--rb)' }}>
+                                  {t.openMaps}
+                                </a>
+                              )}
+                              {cal && (
+                                <a href={cal} target="_blank" rel="noopener noreferrer" className="border px-4 py-2 text-xs font-medium" style={{ borderColor: 'var(--p)', color: 'var(--p)', borderRadius: 'var(--rb)' }}>
+                                  {t.saveDate}
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </Reveal>
+                      );
+                    })}
+                  </div>
+                </Block>
+              );
+
+            case 'countdown':
+              return <Countdown key="countdown" target={mainDate} t={t} />;
+
+            case 'galeri':
+              return (
+                <Block key="galeri" title={t.gallery} headingStyle={headingStyle}>
+                  {galleryPhotos.length > 0 ? (
                     <div className="grid grid-cols-2 gap-2.5">
-                      {[0, 1, 2, 3].map((i) => (
-                        <PhotoPlaceholder key={i} className={i === 0 ? 'col-span-2 aspect-[16/10]' : 'aspect-[4/5]'} />
+                      {galleryPhotos.map((src, i) => (
+                        <button
+                          key={src}
+                          onClick={() => setLightbox(i)}
+                          className={`wl-reveal overflow-hidden ${i % 3 === 0 ? 'col-span-2 aspect-[16/10]' : 'aspect-[4/5]'}`}
+                          style={{ borderRadius: radius.photo, '--d': `${(i % 3) * 90}ms` } as CSSProperties}
+                          aria-label={`Foto ${i + 1}`}
+                        >
+                          <img src={src} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+                        </button>
                       ))}
                     </div>
-                  )
-                )}
-                {galleryVideos.map((src) => (
-                  <video key={src} src={src} controls playsInline preload="metadata" className="mt-3 w-full rounded-xl bg-black" />
-                ))}
-              </Block>
-            );
-
-          case 'rsvp':
-            return (
-              <Block key="rsvp" title={t.rsvp} headingStyle={headingStyle} tint={soft}>
-                <p className={`mb-6 text-center opacity-85 ${bodyText}`}>{str(data, 'rsvp', 'pengantar') || t.rsvpIntro}</p>
-                <RsvpForm slug={view.slug} preview={mode === 'preview'} t={t} accent="var(--p)" />
-              </Block>
-            );
-
-          case 'amplop_digital': {
-            const accounts = [1, 2]
-              .map((n) => ({ bank: str(data, 'amplop_digital', `bank_${n}`), number: str(data, 'amplop_digital', `rekening_${n}`), holder: str(data, 'amplop_digital', `atas_nama_${n}`) }))
-              .filter((a) => a.number);
-            const list2 = accounts.length ? accounts : placeholders ? [{ bank: 'BCA', number: '1234567890', holder: 'Andi Pratama' }] : [];
-            const address = str(data, 'amplop_digital', 'alamat_kado');
-            return (
-              <Block key="amplop" title={t.envelope} headingStyle={headingStyle}>
-                <p className={`mb-6 text-center opacity-85 ${bodyText}`}>{t.envelopeIntro}</p>
-                <div className="space-y-3">
-                  {list2.map((a) => (
-                    <CopyCard key={a.number} bank={a.bank} number={a.number} holder={a.holder} t={t} />
-                  ))}
-                  {address && (
-                    <div className="rounded-2xl border p-5 text-center" style={{ borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)' }}>
-                      <p className="text-xs uppercase tracking-widest opacity-60">{t.giftAddress}</p>
-                      <p className={`mt-2 ${bodyText}`}>{address}</p>
-                    </div>
+                  ) : (
+                    placeholders && (
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {[0, 1, 2, 3].map((i) => (
+                          <PhotoPlaceholder key={i} className={i === 0 ? 'col-span-2 aspect-[16/10]' : 'aspect-[4/5]'} radius={radius.photo} delay={(i % 3) * 90} />
+                        ))}
+                      </div>
+                    )
                   )}
-                </div>
-              </Block>
-            );
+                  {galleryVideos.map((src) => (
+                    <video key={src} src={src} controls playsInline preload="metadata" className="mt-3 w-full bg-black" style={{ borderRadius: radius.photo }} />
+                  ))}
+                </Block>
+              );
+
+            case 'rsvp':
+              return (
+                <Block key="rsvp" title={t.rsvp} headingStyle={headingStyle} tint={soft}>
+                  <p className={`mb-6 text-center opacity-85 ${bodyText}`}>{str(data, 'rsvp', 'pengantar') || t.rsvpIntro}</p>
+                  <RsvpForm slug={view.slug} preview={mode === 'preview'} t={t} accent="var(--p)" />
+                </Block>
+              );
+
+            case 'amplop_digital': {
+              const accounts = [1, 2]
+                .map((n) => ({ bank: str(data, 'amplop_digital', `bank_${n}`), number: str(data, 'amplop_digital', `rekening_${n}`), holder: str(data, 'amplop_digital', `atas_nama_${n}`) }))
+                .filter((a) => a.number);
+              const list2 = accounts.length ? accounts : placeholders ? [{ bank: 'BCA', number: '1234567890', holder: 'Andi Pratama' }] : [];
+              const address = str(data, 'amplop_digital', 'alamat_kado');
+              return (
+                <Block key="amplop" title={t.envelope} headingStyle={headingStyle}>
+                  <p className={`mb-6 text-center opacity-85 ${bodyText}`}>{t.envelopeIntro}</p>
+                  <div className="space-y-3">
+                    {list2.map((a) => (
+                      <CopyCard key={a.number} bank={a.bank} number={a.number} holder={a.holder} t={t} />
+                    ))}
+                    {address && (
+                      <div className="border p-5 text-center" style={{ borderRadius: 'var(--r)', borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)' }}>
+                        <p className="text-xs uppercase tracking-widest opacity-60">{t.giftAddress}</p>
+                        <p className={`mt-2 ${bodyText}`}>{address}</p>
+                      </div>
+                    )}
+                  </div>
+                </Block>
+              );
+            }
+
+            case 'buku_tamu':
+              return <Guestbook key="buku" slug={view.slug} initial={view.guestbook} t={t} headingStyle={headingStyle} soft={soft} placeholders={placeholders} />;
           }
+          return null;
+        })}
 
-          case 'buku_tamu':
-            return <Guestbook key="buku" slug={view.slug} initial={view.guestbook} t={t} headingStyle={headingStyle} soft={soft} placeholders={placeholders} />;
-        }
-        return null;
-      })}
+        <footer className="px-6 pb-24 pt-12 text-center text-xs opacity-60">
+          <div style={{ color: 'var(--p)' }}>
+            <orn.Sprig className="mx-auto mb-3 w-20" />
+          </div>
+          <p style={{ color: 'var(--tx)' }}>{names}</p>
+          <p className="mt-1">{t.madeWith}</p>
+        </footer>
 
-      <footer className="px-6 pb-24 pt-12 text-center text-xs opacity-60">
-        <Sprig className="mx-auto mb-3 w-20" />
-        <p style={{ color: 'var(--tx)' }}>{names}</p>
-        <p className="mt-1">{t.madeWith}</p>
-      </footer>
+        {musicUrl && (
+          <div className="pointer-events-none sticky bottom-4 z-20 flex h-0 justify-end pr-4">
+            <button
+              onClick={toggleMusic}
+              className={`pointer-events-auto -mt-12 flex h-11 w-11 items-center justify-center text-white shadow-lg ${playing && animated ? 'wl-pulse' : ''}`}
+              style={{ background: 'var(--p)', borderRadius: radius.button === '0px' ? '0px' : '999px' }}
+              aria-label={playing ? 'Jeda musik' : 'Putar musik'}
+            >
+              {playing ? <PauseIcon /> : <PlayIcon />}
+            </button>
+          </div>
+        )}
 
-      {musicUrl && (
-        <div className="pointer-events-none sticky bottom-4 z-20 flex h-0 justify-end pr-4">
-          <button
-            onClick={toggleMusic}
-            className="pointer-events-auto -mt-12 flex h-11 w-11 items-center justify-center rounded-full text-white shadow-lg"
-            style={{ background: 'var(--p)' }}
-            aria-label={playing ? 'Jeda musik' : 'Putar musik'}
-          >
-            {playing ? <PauseIcon /> : <PlayIcon />}
-          </button>
-        </div>
-      )}
-
-      {lightbox !== null && <Lightbox photos={galleryPhotos} index={lightbox} onClose={() => setLightbox(null)} onIndex={setLightbox} />}
-    </div>
+        {lightbox !== null && <Lightbox photos={galleryPhotos} index={lightbox} onClose={() => setLightbox(null)} onIndex={setLightbox} />}
+      </div>
+    </ThemeContext.Provider>
   );
 }
 
 function Block({ title, children, headingStyle, tint }: { title: string; children: ReactNode; headingStyle: CSSProperties; tint?: string }) {
+  const { orn, motif, fx, sectionFont } = useTheme();
   return (
-    <section className="px-6 py-16" style={{ background: tint }}>
-      <div className="mb-10 text-center">
-        <h2 className="text-4xl" style={{ ...headingStyle, fontWeight: 500 }}>{title}</h2>
-        <Divider className="mx-auto mt-3 w-28" />
+    <section className="relative px-6 py-16" style={{ background: tint }}>
+      {tint && fx !== 'none' && <PatternLayer kind={motif.pattern} opacity={0.05} />}
+      <div className="wl-reveal relative mb-10 text-center">
+        <h2 style={{ ...headingStyle, ...sectionFont }}>{title}</h2>
+        <div style={{ color: 'var(--p)' }}>
+          <orn.Divider className="mx-auto mt-3 w-28" />
+        </div>
       </div>
-      {children}
+      <div className="relative">{children}</div>
     </section>
   );
 }
 
-function PhotoPlaceholder({ className = '' }: { className?: string }) {
+function PhotoPlaceholder({ className = '', radius, delay = 0 }: { className?: string; radius: string; delay?: number }) {
   return (
-    <div className={`flex items-center justify-center overflow-hidden rounded-xl ${className}`} style={{ background: 'linear-gradient(140deg, color-mix(in srgb, var(--p) 22%, var(--bg)), color-mix(in srgb, var(--s) 40%, var(--bg)))' }}>
+    <div
+      className={`wl-reveal flex items-center justify-center overflow-hidden ${className}`}
+      style={{ borderRadius: radius, '--d': `${delay}ms`, background: 'linear-gradient(140deg, color-mix(in srgb, var(--p) 22%, var(--bg)), color-mix(in srgb, var(--s) 40%, var(--bg)))' } as CSSProperties}
+    >
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" style={{ color: 'var(--p)', opacity: 0.55 }} aria-hidden>
         <rect x="3" y="4" width="18" height="16" rx="2" />
         <circle cx="9" cy="10" r="1.6" />
@@ -412,38 +511,49 @@ function PhotoPlaceholder({ className = '' }: { className?: string }) {
   );
 }
 
-function Arch({ src, placeholders, label }: { src?: string; placeholders?: boolean; label: string }) {
-  const shape = 'h-56 w-44 rounded-t-[999px] rounded-b-2xl object-cover';
-  return (
-    <div className="rounded-t-[999px] rounded-b-3xl p-1.5" style={{ border: '1px solid color-mix(in srgb, var(--p) 45%, transparent)' }}>
-      {src ? (
-        <img src={src} alt={label} className={shape} />
-      ) : placeholders ? (
-        <div className={`${shape} flex items-center justify-center`} style={{ background: 'linear-gradient(160deg, color-mix(in srgb, var(--p) 25%, var(--bg)), color-mix(in srgb, var(--s) 45%, var(--bg)))' }}>
-          <span className="text-5xl" style={{ fontFamily: 'var(--font-script)', color: 'var(--p)' }}>{label.charAt(0)}</span>
-        </div>
-      ) : (
-        <div className={`${shape} flex items-center justify-center`} style={{ background: 'color-mix(in srgb, var(--p) 10%, var(--bg))' }}>
-          <span className="text-5xl" style={{ fontFamily: 'var(--font-script)', color: 'var(--p)' }}>{label.charAt(0)}</span>
-        </div>
-      )}
-    </div>
-  );
-}
+// Gaya sel hitung mundur per motif. Latar seksi selalu warna utama (atau gelap untuk gaya neon/pixel).
+const COUNTDOWN_LOOK: Record<CountdownKind, { section: CSSProperties; cell: CSSProperties; num?: CSSProperties; round?: boolean }> = {
+  soft: { section: { background: 'var(--p)' }, cell: { background: 'rgba(255,255,255,.15)' } },
+  outline: { section: { background: 'var(--p)' }, cell: { border: '1px solid rgba(255,255,255,.7)' } },
+  round: { section: { background: 'var(--p)' }, cell: { background: 'rgba(255,255,255,.15)', borderRadius: '999px' }, round: true },
+  ticket: { section: { background: 'var(--p)' }, cell: { background: 'rgba(255,255,255,.12)', border: '1.5px dashed rgba(255,255,255,.7)' } },
+  pixel: {
+    section: { background: 'color-mix(in srgb, var(--p) 30%, #0b0b14)' },
+    cell: { border: '3px solid #fff', background: 'rgba(0,0,0,.35)', borderRadius: '0px' },
+    num: { fontFamily: 'var(--font-pixel)', fontSize: '1.15rem', fontWeight: 400 },
+  },
+  neon: {
+    section: { background: 'color-mix(in srgb, var(--p) 22%, #07070f)' },
+    cell: { border: '1.5px solid var(--s)', background: 'rgba(0,0,0,.35)', boxShadow: '0 0 14px color-mix(in srgb, var(--s) 70%, transparent), inset 0 0 12px color-mix(in srgb, var(--s) 30%, transparent)' },
+    num: { textShadow: '0 0 12px var(--s), 0 0 3px var(--s)' },
+  },
+  flip: {
+    section: { background: 'color-mix(in srgb, var(--p) 40%, #0d0d0d)' },
+    cell: { background: 'linear-gradient(#2c2c2c calc(50% - 1px), #000 calc(50% - 1px) calc(50% + 1px), #1c1c1c calc(50% + 1px))', borderRadius: '8px', boxShadow: '0 6px 14px -6px rgba(0,0,0,.6)' },
+  },
+};
 
-function Countdown({ target, t, headingStyle }: { target: string; t: Strings; headingStyle: CSSProperties }) {
+function Countdown({ target, t }: { target: string; t: Strings }) {
+  const { motif, fx, radius, sectionFont } = useTheme();
   const now = useNow();
   const end = localToInstant(target);
   const diff = now === null || Number.isNaN(end) ? null : Math.max(0, end - now);
   const parts = diff === null ? null : [Math.floor(diff / 86_400_000), Math.floor((diff / 3_600_000) % 24), Math.floor((diff / 60_000) % 60), Math.floor((diff / 1000) % 60)];
   const labels = [t.days, t.hours, t.minutes, t.seconds];
+  const look = COUNTDOWN_LOOK[motif.countdown];
   return (
-    <section className="px-6 py-14 text-center" style={{ background: 'var(--p)', color: '#fff' }}>
-      <h2 className="text-3xl" style={{ ...headingStyle, color: '#fff', fontWeight: 500 }}>{t.countdown}</h2>
+    <section className="wl-reveal px-6 py-14 text-center" style={{ ...look.section, color: '#fff' }}>
+      <h2 style={{ ...sectionFont, color: '#fff' }}>{t.countdown}</h2>
       <div className="mt-7 grid grid-cols-4 gap-2.5" role="timer" aria-live="off">
         {labels.map((label, i) => (
-          <div key={label} className="rounded-2xl bg-white/15 py-4 backdrop-blur-sm">
-            <div className="text-3xl font-semibold tabular-nums" style={{ fontFamily: 'var(--font-cormorant)' }}>{parts ? String(parts[i]).padStart(2, '0') : '--'}</div>
+          <div
+            key={label}
+            className={`flex flex-col items-center justify-center ${look.round ? 'aspect-square' : 'py-4'} ${fx === 'none' ? 'backdrop-blur-sm' : ''}`}
+            style={{ borderRadius: radius.cell, ...look.cell }}
+          >
+            <div key={parts ? parts[i] : 'x'} className={`text-3xl font-semibold tabular-nums ${fx === 'premium' ? 'wl-tick' : ''}`} style={{ fontFamily: 'var(--font-cormorant)', ...look.num }}>
+              {parts ? String(parts[i]).padStart(2, '0') : '--'}
+            </div>
             <div className="mt-1 text-[11px] uppercase tracking-widest opacity-80">{label}</div>
           </div>
         ))}
@@ -455,7 +565,7 @@ function Countdown({ target, t, headingStyle }: { target: string; t: Strings; he
 function CopyCard({ bank, number, holder, t }: { bank: string; number: string; holder: string; t: Strings }) {
   const [done, setDone] = useState(false);
   return (
-    <div className="rounded-2xl border p-5 text-center" style={{ borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)' }}>
+    <div className="border p-5 text-center" style={{ borderRadius: 'var(--r)', borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)' }}>
       {bank && <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--p)' }}>{bank}</p>}
       <p className="mt-2 text-2xl font-semibold tracking-wider tabular-nums" style={{ fontFamily: 'var(--font-cormorant)' }}>{number}</p>
       {holder && <p className="mt-1 text-sm opacity-75">a.n. {holder}</p>}
@@ -466,8 +576,8 @@ function CopyCard({ bank, number, holder, t }: { bank: string; number: string; h
             setTimeout(() => setDone(false), 1800);
           });
         }}
-        className="mt-3 rounded-full border px-4 py-1.5 text-xs font-medium"
-        style={{ borderColor: 'var(--p)', color: 'var(--p)' }}
+        className="mt-3 border px-4 py-1.5 text-xs font-medium"
+        style={{ borderColor: 'var(--p)', color: 'var(--p)', borderRadius: 'var(--rb)' }}
       >
         {done ? t.copied : t.copy}
       </button>
@@ -503,10 +613,10 @@ function RsvpForm({ slug, preview, t, accent }: { slug: string; preview: boolean
     }
   }
 
-  if (state === 'done') return <p className="rounded-2xl p-6 text-center font-medium" style={{ background: 'var(--bg)', color: accent }}>{t.thanks}</p>;
+  if (state === 'done') return <p className="p-6 text-center font-medium" style={{ background: 'var(--bg)', color: accent, borderRadius: 'var(--r)' }}>{t.thanks}</p>;
 
-  const field = 'w-full rounded-xl border bg-white/80 px-4 py-3 text-sm outline-none focus:ring-2';
-  const fieldStyle = { borderColor: 'color-mix(in srgb, var(--p) 30%, transparent)', color: '#2b2420' } as CSSProperties;
+  const field = 'w-full border bg-white/80 px-4 py-3 text-sm outline-none focus:ring-2';
+  const fieldStyle = { borderColor: 'color-mix(in srgb, var(--p) 30%, transparent)', color: '#2b2420', borderRadius: 'var(--rf)' } as CSSProperties;
   return (
     <form onSubmit={submit} className="space-y-3">
       <input required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} placeholder={t.name} className={field} style={fieldStyle} aria-label={t.name} />
@@ -516,8 +626,8 @@ function RsvpForm({ slug, preview, t, accent }: { slug: string; preview: boolean
             key={String(v)}
             type="button"
             onClick={() => setAttending(v)}
-            className="rounded-xl border px-3 py-3 text-sm font-medium transition-colors"
-            style={attending === v ? { background: accent, color: '#fff', borderColor: accent } : { borderColor: 'color-mix(in srgb, var(--p) 30%, transparent)', background: 'rgba(255,255,255,.8)', color: '#2b2420' }}
+            className="border px-3 py-3 text-sm font-medium transition-colors"
+            style={{ borderRadius: 'var(--rf)', ...(attending === v ? { background: accent, color: '#fff', borderColor: accent } : { borderColor: 'color-mix(in srgb, var(--p) 30%, transparent)', background: 'rgba(255,255,255,.8)', color: '#2b2420' }) }}
             aria-pressed={attending === v}
           >
             {v ? t.attending : t.notAttending}
@@ -525,7 +635,7 @@ function RsvpForm({ slug, preview, t, accent }: { slug: string; preview: boolean
         ))}
       </div>
       {attending && (
-        <label className="flex items-center justify-between rounded-xl border bg-white/80 px-4 py-2.5 text-sm" style={{ borderColor: 'color-mix(in srgb, var(--p) 30%, transparent)', color: '#2b2420' }}>
+        <label className="flex items-center justify-between border bg-white/80 px-4 py-2.5 text-sm" style={{ borderRadius: 'var(--rf)', borderColor: 'color-mix(in srgb, var(--p) 30%, transparent)', color: '#2b2420' }}>
           {t.guests}
           <select value={count} onChange={(e) => setCount(Number(e.target.value))} className="rounded-lg bg-transparent px-2 py-1 font-semibold">
             {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
@@ -536,7 +646,7 @@ function RsvpForm({ slug, preview, t, accent }: { slug: string; preview: boolean
       )}
       <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={500} rows={3} placeholder={t.message} className={field} style={fieldStyle} aria-label={t.message} />
       {error && <p className="text-center text-sm" style={{ color: '#b42318' }} role="alert">{error}</p>}
-      <button type="submit" disabled={state === 'sending'} className="w-full rounded-xl py-3 text-sm font-semibold text-white disabled:opacity-60" style={{ background: accent }}>
+      <button type="submit" disabled={state === 'sending'} className="w-full py-3 text-sm font-semibold text-white disabled:opacity-60" style={{ background: accent, borderRadius: 'var(--rf)' }}>
         {state === 'sending' ? t.sending : t.send}
       </button>
     </form>
@@ -556,7 +666,7 @@ function Guestbook({ slug, initial, t, headingStyle, soft, placeholders }: { slu
       ) : (
         <ul className="space-y-3">
           {items.map((w, i) => (
-            <li key={i} className="rounded-2xl p-4" style={{ background: 'var(--bg)' }}>
+            <li key={i} className="wl-reveal p-4" style={{ background: 'var(--bg)', borderRadius: 'var(--r)', '--d': `${Math.min(i, 5) * 80}ms` } as CSSProperties}>
               <p className="text-sm font-semibold" style={{ color: 'var(--p)' }}>{w.name}</p>
               <p className="mt-1 whitespace-pre-line text-sm leading-relaxed opacity-85">{w.message}</p>
             </li>

@@ -3,11 +3,35 @@ import type { Template, TemplateTier } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ADDON_SECTIONS, SECTION_REGISTRY, normalizeLayout } from './layout.js';
 import type { SectionDef, TemplateLayout } from './layout.js';
+import { designById } from './themes.js';
 
+function designInfo(layout: TemplateLayout) {
+  const design = designById(layout.theme.motif) ?? designById(layout.theme.preset);
+  return design ? { id: design.id, name: design.name, group: design.group, blurb: design.blurb } : null;
+}
+
+// Detail template (lengkap: field per section, seluruh lagu bawaan, palet).
 export function toPublicTemplate(t: Template) {
   const { layoutSchema, ...rest } = t;
   const layout: TemplateLayout = normalizeLayout(layoutSchema, t.category);
-  return { ...rest, layout };
+  return { ...rest, design: designInfo(layout), layout };
+}
+
+// Versi ringan untuk katalog (puluhan template): tanpa field & tanpa daftar lagu.
+export function toListTemplate(t: Template) {
+  const { layoutSchema, ...rest } = t;
+  const layout = normalizeLayout(layoutSchema, t.category);
+  return {
+    ...rest,
+    design: designInfo(layout),
+    layout: {
+      theme: layout.theme,
+      sections: layout.sections.map((s) => ({ id: s.id, title: s.title, fields: [] })),
+      galeri: layout.galeri,
+      musik: { allowed: layout.musik.allowed, presets: [], count: layout.musik.presets.length },
+      palettes: layout.palettes,
+    },
+  };
 }
 
 // Definisi section yang dibuka add-on (RSVP online, amplop digital) untuk template yang belum memilikinya:
@@ -36,7 +60,7 @@ export class TemplatesService {
       },
       orderBy: [{ price: 'asc' }, { createdAt: 'asc' }],
     });
-    return rows.map(toPublicTemplate);
+    return rows.map(toListTemplate);
   }
 
   async findPublishedOne(id: string) {

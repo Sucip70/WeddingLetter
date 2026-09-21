@@ -7,7 +7,8 @@ import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { Alert, Badge, Button, Card, Field, Input, Select, Toggle, cn } from '@/components/ui';
 import { api, errorMessage, uploadWithProgress } from '@/lib/client-api';
 import { sampleView } from '@/lib/sample';
-import type { FieldType, Theme } from '@/lib/types';
+import { FX_LABEL } from '@/lib/catalog';
+import type { FieldType, FxLevel, Palette, Theme, ThemeGroup } from '@/lib/types';
 
 export interface AuthField { key: string; type: FieldType; label: string; required: boolean; enabled: boolean }
 export interface AuthSection { id: string; title: string; enabled: boolean; fields: AuthField[] }
@@ -16,6 +17,7 @@ export interface Authoring {
   sections: AuthSection[];
   galeri: { maxPhotos: number; maxVideos: number };
   musik: { allowed: boolean; presets: { name: string; url: string }[] };
+  palettes: Palette[];
 }
 export interface TemplateForm {
   id?: string;
@@ -29,14 +31,41 @@ export interface TemplateForm {
   layout: Authoring;
   orders?: number;
 }
+export interface DesignMeta {
+  id: string;
+  name: string;
+  group: ThemeGroup;
+  blurb: string;
+  primary: string;
+  secondary: string;
+  background: string;
+  text: string;
+  headingFont: Theme['headingFont'];
+  bodyFont: Theme['bodyFont'];
+  music: string[];
+  palettes: Palette[];
+}
 export interface BuilderMeta {
-  themePresets: string[];
-  themes: Record<string, Omit<Theme, 'preset'>>;
+  designs: DesignMeta[];
+  groups: { id: ThemeGroup; label: string }[];
+  tracks: { id: string; name: string; mood: string }[];
   sections: { id: string; title: string; fields: { key: string; label: string; type: FieldType; required: boolean }[] }[];
 }
 
-const CATEGORIES = ['rustic', 'floral', 'elegant', 'minimalis', 'islami'];
-const FONT_LABEL: Record<string, string> = { script: 'Tulisan tangan (script)', serif: 'Serif klasik', sans: 'Sans modern' };
+const FONT_LABEL: Record<string, string> = {
+  script: 'Tulisan tangan (script)',
+  serif: 'Serif klasik',
+  sans: 'Sans modern',
+  display: 'Display hangat (Fraunces)',
+  cinzel: 'Kapital klasik (Cinzel)',
+  pixel: 'Pixel retro',
+  round: 'Bulat ceria',
+};
+const BODY_LABEL: Record<string, string> = { sans: 'Sans modern', serif: 'Serif klasik', round: 'Bulat ceria' };
+const FX_ORDER: FxLevel[] = ['none', 'standard', 'premium'];
+const HEX = /^#[0-9a-fA-F]{6}$/;
+
+const themeOf = (d: DesignMeta, fx: FxLevel): Theme => ({ preset: d.id, motif: d.id, fx, primary: d.primary, secondary: d.secondary, background: d.background, text: d.text, headingFont: d.headingFont, bodyFont: d.bodyFont });
 
 function blank(meta: BuilderMeta): TemplateForm {
   const on = ['cover', 'mempelai', 'tanggal_lokasi', 'galeri'];
@@ -45,15 +74,16 @@ function blank(meta: BuilderMeta): TemplateForm {
     ...on.map((id) => chosen.find((s) => s.id === id)!),
     ...chosen.filter((s) => !on.includes(s.id)),
   ].map((s) => ({ id: s.id, title: s.title, enabled: on.includes(s.id), fields: s.fields.map((f) => ({ ...f, enabled: true })) }));
+  const rustic = meta.designs.find((d) => d.id === 'rustic') ?? meta.designs[0]!;
   return {
     name: '',
-    category: 'rustic',
+    category: rustic.group,
     tier: 'BASIC',
     price: 20000,
     includedWeeks: 4,
     status: 'DRAFT',
     thumbnailUrl: null,
-    layout: { theme: { preset: 'rustic', ...meta.themes.rustic! }, sections, galeri: { maxPhotos: 4, maxVideos: 0 }, musik: { allowed: false, presets: [] } },
+    layout: { theme: themeOf(rustic, 'none'), sections, galeri: { maxPhotos: 4, maxVideos: 0 }, musik: { allowed: false, presets: [] }, palettes: rustic.palettes },
   };
 }
 
@@ -93,10 +123,27 @@ export function TemplateBuilder({ meta, initial }: { meta: BuilderMeta; initial:
 
   const view = useMemo(() => sampleView(toPreviewLayout(layout), { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }), [layout]);
 
-  function applyPreset(preset: string) {
-    const t = meta.themes[preset];
-    if (t) setTheme({ preset, ...t });
+  const design = meta.designs.find((d) => d.id === layout.theme.motif) ?? meta.designs.find((d) => d.id === layout.theme.preset);
+  const trackById = (id: string) => meta.tracks.find((t) => t.id === id);
+  const usedUrls = new Set(layout.musik.presets.map((p) => p.url));
+
+  // Ganti desain: warna, font, motif, dan usulan palet ikut berganti; lagu rekomendasi ditambahkan bila daftar masih kosong.
+  function applyDesign(id: string) {
+    const d = meta.designs.find((x) => x.id === id);
+    if (!d) return;
+    const recommended = layout.musik.presets.length === 0 ? d.music.map((m) => trackById(m)).filter((t): t is NonNullable<typeof t> => !!t).map((t) => ({ name: t.name, url: `/audio/${t.id}.mp3` })) : layout.musik.presets;
+    setForm((f) => ({
+      ...f,
+      category: d.group,
+      layout: { ...f.layout, theme: themeOf(d, f.layout.theme.fx), palettes: d.palettes, musik: { ...f.layout.musik, presets: recommended } },
+    }));
   }
+
+  const setPalette = (i: number, patch: Partial<Palette>) => setLayout({ palettes: layout.palettes.map((p, j) => (j === i ? { ...p, ...patch } : p)) });
+  const addLibraryTrack = (id: string) => {
+    const t = trackById(id);
+    if (t && !usedUrls.has(`/audio/${t.id}.mp3`)) setLayout({ musik: { ...layout.musik, presets: [...layout.musik.presets, { name: t.name, url: `/audio/${t.id}.mp3` }] } });
+  };
 
   async function uploadAsset(file: File, kind: 'image' | 'audio') {
     const target = await api<{ uploadUrl: string; method: string; headers: Record<string, string>; publicUrl: string }>('admin/assets/presign', { body: { kind, contentType: file.type, sizeBytes: file.size } });
@@ -149,6 +196,7 @@ export function TemplateBuilder({ meta, initial }: { meta: BuilderMeta; initial:
         sections: layout.sections.map((s) => ({ id: s.id, title: s.title, enabled: s.enabled, fields: s.fields.map((f) => ({ key: f.key, label: f.label, required: f.required, enabled: f.enabled })) })),
         galeri: { maxPhotos: Number(layout.galeri.maxPhotos), maxVideos: Number(layout.galeri.maxVideos) },
         musik: layout.musik,
+        palettes: layout.palettes,
       },
     };
     try {
@@ -195,9 +243,9 @@ export function TemplateBuilder({ meta, initial }: { meta: BuilderMeta; initial:
             <h2 className="font-semibold text-ink">Informasi dasar</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Field label="Nama template" required><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={80} /></Field>
-              <Field label="Gaya / kategori">
-                <Select value={form.category} onChange={(e) => { setForm({ ...form, category: e.target.value }); if (meta.themes[e.target.value] && !initial) applyPreset(e.target.value); }}>
-                  {[...new Set([...CATEGORIES, form.category])].map((c) => <option key={c} value={c}>{c}</option>)}
+              <Field label="Kelompok tema" hint="Dipakai untuk filter katalog. Otomatis mengikuti desain yang dipilih.">
+                <Select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+                  {[...new Set([...meta.groups.map((g) => g.id as string), form.category])].map((c) => <option key={c} value={c}>{meta.groups.find((g) => g.id === c)?.label ?? c}</option>)}
                 </Select>
               </Field>
               <Field label="Paket (tier)"><Select value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value as TemplateForm['tier'] })}><option value="BASIC">Basic</option><option value="STANDARD">Standard</option><option value="PREMIUM">Premium</option></Select></Field>
@@ -217,10 +265,19 @@ export function TemplateBuilder({ meta, initial }: { meta: BuilderMeta; initial:
           <Card className="p-5">
             <h2 className="font-semibold text-ink">Tema tampilan</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <Field label="Preset warna">
-                <Select value={layout.theme.preset} onChange={(e) => applyPreset(e.target.value)}>{meta.themePresets.map((p) => <option key={p} value={p}>{p}</option>)}</Select>
+              <Field label="Desain" hint={design?.blurb ?? 'Desain kustom: motif mengikuti desain terdekat.'}>
+                <Select value={design?.id ?? ''} onChange={(e) => applyDesign(e.target.value)}>
+                  {!design && <option value="">(kustom)</option>}
+                  {meta.groups.map((g) => (
+                    <optgroup key={g.id} label={g.label}>
+                      {meta.designs.filter((d) => d.group === g.id).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </optgroup>
+                  ))}
+                </Select>
               </Field>
-              <div />
+              <Field label="Level animasi" hint="Tanpa = tampilan statis (Basic). Standar = animasi masuk & partikel di sampul. Penuh = partikel di seluruh halaman, kilau, dan gerak tambahan.">
+                <Select value={layout.theme.fx} onChange={(e) => setTheme({ fx: e.target.value as FxLevel })}>{FX_ORDER.map((v) => <option key={v} value={v}>{FX_LABEL[v]}</option>)}</Select>
+              </Field>
               {(['primary', 'secondary', 'background', 'text'] as const).map((k) => (
                 <Field key={k} label={{ primary: 'Warna utama', secondary: 'Warna pendamping', background: 'Latar', text: 'Teks' }[k]}>
                   <div className="flex items-center gap-2">
@@ -230,8 +287,38 @@ export function TemplateBuilder({ meta, initial }: { meta: BuilderMeta; initial:
                 </Field>
               ))}
               <Field label="Font judul"><Select value={layout.theme.headingFont} onChange={(e) => setTheme({ headingFont: e.target.value as Theme['headingFont'] })}>{Object.entries(FONT_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></Field>
-              <Field label="Font isi"><Select value={layout.theme.bodyFont} onChange={(e) => setTheme({ bodyFont: e.target.value as Theme['bodyFont'] })}><option value="sans">Sans modern</option><option value="serif">Serif klasik</option></Select></Field>
+              <Field label="Font isi"><Select value={layout.theme.bodyFont} onChange={(e) => setTheme({ bodyFont: e.target.value as Theme['bodyFont'] })}>{Object.entries(BODY_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></Field>
             </div>
+          </Card>
+
+          <Card className="p-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h2 className="font-semibold text-ink">Pilihan warna untuk pembeli</h2>
+                <p className="mt-1 text-sm text-ink-soft">Pembeli memilih salah satu palet ini tanpa biaya. Kosongkan bila template hanya punya satu warna. Warna dasar di atas otomatis ikut sebagai palet &quot;Bawaan&quot;.</p>
+              </div>
+              {design && (
+                <Button type="button" variant="secondary" size="sm" onClick={() => setLayout({ palettes: design.palettes })}>
+                  Pakai usulan desain ({design.palettes.length})
+                </Button>
+              )}
+            </div>
+            {layout.palettes.length > 0 && (
+              <ul className="mt-4 space-y-2">
+                {layout.palettes.map((p, i) => (
+                  <li key={p.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-line px-3 py-2">
+                    <span className="h-7 w-7 shrink-0 rounded-full ring-1 ring-black/10" style={{ background: `linear-gradient(135deg, ${p.primary} 50%, ${p.secondary} 50%)` }} />
+                    <Input value={p.name} onChange={(e) => setPalette(i, { name: e.target.value })} className="!h-8 min-w-32 flex-1 text-xs" aria-label="Nama palet" maxLength={40} />
+                    {(['primary', 'secondary', 'background', 'text'] as const).map((k) => (
+                      <input key={k} type="color" value={HEX.test(p[k]) ? p[k] : '#000000'} onChange={(e) => setPalette(i, { [k]: e.target.value })} className="h-8 w-9 cursor-pointer rounded-md border border-line bg-paper p-0.5" aria-label={`${p.name}: ${k}`} title={k} />
+                    ))}
+                    <button type="button" onClick={() => setTheme({ primary: p.primary, secondary: p.secondary, background: p.background, text: p.text })} className="text-xs font-medium text-rose hover:underline">Pratinjau</button>
+                    <button type="button" onClick={() => setLayout({ palettes: layout.palettes.filter((_, j) => j !== i) })} className="text-xs font-medium text-danger hover:underline">Hapus</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Button type="button" variant="secondary" size="sm" className="mt-3" disabled={layout.palettes.length >= 15} onClick={() => setLayout({ palettes: [...layout.palettes, { id: `warna-${layout.palettes.length + 1}-${Date.now().toString(36).slice(-3)}`, name: `Warna ${layout.palettes.length + 1}`, primary: layout.theme.primary, secondary: layout.theme.secondary, background: layout.theme.background, text: layout.theme.text }] })}>+ Tambah palet</Button>
           </Card>
 
           <Card className="p-5">
@@ -294,6 +381,17 @@ export function TemplateBuilder({ meta, initial }: { meta: BuilderMeta; initial:
                     <button type="button" onClick={() => setLayout({ musik: { ...layout.musik, presets: layout.musik.presets.filter((_, j) => j !== i) } })} className="text-xs font-medium text-danger hover:underline">Hapus</button>
                   </div>
                 ))}
+                {meta.tracks.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Select value="" onChange={(e) => { if (e.target.value) addLibraryTrack(e.target.value); }} aria-label="Tambah dari pustaka lagu" className="max-w-xs">
+                      <option value="">+ Tambah dari pustaka bawaan…</option>
+                      {meta.tracks.filter((t) => !usedUrls.has(`/audio/${t.id}.mp3`)).map((t) => <option key={t.id} value={t.id}>{t.name} — {t.mood}</option>)}
+                    </Select>
+                    {design && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setLayout({ musik: { ...layout.musik, presets: [...layout.musik.presets, ...design.music.filter((id) => !usedUrls.has(`/audio/${id}.mp3`)).map((id) => trackById(id)).filter((t): t is NonNullable<typeof t> => !!t).map((t) => ({ name: t.name, url: `/audio/${t.id}.mp3` }))] } })}>Tambah rekomendasi desain</Button>
+                    )}
+                  </div>
+                )}
                 <input ref={songInput} type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/ogg" className="sr-only" aria-label="Unggah lagu bawaan" onChange={(e) => { void onSong(e.target.files?.[0]); e.target.value = ''; }} />
                 <Button type="button" variant="secondary" size="sm" onClick={() => songInput.current?.click()} loading={uploading === 'song'}>+ Unggah lagu bawaan (maks. 8 MB)</Button>
               </div>

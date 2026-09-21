@@ -4,51 +4,70 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client.js";
+import { presetsFor, TRACK_IDS } from "../src/templates/music-library.js";
+import { autoPalettes, BASIC_PALETTES, DESIGNS } from "../src/templates/themes.js";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
-const templates = [
-  {
-    name: "Basic Rustic",
-    category: "rustic",
-    tier: "BASIC" as const,
+// Katalog = desain x paket. Desain "rustic" tersedia di ketiga paket (Basic juga memakai desain ini dengan 8 pilihan
+// warna); ke-33 desain lainnya (suku, religi, perayaan, kartun, game, film, musim) tersedia di Standard & Premium.
+// Standard = animasi sedang + 4 lagu rekomendasi; Premium = animasi penuh + seluruh pustaka lagu + 1 video.
+const TIERS = {
+  BASIC: {
+    label: "Basic",
     price: 20_000,
-    includedWeeks: 4,
-    layoutSchema: {
-      theme: { preset: "rustic" },
-      sections: ["cover", "mempelai", "tanggal_lokasi", "galeri"],
-      galeri: { maxPhotos: 4, maxVideos: 0 },
-      musik: { allowed: false },
-    },
+    fx: "none" as const,
+    sections: ["cover", "mempelai", "tanggal_lokasi", "galeri"],
+    galeri: { maxPhotos: 4, maxVideos: 0 },
   },
-  {
-    name: "Standard Floral",
-    category: "floral",
-    tier: "STANDARD" as const,
+  STANDARD: {
+    label: "Standard",
     price: 75_000,
-    includedWeeks: 4,
-    layoutSchema: {
-      theme: { preset: "floral" },
-      sections: ["cover", "mempelai", "cerita", "tanggal_lokasi", "countdown", "galeri", "rsvp"],
-      galeri: { maxPhotos: 10, maxVideos: 0 },
-      musik: { allowed: true },
-    },
+    fx: "standard" as const,
+    sections: ["cover", "mempelai", "cerita", "tanggal_lokasi", "countdown", "galeri", "rsvp"],
+    galeri: { maxPhotos: 10, maxVideos: 0 },
   },
-  {
-    name: "Premium Elegant",
-    category: "elegant",
-    tier: "PREMIUM" as const,
+  PREMIUM: {
+    label: "Premium",
     price: 150_000,
-    includedWeeks: 4,
-    layoutSchema: {
-      theme: { preset: "elegant" },
-      sections: ["cover", "mempelai", "cerita", "tanggal_lokasi", "countdown", "galeri", "rsvp", "amplop_digital", "buku_tamu"],
-      galeri: { maxPhotos: 20, maxVideos: 1 },
-      musik: { allowed: true },
-    },
+    fx: "premium" as const,
+    sections: ["cover", "mempelai", "cerita", "tanggal_lokasi", "countdown", "galeri", "rsvp", "amplop_digital", "buku_tamu"],
+    galeri: { maxPhotos: 20, maxVideos: 1 },
   },
-];
+};
+
+// Nama baris yang sudah ada sejak seed awal dipertahankan supaya pesanan lama tetap menunjuk ke template yang sama.
+const LEGACY_NAMES: Record<string, string> = { "BASIC:rustic": "Basic Rustic", "STANDARD:floral": "Standard Floral", "PREMIUM:elegant": "Premium Elegant" };
+
+function buildTemplates() {
+  const rows: { name: string; category: string; tier: "BASIC" | "STANDARD" | "PREMIUM"; price: number; includedWeeks: number; layoutSchema: object }[] = [];
+  for (const design of DESIGNS) {
+    const palettes = design.id === "rustic" ? BASIC_PALETTES : autoPalettes(design);
+    for (const tier of ["BASIC", "STANDARD", "PREMIUM"] as const) {
+      if (tier === "BASIC" && design.id !== "rustic") continue;
+      const cfg = TIERS[tier];
+      const musicIds = tier === "BASIC" ? [] : tier === "STANDARD" ? design.music.slice(0, 4) : [...design.music, ...TRACK_IDS.filter((id) => !design.music.includes(id))];
+      rows.push({
+        name: LEGACY_NAMES[tier + ":" + design.id] ?? cfg.label + " " + design.name,
+        category: design.group,
+        tier,
+        price: cfg.price,
+        includedWeeks: 4,
+        layoutSchema: {
+          theme: { preset: design.id, fx: cfg.fx },
+          palettes,
+          sections: cfg.sections,
+          galeri: cfg.galeri,
+          musik: tier === "BASIC" ? { allowed: false } : { allowed: true, presets: presetsFor(musicIds) },
+        },
+      });
+    }
+  }
+  return rows;
+}
+
+const templates = buildTemplates();
 
 const addOns = [
   { code: "PHOTO_PACK_5", name: "Paket 5 foto tambahan", type: "FLAT" as const, price: 8_000, unit: "paket" },
@@ -67,7 +86,7 @@ async function main() {
     const existing = await prisma.template.findFirst({ where: { name: t.name }, select: { id: true } });
     if (existing) {
       // Skema lama (dari seed awal) dimutakhirkan ke bentuk baru; harga & status tidak disentuh.
-      await prisma.template.update({ where: { id: existing.id }, data: { layoutSchema: t.layoutSchema, includedWeeks: t.includedWeeks } });
+      await prisma.template.update({ where: { id: existing.id }, data: { layoutSchema: t.layoutSchema, includedWeeks: t.includedWeeks, category: t.category } });
     } else {
       await prisma.template.create({ data: { ...t, status: "PUBLISHED" } });
     }

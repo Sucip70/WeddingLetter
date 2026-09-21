@@ -45,7 +45,7 @@ function useDebounced<T>(value: T, ms: number) {
   return v;
 }
 
-export function Editor({ template, addOns, initialUser }: { template: TemplateDetail; addOns: AddOn[]; initialUser: SessionUser | null }) {
+export function Editor({ template, addOns, initialUser, initialPalette }: { template: TemplateDetail; addOns: AddOn[]; initialUser: SessionUser | null; initialPalette?: string }) {
   const router = useRouter();
   const draftKey = `wl:draft:${template.id}`;
   const price = useMemo(() => Object.fromEntries(addOns.map((a) => [a.code, a.price])) as Record<string, number>, [addOns]);
@@ -56,6 +56,8 @@ export function Editor({ template, addOns, initialUser }: { template: TemplateDe
   const [selected, setSelected] = useState<Selectable[]>([]);
   const [couponCode, setCouponCode] = useState('');
   const [customSlug, setCustomSlug] = useState('');
+  const palettes = useMemo(() => template.layout.palettes ?? [], [template.layout.palettes]);
+  const [paletteId, setPaletteId] = useState(() => (palettes.some((p) => p.id === initialPalette) ? initialPalette! : (palettes[0]?.id ?? '')));
   const [files, setFiles] = useState<Record<string, LocalFile>>({});
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -82,15 +84,17 @@ export function Editor({ template, addOns, initialUser }: { template: TemplateDe
         if (Array.isArray(d.addOns)) setSelected(d.addOns.filter((a): a is Selectable => a in ADDON_HELP && !alreadyIncluded(template, a)));
         if (typeof d.couponCode === 'string') setCouponCode(d.couponCode);
         if (typeof d.customSlug === 'string') setCustomSlug(d.customSlug);
+        if (!initialPalette && typeof d.palette === 'string' && palettes.some((p) => p.id === d.palette)) setPaletteId(d.palette);
       }
     } catch {
       /* draft rusak: abaikan */
     }
     setOpen({ [template.layout.sections[0]?.id ?? '']: true, mempelai: true, tanggal_lokasi: true });
     setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftKey, template]);
 
-  const draft: Draft = useMemo(() => ({ data: stripMedia(data, sections), weeks, addOns: selected, couponCode, customSlug }), [data, sections, weeks, selected, couponCode, customSlug]);
+  const draft: Draft = useMemo(() => ({ data: stripMedia(data, sections), weeks, addOns: selected, couponCode, customSlug, palette: paletteId }), [data, sections, weeks, selected, couponCode, customSlug, paletteId]);
   const debouncedDraft = useDebounced(draft, 500);
   useEffect(() => {
     if (!hydrated) return;
@@ -116,8 +120,9 @@ export function Editor({ template, addOns, initialUser }: { template: TemplateDe
       addOns: selected,
       couponCode: couponCode.trim() || undefined,
       customSlug: selected.includes('CUSTOM_DOMAIN') && slugOk ? customSlug : undefined,
+      palette: palettes.length > 0 && paletteId ? paletteId : undefined,
     }),
-    [template.id, weeks, data, usedIds, files, selected, couponCode, customSlug, slugOk],
+    [template.id, weeks, data, usedIds, files, selected, couponCode, customSlug, slugOk, palettes, paletteId],
   );
   const debouncedBody = useDebounced(requestBody, 350);
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -210,18 +215,22 @@ export function Editor({ template, addOns, initialUser }: { template: TemplateDe
   };
 
   // ----- Preview -----
+  const paletteTheme = useMemo(() => {
+    const p = palettes.find((x) => x.id === paletteId);
+    return p ? { ...template.layout.theme, primary: p.primary, secondary: p.secondary, background: p.background, text: p.text } : template.layout.theme;
+  }, [template, palettes, paletteId]);
   const view: InvitationViewData = useMemo(
     () => ({
       slug: 'pratinjau',
       templateName: template.name,
-      layout: { theme: template.layout.theme, sections, musik: { presets: template.layout.musik.presets } },
+      layout: { theme: paletteTheme, sections, musik: { presets: template.layout.musik.presets } },
       features: { english: selected.includes('TRANSLATION_EN') },
       data,
       media: Object.fromEntries(Object.values(files).map((f) => [f.clientId, { url: f.url, type: f.type }])),
       rsvpEnabled: sections.some((s) => s.id === 'rsvp'),
       guestbook: [],
     }),
-    [template, sections, selected, data, files],
+    [template, sections, selected, data, files, paletteTheme],
   );
 
   // ----- Checkout -----
@@ -340,6 +349,28 @@ export function Editor({ template, addOns, initialUser }: { template: TemplateDe
               </Card>
             );
           })}
+
+          {palettes.length > 1 && (
+            <Card className="p-5">
+              <h2 className="font-semibold text-ink">Warna undangan</h2>
+              <p className="mt-1 text-sm text-ink-soft">Gratis, dan bisa diganti lagi setelah undangan dibeli.</p>
+              <div className="mt-4 flex flex-wrap gap-3" role="radiogroup" aria-label="Warna undangan">
+                {palettes.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={p.id === paletteId}
+                    onClick={() => setPaletteId(p.id)}
+                    className={cn('flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3.5 text-sm transition-colors', p.id === paletteId ? 'border-rose bg-rose-soft/50 text-ink' : 'border-line text-ink-soft hover:border-ink/30 hover:text-ink')}
+                  >
+                    <span className="h-6 w-6 rounded-full ring-1 ring-black/10" style={{ background: `linear-gradient(135deg, ${p.primary} 50%, ${p.secondary} 50%)` }} />
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </Card>
+          )}
 
           <Card className="p-5">
             <h2 className="font-semibold text-ink">Masa aktif & tambahan</h2>
