@@ -18,8 +18,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="id" className={`${jakarta.variable} ${fraunces.variable} ${script.variable} ${cormorant.variable} ${cinzel.variable} ${pixel.variable} ${fredoka.variable} h-full`}>
-      <body className="flex min-h-full flex-col">{children}</body>
+    <html lang="id" className={`${jakarta.variable} ${fraunces.variable} ${script.variable} ${cormorant.variable} ${cinzel.variable} ${pixel.variable} ${fredoka.variable} h-full`} data-scroll-behavior="smooth" suppressHydrationWarning>
+      {/* Ekstensi browser (pengelola sandi, terjemahan, dsb.) sering menambah atribut ke <html>/<body> sebelum React aktif. */}
+      <body className="flex min-h-full flex-col" suppressHydrationWarning>{children}</body>
     </html>
   );
 }

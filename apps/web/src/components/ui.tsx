@@ -65,7 +65,8 @@ const fieldBase =
   'w-full rounded-xl border border-line bg-paper px-3.5 text-sm text-ink placeholder:text-ink-soft/60 transition-colors focus:border-rose focus:outline-none focus:ring-2 focus:ring-rose/20 disabled:bg-ivory disabled:text-ink-soft';
 
 export function Input({ className, ...rest }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...rest} className={cx(fieldBase, 'h-10', className)} />;
+  // suppressHydrationWarning: pengelola sandi / autofill menyisipkan atribut ke kolom isian sebelum hidrasi.
+  return <input suppressHydrationWarning {...rest} className={cx(fieldBase, 'h-10', className)} />;
 }
 
 export function Textarea({ className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
