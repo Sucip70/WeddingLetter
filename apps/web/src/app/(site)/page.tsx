@@ -3,7 +3,7 @@ import { InvitationView } from '@/components/invitation/invitation-view';
 import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { TemplateThumb } from '@/components/template-thumb';
 import { Badge, LinkButton } from '@/components/ui';
-import { GROUP_LABEL, TIER_LABEL, getAddOns, getTemplate, getTemplates, groupByDesign, templateFeatures } from '@/lib/catalog';
+import { GROUP_LABEL, TIER_LABEL, getAddOns, getDemoPhotos, getTemplate, getTemplates, groupByDesign, templateFeatures } from '@/lib/catalog';
 import { rupiah, whatsappLink } from '@/lib/format';
 import { sampleView } from '@/lib/sample';
 import type { AddOn, Template, TemplateDetail, ThemeGroup } from '@/lib/types';
@@ -35,10 +35,11 @@ const FAQ = [
 export default async function HomePage() {
   let templates: Template[] = [];
   let addOns: AddOn[] = [];
+  let photos: Record<string, string> = {};
   let heroA: TemplateDetail | undefined;
   let heroB: TemplateDetail | undefined;
   try {
-    [templates, addOns] = await Promise.all([getTemplates(), getAddOns()]);
+    [templates, addOns, photos] = await Promise.all([getTemplates(), getAddOns(), getDemoPhotos()]);
     // Daftar katalog sengaja ringan (tanpa field & lagu), jadi demo hero mengambil detail lengkapnya.
     const premium = templates.filter((t) => t.tier === 'PREMIUM');
     const pick = (design: string) => premium.find((t) => t.design?.id === design) ?? premium[0] ?? templates[templates.length - 1];
@@ -94,12 +95,12 @@ export default async function HomePage() {
               <div className="relative h-[560px] w-[500px] max-w-full scale-[0.82] sm:scale-100">
                 <div className="absolute left-0 top-10 -rotate-[5deg]">
                   <PhoneFrame size="md">
-                    <InvitationView view={sampleView(heroB.layout)} mode="preview" embedded placeholders />
+                    <InvitationView view={sampleView(heroB.layout, {}, photos)} mode="preview" embedded placeholders />
                   </PhoneFrame>
                 </div>
                 <div className="absolute right-0 top-0 rotate-[4deg]">
                   <PhoneFrame size="md">
-                    <InvitationView view={sampleView(heroA.layout)} mode="preview" embedded placeholders />
+                    <InvitationView view={sampleView(heroA.layout, {}, photos)} mode="preview" embedded placeholders />
                   </PhoneFrame>
                 </div>
               </div>

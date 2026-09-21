@@ -4,6 +4,7 @@ import { TemplateThumb } from '@/components/template-thumb';
 import { Alert, Badge, EmptyState, PageHeader } from '@/components/ui';
 import { FX_LABEL, GROUP_LABEL, GROUP_ORDER, TIER_LABEL, getTemplates, groupByDesign } from '@/lib/catalog';
 import { rupiah } from '@/lib/format';
+import { GATE_LABEL } from '@/lib/types';
 import type { Template, ThemeGroup, Tier } from '@/lib/types';
 
 export const metadata: Metadata = { title: 'Template undangan' };
@@ -116,6 +117,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<'/templa
                               </span>
                             )}
                             {fx !== 'none' && <span>✓ {FX_LABEL[fx]}</span>}
+                            {t.layout.theme.gate && t.layout.theme.gate !== 'none' && <span>✓ Gerbang {GATE_LABEL[t.layout.theme.gate].toLowerCase()}</span>}
                             {tracks > 0 && <span>✓ {tracks} pilihan lagu</span>}
                             <span>✓ Galeri {t.layout.galeri.maxPhotos} foto</span>
                           </div>

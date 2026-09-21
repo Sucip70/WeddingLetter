@@ -55,7 +55,7 @@ Alur uji: `/templates` → pilih template → isi (harga live di kanan) → Chec
 
 **Pengguna**
 - Katalog **34 desain x 3 paket** (69 template): dikelompokkan per tema (klasik, suku & budaya, religi, perayaan, kartun, video game, film, musim). Demo interaktif dengan ganti warna dan dengar lagu bawaan; halaman harga + kalkulator sewa media.
-- **Basic** = desain Rustic dengan 8 pilihan warna (tanpa animasi). Desain yang sama juga tersedia di Standard & Premium. **Standard** = animasi sedang; **Premium** = animasi penuh + 1 video. Semua paket boleh memilih lagu bawaan dari pustaka musik (lihat "Musik" di bawah). Warna dipilih pembeli gratis (di editor dan bisa diganti lagi di dashboard).
+- **Basic** = desain Rustic dengan 8 pilihan warna (tanpa animasi). Desain yang sama juga tersedia di Standard & Premium. **Standard** = animasi sedang; **Premium** = animasi penuh + **gerbang pembuka** + 1 video. Semua paket boleh memilih lagu bawaan dari pustaka musik (lihat "Musik" di bawah). Warna dipilih pembeli gratis (di editor dan bisa diganti lagi di dashboard).
 - Editor berbasis skema template: form dinamis, pratinjau ponsel langsung (berwatermark sebelum bayar), draf otomatis di browser, kompres foto otomatis (≤2000px), kalkulator harga live (server = sumber kebenaran).
 - Akun hanya diminta saat checkout (email + OTP, atau Google bila dikonfigurasi) tanpa meninggalkan editor.
 - Checkout: buat pesanan → unggah file langsung ke storage (URL bertanda tangan, ukuran diverifikasi server) → bayar (Midtrans Snap).
@@ -75,7 +75,7 @@ Alur uji: `/templates` → pilih template → isi (harga live di kanan) → Chec
 ## Testing
 
 ```
-npm test --workspace apps/api          # 94 unit test (kalkulator harga, skema/validasi, webhook, storage, dst.)
+npm test --workspace apps/api          # 107 unit test (kalkulator harga, skema/validasi, webhook, storage, dst.)
 ```
 
 Smoke test alur penuh (user + admin + job) terhadap API & **database khusus tes** — script ini membuat user/order, jangan arahkan ke database dev Anda:
@@ -124,6 +124,8 @@ Di production tanpa kredensial Midtrans/R2/Resend, endpoint terkait **menolak** 
 
 - **Prisma dipin di `7.10.0`** (tag `latest` npm menunjuk `8.0.0-rc.x`). Prisma 7 wajib driver adapter (`@prisma/adapter-pg`). Client digenerate ke `apps/api/src/generated/prisma` (harus di dalam `src/`).
 - **Tema & animasi**: satu desain = entri di `apps/api/src/templates/themes.ts` (warna, font) + paket motif di `apps/web/src/components/invitation/motifs.ts` (ornamen, pola, partikel, bingkai foto, gaya hitung mundur, efek sampul, teks pengganti), kuncinya sama dengan id desain. Level animasi ada di `theme.fx` (`none` / `standard` / `premium`) dan diatur per template. Menambah desain baru: tambahkan di kedua file itu lalu `npx prisma db seed` (idempotent; harga yang sudah diubah admin tidak ditimpa).
+- **Foto demo**: demo template (halaman detail, beranda, pratinjau builder) memakai foto contoh dari tabel `demo_photos` (slot: mempelai pria/wanita, galeri 1-8, sampul opsional) yang berkas-nya ada di folder `assets/` storage (R2). Foto bawaan adalah **ilustrasi placeholder** buatan kode (`apps/api/assets/demo/*.svg`, dibuat `node scripts/build-demo-photos.mjs`); ganti dengan foto asli di **Admin → Foto demo** (tombol "Bawaan" mengembalikan). `npm run demo:photos -w api` hanya mengunggah berkas bawaan ke storage (tanpa database); `npx prisma db seed` juga mendaftarkan slot yang masih kosong dan tidak menimpa foto yang sudah diganti. Halaman undangan pembeli tidak terpengaruh.
+- **Gerbang pembuka (Premium)**: halaman pertama undangan berupa adegan animasi yang harus diketuk (pintu, amplop, tirai, portal sihir, cincin, bunga, daun, kado, lentera, kembang api, kaca beku, buku, dst.; 19 jenis di `apps/web/src/components/invitation/gates.tsx`). Jenis gerbang tersimpan di `theme.gate` (`none` = tanpa gerbang); bawaan per desain ada di `DESIGN_GATES` (`apps/api/src/templates/themes.ts`) dan dipasang seed hanya ke baris Premium. Admin bisa menggantinya per template di builder (pratinjau punya tombol "Putar ulang gerbang"). Ketukan pertama juga menyalakan musik (sentuhan pengguna). Animasi mati untuk "kurangi gerakan". Menambah jenis baru: tambahkan di `GATE_LABEL` (API + `lib/types.ts`), adegan + CSS di `gates.tsx`, lama animasi di `GATE_MS`.
 - Tema kartun/game/film hanya **terinspirasi gaya umum** (palet, ornamen, teks) dan tidak memakai karakter, logo, atau nama berhak cipta. Jangan menambahkan nama/karakter merek dagang ke desain.
 - Hanya satu server `next dev` per folder `.next`. Untuk server kedua: `NEXT_DIST_DIR=.next-verify npx next dev -p 3100` (Next akan menambah entri `.next-verify` ke `tsconfig.json`; jangan di-commit).
 - npm di mesin dev awal memblokir sebagian install script (`allow-scripts`); Prisma tetap berfungsi.

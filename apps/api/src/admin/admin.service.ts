@@ -7,7 +7,7 @@ import { PaymentsService } from '../payments/payments.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { SECTION_REGISTRY, layoutIncludes, normalizeLayout, toAuthoring } from '../templates/layout.js';
-import { BASIC_PALETTES, DESIGNS, GROUP_LABEL, GROUP_ORDER, autoPalettes } from '../templates/themes.js';
+import { BASIC_PALETTES, DESIGNS, GATE_LABEL, GROUP_LABEL, GROUP_ORDER, autoPalettes } from '../templates/themes.js';
 import type { z } from 'zod';
 import type { assetPresignSchema, couponCreateSchema, couponUpdateSchema, listQuerySchema, templateCreateSchema, templateUpdateSchema } from './admin.dto.js';
 
@@ -61,6 +61,7 @@ export class AdminService {
       // palettes = usulan palet pembeli untuk desain itu (rustic memakai 8 warna Basic, lainnya 2 varian otomatis)
       designs: DESIGNS.map((design) => ({ ...design, palettes: design.id === 'rustic' ? BASIC_PALETTES : autoPalettes(design) })),
       groups: GROUP_ORDER.map((id) => ({ id, label: GROUP_LABEL[id] })),
+      gates: Object.entries(GATE_LABEL).map(([id, label]) => ({ id, label })),
       sections: Object.entries(SECTION_REGISTRY).map(([id, def]) => ({ id, title: def.title, fields: def.fields })),
     };
   }

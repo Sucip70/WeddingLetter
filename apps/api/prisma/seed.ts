@@ -4,6 +4,9 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client.js";
+import { DEMO_SLOTS, defaultKey } from "../src/demo-photos/demo-photos.slots.js";
+import { uploadDefaultFile } from "../src/demo-photos/demo-photos.service.js";
+import { StorageService } from "../src/storage/storage.service.js";
 import { autoPalettes, BASIC_PALETTES, DESIGNS } from "../src/templates/themes.js";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
@@ -11,7 +14,7 @@ const prisma = new PrismaClient({ adapter });
 
 // Katalog = desain x paket. Desain "rustic" tersedia di ketiga paket (Basic juga memakai desain ini dengan 8 pilihan
 // warna); ke-33 desain lainnya (suku, religi, perayaan, kartun, game, film, musim) tersedia di Standard & Premium.
-// Standard = animasi sedang; Premium = animasi penuh + 1 video. Semua paket boleh memilih lagu bawaan:
+// Standard = animasi sedang; Premium = animasi penuh + gerbang pembuka + 1 video. Semua paket boleh memilih lagu bawaan:
 // daftar lagunya berasal dari pustaka (Admin -> Musik) dan disaring per paket lewat MusicTrack.minTier.
 const TIERS = {
   BASIC: {
@@ -54,7 +57,8 @@ function buildTemplates() {
         price: cfg.price,
         includedWeeks: 4,
         layoutSchema: {
-          theme: { preset: design.id, fx: cfg.fx },
+          // Gerbang pembuka hanya untuk Premium (admin bisa mengubahnya per template di builder).
+          theme: { preset: design.id, fx: cfg.fx, gate: tier === "PREMIUM" ? design.gate : "none" },
           palettes,
           sections: cfg.sections,
           galeri: cfg.galeri,
@@ -80,6 +84,17 @@ const addOns = [
   { code: "EXTEND_ACTIVE_WEEK", name: "Perpanjangan masa aktif undangan", type: "PER_UNIT" as const, price: 10_000, unit: "minggu" },
 ];
 
+// Foto contoh untuk demo template: berkas bawaan (ilustrasi) diunggah ke folder assets/ storage (R2 bila
+// dikonfigurasi) dan didaftarkan per slot. Slot yang sudah terisi (mis. sudah diganti admin) tidak disentuh.
+async function installDemoPhotos() {
+  const storage = new StorageService();
+  for (const slot of DEMO_SLOTS.filter((s) => s.hasDefault)) {
+    if (await prisma.demoPhoto.findUnique({ where: { slot: slot.slot } })) continue;
+    await uploadDefaultFile(storage, slot.slot);
+    await prisma.demoPhoto.create({ data: { slot: slot.slot, storageKey: defaultKey(slot.slot) } });
+  }
+}
+
 async function main() {
   for (const t of templates) {
     const existing = await prisma.template.findFirst({ where: { name: t.name }, select: { id: true } });
@@ -97,6 +112,13 @@ async function main() {
     data: [{ code: "TEMANKELUARGA", type: "PERCENT", value: 20, quota: 50, status: "ACTIVE" }],
     skipDuplicates: true,
   });
+
+  try {
+    await installDemoPhotos();
+  } catch (error) {
+    // Storage belum siap (mis. R2 salah konfigurasi): seed lain tetap jalan; ulangi seed setelah storage beres.
+    console.warn(`Foto demo dilewati: ${error instanceof Error ? error.message : error}`);
+  }
 
   const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   if (adminEmail) {

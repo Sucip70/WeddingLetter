@@ -8,6 +8,8 @@ import { findPreset } from '@/lib/presets';
 import type { InvitationViewData } from '@/lib/types';
 import { STRINGS } from './i18n';
 import type { Lang, Strings } from './i18n';
+import { GATE_MS, Gate } from './gates';
+import type { GatePhase } from './gates';
 import { CoverFx, Particles, PatternLayer, PhotoFrame, Reveal, useReveal } from './effects';
 import { BODY, HEADING, RADIUS, motifFor } from './motifs';
 import type { CountdownKind, Motif } from './motifs';
@@ -22,6 +24,9 @@ export interface InvitationViewProps {
   embedded?: boolean;
   // Tampilkan kotak foto contoh bila belum ada foto (untuk demo template & editor).
   placeholders?: boolean;
+  // Gerbang pembuka (Premium): 'show' = tampil dan harus diketuk; 'skip' = langsung terbuka + tombol "Putar ulang".
+  // Bawaan: tampil di halaman live, dilewati di pratinjau (editor, dashboard, builder).
+  gate?: 'show' | 'skip';
 }
 
 // Konteks tema untuk sub-komponen (ornamen, gaya sudut, level animasi) tanpa oper-prop berlapis.
@@ -74,7 +79,7 @@ function gcalLink(title: string, start: string, location: string) {
 
 const EMBED_HEIGHT = 810; // tinggi logis PhoneFrame
 
-export function InvitationView({ view, mode = 'live', embedded = false, placeholders = false }: InvitationViewProps) {
+export function InvitationView({ view, mode = 'live', embedded = false, placeholders = false, gate }: InvitationViewProps) {
   const { theme } = view.layout;
   const { data } = view;
   // Snapshot lama (sebelum ada motif/fx) tetap dirender: motif mengikuti preset, tanpa animasi.
@@ -115,6 +120,41 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     if (a.paused) void a.play().catch(() => undefined);
     else a.pause();
   }, []);
+
+  // ----- Gerbang pembuka -----
+  const gateKind = theme.gate && theme.gate !== 'none' ? theme.gate : null;
+  const gateMode = gate ?? (mode === 'live' ? 'show' : 'skip');
+  const [gatePhase, setGatePhase] = useState<GatePhase | 'open'>(gateKind && gateMode === 'show' ? 'closed' : 'open');
+  const gateTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(gateTimer.current), []);
+  // Gerbang dinonaktifkan dari luar (mis. admin mengganti jenis di builder): pastikan tidak menggantung.
+  const gateActive = gateKind !== null && gatePhase !== 'open';
+
+  const openGate = useCallback(() => {
+    if (!gateKind || gatePhase !== 'closed') return;
+    // Ketukan = sentuhan pengguna, jadi musik boleh langsung diputar (di pratinjau tidak).
+    if (mode === 'live' && audioRef.current?.paused) void audioRef.current.play().catch(() => undefined);
+    setGatePhase('opening');
+    const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    gateTimer.current = setTimeout(() => setGatePhase('open'), reduced ? 350 : GATE_MS[gateKind]);
+  }, [gateKind, gatePhase, mode]);
+
+  const replayGate = useCallback(() => {
+    clearTimeout(gateTimer.current);
+    rootRef.current?.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0 });
+    setGatePhase('closed');
+  }, []);
+
+  // Selama gerbang tertutup, halaman tidak boleh tergulir di belakangnya.
+  useEffect(() => {
+    if (!gateActive || embedded) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [gateActive, embedded]);
 
   const open = useCallback(() => {
     if (mode === 'live' && audioRef.current?.paused) void audioRef.current.play().catch(() => undefined);
@@ -205,16 +245,36 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     <ThemeContext.Provider value={themeCtx}>
       <div
         ref={rootRef}
-        style={rootStyle}
+        style={gateActive && embedded ? { ...rootStyle, overflowY: 'hidden' } : rootStyle}
         data-reveal={motif.reveal}
         // Terpasang sejak render server: keadaan awal "tersembunyi" sudah aktif sebelum hidrasi, jadi tidak ada kedipan.
         data-armed={animated ? '' : undefined}
-        className={`wl-root ${embedded ? 'thin-scroll h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}
+        className={`wl-root ${embedded ? 'thin-scroll relative h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}
       >
         {animated && (
           <noscript>
             <style>{'.wl-root[data-armed] .wl-reveal{opacity:1!important;transform:none!important;filter:none!important}'}</style>
           </noscript>
+        )}
+        {gateActive && gateKind && (
+          <Gate
+            kind={gateKind}
+            phase={gatePhase === 'opening' ? 'opening' : 'closed'}
+            embedded={embedded}
+            names={names}
+            kicker={kicker}
+            guest={mode === 'live' ? guest : null}
+            pattern={motif.pattern}
+            headingFamily={hf.family}
+            onOpen={openGate}
+          />
+        )}
+        {gateKind && mode !== 'live' && !gateActive && (
+          <div className="pointer-events-none sticky top-0 z-[65] h-0">
+            <button type="button" onClick={replayGate} className="pointer-events-auto m-2 rounded-full bg-black/55 px-3 py-1 text-[11px] font-medium text-white backdrop-blur hover:bg-black/70">
+              ↻ Putar ulang gerbang
+            </button>
+          </div>
         )}
         {musicUrl && <audio ref={audioRef} src={musicUrl} loop preload="none" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />}
 
@@ -267,7 +327,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             </button>
           )}
 
-          <div className="relative z-[4] flex flex-col items-center" style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
+          <div key={gateActive ? 'gate' : 'open'} className="relative z-[4] flex flex-col items-center" style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
             <p className={`text-xs uppercase tracking-[0.35em] opacity-80 ${enter(100).className}`} style={enter(100).style}>{kicker}</p>
             <h1
               className={`mt-5 leading-[1.1] ${enter(250).className} ${fx === 'premium' && !coverPhoto ? 'wl-shimmer' : ''}`}

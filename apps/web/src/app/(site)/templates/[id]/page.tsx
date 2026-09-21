@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { TemplateDemo } from '@/components/template-demo';
 import { Badge, Card } from '@/components/ui';
 import { ApiError } from '@/lib/api';
-import { ADDON_DESC, FX_LABEL, GROUP_LABEL, TIER_LABEL, getAddOns, getTemplate, getTemplates, templateFeatures } from '@/lib/catalog';
+import { ADDON_DESC, FX_LABEL, GROUP_LABEL, TIER_LABEL, getAddOns, getDemoPhotos, getTemplate, getTemplates, templateFeatures } from '@/lib/catalog';
 import { rupiah } from '@/lib/format';
 import type { AddOn, Template, TemplateDetail, ThemeGroup } from '@/lib/types';
 
@@ -36,7 +36,7 @@ function relevantAddOns(t: TemplateDetail, addOns: AddOn[]) {
 
 export default async function TemplateDetailPage({ params }: PageProps<'/templates/[id]'>) {
   const { id } = await params;
-  const [t, addOns, all] = await Promise.all([load(id), getAddOns().catch(() => [] as AddOn[]), getTemplates().catch(() => [] as Template[])]);
+  const [t, addOns, all, photos] = await Promise.all([load(id), getAddOns().catch(() => [] as AddOn[]), getTemplates().catch(() => [] as Template[]), getDemoPhotos()]);
   // Desain yang sama di paket lain (Basic / Standard / Premium).
   const siblings = all.filter((x) => t.design && x.design?.id === t.design.id).sort((x, y) => x.price - y.price);
   const fx = t.layout.theme.fx;
@@ -79,7 +79,7 @@ export default async function TemplateDetailPage({ params }: PageProps<'/templat
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <TemplateDemo template={t} header={header}>
+      <TemplateDemo template={t} header={header} photos={photos}>
         <Card className="mt-10 p-6">
           <h2 className="font-semibold text-ink">Sudah termasuk</h2>
           <ul className="mt-4 grid gap-2.5 text-sm text-ink-soft sm:grid-cols-2">

@@ -34,6 +34,10 @@ export class R2Driver implements StorageDriver {
     return { uploadUrl, method: 'PUT', headers: { 'Content-Type': contentType }, expiresInSeconds: PRESIGN_TTL_SECONDS };
   }
 
+  async put(key: string, body: Buffer, contentType: string) {
+    await this.client.send(new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: body, ContentType: contentType }));
+  }
+
   async head(key: string) {
     try {
       const res = await this.client.send(new HeadObjectCommand({ Bucket: this.bucket, Key: key }));

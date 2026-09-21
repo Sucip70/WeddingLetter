@@ -19,6 +19,33 @@ export const GROUP_LABEL: Record<ThemeGroup, string> = {
 };
 export const GROUP_ORDER: ThemeGroup[] = ['klasik', 'suku', 'agama', 'perayaan', 'kartun', 'game', 'film', 'musim'];
 
+// Gerbang pembuka undangan Premium: adegan animasi (pintu, amplop, tirai, ...) yang harus diketuk sebelum
+// sampul terlihat. Dirender di web (apps/web/.../gates.tsx, kunci = id). 'none' = tanpa gerbang.
+export const GATE_LABEL = {
+  door: 'Pintu',
+  glass: 'Jendela kaca patri',
+  curtain: 'Tirai',
+  cloth: 'Kain ditarik',
+  envelope: 'Amplop',
+  portal: 'Portal sihir',
+  ring: 'Cincin',
+  bloom: 'Bunga bermekaran',
+  leaves: 'Daun berguguran',
+  balloons: 'Balon',
+  waves: 'Ombak',
+  gift: 'Kado',
+  lantern: 'Lentera',
+  fireworks: 'Kembang api',
+  frost: 'Kaca beku',
+  book: 'Buku dongeng',
+  pressstart: 'Press Start',
+  loading: 'Loading',
+  neon: 'Papan neon',
+} as const;
+export type GateKind = keyof typeof GATE_LABEL;
+export const GATE_KINDS = Object.keys(GATE_LABEL) as GateKind[];
+export type GateSetting = GateKind | 'none';
+
 export interface Palette {
   id: string;
   name: string;
@@ -41,6 +68,8 @@ export interface Design {
   bodyFont: BodyFont;
   // Warna tetap (mis. Merah Putih): tidak dibuatkan varian warna otomatis.
   fixedColors?: boolean;
+  // Gerbang pembuka bawaan (dipakai template Premium; admin bisa menggantinya di builder).
+  gate: GateKind;
 }
 
 const d = (
@@ -51,9 +80,9 @@ const d = (
   colors: [string, string, string, string],
   fonts: [HeadingFont, BodyFont],
   fixedColors = false,
-): Design => ({ id, name, group, blurb, primary: colors[0], secondary: colors[1], background: colors[2], text: colors[3], headingFont: fonts[0], bodyFont: fonts[1], ...(fixedColors ? { fixedColors } : {}) });
+): Omit<Design, 'gate'> => ({ id, name, group, blurb, primary: colors[0], secondary: colors[1], background: colors[2], text: colors[3], headingFont: fonts[0], bodyFont: fonts[1], ...(fixedColors ? { fixedColors } : {}) });
 
-export const DESIGNS: Design[] = [
+const BASE_DESIGNS: Omit<Design, 'gate'>[] = [
   // ---- Klasik ----
   d('rustic', 'Rustic Klasik', 'klasik', 'Hangat dan bersahaja dengan nuansa kayu dan tanah.', ['#8a5a3c', '#c9a27e', '#fbf6ef', '#3b2a20'], ['serif', 'sans']),
   d('floral', 'Floral Romantis', 'klasik', 'Bunga-bunga lembut dengan tulisan tangan yang manis.', ['#c4587a', '#e9b7c6', '#fff7f9', '#4a2c38'], ['script', 'sans']),
@@ -104,6 +133,20 @@ export const DESIGNS: Design[] = [
   d('gugur', 'Musim Gugur', 'musim', 'Daun maple keemasan yang jatuh perlahan.', ['#b45309', '#7c2d12', '#fdf3e4', '#3d2410'], ['display', 'serif']),
   d('salju', 'Musim Dingin', 'musim', 'Salju turun tenang dengan biru es dan lonceng.', ['#4b7bb5', '#dbe9f7', '#f4f9ff', '#1c2f4a'], ['script', 'sans']),
 ];
+
+// Gerbang bawaan per desain (alasan pemilihan ada di riwayat diskusi: sesuaikan dengan adegan tema).
+const DESIGN_GATES: Record<string, GateKind> = {
+  rustic: 'envelope', floral: 'bloom', elegant: 'ring',
+  jawa: 'door', sunda: 'leaves', minang: 'curtain', batak: 'cloth', bali: 'door',
+  islami: 'door', kristiani: 'glass', buddha: 'bloom',
+  natal: 'gift', imlek: 'lantern', valentine: 'envelope', kemerdekaan: 'curtain', lebaran: 'envelope', tahunbaru: 'fireworks', halloween: 'door',
+  'kerajaan-es': 'frost', ceria: 'balloons', 'sakura-anime': 'bloom', dongeng: 'book',
+  pixel: 'pressstart', 'player-one': 'loading', rpg: 'door', neon: 'neon',
+  hollywood: 'curtain', galaksi: 'portal', sihir: 'portal', paris: 'envelope',
+  semi: 'bloom', panas: 'waves', gugur: 'leaves', salju: 'frost',
+};
+
+export const DESIGNS: Design[] = BASE_DESIGNS.map((x) => ({ ...x, gate: DESIGN_GATES[x.id]! }));
 
 export const DESIGN_IDS = DESIGNS.map((x) => x.id);
 export const designById = (id: string | undefined) => DESIGNS.find((x) => x.id === id);

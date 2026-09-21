@@ -1,8 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { z } from 'zod';
 import { ADDON, LIMITS } from '../config/constants.js';
-import { DESIGNS, baseColors } from './themes.js';
-import type { BodyFont, HeadingFont, Palette } from './themes.js';
+import { DESIGNS, GATE_KINDS, baseColors } from './themes.js';
+import type { BodyFont, GateSetting, HeadingFont, Palette } from './themes.js';
 
 // Template engine berbasis skema (Bagian 5): admin menyusun *skema* (section, field, tema, kuota media),
 // bukan HTML. Daftar section & field yang dikenali renderer ada di SECTION_REGISTRY; admin hanya
@@ -48,6 +48,8 @@ export interface ThemeDef {
   motif: string;
   // Tingkat animasi: none (Basic), standard (reveal + partikel), premium (efek lengkap).
   fx: FxLevel;
+  // Gerbang pembuka (Premium). 'none' / kosong = tanpa gerbang.
+  gate: GateSetting;
   primary: string;
   secondary: string;
   background: string;
@@ -194,6 +196,7 @@ export const layoutInputSchema = z.object({
       preset: z.string().optional(),
       motif: z.string().max(40).optional(),
       fx: z.enum(['none', 'standard', 'premium']).optional(),
+      gate: z.enum(['none', ...GATE_KINDS]).optional(),
       primary: hex.optional(),
       secondary: hex.optional(),
       background: hex.optional(),
@@ -243,6 +246,7 @@ export function normalizeLayout(raw: unknown, category = 'rustic'): TemplateLayo
     preset,
     motif: input.theme?.motif ?? preset,
     fx: input.theme?.fx ?? 'none',
+    gate: input.theme?.gate ?? 'none',
     primary: input.theme?.primary ?? base.primary,
     secondary: input.theme?.secondary ?? base.secondary,
     background: input.theme?.background ?? base.background,

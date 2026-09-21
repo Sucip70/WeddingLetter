@@ -7,8 +7,9 @@ import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { Alert, Badge, Button, Card, Field, Input, Select, Toggle, cn } from '@/components/ui';
 import { api, errorMessage, uploadWithProgress } from '@/lib/client-api';
 import { sampleView } from '@/lib/sample';
+import type { DemoPhotos } from '@/lib/sample';
 import { FX_LABEL } from '@/lib/catalog';
-import type { FieldType, FxLevel, Palette, Theme, ThemeGroup } from '@/lib/types';
+import type { FieldType, FxLevel, GateSetting, Palette, Theme, ThemeGroup } from '@/lib/types';
 
 export interface AuthField { key: string; type: FieldType; label: string; required: boolean; enabled: boolean }
 export interface AuthSection { id: string; title: string; enabled: boolean; fields: AuthField[] }
@@ -42,11 +43,13 @@ export interface DesignMeta {
   text: string;
   headingFont: Theme['headingFont'];
   bodyFont: Theme['bodyFont'];
+  gate: GateSetting;
   palettes: Palette[];
 }
 export interface BuilderMeta {
   designs: DesignMeta[];
   groups: { id: ThemeGroup; label: string }[];
+  gates: { id: string; label: string }[];
   sections: { id: string; title: string; fields: { key: string; label: string; type: FieldType; required: boolean }[] }[];
 }
 
@@ -63,7 +66,7 @@ const BODY_LABEL: Record<string, string> = { sans: 'Sans modern', serif: 'Serif 
 const FX_ORDER: FxLevel[] = ['none', 'standard', 'premium'];
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
-const themeOf = (d: DesignMeta, fx: FxLevel): Theme => ({ preset: d.id, motif: d.id, fx, primary: d.primary, secondary: d.secondary, background: d.background, text: d.text, headingFont: d.headingFont, bodyFont: d.bodyFont });
+const themeOf = (d: DesignMeta, fx: FxLevel, gate: GateSetting): Theme => ({ preset: d.id, motif: d.id, fx, gate, primary: d.primary, secondary: d.secondary, background: d.background, text: d.text, headingFont: d.headingFont, bodyFont: d.bodyFont });
 
 function blank(meta: BuilderMeta): TemplateForm {
   const on = ['cover', 'mempelai', 'tanggal_lokasi', 'galeri'];
@@ -81,7 +84,7 @@ function blank(meta: BuilderMeta): TemplateForm {
     includedWeeks: 4,
     status: 'DRAFT',
     thumbnailUrl: null,
-    layout: { theme: themeOf(rustic, 'none'), sections, galeri: { maxPhotos: 4, maxVideos: 0 }, musik: { allowed: false, presets: [] }, palettes: rustic.palettes },
+    layout: { theme: themeOf(rustic, 'none', 'none'), sections, galeri: { maxPhotos: 4, maxVideos: 0 }, musik: { allowed: false, presets: [] }, palettes: rustic.palettes },
   };
 }
 
@@ -94,7 +97,7 @@ function toPreviewLayout(l: Authoring) {
   };
 }
 
-export function TemplateBuilder({ meta, initial }: { meta: BuilderMeta; initial: TemplateForm | null }) {
+export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderMeta; initial: TemplateForm | null; photos?: DemoPhotos }) {
   const router = useRouter();
   const [form, setForm] = useState<TemplateForm>(() => initial ?? blank(meta));
   const [openSection, setOpenSection] = useState<string | null>(null);
@@ -119,14 +122,24 @@ export function TemplateBuilder({ meta, initial }: { meta: BuilderMeta; initial:
     setLayout({ sections: next });
   };
 
-  const view = useMemo(() => sampleView(toPreviewLayout(layout), { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }), [layout]);
+  const view = useMemo(() => sampleView({ ...toPreviewLayout(layout), galeri: layout.galeri }, { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }, photos), [layout, photos]);
 
   const design = meta.designs.find((d) => d.id === layout.theme.motif) ?? meta.designs.find((d) => d.id === layout.theme.preset);
   // Ganti desain: warna, font, motif, dan usulan palet ikut berganti.
   function applyDesign(id: string) {
     const d = meta.designs.find((x) => x.id === id);
     if (!d) return;
-    setForm((f) => ({ ...f, category: d.group, layout: { ...f.layout, theme: themeOf(d, f.layout.theme.fx), palettes: d.palettes } }));
+    // Gerbang bawaan desain hanya dipasang untuk paket Premium.
+    setForm((f) => ({ ...f, category: d.group, layout: { ...f.layout, theme: themeOf(d, f.layout.theme.fx, f.tier === 'PREMIUM' ? d.gate : 'none'), palettes: d.palettes } }));
+  }
+
+  // Pindah ke Premium: pasang gerbang bawaan desain bila belum ada gerbang.
+  function changeTier(tier: TemplateForm['tier']) {
+    setForm((f) => {
+      const d = meta.designs.find((x) => x.id === f.layout.theme.motif);
+      const gate = tier === 'PREMIUM' && (f.layout.theme.gate ?? 'none') === 'none' && d ? d.gate : f.layout.theme.gate;
+      return { ...f, tier, layout: { ...f.layout, theme: { ...f.layout.theme, gate } } };
+    });
   }
 
   const setPalette = (i: number, patch: Partial<Palette>) => setLayout({ palettes: layout.palettes.map((p, j) => (j === i ? { ...p, ...patch } : p)) });
@@ -234,7 +247,7 @@ export function TemplateBuilder({ meta, initial }: { meta: BuilderMeta; initial:
                   {[...new Set([...meta.groups.map((g) => g.id as string), form.category])].map((c) => <option key={c} value={c}>{meta.groups.find((g) => g.id === c)?.label ?? c}</option>)}
                 </Select>
               </Field>
-              <Field label="Paket (tier)"><Select value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value as TemplateForm['tier'] })}><option value="BASIC">Basic</option><option value="STANDARD">Standard</option><option value="PREMIUM">Premium</option></Select></Field>
+              <Field label="Paket (tier)"><Select value={form.tier} onChange={(e) => changeTier(e.target.value as TemplateForm['tier'])}><option value="BASIC">Basic</option><option value="STANDARD">Standard</option><option value="PREMIUM">Premium</option></Select></Field>
               <Field label="Harga (Rp)"><Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} /></Field>
               <Field label="Masa aktif termasuk (minggu)" hint="Lama tayang yang sudah termasuk di harga template."><Input type="number" min={1} max={52} value={form.includedWeeks} onChange={(e) => setForm({ ...form, includedWeeks: Number(e.target.value) })} /></Field>
               <Field label="Status"><Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TemplateForm['status'] })}><option value="DRAFT">Draf (tidak tampil)</option><option value="PUBLISHED">Dipublikasikan</option><option value="ARCHIVED">Diarsipkan</option></Select></Field>
@@ -263,6 +276,12 @@ export function TemplateBuilder({ meta, initial }: { meta: BuilderMeta; initial:
               </Field>
               <Field label="Level animasi" hint="Tanpa = tampilan statis (Basic). Standar = animasi masuk & partikel di sampul. Penuh = partikel di seluruh halaman, kilau, dan gerak tambahan.">
                 <Select value={layout.theme.fx} onChange={(e) => setTheme({ fx: e.target.value as FxLevel })}>{FX_ORDER.map((v) => <option key={v} value={v}>{FX_LABEL[v]}</option>)}</Select>
+              </Field>
+              <Field label="Gerbang pembuka" hint="Halaman pertama undangan: adegan animasi yang harus diketuk sebelum sampul terlihat. Dirancang untuk Premium. Di pratinjau kanan, gunakan tombol Putar ulang gerbang.">
+                <Select value={layout.theme.gate ?? 'none'} onChange={(e) => setTheme({ gate: e.target.value as GateSetting })}>
+                  <option value="none">Tanpa gerbang</option>
+                  {meta.gates.map((g) => <option key={g.id} value={g.id}>{g.label}{design?.gate === g.id ? ' (bawaan desain)' : ''}</option>)}
+                </Select>
               </Field>
               {(['primary', 'secondary', 'background', 'text'] as const).map((k) => (
                 <Field key={k} label={{ primary: 'Warna utama', secondary: 'Warna pendamping', background: 'Latar', text: 'Teks' }[k]}>

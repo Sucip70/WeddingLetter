@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { applyPalette, normalizeLayout } from './layout.js';
-import { BASIC_PALETTES, DESIGNS, GROUP_ORDER, autoPalettes, designById } from './themes.js';
+import { BASIC_PALETTES, DESIGNS, GATE_KINDS, GROUP_ORDER, autoPalettes, designById } from './themes.js';
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
@@ -19,6 +19,29 @@ describe('registry desain', () => {
     for (const design of DESIGNS) {
       for (const color of [design.primary, design.secondary, design.background, design.text]) expect(color).toMatch(HEX);
     }
+  });
+});
+
+describe('gerbang pembuka', () => {
+  it('setiap desain punya gerbang bawaan yang valid; semua jenis gerbang dipakai minimal satu desain', () => {
+    for (const design of DESIGNS) expect(GATE_KINDS).toContain(design.gate);
+    const used = new Set(DESIGNS.map((x) => x.gate));
+    expect([...used].sort()).toEqual([...GATE_KINDS].sort());
+  });
+
+  it('normalizeLayout: gerbang bawaan none; nilai sah dipakai; nilai asing dibuang tanpa melempar', () => {
+    expect(normalizeLayout({ theme: { preset: 'jawa' } }).theme.gate).toBe('none');
+    expect(normalizeLayout({ theme: { preset: 'jawa', gate: 'door' } }).theme.gate).toBe('door');
+    expect(normalizeLayout({ theme: { preset: 'jawa', gate: 'none' } }).theme.gate).toBe('none');
+    expect(() => normalizeLayout({ theme: { preset: 'jawa', gate: 'meriam' } })).not.toThrow();
+    expect(normalizeLayout({ theme: { preset: 'jawa', gate: 'meriam' } }).theme.gate).toBe('none');
+  });
+
+  it('pemilihan gerbang sesuai rekomendasi tema (contoh)', () => {
+    expect(designById('sihir')!.gate).toBe('portal');
+    expect(designById('hollywood')!.gate).toBe('curtain');
+    expect(designById('dongeng')!.gate).toBe('book');
+    expect(designById('gugur')!.gate).toBe('leaves');
   });
 });
 

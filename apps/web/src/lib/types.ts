@@ -18,6 +18,30 @@ export interface SectionDef {
 }
 
 export type FxLevel = 'none' | 'standard' | 'premium';
+// Gerbang pembuka undangan Premium (apps/web/.../gates.tsx). Sama dengan GATE_LABEL di API.
+export const GATE_LABEL = {
+  door: 'Pintu',
+  glass: 'Jendela kaca patri',
+  curtain: 'Tirai',
+  cloth: 'Kain ditarik',
+  envelope: 'Amplop',
+  portal: 'Portal sihir',
+  ring: 'Cincin',
+  bloom: 'Bunga bermekaran',
+  leaves: 'Daun berguguran',
+  balloons: 'Balon',
+  waves: 'Ombak',
+  gift: 'Kado',
+  lantern: 'Lentera',
+  fireworks: 'Kembang api',
+  frost: 'Kaca beku',
+  book: 'Buku dongeng',
+  pressstart: 'Press Start',
+  loading: 'Loading',
+  neon: 'Papan neon',
+} as const;
+export type GateKind = keyof typeof GATE_LABEL;
+export type GateSetting = GateKind | 'none';
 export type HeadingFont = 'script' | 'serif' | 'sans' | 'display' | 'cinzel' | 'pixel' | 'round';
 export type BodyFont = 'serif' | 'sans' | 'round';
 
@@ -26,6 +50,8 @@ export interface Theme {
   // Kunci paket motif visual (ornamen, partikel, bingkai, dst.) di components/invitation/motifs.ts.
   motif: string;
   fx: FxLevel;
+  // Kosong / 'none' = tanpa gerbang (undangan lama sebelum fitur ini).
+  gate?: GateSetting;
   primary: string;
   secondary: string;
   background: string;

@@ -37,7 +37,11 @@ function sampleDates() {
   return { akad_tanggal: `${day}T10:00`, resepsi_tanggal: `${day}T12:00` };
 }
 
-export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'>, extra: Partial<InvitationViewData> = {}): InvitationViewData {
+// Foto demo (Admin -> Foto demo): slot -> URL. Dipakai mengisi bingkai mempelai, galeri, dan (opsional) sampul.
+export type DemoPhotos = Record<string, string>;
+const GALLERY_SLOTS = ['gallery1', 'gallery2', 'gallery3', 'gallery4', 'gallery5', 'gallery6', 'gallery7', 'gallery8'];
+
+export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'> & { galeri?: Layout['galeri'] }, extra: Partial<InvitationViewData> = {}, photos: DemoPhotos = {}): InvitationViewData {
   const dates = sampleDates();
   const data: InvitationViewData['data'] = {};
   for (const section of layout.sections) {
@@ -52,13 +56,29 @@ export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'>,
     }
     if (Object.keys(values).length) data[section.id] = values;
   }
+  // Foto demo: hanya untuk field yang memang ada di template.
+  const media: InvitationViewData['media'] = {};
+  const has = (section: string, key: string) => layout.sections.find((s) => s.id === section)?.fields.some((f) => f.key === key) ?? false;
+  const put = (section: string, key: string, slots: string[], list = false) => {
+    const ids = slots.filter((slot) => photos[slot]).map((slot) => {
+      media[`demo:${slot}`] = { url: photos[slot]!, type: 'PHOTO' };
+      return `demo:${slot}`;
+    });
+    if (!ids.length || !has(section, key)) return;
+    data[section] = { ...(data[section] ?? {}), [key]: list ? ids : ids[0]! };
+  };
+  put('cover', 'foto', ['cover']);
+  put('mempelai', 'pria_foto', ['groom']);
+  put('mempelai', 'wanita_foto', ['bride']);
+  put('galeri', 'foto', GALLERY_SLOTS.slice(0, Math.max(0, Math.min(layout.galeri?.maxPhotos ?? 8, 8))), true);
+
   return {
     slug: 'contoh',
     templateName: 'Contoh',
     layout: { theme: layout.theme, sections: layout.sections, musik: { presets: layout.musik?.presets ?? [] } },
     features: {},
     data,
-    media: {},
+    media,
     rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp'),
     guestbook: [],
     ...extra,

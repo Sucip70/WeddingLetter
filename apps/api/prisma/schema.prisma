@@ -330,3 +330,14 @@ model MusicTrack {
   @@index([status, minTier, sortOrder])
   @@map("music_tracks")
 }
+
+// Foto contoh yang dipakai demo template (halaman detail, beranda, pratinjau builder) supaya template
+// terlihat hidup. Satu baris per "slot" (mempelai pria, mempelai wanita, galeri 1-8, sampul). Berkas ada
+// di folder assets/ storage; admin bisa menggantinya di Admin -> Foto demo.
+model DemoPhoto {
+  slot       String   @id
+  storageKey String
+  updatedAt  DateTime @updatedAt
+
+  @@map("demo_photos")
+}

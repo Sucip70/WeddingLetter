@@ -10,6 +10,7 @@ const ITEMS = [
   { href: '/admin/invitations', label: 'Undangan' },
   { href: '/admin/templates', label: 'Template' },
   { href: '/admin/music', label: 'Musik' },
+  { href: '/admin/demo-photos', label: 'Foto demo' },
   { href: '/admin/pricing', label: 'Harga & kupon' },
   { href: '/admin/users', label: 'Pengguna' },
 ];

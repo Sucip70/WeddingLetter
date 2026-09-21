@@ -172,14 +172,14 @@ const PATTERNS: Record<Exclude<PatternKind, 'none'>, { w: number; h: number; svg
   cross: P(28, 28, '<path d="M14 8v12M8 14h12" stroke-width="1.8"/>'),
 };
 
-export function PatternLayer({ kind, opacity = 0.09 }: { kind: PatternKind; opacity?: number }) {
+export function PatternLayer({ kind, opacity = 0.09, color = 'var(--p)' }: { kind: PatternKind; opacity?: number; color?: string }) {
   if (kind === 'none') return null;
   const p = PATTERNS[kind];
   const url = `url("data:image/svg+xml,${encodeURIComponent(p.svg)}")`;
   return (
     <div
       className="pointer-events-none absolute inset-0"
-      style={{ background: 'var(--p)', opacity, WebkitMaskImage: url, maskImage: url, WebkitMaskSize: `${p.w}px ${p.h}px`, maskSize: `${p.w}px ${p.h}px`, WebkitMaskRepeat: 'repeat', maskRepeat: 'repeat' }}
+      style={{ background: color, opacity, WebkitMaskImage: url, maskImage: url, WebkitMaskSize: `${p.w}px ${p.h}px`, maskSize: `${p.w}px ${p.h}px`, WebkitMaskRepeat: 'repeat', maskRepeat: 'repeat' }}
       aria-hidden
     />
   );

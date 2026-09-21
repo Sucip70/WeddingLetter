@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { TemplateBuilder } from '@/components/admin/template-builder';
 import type { BuilderMeta, TemplateForm } from '@/components/admin/template-builder';
 import { ApiError } from '@/lib/api';
+import { getDemoPhotos } from '@/lib/catalog';
 import { authedFetch } from '@/lib/session';
 
 export const metadata: Metadata = { title: 'Admin — template builder' };
@@ -11,7 +12,7 @@ export const metadata: Metadata = { title: 'Admin — template builder' };
 export default async function AdminTemplateBuilder({ params }: PageProps<'/admin/templates/[id]'>) {
   const { id } = await params;
   const path = `/admin/templates/${id}`;
-  const meta = await authedFetch<BuilderMeta>('/admin/builder-meta', path);
+  const [meta, photos] = await Promise.all([authedFetch<BuilderMeta>('/admin/builder-meta', path), getDemoPhotos()]);
   const template =
     id === 'new'
       ? null
@@ -22,7 +23,7 @@ export default async function AdminTemplateBuilder({ params }: PageProps<'/admin
   return (
     <div>
       <Link href="/admin/templates" className="text-sm text-ink-soft hover:text-ink">← Template</Link>
-      <TemplateBuilder key={template?.id ?? 'new'} meta={meta} initial={template} />
+      <TemplateBuilder key={template?.id ?? 'new'} meta={meta} initial={template} photos={photos} />
     </div>
   );
 }

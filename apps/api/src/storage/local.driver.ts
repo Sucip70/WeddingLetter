@@ -1,11 +1,12 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { mkdir, rm, stat } from 'node:fs/promises';
+import { mkdir, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { PresignedUpload, StorageDriver } from './storage.types.js';
 
 const TTL_SECONDS = 15 * 60;
 
-export const KEY_PATTERN = /^[a-z0-9]+\/[a-z0-9]+\.[a-z0-9]{2,5}$/i;
+// <folder>/<nama>.<ekstensi>; nama boleh memakai tanda hubung (mis. assets/demo-groom.svg).
+export const KEY_PATTERN = /^[a-z0-9]+\/[a-z0-9-]+\.[a-z0-9]{2,5}$/i;
 
 // Driver disk lokal, hanya untuk development tanpa kredensial R2. URL upload ditandatangani HMAC
 // (kunci, tipe, ukuran, kedaluwarsa) supaya perilakunya sama dengan R2: tidak bisa unggah sembarangan.
@@ -50,6 +51,11 @@ export class LocalDriver implements StorageDriver {
       headers: { 'Content-Type': contentType },
       expiresInSeconds: TTL_SECONDS,
     };
+  }
+
+  async put(key: string, body: Buffer) {
+    await this.ensureDir(key);
+    await writeFile(this.filePath(key), body);
   }
 
   async head(key: string) {

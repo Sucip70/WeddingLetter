@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { sampleView } from '@/lib/sample';
+import type { DemoPhotos } from '@/lib/sample';
 import type { TemplateDetail } from '@/lib/types';
 import { InvitationView } from './invitation/invitation-view';
 import { PhoneFrame } from './invitation/phone-frame';
@@ -11,7 +12,7 @@ import { LinkButton } from './ui';
 
 // Demo interaktif di halaman detail template: ganti warna, dengarkan lagu bawaan, lalu "Pakai template ini".
 // Kolom kanan dirakit dari `header` (judul, harga) + tombol pakai + `children` (fitur, add-on) dari server.
-export function TemplateDemo({ template, header, children }: { template: TemplateDetail; header: ReactNode; children: ReactNode }) {
+export function TemplateDemo({ template, header, children, photos }: { template: TemplateDetail; header: ReactNode; children: ReactNode; photos: DemoPhotos }) {
   const { palettes, musik } = template.layout;
   const [paletteId, setPaletteId] = useState(palettes[0]?.id ?? '');
   const [track, setTrack] = useState<number | null>(null);
@@ -21,8 +22,8 @@ export function TemplateDemo({ template, header, children }: { template: Templat
   const palette = palettes.find((p) => p.id === paletteId);
   const view = useMemo(() => {
     const theme = palette ? { ...template.layout.theme, primary: palette.primary, secondary: palette.secondary, background: palette.background, text: palette.text } : template.layout.theme;
-    return sampleView({ ...template.layout, theme });
-  }, [template.layout, palette]);
+    return sampleView({ ...template.layout, theme }, {}, photos);
+  }, [template.layout, palette, photos]);
 
   // Memilih lagu memutarnya; memilih lagu yang sama lagi menghentikannya.
   useEffect(() => {
@@ -43,7 +44,7 @@ export function TemplateDemo({ template, header, children }: { template: Templat
     <div className="mt-6 grid gap-12 lg:grid-cols-[auto_1fr] lg:gap-16">
       <div className="lg:sticky lg:top-24 lg:self-start">
         <PhoneFrame size="lg">
-          <InvitationView key={paletteId} view={view} mode="preview" embedded placeholders />
+          <InvitationView view={view} mode="preview" embedded placeholders gate="show" />
         </PhoneFrame>
         <p className="mt-4 text-center text-xs text-ink-soft">Demo interaktif · gulir di dalam layar ponsel</p>
 
