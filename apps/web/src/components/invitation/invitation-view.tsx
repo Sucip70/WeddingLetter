@@ -4,6 +4,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { CSSProperties, FormEvent, ReactNode } from 'react';
 import { formatLocalDate, formatLocalTime, localToInstant, parseLocal } from '@/lib/format';
+import { findPreset } from '@/lib/presets';
 import type { InvitationViewData } from '@/lib/types';
 import { STRINGS } from './i18n';
 import type { Lang, Strings } from './i18n';
@@ -101,12 +102,12 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   );
   const url = (id: string | undefined) => (id ? view.media[id]?.url : undefined);
 
+  const song = str(data, 'musik', 'lagu');
+  const preset = findPreset(view.layout.musik.presets, song);
   const musicUrl = useMemo(() => {
-    const song = str(data, 'musik', 'lagu');
     if (!song) return undefined;
-    const m = /^preset:(\d+)$/.exec(song);
-    return m ? view.layout.musik.presets[Number(m[1])]?.url : view.media[song]?.url;
-  }, [data, view.layout.musik.presets, view.media]);
+    return song.startsWith('preset:') ? preset?.url : view.media[song]?.url;
+  }, [song, preset, view.media]);
 
   const toggleMusic = useCallback(() => {
     const a = audioRef.current;
@@ -459,6 +460,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
           </div>
           <p style={{ color: 'var(--tx)' }}>{names}</p>
           <p className="mt-1">{t.madeWith}</p>
+          {preset?.credit && <p className="mt-2 opacity-80">{preset.credit}</p>}
         </footer>
 
         {musicUrl && (

@@ -4,7 +4,8 @@
 import { useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 import { mb, rupiah } from '@/lib/format';
-import type { FieldDef, InvitationData, MediaCharge } from '@/lib/types';
+import { presetToken } from '@/lib/presets';
+import type { FieldDef, InvitationData, MediaCharge, MusicPreset } from '@/lib/types';
 import { Badge, Button, Field, Input, Select, Textarea, cn } from '../ui';
 import { ACCEPT, LIMITS } from './model';
 import type { LocalFile } from './model';
@@ -14,7 +15,7 @@ export interface FieldCtx {
   files: Record<string, LocalFile>;
   charges: Record<string, MediaCharge>;
   weeks: number;
-  presets: { name: string; url: string }[];
+  presets: MusicPreset[];
   songPrice?: number;
   photoPackPrice?: number;
   maxPhotos: number;
@@ -224,10 +225,11 @@ function SongField({ section, field, ctx }: { section: string; field: FieldDef; 
           <input type="radio" name={`${section}.${field.key}`} checked={!current} onChange={() => choose(undefined)} className="accent-[#b4533c]" />
           Tanpa musik
         </label>
+        {ctx.presets.length === 0 && <p className="rounded-xl border border-dashed border-line px-3 py-2.5 text-xs text-ink-soft">Belum ada lagu bawaan untuk paket ini. Anda tetap bisa mengunggah lagu sendiri di bawah.</p>}
         {ctx.presets.map((p, i) => (
-          <label key={p.url} className="flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-paper px-3 py-2.5 text-sm has-[:checked]:border-rose has-[:checked]:bg-rose-soft/40">
-            <input type="radio" name={`${section}.${field.key}`} checked={current === `preset:${i}`} onChange={() => choose(`preset:${i}`)} className="accent-[#b4533c]" />
-            <span className="flex-1">{p.name}</span>
+          <label key={p.id ?? p.url} className="flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-paper px-3 py-2.5 text-sm has-[:checked]:border-rose has-[:checked]:bg-rose-soft/40">
+            <input type="radio" name={`${section}.${field.key}`} checked={current === presetToken(p, i)} onChange={() => choose(presetToken(p, i))} className="accent-[#b4533c]" />
+            <span className="flex-1">{p.name}{p.credit && <span className="block text-[11px] text-ink-soft">{p.credit}</span>}</span>
             <audio src={p.url} controls preload="none" className="h-8 w-40" onClick={(e) => e.stopPropagation()} />
             <Badge tone="sage">Gratis</Badge>
           </label>

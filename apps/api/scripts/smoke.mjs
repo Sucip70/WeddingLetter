@@ -65,9 +65,9 @@ ok(templates.length >= 3 && basic.layout.sections.length > 0, 'katalog memuat te
 eq(templates.length, 69, 'katalog 69 template (1 Basic + 34 Standard + 34 Premium)');
 eq(basic.layout.palettes.length, 8, 'Basic punya 8 pilihan warna');
 const premium = templates.find((t) => t.name === 'Premium Batik Jawa');
-ok(premium.design.group === 'suku' && premium.layout.theme.fx === 'premium' && premium.layout.musik.presets.length === 0 && premium.layout.musik.count === 20, 'daftar katalog ringan: info desain + jumlah lagu, tanpa daftar lagu');
+ok(premium.design.group === 'suku' && premium.layout.theme.fx === 'premium' && premium.layout.musik.presets.length === 0 && premium.layout.musik.count === 0, 'daftar katalog ringan: info desain + jumlah lagu, tanpa daftar lagu');
 const premiumFull = (await call('GET', `/templates/${premium.id}`, { expect: 200 })).json;
-ok(premiumFull.layout.musik.presets.length === 20 && premiumFull.layout.musik.presets[0].url.startsWith('/audio/'), 'detail Premium memuat 20 lagu bawaan');
+ok(premiumFull.layout.musik.allowed && basic.layout.musik.allowed && premiumFull.layout.musik.presets.length === 0, 'semua paket boleh musik; pustaka lagu awalnya kosong (diisi admin)');
 eq(premiumFull.layout.palettes.map((p) => p.id), ['bawaan', 'hangat', 'sejuk'], 'desain non-Basic punya palet bawaan + 2 varian otomatis');
 const standardJawa = templates.find((t) => t.name === 'Standard Batik Jawa');
 eq(standardJawa.layout.theme.fx, 'standard', 'Standard = animasi standar');
@@ -218,7 +218,7 @@ ok(stats.revenue.total >= 53120 + 22800 && stats.invitations.ACTIVE >= 1, 'stati
 
 step('Admin: template builder');
 const meta = (await call('GET', '/admin/builder-meta', { token: admin, expect: 200 })).json;
-ok(meta.designs.length === 34 && meta.groups.length === 8 && meta.tracks.length === 20 && meta.sections.length === 10, 'builder-meta memuat 34 desain, 8 grup, 20 lagu & 10 section');
+ok(meta.designs.length === 34 && meta.groups.length === 8 && meta.sections.length === 10, 'builder-meta memuat 34 desain, 8 grup & 10 section');
 ok(meta.designs.every((d) => d.palettes.length >= 0) && meta.designs.find((d) => d.id === 'rustic').palettes.length === 8, 'usulan palet per desain tersedia');
 const authoring = (await call('GET', `/admin/templates/${basic.id}`, { token: admin, expect: 200 })).json;
 eq(authoring.layout.sections.length, 9, 'builder memuat semua 9 section (aktif & nonaktif)');
@@ -262,6 +262,51 @@ ok(true, 'warna tidak valid ditolak');
 await call('DELETE', `/admin/templates/${basic.id}`, { token: admin, expect: 409 });
 ok(true, 'template yang sudah pernah dipesan tidak bisa dihapus');
 await call('DELETE', `/admin/templates/${newTpl.id}`, { token: admin, expect: 200 });
+
+step('Admin: pustaka lagu (unggah, batas paket, arsip, hapus)');
+await call('GET', '/admin/music', { token: user, expect: 403 });
+ok(true, 'pustaka lagu hanya untuk admin');
+await call('POST', '/admin/assets/presign', { token: admin, body: { kind: 'audio', contentType: 'audio/mpeg', sizeBytes: 26 * MB }, expect: 400 });
+ok(true, 'unggahan lagu di atas 25 MB ditolak');
+async function addTrack(meta) {
+  const p = (await call('POST', '/admin/assets/presign', { token: admin, body: { kind: 'audio', contentType: 'audio/mpeg', sizeBytes: 3 * MB }, expect: 200 })).json;
+  eq(await upload(p, 3 * MB), 200, 'file lagu terunggah');
+  return (await call('POST', '/admin/music', { token: admin, body: { key: p.key, ...meta }, expect: 201 })).json;
+}
+await call('POST', '/admin/music', { token: admin, body: { key: 'assets/belum-ada.mp3', title: 'X', artist: 'Y', licenseType: 'CC0', minTier: 'BASIC' }, expect: 400 });
+ok(true, 'simpan lagu ditolak bila file belum terunggah');
+const canon = await addTrack({ title: 'Canon in D', artist: 'Pachelbel', licenseType: 'PUBLIC_DOMAIN', minTier: 'BASIC', durationSec: 240, sortOrder: 1 });
+const rf = await addTrack({ title: 'Bebas Royalti', artist: 'Studio X', licenseType: 'ROYALTY_FREE', minTier: 'STANDARD', sortOrder: 2 });
+const excl = await addTrack({ title: 'Eksklusif', artist: 'Y', licenseType: 'CC_BY', minTier: 'PREMIUM', attribution: 'Musik: Eksklusif oleh Y (CC BY 4.0)', sortOrder: 3 });
+const basicTpl = (await call('GET', `/templates/${basic.id}`, { expect: 200 })).json;
+const stdTpl = (await call('GET', `/templates/${standardJawa.id}`, { expect: 200 })).json;
+const premTpl = (await call('GET', `/templates/${premium.id}`, { expect: 200 })).json;
+eq(basicTpl.layout.musik.presets.map((p) => p.id), [canon.id], 'Basic hanya mendapat lagu klasik domain publik');
+eq(stdTpl.layout.musik.presets.map((p) => p.id), [canon.id, rf.id], 'Standard mendapat lagu klasik + royalty-free');
+eq(premTpl.layout.musik.presets.map((p) => p.id), [canon.id, rf.id, excl.id], 'Premium mendapat seluruh pustaka');
+ok(premTpl.layout.musik.presets[2].credit === 'Musik: Eksklusif oleh Y (CC BY 4.0)' && !('credit' in premTpl.layout.musik.presets[0]), 'kredit hanya ada untuk lagu yang mewajibkannya');
+const listAfter = (await call('GET', '/templates', { expect: 200 })).json;
+eq(listAfter.find((t) => t.id === basic.id).layout.musik.count, 1, 'daftar katalog memuat jumlah lagu per paket');
+const musicOrder = {
+  templateId: basic.id,
+  weeks: 4,
+  media: [],
+  data: { mempelai: { pria_nama: 'A', wanita_nama: 'B' }, tanggal_lokasi: { akad_tanggal: '2027-02-06T10:00', akad_lokasi: 'Gedung' }, musik: { lagu: `preset:${canon.id}` } },
+};
+const musicCreated = await call('POST', '/orders', { token: user, body: musicOrder, expect: 201 });
+const musicInv = (await call('GET', `/invitations/${musicCreated.json.order.invitation.id}`, { token: user, expect: 200 })).json;
+eq(musicInv.data.musik.lagu, `preset:${canon.id}`, 'pesanan dengan lagu klasik tersimpan');
+eq(musicInv.layout.musik.presets.map((p) => p.id), [canon.id], 'snapshot undangan menyimpan lagu pustaka yang berhak dipakai paketnya');
+await call('POST', '/orders', { token: user, body: { ...musicOrder, data: { ...musicOrder.data, musik: { lagu: `preset:${excl.id}` } } }, expect: 400 });
+ok(true, 'Basic tidak bisa memilih lagu khusus Premium (400)');
+await call('POST', `/orders/${musicCreated.json.order.id}/cancel`, { token: user });
+await call('PATCH', `/admin/music/${rf.id}`, { token: admin, body: { status: 'ARCHIVED' }, expect: 200 });
+eq((await call('GET', `/templates/${standardJawa.id}`, { expect: 200 })).json.layout.musik.presets.map((p) => p.id), [canon.id], 'lagu yang diarsipkan hilang dari pilihan pembeli baru');
+await call('DELETE', `/admin/music/${canon.id}`, { token: admin, expect: 409 });
+ok(true, 'lagu yang masih dipakai undangan tidak bisa dihapus permanen (409)');
+await call('DELETE', `/admin/music/${rf.id}`, { token: admin, expect: 200 });
+await call('DELETE', `/admin/music/${excl.id}`, { token: admin, expect: 200 });
+ok(true, 'lagu yang tidak dipakai bisa dihapus permanen');
 
 step('Admin: harga per komponen langsung berlaku');
 const rental = (await call('GET', '/admin/add-ons', { token: admin, expect: 200 })).json.find((a) => a.code === 'MEDIA_RENTAL_WEEK');

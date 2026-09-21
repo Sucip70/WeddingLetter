@@ -11,6 +11,7 @@ import { InvitationStatusBadge, expiryText } from '@/components/status';
 import { Alert, Badge, Button, Card, Field, Input, Modal, Select, Spinner, cn } from '@/components/ui';
 import { api, errorMessage, uploadWithProgress } from '@/lib/client-api';
 import { daysLeft, formatDate, formatDateTime, mb, rupiah, whatsappLink } from '@/lib/format';
+import { findPreset } from '@/lib/presets';
 import type { InvitationData, InvitationDetail, InvitationMedia, InvitationViewData, QuoteLine, RsvpSummary, Upload } from '@/lib/types';
 
 type Tab = 'overview' | 'edit' | 'rsvp' | 'extend';
@@ -341,7 +342,7 @@ function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: Invitatio
                   <div key={f.key} className="sm:col-span-2">
                     <p className="text-sm font-medium text-ink">{f.label}</p>
                     {typeof v === 'string' && v.startsWith('preset:') ? (
-                      <p className="mt-1 text-sm text-ink-soft">Lagu bawaan: {inv.layout.musik.presets[Number(v.slice(7))]?.name}</p>
+                      <p className="mt-1 text-sm text-ink-soft">Lagu bawaan: {findPreset(inv.layout.musik.presets, v)?.name}</p>
                     ) : ids.length === 0 ? (
                       <p className="mt-1 text-sm text-ink-soft">Belum ada.</p>
                     ) : (

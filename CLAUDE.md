@@ -18,19 +18,19 @@ Setup lengkap ada di [README.md](./README.md) — install, jalankan database, mi
 
 ## Status implementasi saat ini
 
-Semua fitur inti dari rancangan **sudah diimplementasikan dan diverifikasi**: 81 unit test API, smoke test alur penuh terhadap Postgres sungguhan (`apps/api/scripts/smoke.mjs`, 126 pengecekan: user + admin + job pemeliharaan), dan alur UI dicoba langsung di browser. Cara menjalankan ada di README.
+Semua fitur inti dari rancangan **sudah diimplementasikan dan diverifikasi**: 89 unit test API, smoke test alur penuh terhadap Postgres sungguhan (`apps/api/scripts/smoke.mjs`, 143 pengecekan: user + admin + job pemeliharaan), dan alur UI dicoba langsung di browser. Cara menjalankan ada di README.
 
 **API (`apps/api/src`)** — pola tiap modul: controller tipis + service + zod (`parseBody`) + `@UseGuards(AuthGuard)`/`@Roles('ADMIN')`.
 - `auth/` email+OTP & Google, JWT bearer (dari sesi lain).
-- `templates/themes.ts` (registry 34 desain + palet: `DESIGNS`, `BASIC_PALETTES`, `autoPalettes`) dan `templates/music-library.ts` (20 lagu bawaan orisinal). Katalog = desain x paket (`prisma/seed.ts` membangun 69 baris; category = grup tema). Basic hanya desain `rustic` (8 warna); Standard/Premium semua desain, `theme.fx` = `standard`/`premium`.
+- `templates/themes.ts` (registry 34 desain + palet: `DESIGNS`, `BASIC_PALETTES`, `autoPalettes`). Katalog = desain x paket (`prisma/seed.ts` membangun 69 baris; category = grup tema). Semua paket `musik.allowed = true`; lagu bawaan TIDAK ada di seed/skema template, melainkan dari tabel `MusicTrack` (modul `music/`, Admin → Musik, `minTier` BASIC/STANDARD/PREMIUM) yang digabung lewat `withLibrary()` di `templates.service` dan `pricing.service` (rujukan `preset:<id>`, `findPreset()`). Basic hanya desain `rustic` (8 warna); Standard/Premium semua desain, `theme.fx` = `standard`/`premium`.
 - `templates/layout.ts` — **template engine berbasis skema** (juga `theme.motif`/`theme.fx`, `palettes`, `applyPalette` untuk warna pilihan pembeli; `GET /templates` sengaja ringan, detail lengkap di `GET /templates/:id`): `SECTION_REGISTRY` (section & field yang dikenali renderer), `normalizeLayout` (toleran skema lama), `effectiveSections` (section + add-on + musik), `validateInvitationData` (mode `lenient` untuk kalkulator), `toAuthoring` (untuk builder admin).
 - `pricing/` — `pricing.calculator.ts` murni (rumus Bagian 6/7/7.1, teruji), `pricing.service.ts` (validasi + kupon), `POST /pricing/quote` publik.
 - `orders/` (buat order + draf undangan + slot upload; perpanjangan = order `EXTENSION`), `payments/` (Midtrans Snap + webhook bertanda tangan; `DevProvider` hanya non-production), `media/` (presign/confirm/**replace**), `storage/` (R2 via S3 SDK, fallback disk lokal dev), `invitations/` (owner + publik + RSVP, `lifecycle.service.ts` = publish/pause/resume/extend/expire/purge), `admin/`, `jobs/maintenance.service.ts` (tiap jam), `notifications/` (Resend, Fonnte).
-- Migrasi: `20260919033052_init`, `20260919100000_auth`, `20260920113934_orders_payments_media`.
+- Migrasi: `20260919033052_init`, `20260919100000_auth`, `20260920113934_orders_payments_media`, `20260921053354_music_library`.
 
 **Web (`apps/web/src`)** — Next 16 App Router, Tailwind 4, tanpa library UI. Grup rute `(site)` memakai header/footer; `u/[slug]` bare.
 - Token sesi di **cookie httpOnly** lewat `app/api/auth/[action]` (login) dan `app/api/backend/[...path]` (proxy ke API). Browser memakai `lib/client-api.ts`; server component memakai `lib/api.ts` + `lib/session.ts`.
-- `components/invitation/motifs.ts` (paket motif per desain, kunci = `theme.motif`), `effects.tsx` (partikel, pola, efek sampul, bingkai foto, reveal saat gulir), `ornaments.tsx` (6 jenis ornamen). Animasi digerbangi `theme.fx`; `fx: none` harus tetap tampil seperti desain Basic lama. Lagu bawaan dibuat `apps/web/scripts/generate-music.mjs` -> `public/audio/`.
+- `components/invitation/motifs.ts` (paket motif per desain, kunci = `theme.motif`), `effects.tsx` (partikel, pola, efek sampul, bingkai foto, reveal saat gulir), `ornaments.tsx` (6 jenis ornamen). Animasi digerbangi `theme.fx`; `fx: none` harus tetap tampil seperti desain Basic lama.
 - `components/invitation/invitation-view.tsx` = renderer undangan (dipakai halaman publik, demo template, editor, dashboard, builder). `phone-frame.tsx` merender pada 390px lalu diskalakan.
 - `components/editor/*` editor + checkout; `components/admin/template-builder.tsx`; dashboard di `(site)/dashboard`; admin di `(site)/admin`.
 

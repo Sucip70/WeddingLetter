@@ -7,7 +7,6 @@ import { PaymentsService } from '../payments/payments.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { SECTION_REGISTRY, layoutIncludes, normalizeLayout, toAuthoring } from '../templates/layout.js';
-import { TRACKS } from '../templates/music-library.js';
 import { BASIC_PALETTES, DESIGNS, GROUP_LABEL, GROUP_ORDER, autoPalettes } from '../templates/themes.js';
 import type { z } from 'zod';
 import type { assetPresignSchema, couponCreateSchema, couponUpdateSchema, listQuerySchema, templateCreateSchema, templateUpdateSchema } from './admin.dto.js';
@@ -62,7 +61,6 @@ export class AdminService {
       // palettes = usulan palet pembeli untuk desain itu (rustic memakai 8 warna Basic, lainnya 2 varian otomatis)
       designs: DESIGNS.map((design) => ({ ...design, palettes: design.id === 'rustic' ? BASIC_PALETTES : autoPalettes(design) })),
       groups: GROUP_ORDER.map((id) => ({ id, label: GROUP_LABEL[id] })),
-      tracks: TRACKS,
       sections: Object.entries(SECTION_REGISTRY).map(([id, def]) => ({ id, title: def.title, fields: def.fields })),
     };
   }
@@ -117,10 +115,11 @@ export class AdminService {
   async presignAsset(input: z.infer<typeof assetPresignSchema>) {
     const allowed = input.kind === 'image' ? ALLOWED_CONTENT_TYPES.PHOTO : ALLOWED_CONTENT_TYPES.SONG;
     if (!allowed.includes(input.contentType)) throw new BadRequestException('Tipe file tidak didukung');
-    if (input.sizeBytes > (input.kind === 'image' ? 5 : 8) * MB) throw new BadRequestException('File terlalu besar');
+    // Lagu pustaka (rekaman klasik utuh) bisa lebih besar dari lagu unggahan pembeli.
+    if (input.sizeBytes > (input.kind === 'image' ? 5 : 25) * MB) throw new BadRequestException(`File terlalu besar (maks. ${input.kind === 'image' ? 5 : 25} MB)`);
     const key = `assets/${newId()}.${EXT_BY_TYPE[input.contentType] ?? 'bin'}`;
     const presigned = await this.storage.presignUpload({ key, contentType: input.contentType, sizeBytes: input.sizeBytes });
-    return { ...presigned, publicUrl: this.storage.publicUrl(key) };
+    return { ...presigned, key, publicUrl: this.storage.publicUrl(key) };
   }
 
   // ----- Harga per komponen -----

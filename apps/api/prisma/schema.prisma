@@ -291,3 +291,42 @@ model RsvpGuest {
   @@index([invitationId, createdAt])
   @@map("rsvp_guests")
 }
+
+// Pustaka lagu bawaan yang dikelola admin (Admin -> Musik). Tersedia untuk pembeli sesuai `minTier`:
+// BASIC = semua paket (mis. musik klasik domain publik), STANDARD = Standard & Premium, PREMIUM = Premium saja.
+enum MusicLicense {
+  PUBLIC_DOMAIN
+  CC0
+  ROYALTY_FREE
+  CC_BY
+  OTHER
+}
+
+enum MusicStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model MusicTrack {
+  id          String       @id @default(cuid())
+  title       String
+  // Komposer / pemain / label.
+  artist      String
+  licenseType MusicLicense
+  // Catatan lisensi bebas (mis. "Komposisi: domain publik. Rekaman: Musopen, CC0").
+  licenseNote String?
+  sourceUrl   String?
+  // Teks kredit yang wajib ditampilkan di undangan (mis. lisensi CC BY). Kosong = tidak ditampilkan.
+  attribution String?
+  minTier     TemplateTier @default(STANDARD)
+  storageKey  String       @unique
+  sizeBytes   Int
+  durationSec Int?
+  sortOrder   Int          @default(0)
+  status      MusicStatus  @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([status, minTier, sortOrder])
+  @@map("music_tracks")
+}

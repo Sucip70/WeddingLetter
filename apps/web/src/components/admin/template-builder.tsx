@@ -42,13 +42,11 @@ export interface DesignMeta {
   text: string;
   headingFont: Theme['headingFont'];
   bodyFont: Theme['bodyFont'];
-  music: string[];
   palettes: Palette[];
 }
 export interface BuilderMeta {
   designs: DesignMeta[];
   groups: { id: ThemeGroup; label: string }[];
-  tracks: { id: string; name: string; mood: string }[];
   sections: { id: string; title: string; fields: { key: string; label: string; type: FieldType; required: boolean }[] }[];
 }
 
@@ -124,26 +122,14 @@ export function TemplateBuilder({ meta, initial }: { meta: BuilderMeta; initial:
   const view = useMemo(() => sampleView(toPreviewLayout(layout), { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }), [layout]);
 
   const design = meta.designs.find((d) => d.id === layout.theme.motif) ?? meta.designs.find((d) => d.id === layout.theme.preset);
-  const trackById = (id: string) => meta.tracks.find((t) => t.id === id);
-  const usedUrls = new Set(layout.musik.presets.map((p) => p.url));
-
-  // Ganti desain: warna, font, motif, dan usulan palet ikut berganti; lagu rekomendasi ditambahkan bila daftar masih kosong.
+  // Ganti desain: warna, font, motif, dan usulan palet ikut berganti.
   function applyDesign(id: string) {
     const d = meta.designs.find((x) => x.id === id);
     if (!d) return;
-    const recommended = layout.musik.presets.length === 0 ? d.music.map((m) => trackById(m)).filter((t): t is NonNullable<typeof t> => !!t).map((t) => ({ name: t.name, url: `/audio/${t.id}.mp3` })) : layout.musik.presets;
-    setForm((f) => ({
-      ...f,
-      category: d.group,
-      layout: { ...f.layout, theme: themeOf(d, f.layout.theme.fx), palettes: d.palettes, musik: { ...f.layout.musik, presets: recommended } },
-    }));
+    setForm((f) => ({ ...f, category: d.group, layout: { ...f.layout, theme: themeOf(d, f.layout.theme.fx), palettes: d.palettes } }));
   }
 
   const setPalette = (i: number, patch: Partial<Palette>) => setLayout({ palettes: layout.palettes.map((p, j) => (j === i ? { ...p, ...patch } : p)) });
-  const addLibraryTrack = (id: string) => {
-    const t = trackById(id);
-    if (t && !usedUrls.has(`/audio/${t.id}.mp3`)) setLayout({ musik: { ...layout.musik, presets: [...layout.musik.presets, { name: t.name, url: `/audio/${t.id}.mp3` }] } });
-  };
 
   async function uploadAsset(file: File, kind: 'image' | 'audio') {
     const target = await api<{ uploadUrl: string; method: string; headers: Record<string, string>; publicUrl: string }>('admin/assets/presign', { body: { kind, contentType: file.type, sizeBytes: file.size } });
@@ -368,7 +354,7 @@ export function TemplateBuilder({ meta, initial }: { meta: BuilderMeta; initial:
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="font-semibold text-ink">Musik latar</h2>
-                <p className="mt-1 text-sm text-ink-soft">Izinkan pembeli memilih lagu. Sediakan lagu bawaan royalty-free; unggah lagu sendiri oleh pembeli dikenai add-on.</p>
+                <p className="mt-1 text-sm text-ink-soft">Izinkan pembeli memilih lagu. Lagu bawaan datang dari pustaka musik (Admin → Musik) dan otomatis disaring sesuai paket template ini. Daftar di bawah hanya untuk lagu khusus template ini (opsional).</p>
               </div>
               <Toggle checked={layout.musik.allowed} onChange={(v) => setLayout({ musik: { ...layout.musik, allowed: v } })} label="Aktifkan musik" />
             </div>
@@ -381,19 +367,8 @@ export function TemplateBuilder({ meta, initial }: { meta: BuilderMeta; initial:
                     <button type="button" onClick={() => setLayout({ musik: { ...layout.musik, presets: layout.musik.presets.filter((_, j) => j !== i) } })} className="text-xs font-medium text-danger hover:underline">Hapus</button>
                   </div>
                 ))}
-                {meta.tracks.length > 0 && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Select value="" onChange={(e) => { if (e.target.value) addLibraryTrack(e.target.value); }} aria-label="Tambah dari pustaka lagu" className="max-w-xs">
-                      <option value="">+ Tambah dari pustaka bawaan…</option>
-                      {meta.tracks.filter((t) => !usedUrls.has(`/audio/${t.id}.mp3`)).map((t) => <option key={t.id} value={t.id}>{t.name} — {t.mood}</option>)}
-                    </Select>
-                    {design && (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setLayout({ musik: { ...layout.musik, presets: [...layout.musik.presets, ...design.music.filter((id) => !usedUrls.has(`/audio/${id}.mp3`)).map((id) => trackById(id)).filter((t): t is NonNullable<typeof t> => !!t).map((t) => ({ name: t.name, url: `/audio/${t.id}.mp3` }))] } })}>Tambah rekomendasi desain</Button>
-                    )}
-                  </div>
-                )}
                 <input ref={songInput} type="file" accept="audio/mpeg,audio/mp4,audio/aac,audio/ogg" className="sr-only" aria-label="Unggah lagu bawaan" onChange={(e) => { void onSong(e.target.files?.[0]); e.target.value = ''; }} />
-                <Button type="button" variant="secondary" size="sm" onClick={() => songInput.current?.click()} loading={uploading === 'song'}>+ Unggah lagu bawaan (maks. 8 MB)</Button>
+                <Button type="button" variant="secondary" size="sm" onClick={() => songInput.current?.click()} loading={uploading === 'song'}>+ Unggah lagu khusus template (maks. 25 MB)</Button>
               </div>
             )}
           </Card>

@@ -4,7 +4,6 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client.js";
-import { presetsFor, TRACK_IDS } from "../src/templates/music-library.js";
 import { autoPalettes, BASIC_PALETTES, DESIGNS } from "../src/templates/themes.js";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
@@ -12,7 +11,8 @@ const prisma = new PrismaClient({ adapter });
 
 // Katalog = desain x paket. Desain "rustic" tersedia di ketiga paket (Basic juga memakai desain ini dengan 8 pilihan
 // warna); ke-33 desain lainnya (suku, religi, perayaan, kartun, game, film, musim) tersedia di Standard & Premium.
-// Standard = animasi sedang + 4 lagu rekomendasi; Premium = animasi penuh + seluruh pustaka lagu + 1 video.
+// Standard = animasi sedang; Premium = animasi penuh + 1 video. Semua paket boleh memilih lagu bawaan:
+// daftar lagunya berasal dari pustaka (Admin -> Musik) dan disaring per paket lewat MusicTrack.minTier.
 const TIERS = {
   BASIC: {
     label: "Basic",
@@ -47,7 +47,6 @@ function buildTemplates() {
     for (const tier of ["BASIC", "STANDARD", "PREMIUM"] as const) {
       if (tier === "BASIC" && design.id !== "rustic") continue;
       const cfg = TIERS[tier];
-      const musicIds = tier === "BASIC" ? [] : tier === "STANDARD" ? design.music.slice(0, 4) : [...design.music, ...TRACK_IDS.filter((id) => !design.music.includes(id))];
       rows.push({
         name: LEGACY_NAMES[tier + ":" + design.id] ?? cfg.label + " " + design.name,
         category: design.group,
@@ -59,7 +58,7 @@ function buildTemplates() {
           palettes,
           sections: cfg.sections,
           galeri: cfg.galeri,
-          musik: tier === "BASIC" ? { allowed: false } : { allowed: true, presets: presetsFor(musicIds) },
+          musik: { allowed: true },
         },
       });
     }

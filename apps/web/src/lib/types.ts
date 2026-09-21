@@ -52,12 +52,20 @@ export interface DesignInfo {
   blurb: string;
 }
 
+// Lagu bawaan dari pustaka (id = rujukan stabil "preset:<id>"). `credit` wajib tampil di undangan bila ada.
+export interface MusicPreset {
+  id?: string;
+  name: string;
+  url: string;
+  credit?: string;
+}
+
 export interface Layout {
   theme: Theme;
   sections: SectionDef[];
   galeri: { maxPhotos: number; maxVideos: number };
   // `count` hanya ada di daftar katalog (presets dikosongkan supaya ringan).
-  musik: { allowed: boolean; presets: { name: string; url: string }[]; count?: number };
+  musik: { allowed: boolean; presets: MusicPreset[]; count?: number };
   palettes: Palette[];
 }
 
@@ -109,7 +117,7 @@ export interface InvitationViewData {
   slug: string;
   status?: string;
   templateName?: string;
-  layout: { theme: Theme; sections: SectionDef[]; musik: { presets: { name: string; url: string }[] } };
+  layout: { theme: Theme; sections: SectionDef[]; musik: { presets: MusicPreset[] } };
   features: InvitationFeatures;
   data: InvitationData;
   media: Record<string, MediaRef>;

@@ -60,7 +60,7 @@ export interface TemplateLayout {
   theme: ThemeDef;
   sections: SectionDef[];
   galeri: { maxPhotos: number; maxVideos: number };
-  musik: { allowed: boolean; presets: { name: string; url: string }[] };
+  musik: { allowed: boolean; presets: MusicPreset[] };
   // Pilihan warna yang bisa dipilih pembeli (kosong = tanpa pemilih warna).
   palettes: Palette[];
 }
@@ -156,6 +156,15 @@ export const paletteSchema = z.object({
 });
 
 // Lagu bawaan: URL https penuh atau berkas pustaka di web (/audio/<id>.mp3).
+// Lagu bawaan. `id` = id trek pustaka (rujukan stabil "preset:<id>"); tanpa id = rujukan berdasarkan urutan (data lama).
+export interface MusicPreset {
+  id?: string;
+  name: string;
+  url: string;
+  // Kredit yang wajib tampil di undangan (mis. lisensi CC BY).
+  credit?: string;
+}
+
 const presetUrl = z
   .string()
   .max(500)
@@ -204,7 +213,7 @@ export const layoutInputSchema = z.object({
   musik: z
     .object({
       allowed: z.boolean().optional(),
-      presets: z.array(z.object({ name: z.string().trim().min(1).max(80), url: presetUrl })).max(40).optional(),
+      presets: z.array(z.object({ name: z.string().trim().min(1).max(120), url: presetUrl, id: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/).optional(), credit: z.string().trim().max(300).optional() })).max(60).optional(),
     })
     .optional(),
   rsvp: z.object({ allowed: z.boolean().optional() }).optional(), // legacy: diabaikan
@@ -306,6 +315,24 @@ export function effectiveSections(layout: TemplateLayout, features: { rsvp?: boo
   if (features.envelope) ensure('amplop_digital');
   if (layout.musik.allowed) ensure('musik');
   return result;
+}
+
+// Rujukan lagu bawaan "preset:<token>": token = id preset, atau angka = urutan (undangan lama sebelum ada id).
+export function findPreset(presets: MusicPreset[], token: string): MusicPreset | undefined {
+  const byId = presets.find((p) => p.id === token);
+  if (byId) return byId;
+  return /^\d+$/.test(token) ? presets[Number(token)] : undefined;
+}
+
+// Menggabungkan lagu pustaka (yang berhak dipakai paket ini) ke skema template. Lagu khusus template
+// (unggahan admin di builder) diberi id stabil "c<urutan>" dan ditaruh setelah lagu pustaka.
+// Template tanpa musik (allowed=false) tidak diubah.
+export function withLibrary(layout: TemplateLayout, library: MusicPreset[]): TemplateLayout {
+  if (!layout.musik.allowed) return layout;
+  const own = layout.musik.presets.map((p, i) => ({ ...p, id: p.id ?? `c${i}` }));
+  const seen = new Set<string>();
+  const presets = [...library, ...own].filter((p) => (seen.has(p.id!) ? false : (seen.add(p.id!), true)));
+  return { ...layout, musik: { ...layout.musik, presets } };
 }
 
 export function layoutIncludes(layout: TemplateLayout, id: SectionId) {
@@ -410,9 +437,9 @@ export function validateInvitationData(
             err(`${label} tidak valid`);
             break;
           }
-          const m = /^preset:(\d+)$/.exec(value);
+          const m = /^preset:([A-Za-z0-9_-]{1,40})$/.exec(value);
           if (m) {
-            if (Number(m[1]) >= layout.musik.presets.length) err(`${label}: lagu bawaan tidak ditemukan`);
+            if (!findPreset(layout.musik.presets, m[1]!)) err(`${label}: lagu bawaan tidak ditemukan`);
             else out[field.key] = value;
           } else {
             const id = resolveMediaRef(value);

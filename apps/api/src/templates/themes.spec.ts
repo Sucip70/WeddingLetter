@@ -1,6 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
 import { applyPalette, normalizeLayout } from './layout.js';
-import { TRACK_IDS, presetsFor } from './music-library.js';
 import { BASIC_PALETTES, DESIGNS, GROUP_ORDER, autoPalettes, designById } from './themes.js';
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -20,20 +19,6 @@ describe('registry desain', () => {
     for (const design of DESIGNS) {
       for (const color of [design.primary, design.secondary, design.background, design.text]) expect(color).toMatch(HEX);
     }
-  });
-
-  it('lagu rekomendasi selalu ada di pustaka & minimal 4 per desain', () => {
-    for (const design of DESIGNS) {
-      expect(design.music.length).toBeGreaterThanOrEqual(4);
-      for (const track of design.music) expect(TRACK_IDS).toContain(track);
-    }
-  });
-
-  it('id lagu unik dan URL preset relatif diterima skema', () => {
-    expect(new Set(TRACK_IDS).size).toBe(TRACK_IDS.length);
-    const layout = normalizeLayout({ musik: { allowed: true, presets: presetsFor(TRACK_IDS) } }, 'rustic');
-    expect(layout.musik.presets).toHaveLength(TRACK_IDS.length);
-    expect(layout.musik.presets[0]!.url).toMatch(/^\/audio\/[a-z0-9-]+\.mp3$/);
   });
 });
 

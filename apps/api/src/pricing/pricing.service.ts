@@ -3,7 +3,8 @@ import { ADDON, ALLOWED_CONTENT_TYPES } from '../config/constants.js';
 import type { SelectableAddOn } from '../config/constants.js';
 import type { AddOn, Invitation, MediaFile, Template } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { applyPalette, effectiveSections, layoutIncludes, normalizeLayout, validateInvitationData } from '../templates/layout.js';
+import { MusicService } from '../music/music.service.js';
+import { applyPalette, effectiveSections, layoutIncludes, normalizeLayout, validateInvitationData, withLibrary } from '../templates/layout.js';
 import type { InvitationData, InvitationFeatures, SectionDef, TemplateLayout } from '../templates/layout.js';
 import { PricingError, couponDiscount, quoteExtension, quoteNewOrder } from './pricing.calculator.js';
 import type { ExtensionQuote, MediaCharge, MediaDecl, Quote, Rates } from './pricing.calculator.js';
@@ -51,7 +52,10 @@ export interface PreparedExtension {
 
 @Injectable()
 export class PricingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly music: MusicService,
+  ) {}
 
   async loadAddOns() {
     const rows = await this.prisma.addOn.findMany();
@@ -105,7 +109,8 @@ export class PricingService {
     const { lenient } = options;
     const template = await this.prisma.template.findFirst({ where: { id: input.templateId, status: 'PUBLISHED' } });
     if (!template) throw new NotFoundException('Template tidak ditemukan');
-    const layout = applyPalette(normalizeLayout(template.layoutSchema, template.category), input.palette);
+    // Lagu bawaan = pustaka sesuai paket template; hasilnya ikut tersimpan di snapshot undangan.
+    const layout = applyPalette(withLibrary(normalizeLayout(template.layoutSchema, template.category), await this.music.libraryFor(template.tier)), input.palette);
 
     const addOns = [...new Set(input.addOns)] as SelectableAddOn[];
     if (addOns.includes('RSVP_ONLINE') && layoutIncludes(layout, 'rsvp')) throw new BadRequestException('RSVP sudah termasuk di template ini');

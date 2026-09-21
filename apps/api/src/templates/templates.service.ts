@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import type { Template, TemplateTier } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { ADDON_SECTIONS, SECTION_REGISTRY, normalizeLayout } from './layout.js';
-import type { SectionDef, TemplateLayout } from './layout.js';
+import { MusicService } from '../music/music.service.js';
+import { ADDON_SECTIONS, SECTION_REGISTRY, normalizeLayout, withLibrary } from './layout.js';
+import type { MusicPreset, SectionDef, TemplateLayout } from './layout.js';
 import { designById } from './themes.js';
 
 function designInfo(layout: TemplateLayout) {
@@ -11,16 +12,16 @@ function designInfo(layout: TemplateLayout) {
 }
 
 // Detail template (lengkap: field per section, seluruh lagu bawaan, palet).
-export function toPublicTemplate(t: Template) {
+export function toPublicTemplate(t: Template, library: MusicPreset[]) {
   const { layoutSchema, ...rest } = t;
-  const layout: TemplateLayout = normalizeLayout(layoutSchema, t.category);
+  const layout: TemplateLayout = withLibrary(normalizeLayout(layoutSchema, t.category), library);
   return { ...rest, design: designInfo(layout), layout };
 }
 
 // Versi ringan untuk katalog (puluhan template): tanpa field & tanpa daftar lagu.
-export function toListTemplate(t: Template) {
+export function toListTemplate(t: Template, library: MusicPreset[]) {
   const { layoutSchema, ...rest } = t;
-  const layout = normalizeLayout(layoutSchema, t.category);
+  const layout = withLibrary(normalizeLayout(layoutSchema, t.category), library);
   return {
     ...rest,
     design: designInfo(layout),
@@ -48,7 +49,10 @@ export function addOnSections(): Record<string, SectionDef> {
 
 @Injectable()
 export class TemplatesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly music: MusicService,
+  ) {}
 
   // Katalog publik: hanya template yang sudah published (Bagian 4 & 5).
   async findPublished(params: { category?: string; tier?: TemplateTier }) {
@@ -60,11 +64,12 @@ export class TemplatesService {
       },
       orderBy: [{ price: 'asc' }, { createdAt: 'asc' }],
     });
-    return rows.map(toListTemplate);
+    const library = await this.music.libraryByTier();
+    return rows.map((t) => toListTemplate(t, library[t.tier]));
   }
 
   async findPublishedOne(id: string) {
     const t = await this.prisma.template.findFirst({ where: { id, status: 'PUBLISHED' } });
-    return t ? { ...toPublicTemplate(t), addOnSections: addOnSections() } : null;
+    return t ? { ...toPublicTemplate(t, await this.music.libraryFor(t.tier)), addOnSections: addOnSections() } : null;
   }
 }
