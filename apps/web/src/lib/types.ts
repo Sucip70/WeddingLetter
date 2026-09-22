@@ -1,6 +1,6 @@
 // Bentuk data dari API (lihat apps/api). Hanya field yang dipakai UI.
 
-export type FieldType = 'text' | 'textarea' | 'datetime' | 'url' | 'image' | 'gallery' | 'videos' | 'song';
+export type FieldType = 'text' | 'textarea' | 'datetime' | 'url' | 'image' | 'gallery' | 'videos' | 'song' | 'coverlayout';
 
 export interface FieldDef {
   key: string;
@@ -93,6 +93,8 @@ export interface Layout {
   // `count` hanya ada di daftar katalog (presets dikosongkan supaya ringan).
   musik: { allowed: boolean; presets: MusicPreset[]; count?: number };
   palettes: Palette[];
+  // Tata letak sampul yang boleh dipilih pembeli (kosong = Basic / tanpa pilihan).
+  coverLayouts?: string[];
 }
 
 export type Tier = 'BASIC' | 'STANDARD' | 'PREMIUM';
@@ -143,7 +145,7 @@ export interface InvitationViewData {
   slug: string;
   status?: string;
   templateName?: string;
-  layout: { theme: Theme; sections: SectionDef[]; musik: { presets: MusicPreset[] } };
+  layout: { theme: Theme; sections: SectionDef[]; musik: { presets: MusicPreset[] }; coverLayouts?: string[] };
   features: InvitationFeatures;
   data: InvitationData;
   media: Record<string, MediaRef>;

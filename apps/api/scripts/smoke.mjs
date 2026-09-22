@@ -114,6 +114,25 @@ eq(lenient.total, 20000, 'template saja = Rp20.000');
 await call('POST', '/orders', { token: user, body: { ...orderBody, data: { ...orderBody.data, mempelai: {} } }, expect: 400 });
 ok(true, 'order menolak field wajib yang kosong (400)');
 
+step('Tata letak sampul: Basic tanpa pilihan; Standard = 9 umum; Premium = 9 umum + 1 khusus tema');
+eq([basic.layout.coverLayouts.length, standardJawa.layout.coverLayouts.length, premium.layout.coverLayouts.length], [0, 9, 10], 'katalog memuat daftar tata letak sesuai paket');
+ok(premium.layout.coverLayouts.includes('gapura') && !standardJawa.layout.coverLayouts.includes('gapura'), 'layout khusus tema (gapura) hanya di Premium Batik Jawa');
+// Kalkulator bersifat lenient (tidak menolak isi keliru), jadi validasi dicek lewat order sungguhan.
+const coverOrder = (templateId, tata_letak) =>
+  call('POST', '/orders', {
+    token: other,
+    body: { templateId, weeks: 4, data: { cover: { tata_letak }, mempelai: { pria_nama: 'Eko', wanita_nama: 'Wati' }, tanggal_lokasi: { akad_tanggal: '2027-01-01T09:00', akad_lokasi: 'Masjid' } } },
+  });
+const cancelled = async (res) => {
+  if (res.status === 201) await call('POST', `/orders/${res.json.order.id}/cancel`, { token: other, expect: 200 });
+  return res.status;
+};
+eq(await cancelled(await coverOrder(premium.id, 'gapura')), 201, 'Premium menerima layout khusus tema');
+eq(await cancelled(await coverOrder(premium.id, 'portal')), 400, 'Premium menolak layout khusus tema milik desain lain');
+eq(await cancelled(await coverOrder(standardJawa.id, 'bingkai')), 201, 'Standard menerima layout umum');
+eq(await cancelled(await coverOrder(standardJawa.id, 'gapura')), 400, 'Standard menolak layout khusus tema');
+eq(await cancelled(await coverOrder(basic.id, 'penuh')), 400, 'Basic menolak pilihan tata letak');
+
 step('Order (wajib login)');
 await call('POST', '/orders', { body: orderBody, expect: 401 });
 const created = await call('POST', '/orders', { token: user, body: orderBody, expect: 201 });
@@ -312,14 +331,14 @@ ok(true, 'lagu yang tidak dipakai bisa dihapus permanen');
 
 step('Foto demo template (galeri foto contoh di folder assets)');
 const demoMap = (await call('GET', '/demo-photos', { expect: 200 })).json;
-eq(Object.keys(demoMap).sort(), ['bride', 'gallery1', 'gallery2', 'gallery3', 'gallery4', 'gallery5', 'gallery6', 'gallery7', 'gallery8', 'groom'], 'seed memasang 10 foto bawaan (publik, tanpa login)');
+eq(Object.keys(demoMap).sort(), ['bride', 'cover', 'gallery1', 'gallery2', 'gallery3', 'gallery4', 'gallery5', 'gallery6', 'gallery7', 'gallery8', 'groom'], 'seed memasang 11 foto bawaan (publik, tanpa login)');
 ok(demoMap.groom.includes('/assets/demo-groom.svg') && demoMap.groom.includes('?v='), 'URL foto bawaan di folder assets + penanda versi');
 const demoFile = await fetch(demoMap.groom);
 ok(demoFile.status === 200 && (await demoFile.text()).startsWith('<svg'), 'berkas foto bawaan bisa diunduh');
 await call('GET', '/admin/demo-photos', { token: user, expect: 403 });
 ok(true, 'kelola foto demo hanya untuk admin');
 const demoList = (await call('GET', '/admin/demo-photos', { token: admin, expect: 200 })).json;
-ok(demoList.length === 11 && demoList.find((x) => x.slot === 'groom').isDefault && demoList.find((x) => x.slot === 'cover').url === null, 'admin melihat 11 slot (sampul kosong, lainnya bawaan)');
+ok(demoList.length === 11 && demoList.find((x) => x.slot === 'groom').isDefault && demoList.every((x) => x.isDefault), 'admin melihat 11 slot, semuanya bawaan');
 await call('PUT', '/admin/demo-photos/xyz', { token: admin, body: { key: 'assets/abc.jpg' }, expect: 404 });
 await call('PUT', '/admin/demo-photos/groom', { token: admin, body: { key: 'assets/belum-ada.jpg' }, expect: 400 });
 ok(true, 'slot asing (404) dan file yang belum terunggah (400) ditolak');

@@ -6,6 +6,7 @@ import { InvitationView } from '@/components/invitation/invitation-view';
 import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { Alert, Badge, Button, Card, Field, Input, Select, Toggle, cn } from '@/components/ui';
 import { api, errorMessage, uploadWithProgress } from '@/lib/client-api';
+import { COVER_LAYOUTS, coverLayoutsFor } from '@/lib/cover-layouts';
 import { sampleView } from '@/lib/sample';
 import type { DemoPhotos } from '@/lib/sample';
 import { FX_LABEL } from '@/lib/catalog';
@@ -122,7 +123,13 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
     setLayout({ sections: next });
   };
 
-  const view = useMemo(() => sampleView({ ...toPreviewLayout(layout), galeri: layout.galeri }, { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }, photos), [layout, photos]);
+  // Tata letak sampul yang akan tersedia bagi pembeli (Basic: tidak ada; Premium: + layout khusus desain ini).
+  const coverKinds = useMemo(() => coverLayoutsFor(form.tier, layout.theme.motif), [form.tier, layout.theme.motif]);
+  const [previewCover, setPreviewCover] = useState('');
+  const view = useMemo(
+    () => sampleView({ ...toPreviewLayout(layout), galeri: layout.galeri, coverLayouts: coverKinds }, { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }, photos, previewCover),
+    [layout, photos, coverKinds, previewCover],
+  );
 
   const design = meta.designs.find((d) => d.id === layout.theme.motif) ?? meta.designs.find((d) => d.id === layout.theme.preset);
   // Ganti desain: warna, font, motif, dan usulan palet ikut berganti.
@@ -408,6 +415,17 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
             <PhoneFrame size="md">
               <InvitationView view={view} mode="preview" embedded placeholders />
             </PhoneFrame>
+            {coverKinds.length > 0 && (
+              <label className="mt-3 flex items-center justify-center gap-2 text-xs text-ink-soft">
+                Tata letak sampul
+                <Select value={previewCover && coverKinds.includes(previewCover as never) ? previewCover : ''} onChange={(e) => setPreviewCover(e.target.value)} className="!h-8 !w-auto !py-0 text-xs" aria-label="Tata letak sampul pratinjau">
+                  <option value="">Bawaan</option>
+                  {coverKinds.map((k) => (
+                    <option key={k} value={k}>{COVER_LAYOUTS[k].label}</option>
+                  ))}
+                </Select>
+              </label>
+            )}
           </div>
         </aside>
       </div>

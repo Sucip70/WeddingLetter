@@ -70,7 +70,7 @@ describe('DemoPhotosService', () => {
     expect(list).toHaveLength(DEMO_SLOTS.length);
     expect(list.find((s) => s.slot === 'groom')).toMatchObject({ isDefault: true, url: expect.stringContaining('demo-groom.svg') });
     expect(list.find((s) => s.slot === 'bride')).toMatchObject({ isDefault: false });
-    expect(list.find((s) => s.slot === 'cover')).toMatchObject({ url: null, isDefault: false });
+    expect(list.find((s) => s.slot === 'gallery1')).toMatchObject({ url: null, isDefault: false }); // belum terisi
   });
 
   it('set: menolak slot asing, kunci tidak valid, dan file yang belum terunggah', async () => {
@@ -97,7 +97,7 @@ describe('DemoPhotosService', () => {
     expect(uploaded).toEqual(['assets/demo-gallery2.svg']);
     expect(rows.get('gallery2')!.storageKey).toBe('assets/demo-gallery2.svg');
     expect(deleted).toEqual(['assets/mine.jpg']);
-    await expect(svc.reset('cover')).rejects.toBeInstanceOf(BadRequestException); // tanpa bawaan
+    await expect(svc.reset('xyz')).rejects.toBeInstanceOf(NotFoundException); // slot asing
   });
 
   it('clear: mengosongkan slot dan menghapus unggahan admin (bawaan dipertahankan)', async () => {

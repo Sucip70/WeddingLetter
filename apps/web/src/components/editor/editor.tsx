@@ -8,6 +8,7 @@ import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { LoginPanel } from '@/components/login-panel';
 import { Alert, Badge, Button, Card, Field, Input, Modal, Spinner, Toggle, cn } from '@/components/ui';
 import { api, errorMessage } from '@/lib/client-api';
+import { defaultCoverLayout } from '@/lib/cover-layouts';
 import { rupiah } from '@/lib/format';
 import type { AddOn, InvitationData, InvitationViewData, OrderDetail, Quote, SessionUser, TemplateDetail, Upload } from '@/lib/types';
 import { runCheckout } from './checkout';
@@ -72,6 +73,13 @@ export function Editor({ template, addOns, initialUser, initialPalette }: { temp
   useEffect(() => () => Object.values(filesRef.current).forEach((f) => URL.revokeObjectURL(f.url)), []);
 
   const sections = useMemo(() => effectiveSections(template, selected), [template, selected]);
+  const coverLayouts = useMemo(() => template.layout.coverLayouts ?? [], [template.layout.coverLayouts]);
+
+  // Pembeli belum memilih tata letak sampul: mulai dari yang khusus tema (Premium) atau "Foto berbingkai".
+  useEffect(() => {
+    if (!hydrated || coverLayouts.length === 0) return;
+    setData((d) => (typeof d.cover?.tata_letak === 'string' && coverLayouts.includes(d.cover.tata_letak) ? d : setField(d, 'cover', 'tata_letak', defaultCoverLayout(coverLayouts))));
+  }, [hydrated, coverLayouts]);
 
   // ----- Draft (tanpa file) di localStorage -----
   useEffect(() => {
@@ -207,6 +215,7 @@ export function Editor({ template, addOns, initialUser, initialPalette }: { temp
     photoPackPrice: price.PHOTO_PACK_5,
     maxPhotos: template.layout.galeri.maxPhotos,
     maxVideos: template.layout.galeri.maxVideos,
+    coverLayouts,
     errors,
     onChange,
     addFiles,
@@ -223,14 +232,14 @@ export function Editor({ template, addOns, initialUser, initialPalette }: { temp
     () => ({
       slug: 'pratinjau',
       templateName: template.name,
-      layout: { theme: paletteTheme, sections, musik: { presets: template.layout.musik.presets } },
+      layout: { theme: paletteTheme, sections, musik: { presets: template.layout.musik.presets }, coverLayouts },
       features: { english: selected.includes('TRANSLATION_EN') },
       data,
       media: Object.fromEntries(Object.values(files).map((f) => [f.clientId, { url: f.url, type: f.type }])),
       rsvpEnabled: sections.some((s) => s.id === 'rsvp'),
       guestbook: [],
     }),
-    [template, sections, selected, data, files, paletteTheme],
+    [template, sections, selected, data, files, paletteTheme, coverLayouts],
   );
 
   // ----- Checkout -----

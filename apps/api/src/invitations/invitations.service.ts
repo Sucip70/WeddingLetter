@@ -29,7 +29,7 @@ export interface InvitationView {
   slug: string;
   status: string;
   templateName: string;
-  layout: { theme: TemplateLayout['theme']; sections: SectionDef[]; musik: { presets: { name: string; url: string }[] } };
+  layout: { theme: TemplateLayout['theme']; sections: SectionDef[]; musik: { presets: { name: string; url: string }[] }; coverLayouts: string[] };
   features: InvitationFeatures;
   data: Invitation['data'];
   media: Record<string, { url: string; type: string }>;
@@ -92,7 +92,7 @@ export class InvitationsService {
       templateName: inv.template.name,
       data: inv.data,
       features: inv.features as InvitationFeatures,
-      layout: { theme: layout.theme, sections: layout.sections, galeri: layout.galeri, musik: layout.musik, palettes: layout.palettes ?? [] },
+      layout: { theme: layout.theme, sections: layout.sections, galeri: layout.galeri, musik: layout.musik, palettes: layout.palettes ?? [], coverLayouts: layout.coverLayouts ?? [] },
       publishedAt: inv.publishedAt,
       expiresAt: inv.expiresAt,
       pausedAt: inv.pausedAt,
@@ -239,7 +239,7 @@ export class InvitationsService {
       slug: inv.slug,
       status: inv.status,
       templateName: inv.template.name,
-      layout: { theme: layout.theme, sections: layout.sections, musik: { presets: layout.musik?.presets ?? [] } },
+      layout: { theme: layout.theme, sections: layout.sections, musik: { presets: layout.musik?.presets ?? [] }, coverLayouts: layout.coverLayouts ?? [] },
       features: inv.features as InvitationFeatures,
       data: inv.data,
       media: Object.fromEntries(media.map((m) => [m.id, { url: this.storage.publicUrl(m.storageKey), type: m.type }])),

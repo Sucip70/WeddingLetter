@@ -19,7 +19,7 @@ export const DEMO_SLOTS: DemoSlot[] = [
   { slot: 'gallery6', label: 'Galeri 6', hint: 'Potret 4:5.', hasDefault: true },
   { slot: 'gallery7', label: 'Galeri 7', hint: 'Foto lebar (rasio 16:10, bagian tengah yang terlihat).', hasDefault: true },
   { slot: 'gallery8', label: 'Galeri 8', hint: 'Potret 4:5.', hasDefault: true },
-  { slot: 'cover', label: 'Foto sampul (opsional)', hint: 'Kosongkan untuk mempertahankan ornamen sampul tema. Bila diisi, semua demo memakai foto ini di sampul (ornamen sampul tidak tampil).', hasDefault: false },
+  { slot: 'cover', label: 'Foto sampul', hint: 'Potret 4:5 atau lebih tinggi, subjek di tengah (tampil penuh di layout foto penuh, dan terpotong di bingkai/jendela/bulat/hati). Dipakai demo Standard & Premium; demo Basic memakai ornamen.', hasDefault: true },
 ];
 
 export const SLOT_IDS = DEMO_SLOTS.map((s) => s.slot);

@@ -4,7 +4,7 @@ import type { SelectableAddOn } from '../config/constants.js';
 import type { AddOn, Invitation, MediaFile, Template } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { MusicService } from '../music/music.service.js';
-import { applyPalette, effectiveSections, layoutIncludes, normalizeLayout, validateInvitationData, withLibrary } from '../templates/layout.js';
+import { applyPalette, effectiveSections, layoutIncludes, normalizeLayout, validateInvitationData, withCoverLayouts, withLibrary } from '../templates/layout.js';
 import type { InvitationData, InvitationFeatures, SectionDef, TemplateLayout } from '../templates/layout.js';
 import { PricingError, couponDiscount, quoteExtension, quoteNewOrder } from './pricing.calculator.js';
 import type { ExtensionQuote, MediaCharge, MediaDecl, Quote, Rates } from './pricing.calculator.js';
@@ -110,7 +110,7 @@ export class PricingService {
     const template = await this.prisma.template.findFirst({ where: { id: input.templateId, status: 'PUBLISHED' } });
     if (!template) throw new NotFoundException('Template tidak ditemukan');
     // Lagu bawaan = pustaka sesuai paket template; hasilnya ikut tersimpan di snapshot undangan.
-    const layout = applyPalette(withLibrary(normalizeLayout(template.layoutSchema, template.category), await this.music.libraryFor(template.tier)), input.palette);
+    const layout = applyPalette(withCoverLayouts(withLibrary(normalizeLayout(template.layoutSchema, template.category), await this.music.libraryFor(template.tier)), template.tier), input.palette);
 
     const addOns = [...new Set(input.addOns)] as SelectableAddOn[];
     if (addOns.includes('RSVP_ONLINE') && layoutIncludes(layout, 'rsvp')) throw new BadRequestException('RSVP sudah termasuk di template ini');

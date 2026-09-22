@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { Template, TemplateTier } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { MusicService } from '../music/music.service.js';
-import { ADDON_SECTIONS, SECTION_REGISTRY, normalizeLayout, withLibrary } from './layout.js';
+import { ADDON_SECTIONS, SECTION_REGISTRY, normalizeLayout, withCoverLayouts, withLibrary } from './layout.js';
 import type { MusicPreset, SectionDef, TemplateLayout } from './layout.js';
 import { designById } from './themes.js';
 
@@ -14,14 +14,14 @@ function designInfo(layout: TemplateLayout) {
 // Detail template (lengkap: field per section, seluruh lagu bawaan, palet).
 export function toPublicTemplate(t: Template, library: MusicPreset[]) {
   const { layoutSchema, ...rest } = t;
-  const layout: TemplateLayout = withLibrary(normalizeLayout(layoutSchema, t.category), library);
+  const layout: TemplateLayout = withCoverLayouts(withLibrary(normalizeLayout(layoutSchema, t.category), library), t.tier);
   return { ...rest, design: designInfo(layout), layout };
 }
 
 // Versi ringan untuk katalog (puluhan template): tanpa field & tanpa daftar lagu.
 export function toListTemplate(t: Template, library: MusicPreset[]) {
   const { layoutSchema, ...rest } = t;
-  const layout = withLibrary(normalizeLayout(layoutSchema, t.category), library);
+  const layout = withCoverLayouts(withLibrary(normalizeLayout(layoutSchema, t.category), library), t.tier);
   return {
     ...rest,
     design: designInfo(layout),
@@ -31,6 +31,7 @@ export function toListTemplate(t: Template, library: MusicPreset[]) {
       galeri: layout.galeri,
       musik: { allowed: layout.musik.allowed, presets: [], count: layout.musik.presets.length },
       palettes: layout.palettes,
+      coverLayouts: layout.coverLayouts,
     },
   };
 }

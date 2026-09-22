@@ -1,6 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { z } from 'zod';
 import { ADDON, LIMITS } from '../config/constants.js';
+import type { TemplateTier } from '../generated/prisma/client.js';
+import { availableCoverLayouts } from './cover-layouts.js';
 import { DESIGNS, GATE_KINDS, baseColors } from './themes.js';
 import type { BodyFont, GateSetting, HeadingFont, Palette } from './themes.js';
 
@@ -8,7 +10,7 @@ import type { BodyFont, GateSetting, HeadingFont, Palette } from './themes.js';
 // bukan HTML. Daftar section & field yang dikenali renderer ada di SECTION_REGISTRY; admin hanya
 // bisa mengaktifkan/menonaktifkan section & field, mengubah label/wajib-isi, urutan, tema, dan kuota.
 
-export type FieldType = 'text' | 'textarea' | 'datetime' | 'url' | 'image' | 'gallery' | 'videos' | 'song';
+export type FieldType = 'text' | 'textarea' | 'datetime' | 'url' | 'image' | 'gallery' | 'videos' | 'song' | 'coverlayout';
 
 export const SECTION_IDS = [
   'cover',
@@ -65,6 +67,8 @@ export interface TemplateLayout {
   musik: { allowed: boolean; presets: MusicPreset[] };
   // Pilihan warna yang bisa dipilih pembeli (kosong = tanpa pemilih warna).
   palettes: Palette[];
+  // Tata letak sampul yang boleh dipilih pembeli (diisi dari paket & tema template; kosong = Basic / tanpa pilihan).
+  coverLayouts: string[];
 }
 
 const f = (
@@ -92,6 +96,7 @@ export const SECTION_REGISTRY: Record<SectionId, { title: string; fields: FieldD
     title: 'Sampul',
     fields: [
       f('foto', 'Foto sampul', 'image'),
+      f('tata_letak', 'Tata letak sampul', 'coverlayout'),
       f('pembuka', 'Kalimat pembuka', 'textarea', {
         maxLength: 300,
         placeholder: 'Dengan penuh syukur, kami mengundang Anda di hari bahagia kami',
@@ -271,6 +276,7 @@ export function normalizeLayout(raw: unknown, category = 'rustic'): TemplateLayo
     galeri: { maxPhotos: input.galeri?.maxPhotos ?? 4, maxVideos: input.galeri?.maxVideos ?? 0 },
     musik: { allowed: musikAllowed, presets: input.musik?.presets ?? [] },
     palettes: buildPalettes(theme, input.palettes ?? []),
+    coverLayouts: [],
   };
 }
 
@@ -337,6 +343,11 @@ export function withLibrary(layout: TemplateLayout, library: MusicPreset[]): Tem
   const seen = new Set<string>();
   const presets = [...library, ...own].filter((p) => (seen.has(p.id!) ? false : (seen.add(p.id!), true)));
   return { ...layout, musik: { ...layout.musik, presets } };
+}
+
+// Mengisi daftar tata letak sampul yang tersedia bagi paket & tema template (Basic: kosong).
+export function withCoverLayouts(layout: TemplateLayout, tier: TemplateTier): TemplateLayout {
+  return { ...layout, coverLayouts: availableCoverLayouts(tier, layout.theme.motif) };
 }
 
 export function layoutIncludes(layout: TemplateLayout, id: SectionId) {
@@ -434,6 +445,11 @@ export function validateInvitationData(
           const id = resolveMediaRef(value);
           out[field.key] = id;
           refs.photos.push(id);
+          break;
+        }
+        case 'coverlayout': {
+          if (typeof value !== 'string' || !layout.coverLayouts?.includes(value)) err(`${label}: tata letak tidak tersedia untuk paket ini`);
+          else out[field.key] = value;
           break;
         }
         case 'song': {

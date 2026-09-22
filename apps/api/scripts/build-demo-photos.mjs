@@ -212,7 +212,34 @@ function flatlay() {
   return wrap(defs, body);
 }
 
-const files = { groom, bride, gallery1: sunset, gallery2: rings, gallery3: bouquet, gallery4: arch, gallery5: lights, gallery6: dance, gallery7: cake, gallery8: flatlay };
+// ---------- sampul ----------
+
+// Potret berdua di senja dengan lampu bergantung; subjek di tengah, ruang kosong di atas & bawah untuk tulisan.
+function cover() {
+  const defs = grad('sky', [[0, '#2f3a6b'], [0.42, '#a4658f'], [0.72, '#f0a48f'], [1, '#ffd8a8']]) + radial('glow', [[0, '#ffe7b8', 0.9], [1, '#ffe7b8', 0]]) + grad('ground', [[0, '#3b2a4d'], [1, '#1c1330']]);
+  const fig = (x, dress) =>
+    dress
+      ? `<circle cx="${x}" cy="-132" r="11"/><path d="M${x - 16} -112h32l16 112h-64z"/><path d="M${x - 8} -140c-6 12-6 30 2 42" stroke="#150d2a" stroke-width="5" fill="none"/>`
+      : `<circle cx="${x}" cy="-134" r="11"/><rect x="${x - 15}" y="-121" width="30" height="58" rx="9"/><rect x="${x - 13}" y="-66" width="11" height="66" rx="3"/><rect x="${x + 2}" y="-66" width="11" height="66" rx="3"/>`;
+  const bulbs = Array.from({ length: 15 }, (_, i) => {
+    const t = i / 14;
+    const x = 40 + t * 720;
+    const y = 190 + Math.sin(t * Math.PI) * 80 + (i % 2) * 6;
+    return `<circle cx="${f(x)}" cy="${f(y)}" r="9" fill="#ffe9ac"/><circle cx="${f(x)}" cy="${f(y)}" r="34" fill="url(#glow)" opacity=".7"/>`;
+  }).join('');
+  const body =
+    `<rect width="${W}" height="${H}" fill="url(#sky)"/>` +
+    bokeh(10, ['#ffe9ac', '#f7c9c9', '#c9b8ee'], 31, { y0: 120, y1: 640, rmin: 24, rmax: 70, op: 0.4 }) +
+    `<circle cx="400" cy="520" r="330" fill="url(#glow)"/>` +
+    `<path d="M40 190Q400 340 760 190" stroke="#7a5b78" stroke-width="3" fill="none" opacity=".8"/>` +
+    bulbs +
+    `<path d="M0 760C170 720 320 760 470 770C600 750 700 740 800 760L800 1000L0 1000Z" fill="url(#ground)"/>` +
+    `<g transform="translate(400 812) scale(2.6)" fill="#120a24">${fig(-24, false)}${fig(28, true)}<path d="M-10 -104L16 -100" stroke="#120a24" stroke-width="5"/></g>` +
+    sparkle(160, 470, 20, '#fff', 0.9) + sparkle(650, 420, 26, '#fff', 0.9) + sparkle(560, 600, 14, '#ffe9ac') + sparkle(230, 620, 12, '#ffe9ac');
+  return wrap(defs, body);
+}
+
+const files = { groom, bride, cover, gallery1: sunset, gallery2: rings, gallery3: bouquet, gallery4: arch, gallery5: lights, gallery6: dance, gallery7: cake, gallery8: flatlay };
 for (const [slot, make] of Object.entries(files)) {
   const svg = make();
   writeFileSync(`${OUT}${slot}.svg`, svg);

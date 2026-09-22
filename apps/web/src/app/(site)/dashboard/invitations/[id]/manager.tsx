@@ -22,7 +22,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'extend', label: 'Perpanjang' },
 ];
 
-const NOOP_CTX: Omit<FieldCtx, 'data' | 'errors' | 'onChange'> = {
+const NOOP_CTX: Omit<FieldCtx, 'data' | 'errors' | 'onChange' | 'coverLayouts'> = {
   files: {},
   charges: {},
   weeks: 1,
@@ -224,7 +224,7 @@ function Overview({ inv, link, reload, goto }: { inv: InvitationDetail; link: st
 
 // ================= Edit isi =================
 
-const TEXT_TYPES = ['text', 'textarea', 'datetime', 'url'];
+const TEXT_TYPES = ['text', 'textarea', 'datetime', 'url', 'coverlayout'];
 
 function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: InvitationDetail) => void }) {
   const [data, setData] = useState<InvitationData>(inv.data);
@@ -248,7 +248,7 @@ function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: Invitatio
     setMessage(null);
   }, []);
 
-  const ctx: FieldCtx = { ...NOOP_CTX, data, errors: {}, onChange };
+  const ctx: FieldCtx = { ...NOOP_CTX, coverLayouts: inv.layout.coverLayouts ?? [], data, errors: {}, onChange };
 
   // Setelah file diganti server sudah memperbarui rujukan di isi tersimpan; sinkronkan salinan lokal
   // (tanpa menghilangkan ketikan yang belum disimpan) dan muat ulang daftar file.
@@ -271,7 +271,7 @@ function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: Invitatio
     () => ({
       slug: inv.slug,
       templateName: inv.templateName,
-      layout: { theme, sections: inv.layout.sections, musik: { presets: inv.layout.musik.presets } },
+      layout: { theme, sections: inv.layout.sections, musik: { presets: inv.layout.musik.presets }, coverLayouts: inv.layout.coverLayouts ?? [] },
       features: inv.features,
       data,
       media: Object.fromEntries(inv.media.filter((m) => ['UPLOADED', 'ACTIVE', 'PAUSED', 'EXPIRED_GRACE'].includes(m.status)).map((m) => [m.id, { url: m.url, type: m.type }])),
@@ -331,7 +331,7 @@ function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: Invitatio
               {section.fields.map((f) => {
                 if (TEXT_TYPES.includes(f.type)) {
                   return (
-                    <div key={f.key} className={f.type === 'textarea' ? 'sm:col-span-2' : ''}>
+                    <div key={f.key} className={f.type === 'textarea' || f.type === 'coverlayout' ? 'sm:col-span-2' : ''}>
                       <FieldInput section={section.id} field={f} ctx={ctx} />
                     </div>
                   );

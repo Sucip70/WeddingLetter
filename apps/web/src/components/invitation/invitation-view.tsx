@@ -10,6 +10,8 @@ import { STRINGS } from './i18n';
 import type { Lang, Strings } from './i18n';
 import { GATE_MS, Gate } from './gates';
 import type { GatePhase } from './gates';
+import { isCoverKind, resolveCover } from '@/lib/cover-layouts';
+import { CoverLayout, isLightCover } from './cover';
 import { CoverFx, Particles, PatternLayer, PhotoFrame, Reveal, useReveal } from './effects';
 import { BODY, HEADING, RADIUS, motifFor } from './motifs';
 import type { CountdownKind, Motif } from './motifs';
@@ -198,7 +200,16 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const soft = 'color-mix(in srgb, var(--p) 9%, var(--bg))';
   const bodyText = bf.className;
 
-  const coverPhoto = url(str(data, 'cover', 'foto'));
+  // Tata letak sampul pilihan pembeli (Standard/Premium). Kosong/tak valid = sampul bawaan (ornamen, atau foto penuh
+  // bila foto sampul ada). Layout yang butuh foto tapi fotonya belum ada kembali ke ornamen.
+  const uploadedCover = url(str(data, 'cover', 'foto'));
+  const chosenCover = str(data, 'cover', 'tata_letak');
+  const coverKind =
+    isCoverKind(chosenCover) && (view.layout.coverLayouts ?? []).includes(chosenCover)
+      ? resolveCover(chosenCover, { cover: uploadedCover, groom: url(str(data, 'mempelai', 'pria_foto')), bride: url(str(data, 'mempelai', 'wanita_foto')) })
+      : null;
+  const coverPhoto = coverKind === 'ornamen' ? undefined : uploadedCover;
+  const photoCover = coverKind && coverKind !== 'ornamen' ? coverKind : null;
 
   const galleryPhotos = list(data, 'galeri', 'foto').map(url).filter((x): x is string => !!x);
   const galleryVideos = list(data, 'galeri', 'video').map(url).filter((x): x is string => !!x);
@@ -240,6 +251,17 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const particleCount = fx === 'premium' ? motif.particles.count : Math.round(motif.particles.count * 0.6);
   const coverInk = coverPhoto ? '#fff' : 'var(--p)';
   const cornerCls = `absolute w-24 ${fx === 'premium' ? 'wl-breathe' : ''}`;
+  const coverBackground = 'linear-gradient(165deg, color-mix(in srgb, var(--p) 20%, var(--bg)), var(--bg) 52%, color-mix(in srgb, var(--p) 10%, color-mix(in srgb, var(--s) 12%, var(--bg))))';
+  const cornersNode = (
+    <div className="pointer-events-none absolute inset-0" style={{ color: 'var(--p)' }} aria-hidden>
+      <orn.Corner className={`${cornerCls} left-2 top-2`} rotate={0} />
+      <orn.Corner className={`${cornerCls} right-2 top-2`} rotate={90} />
+      <orn.Corner className={`${cornerCls} bottom-2 right-2`} rotate={180} />
+      <orn.Corner className={`${cornerCls} bottom-2 left-2`} rotate={270} />
+    </div>
+  );
+  // Tulisan/tombol di sampul berwarna putih bila latarnya foto atau adegan gelap.
+  const onDark = photoCover ? isLightCover(photoCover) : !!coverPhoto;
 
   return (
     <ThemeContext.Provider value={themeCtx}>
@@ -293,40 +315,73 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
           className="relative flex flex-col items-center justify-center overflow-hidden px-8 text-center"
           style={embedded ? { height: '100%' } : { minHeight: '100svh' }}
         >
-          {coverPhoto ? (
-            <>
-              <img src={coverPhoto} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15) 40%, rgba(0,0,0,.6))' }} />
-            </>
-          ) : (
+          {coverPhoto || photoCover ? null : (
             <div
               className="absolute inset-0"
-              style={{ background: 'linear-gradient(165deg, color-mix(in srgb, var(--p) 20%, var(--bg)), var(--bg) 52%, color-mix(in srgb, var(--p) 10%, color-mix(in srgb, var(--s) 12%, var(--bg))))' }}
+              style={{ background: coverBackground }}
             />
           )}
-          {animated && !coverPhoto && <PatternLayer kind={motif.pattern} opacity={0.1} />}
-          {animated && <CoverFx kind={motif.cover} animate />}
-          {fx === 'standard' && <Particles kind={motif.particles.kind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />}
-          {!coverPhoto && (
-            <div className="pointer-events-none absolute inset-0" style={{ color: 'var(--p)' }} aria-hidden>
-              <orn.Corner className={`${cornerCls} left-2 top-2`} rotate={0} />
-              <orn.Corner className={`${cornerCls} right-2 top-2`} rotate={90} />
-              <orn.Corner className={`${cornerCls} bottom-2 right-2`} rotate={180} />
-              <orn.Corner className={`${cornerCls} bottom-2 left-2`} rotate={270} />
-            </div>
+          {photoCover ? (
+            <CoverLayout
+              key={gateActive ? 'gate' : 'open'}
+              kind={photoCover}
+              photo={uploadedCover}
+              groom={url(str(data, 'mempelai', 'pria_foto'))}
+              bride={url(str(data, 'mempelai', 'wanita_foto'))}
+              kicker={kicker}
+              names={names}
+              groomName={groom || (placeholders ? 'Andi' : '')}
+              brideName={bride || (placeholders ? 'Sinta' : '')}
+              dateText={shortDate}
+              guest={mode === 'live' || placeholders ? { dear: t.dear, name: guest ?? t.guestFallback } : null}
+              openLabel={openLabel}
+              onOpen={open}
+              heading={{ family: hf.family, size: hf.size, weight: hf.weight, tracking: hf.tracking, upper: hf.upper }}
+              animated={animated}
+              premium={fx === 'premium'}
+              base={<div className="absolute inset-0" style={{ background: coverBackground }} />}
+              decor={
+                <>
+                  {animated && <PatternLayer kind={motif.pattern} opacity={0.1} />}
+                  {animated && <CoverFx kind={motif.cover} animate />}
+                  {fx === 'standard' && <Particles kind={motif.particles.kind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />}
+                </>
+              }
+              corners={cornersNode}
+              orn={orn}
+              frame={motif.frame}
+              photoRadius={radius.photo}
+              buttonRadius="var(--rb)"
+              letterFont="var(--font-script)"
+              layerHeight={layerHeight}
+            />
+          ) : (
+            <>
+              {coverPhoto && (
+                <>
+                  <img src={coverPhoto} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15) 40%, rgba(0,0,0,.6))' }} />
+                </>
+              )}
+              {animated && !coverPhoto && <PatternLayer kind={motif.pattern} opacity={0.1} />}
+              {animated && <CoverFx kind={motif.cover} animate />}
+              {fx === 'standard' && <Particles kind={motif.particles.kind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />}
+              {!coverPhoto && cornersNode}
+            </>
           )}
 
           {view.features.english && (
             <button
               onClick={() => setLang((l) => (l === 'id' ? 'en' : 'id'))}
               className="absolute right-4 top-4 z-10 rounded-full border px-3 py-1 text-xs font-medium backdrop-blur"
-              style={{ borderColor: coverPhoto ? 'rgba(255,255,255,.6)' : 'var(--p)', color: coverInk }}
+              style={{ borderColor: onDark ? 'rgba(255,255,255,.6)' : 'var(--p)', color: onDark ? '#fff' : 'var(--p)' }}
               aria-label="Ganti bahasa / Switch language"
             >
               {lang === 'id' ? 'ID · EN' : 'EN · ID'}
             </button>
           )}
 
+          {!photoCover && (
           <div key={gateActive ? 'gate' : 'open'} className="relative z-[4] flex flex-col items-center" style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
             <p className={`text-xs uppercase tracking-[0.35em] opacity-80 ${enter(100).className}`} style={enter(100).style}>{kicker}</p>
             <h1
@@ -353,6 +408,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               {openLabel}
             </button>
           </div>
+          )}
         </section>
 
         {/* ===== Isi ===== */}

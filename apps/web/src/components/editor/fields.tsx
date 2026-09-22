@@ -7,6 +7,7 @@ import { mb, rupiah } from '@/lib/format';
 import { presetToken } from '@/lib/presets';
 import type { FieldDef, InvitationData, MediaCharge, MusicPreset } from '@/lib/types';
 import { Badge, Button, Field, Input, Select, Textarea, cn } from '../ui';
+import { CoverLayoutPicker } from './cover-picker';
 import { ACCEPT, LIMITS } from './model';
 import type { LocalFile } from './model';
 
@@ -20,6 +21,8 @@ export interface FieldCtx {
   photoPackPrice?: number;
   maxPhotos: number;
   maxVideos: number;
+  // Tata letak sampul yang tersedia (kosong = Basic, pemilih disembunyikan).
+  coverLayouts: string[];
   errors: Record<string, string>;
   onChange: (section: string, key: string, value: string | string[] | undefined) => void;
   addFiles: (type: 'PHOTO' | 'VIDEO' | 'SONG', files: File[]) => Promise<LocalFile[]>;
@@ -255,6 +258,28 @@ function SongField({ section, field, ctx }: { section: string; field: FieldDef; 
   );
 }
 
+function CoverLayoutField({ section, field, ctx }: { section: string; field: FieldDef; ctx: FieldCtx }) {
+  // Basic (daftar kosong) tidak punya pilihan.
+  if (ctx.coverLayouts.length === 0) return null;
+  const current = value(ctx, section, field.key);
+  const has = (s: string, k: string) => {
+    const v = value(ctx, s, k);
+    return typeof v === 'string' && v !== '';
+  };
+  return (
+    <Field label={field.label} required={field.required} error={ctx.errors[`${section}.${field.key}`]} group hint="Pilih tampilan halaman pertama. Layout berfoto memakai foto sampul di bawah (boleh berbeda dari foto galeri); tanpa foto akan tampil sebagai Ornamen.">
+      <CoverLayoutPicker
+        name={`${section}.${field.key}`}
+        available={ctx.coverLayouts}
+        value={typeof current === 'string' ? current : undefined}
+        hasPhoto={has('cover', 'foto')}
+        hasCoupleOnly={has('mempelai', 'pria_foto') || has('mempelai', 'wanita_foto')}
+        onChange={(k) => ctx.onChange(section, field.key, k)}
+      />
+    </Field>
+  );
+}
+
 export function FieldInput({ section, field, ctx }: { section: string; field: FieldDef; ctx: FieldCtx }) {
   const v = value(ctx, section, field.key);
   const text = typeof v === 'string' ? v : '';
@@ -294,5 +319,7 @@ export function FieldInput({ section, field, ctx }: { section: string; field: Fi
       return <VideosField section={section} field={field} ctx={ctx} />;
     case 'song':
       return <SongField section={section} field={field} ctx={ctx} />;
+    case 'coverlayout':
+      return <CoverLayoutField section={section} field={field} ctx={ctx} />;
   }
 }
