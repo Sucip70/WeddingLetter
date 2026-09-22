@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { TemplateThumb } from '@/components/template-thumb';
 import { Alert, Badge, EmptyState, PageHeader } from '@/components/ui';
-import { FX_LABEL, GROUP_LABEL, GROUP_ORDER, TIER_LABEL, getTemplates, groupByDesign } from '@/lib/catalog';
+import { FX_LABEL, GROUP_LABEL, GROUP_ORDER, TIER_LABEL, getDemoPhotos, getTemplates, groupByDesign } from '@/lib/catalog';
 import { rupiah } from '@/lib/format';
 import { GATE_LABEL } from '@/lib/types';
 import type { Template, ThemeGroup, Tier } from '@/lib/types';
@@ -22,8 +22,9 @@ export default async function TemplatesPage({ searchParams }: PageProps<'/templa
 
   let all: Template[] = [];
   let failed = false;
+  let photos: Record<string, string> = {};
   try {
-    all = await getTemplates();
+    [all, photos] = await Promise.all([getTemplates(), getDemoPhotos()]);
   } catch {
     failed = true;
   }
@@ -94,7 +95,14 @@ export default async function TemplatesPage({ searchParams }: PageProps<'/templa
                     return (
                       <Link key={t.id} href={`/templates/${t.id}`} className="group flex flex-col overflow-hidden rounded-3xl border border-line bg-paper transition-shadow hover:shadow-xl hover:shadow-ink/5">
                         <div className="aspect-[4/5] overflow-hidden">
-                          <TemplateThumb theme={t.layout.theme} imageUrl={t.thumbnailUrl} className="transition-transform duration-500 group-hover:scale-[1.03]" />
+                          <TemplateThumb
+                            theme={t.layout.theme}
+                            imageUrl={t.thumbnailUrl}
+                            coverLayouts={t.layout.coverLayouts}
+                            photos={photos}
+                            seed={t.id}
+                            className="transition-transform duration-500 group-hover:scale-[1.03]"
+                          />
                         </div>
                         <div className="flex flex-1 flex-col p-5">
                           <div className="flex items-start justify-between gap-3">

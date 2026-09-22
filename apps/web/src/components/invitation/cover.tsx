@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 // Tata letak halaman pertama (sampul) berfoto. Dipilih pembeli di editor (data.cover.tata_letak); daftar id di
 // lib/cover-layouts.ts. Layout "ornamen" (tanpa foto) tetap dirender InvitationView. Warna mengikuti tema (--p/--s/--bg/--tx).
-import { useId } from 'react';
+import { Fragment, useId } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { CoverKind } from '@/lib/cover-layouts';
 import { Particles, PatternLayer, PhotoFrame } from './effects';
@@ -23,7 +23,9 @@ export interface CoverProps {
   // Sapaan tamu ("Kepada Yth." + nama); null = tidak ditampilkan.
   guest: { dear: string; name: string } | null;
   openLabel: string;
-  onOpen: () => void;
+  // Opsional saat `decorative` (mis. kartu katalog di Server Component): fungsi tidak bisa dikirim lewat
+  // batas server/client kecuali sungguh dipakai, dan mode dekoratif tidak pernah memakainya.
+  onOpen?: () => void;
   heading: { family: string; size: string; weight: number; tracking?: string; upper?: boolean };
   animated: boolean;
   premium: boolean;
@@ -36,6 +38,9 @@ export interface CoverProps {
   buttonRadius: string;
   letterFont: string;
   layerHeight: number | string;
+  // Pratinjau statis dalam kartu terbuka (mis. grid katalog di dalam <Link>): tombol "buka" dirender sebagai
+  // <span> (bukan <button>) supaya tidak ada kontrol interaktif bersarang, dan tidak menerima klik.
+  decorative?: boolean;
 }
 
 const PIXEL_CLIP = 'polygon(0 6%, 4% 6%, 4% 3%, 8% 3%, 8% 0, 92% 0, 92% 3%, 96% 3%, 96% 6%, 100% 6%, 100% 94%, 96% 94%, 96% 97%, 92% 97%, 92% 100%, 8% 100%, 8% 97%, 4% 97%, 4% 94%, 0 94%)';
@@ -124,14 +129,15 @@ export function CoverLayout(p: CoverProps) {
   };
   const buttonEl = (l = light, cls = 'mt-6') => {
     const e = enter(850);
+    const Tag = p.decorative ? 'span' : 'button';
     return (
-      <button
-        onClick={p.onOpen}
+      <Tag
+        {...(p.decorative ? {} : { onClick: p.onOpen })}
         className={`${cls} px-7 py-3 text-sm font-medium tracking-wide shadow-lg transition-transform hover:scale-[1.03] ${p.premium ? 'wl-pulse' : ''} ${e.className}`}
         style={{ ...e.style, borderRadius: p.buttonRadius, background: l ? 'rgba(255,255,255,.92)' : 'var(--p)', color: l ? '#222' : '#fff' }}
       >
         {p.openLabel}
-      </button>
+      </Tag>
     );
   };
   const photoOf = { cover: p.photo ?? p.groom ?? p.bride, groom: p.groom ?? p.photo ?? p.bride, bride: p.bride ?? p.photo ?? p.groom };
@@ -142,6 +148,16 @@ export function CoverLayout(p: CoverProps) {
     </>
   );
   const column = 'relative z-[4] flex w-full flex-col items-center px-8 text-center';
+  // `base`/`decor`/`corners` datang dari prop (dibuat di luar CoverLayout), jadi saat ditaruh sebagai beberapa
+  // saudara sejajar React tidak tahu itu aman tanpa key (peringatan "key prop" palsu) — bungkus tiap satu
+  // dengan Fragment berkunci supaya jelas bagi React.
+  const backdrop = (
+    <>
+      <Fragment key="base">{p.base}</Fragment>
+      <Fragment key="decor">{p.decor}</Fragment>
+      <Fragment key="corners">{p.corners}</Fragment>
+    </>
+  );
 
   switch (p.kind) {
     // ---------- foto penuh ----------
@@ -175,7 +191,7 @@ export function CoverLayout(p: CoverProps) {
       const e = enter(300);
       return (
         <>
-          {p.base}{p.decor}{p.corners}
+          {backdrop}
           <div className={column}>
             {kickerEl()}
             <div className={`mt-5 ${p.premium ? 'wl-float' : ''}`}>
@@ -200,7 +216,7 @@ export function CoverLayout(p: CoverProps) {
       const e = enter(300);
       return (
         <>
-          {p.base}{p.decor}{p.corners}
+          {backdrop}
           <div className={column}>
             {kickerEl()}
             <div className={`relative mt-5 w-[14.5rem] ${e.className}`} style={e.style}>
@@ -227,7 +243,7 @@ export function CoverLayout(p: CoverProps) {
       const e = enter(300);
       return (
         <>
-          {p.base}{p.decor}{p.corners}
+          {backdrop}
           <div className={column}>
             {kickerEl()}
             <div className={`relative mt-4 flex h-[16.5rem] w-[16.5rem] items-center justify-center ${e.className}`} style={e.style}>
@@ -255,11 +271,11 @@ export function CoverLayout(p: CoverProps) {
       const mask = 'linear-gradient(#000 60%, transparent)';
       return (
         <>
-          {p.base}
+          <Fragment key="base">{p.base}</Fragment>
           <div className="absolute inset-x-0 top-0 h-[62%]">
             <img src={photoOf.cover} alt="" className="h-full w-full object-cover" style={{ maskImage: mask, WebkitMaskImage: mask }} />
           </div>
-          {p.decor}
+          <Fragment key="decor">{p.decor}</Fragment>
           <div className="absolute inset-x-[7%] bottom-[5%] top-[49%] z-[4] flex flex-col items-center justify-center overflow-hidden border px-6 text-center" style={{ borderColor: 'color-mix(in srgb, var(--s) 75%, transparent)', background: 'color-mix(in srgb, var(--bg) 93%, transparent)', borderRadius: 'var(--r)', color: 'var(--tx)' }}>
             <div className="pointer-events-none absolute left-0 top-0 w-16" style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className="w-16" rotate={0} /></div>
             <div className="pointer-events-none absolute bottom-0 right-0 w-16" style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className="w-16" rotate={180} /></div>
@@ -278,7 +294,7 @@ export function CoverLayout(p: CoverProps) {
       const frame = p.frame === 'diamond' || p.frame === 'hex' ? 'arch' : p.frame;
       return (
         <>
-          {p.base}{p.decor}{p.corners}
+          {backdrop}
           <div className={column}>
             {kickerEl()}
             <div className="mt-5 flex items-end justify-center" style={{ zoom: 0.82 }}>
@@ -321,7 +337,7 @@ export function CoverLayout(p: CoverProps) {
         );
       return (
         <>
-          {p.base}{p.decor}{p.corners}
+          {backdrop}
           <div className={column}>
             {kickerEl()}
             <div className={`mt-5 ${width} ${p.premium ? 'wl-float' : ''}`}>
@@ -427,13 +443,18 @@ export function CoverLayout(p: CoverProps) {
             </h1>
             {p.dateText && <p className="mt-2 text-[11px] uppercase tracking-[0.35em]" style={{ color: 'var(--s)' }}>Tayang perdana · {p.dateText}</p>}
             {p.guest && <p className="mt-3 text-xs text-white/75">{p.guest.dear} <span className="font-semibold text-white">{p.guest.name}</span></p>}
-            <button
-              onClick={p.onOpen}
-              className={`mt-4 border px-7 py-2.5 text-sm font-medium uppercase tracking-[0.2em] transition-transform hover:scale-[1.03] ${p.premium ? 'wl-pulse' : ''}`}
-              style={{ borderColor: 'var(--s)', color: 'var(--s)', borderRadius: p.buttonRadius, background: 'rgba(0,0,0,.35)' }}
-            >
-              {p.openLabel}
-            </button>
+            {(() => {
+              const Tag = p.decorative ? 'span' : 'button';
+              return (
+                <Tag
+                  {...(p.decorative ? {} : { onClick: p.onOpen })}
+                  className={`mt-4 border px-7 py-2.5 text-sm font-medium uppercase tracking-[0.2em] transition-transform hover:scale-[1.03] ${p.premium ? 'wl-pulse' : ''}`}
+                  style={{ borderColor: 'var(--s)', color: 'var(--s)', borderRadius: p.buttonRadius, background: 'rgba(0,0,0,.35)' }}
+                >
+                  {p.openLabel}
+                </Tag>
+              );
+            })()}
           </div>
         </>
       );
