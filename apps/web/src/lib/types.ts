@@ -34,7 +34,7 @@ export const GATE_LABEL = {
   gift: 'Kado',
   lantern: 'Lentera',
   fireworks: 'Kembang api',
-  frost: 'Kaca beku',
+  frost: 'Surat kristal es',
   book: 'Buku dongeng',
   pressstart: 'Press Start',
   loading: 'Loading',

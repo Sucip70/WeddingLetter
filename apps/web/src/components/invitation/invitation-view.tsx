@@ -304,11 +304,12 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         )}
         {musicUrl && <audio ref={audioRef} src={musicUrl} loop preload="none" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />}
 
-        {/* Premium: partikel melayang di seluruh halaman (lapisan lengket seukuran layar) */}
-        {fx === 'premium' && (
+        {/* Premium: partikel melayang di seluruh halaman (lapisan lengket seukuran layar). Dengan gerbang, baru
+            dipasang saat sampul mulai terlihat dan masuk bertahap dari tepi layar, bukan muncul di tengah. */}
+        {fx === 'premium' && (!gateKind || coverKey === 'open') && (
           <div className="pointer-events-none sticky top-0 z-[5] h-0" aria-hidden>
             <div className="relative" style={{ height: layerHeight }}>
-              <Particles kind={motif.particles.kind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />
+              <Particles kind={motif.particles.kind} count={particleCount} mode={motif.particles.mode} height={layerHeight} enter={!!gateKind} />
             </div>
           </div>
         )}

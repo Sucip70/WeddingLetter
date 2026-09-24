@@ -118,21 +118,30 @@ function Shape({ kind }: { kind: ParticleKind }) {
 
 const MODE_CLASS: Record<ParticleMode, string> = { fall: 'wl-fall', rise: 'wl-rise', twinkle: 'wl-twinkle', drift: 'wl-drift' };
 
+// Jendela waktu (detik) partikel mulai satu per satu saat `enter`: layar terisi bertahap dalam beberapa detik.
+const ENTER_WINDOW = 4.5;
+
 // Lapisan partikel. `height` = tinggi area (px) dipakai untuk lintasan jatuh/naik.
-export function Particles({ kind, count, mode, height }: { kind: ParticleKind; count: number; mode: ParticleMode; height: number | string }) {
+// Bawaan: tiap partikel mulai di tengah lintasannya (delay negatif), jadi layar langsung penuh saat dimuat.
+// `enter`: semua mulai dari awal lintasan (jatuh dari atas / naik dari bawah / muncul perlahan) secara bertahap —
+// dipakai setelah gerbang pembuka supaya partikel tidak tiba-tiba muncul di tengah layar.
+export function Particles({ kind, count, mode, height, enter = false }: { kind: ParticleKind; count: number; mode: ParticleMode; height: number | string; enter?: boolean }) {
   const colors = COLORS[kind];
   const isStatic = mode === 'twinkle' || mode === 'drift';
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" style={{ '--h': typeof height === 'number' ? `${height}px` : height } as CSSProperties} aria-hidden>
       {Array.from({ length: count }, (_, i) => {
         const dur = isStatic ? 2.6 + rand(i, 3) * 3.4 : 9 + rand(i, 3) * 10;
+        const delay = enter ? rand(i, 4) * Math.min(dur, ENTER_WINDOW) : -rand(i, 4) * dur;
         const style = {
           left: `${(rand(i, 1) * 100).toFixed(2)}%`,
           ...(isStatic ? { top: `${(rand(i, 6) * 100).toFixed(2)}%` } : null),
           color: colors[i % colors.length],
           transform: undefined,
           animationDuration: `${dur.toFixed(2)}s`,
-          animationDelay: `${(-rand(i, 4) * dur).toFixed(2)}s`,
+          animationDelay: `${delay.toFixed(2)}s`,
+          // Selama menunggu giliran, tetap di keadaan awal keyframe (di luar layar / transparan), bukan diam terlihat di tepi.
+          ...(enter ? { animationFillMode: 'backwards' } : null),
           '--sway': `${((rand(i, 5) - 0.5) * (mode === 'drift' ? 70 : 90)).toFixed(0)}px`,
           '--rot': `${((rand(i, 7) - 0.5) * 540).toFixed(0)}deg`,
           '--o': (0.55 + rand(i, 8) * 0.4).toFixed(2),

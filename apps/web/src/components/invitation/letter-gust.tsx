@@ -1,10 +1,11 @@
 'use client';
 
-// Gerbang "Surat kelopak sakura": surat kecil beristirahat di atas tumpukan kelopak sakura. Ketukan pada
-// `.wl-gate` (gates.tsx) mengubah `phase` ke 'opening': embusan angin menyapu diagonal dari kiri-bawah ke
-// kanan-atas, membawa kelopak & surat, dan latar gerbang terhapus tepat di belakang muka angin sehingga sampul
-// asli tersingkap mengikuti kelopak (REVEALS_COVER). Satu-satunya gerbang yang memakai Motion (dipilih pembuat
-// produk untuk animasi bertahap seperti ini); gerbang lain tetap CSS murni, jangan pindahkan tanpa alasan.
+// Gerbang "surat di atas tumpukan kepingan": surat kecil beristirahat di atas tumpukan kelopak sakura (`sakura`)
+// atau kepingan kristal es (`frost`). Ketukan pada `.wl-gate` (gates.tsx) mengubah `phase` ke 'opening': embusan
+// angin menyapu diagonal dari kiri-bawah ke kanan-atas, membawa kepingan & surat, dan latar gerbang terhapus
+// tepat di belakang muka angin sehingga sampul asli tersingkap mengikuti kepingan (REVEALS_COVER). Satu-satunya
+// gerbang yang memakai Motion (dipilih pembuat produk untuk animasi bertahap seperti ini); gerbang lain tetap CSS
+// murni, jangan pindahkan tanpa alasan. Varian hanya beda rupa (bentuk, warna, surat); gerak & waktu sama.
 import { motion, useReducedMotion } from 'motion/react';
 import type { CSSProperties } from 'react';
 import type { GatePhase } from './gates';
@@ -20,20 +21,64 @@ const rand = (i: number, salt: number) => {
 // merender style yang sama persis) — sama seperti .toFixed() yang dipakai rand() di effects.tsx.
 const r3 = (n: number) => Math.round(n * 1000) / 1000;
 
-// Path kelopak sakura sederhana (lekukan kecil di ujung).
+// ----- bentuk kepingan (viewBox 24x24) -----
+// Kelopak sakura sederhana (lekukan kecil di ujung).
 const PETAL_PATH = 'M12 2C9.4 2 7.3 4.4 7.6 7.4c.2 2.3 1.9 4.1 3.4 5.7.4.4.7.9 1 1.5.3-.6.6-1.1 1-1.5 1.5-1.6 3.2-3.4 3.4-5.7C16.7 4.4 14.6 2 12 2Z';
+// Poligon beraturan di tengah kotak 24x24; `inner` > 0 = bintang (sudut bergantian luar/dalam).
+const polygon = (points: number, outer: number, inner = 0) => {
+  const n = inner ? points * 2 : points;
+  const pts = Array.from({ length: n }, (_, i) => {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+    const r = inner && i % 2 ? inner : outer;
+    return `${(12 + Math.cos(a) * r).toFixed(2)} ${(12 + Math.sin(a) * r).toFixed(2)}`;
+  });
+  return `M${pts.join('L')}Z`;
+};
+// Kristal es: bintang enam runcing & pelat heksagonal, dipakai bergantian supaya tumpukan tidak seragam.
+const ICE_STAR = polygon(6, 11.5, 3.2);
+const ICE_PLATE = polygon(6, 8.5);
 
-// ----- waktu embusan (detik). GATE_MS.sakura (gates.tsx) harus sedikit lebih lama dari akhir semuanya. -----
+type GustKind = 'sakura' | 'frost';
+
+interface Look {
+  shapes: string[];
+  // Persentase warna tema yang dicampur ke putih dikali faktor ini (es lebih pucat dari kelopak).
+  tintScale: number;
+  fillOpacity: number;
+  stroke?: string;
+  pileShadow: string;
+  letter: { background: string; color: string; border?: string };
+}
+
+const LOOKS: Record<GustKind, Look> = {
+  sakura: {
+    shapes: [PETAL_PATH],
+    tintScale: 1,
+    fillOpacity: 1,
+    pileShadow: 'drop-shadow-[0_1px_1px_rgba(0,0,0,0.12)]',
+    letter: { background: '#fffdf8', color: '#3b2a20' },
+  },
+  frost: {
+    shapes: [ICE_STAR, ICE_PLATE],
+    tintScale: 0.75,
+    fillOpacity: 0.88,
+    stroke: 'rgba(255,255,255,.85)',
+    pileShadow: 'drop-shadow-[0_1px_2px_rgba(40,90,140,0.28)]',
+    letter: { background: '#fbfdff', color: '#1f3347', border: '1px solid color-mix(in srgb, var(--s) 75%, transparent)' },
+  },
+};
+
+// ----- waktu embusan (detik). GATE_MS (gates.tsx) harus sedikit lebih lama dari akhir semuanya. -----
 // Muka angin (batas latar yang terhapus) bergerak dari sudut kiri-bawah ke kanan-atas.
 const WIPE = { delay: 0.3, duration: 1.55 };
 const PILE_COUNT = 34;
 const GUST_COUNT = 30;
 
-// Arah angin di layar (x ke kanan, y ke bawah): ke kanan-atas; tegak lurusnya untuk menyebar kelopak embusan.
+// Arah angin di layar (x ke kanan, y ke bawah): ke kanan-atas; tegak lurusnya untuk menyebar kepingan embusan.
 const DIR = { x: Math.SQRT1_2, y: -Math.SQRT1_2 };
 const PERP = { x: Math.SQRT1_2, y: Math.SQRT1_2 };
 
-interface PilePetal {
+interface PileBit {
   id: number;
   left: number; // %
   top: number; // %
@@ -48,20 +93,20 @@ interface PilePetal {
   duration: number;
 }
 
-// Tumpukan berbentuk gundukan: padat di bawah-tengah, menipis ke atas/tepi. Tiap kelopak terangkat saat muka
+// Tumpukan berbentuk gundukan: padat di bawah-tengah, menipis ke atas/tepi. Tiap kepingan terangkat saat muka
 // angin melewatinya (yang di kiri-bawah lebih dulu), lalu terbang jauh ke kanan-atas keluar layar.
-function pilePetals(): PilePetal[] {
-  const petals: PilePetal[] = [];
+function pileBits(): PileBit[] {
+  const bits: PileBit[] = [];
   for (let i = 0; i < PILE_COUNT; i++) {
     const centered = (rand(i, 1) - 0.5) * 2; // -1..1
     const left = Math.min(96, Math.max(4, 50 + centered * 38 + (rand(i, 2) - 0.5) * 14));
     const heightBias = 1 - Math.abs(centered) * 0.6; // makin ke tengah, boleh makin tinggi tumpukannya
     const top = Math.min(97, Math.max(48, 96 - rand(i, 3) * 34 * heightBias));
-    // 0 = sudut kiri-bawah, 1 = sudut kanan-atas (kira-kira posisi muka angin saat melewati kelopak ini).
+    // 0 = sudut kiri-bawah, 1 = sudut kanan-atas (kira-kira posisi muka angin saat melewati kepingan ini).
     const along = (left + (100 - top)) / 200;
     const travel = 520 + rand(i, 8) * 420;
     const drift = (rand(i, 9) - 0.5) * 220;
-    petals.push({
+    bits.push({
       id: i,
       left: r3(left),
       top: r3(top),
@@ -76,11 +121,11 @@ function pilePetals(): PilePetal[] {
       duration: r3(0.95 + rand(i, 13) * 0.4),
     });
   }
-  return petals;
+  return bits;
 }
-const PILE = pilePetals();
+const PILE = pileBits();
 
-interface GustPetal {
+interface GustBit {
   id: number;
   size: number;
   tint: 'p' | 's';
@@ -95,17 +140,17 @@ interface GustPetal {
   duration: number;
 }
 
-// Kelopak embusan: masuk dari luar sudut kiri-bawah dalam pita tegak lurus arah angin, menyapu seluruh layar
+// Kepingan embusan: masuk dari luar sudut kiri-bawah dalam pita tegak lurus arah angin, menyapu seluruh layar
 // (juga di atas sampul yang sudah tersingkap), lalu keluar di kanan-atas. Posisi dalam px dari sudut kiri-bawah;
 // pita & jarak dibuat cukup untuk layar sampai ±480x1000 (layar yang lebih besar tetap tersingkap oleh latar).
-function gustPetals(): GustPetal[] {
-  const petals: GustPetal[] = [];
+function gustBits(): GustBit[] {
+  const bits: GustBit[] = [];
   for (let i = 0; i < GUST_COUNT; i++) {
     const spread = -760 + rand(i, 21) * 1140; // posisi dalam pita (tegak lurus angin)
     const start = -60 - rand(i, 22) * 160; // mulai sedikit di belakang layar
     const travel = 1250 + rand(i, 23) * 250;
     const wobble = (rand(i, 24) - 0.5) * 160;
-    petals.push({
+    bits.push({
       id: i,
       size: r3(12 + rand(i, 25) * 14),
       tint: rand(i, 26) > 0.45 ? 'p' : 's',
@@ -120,62 +165,74 @@ function gustPetals(): GustPetal[] {
       duration: r3(1.25 + rand(i, 32) * 0.55),
     });
   }
-  return petals;
+  return bits;
 }
-const GUST = gustPetals();
+const GUST = gustBits();
 
-const petalColor = (tint: 'p' | 's', shade: number) => `color-mix(in srgb, var(--${tint}) ${Math.round(shade * 100)}%, #fff)`;
+function Shape({ look, id, tint, shade }: { look: Look; id: number; tint: 'p' | 's'; shade: number }) {
+  return (
+    <path
+      d={look.shapes[id % look.shapes.length]}
+      fill={`color-mix(in srgb, var(--${tint}) ${Math.round(shade * look.tintScale * 100)}%, #fff)`}
+      fillOpacity={look.fillOpacity}
+      stroke={look.stroke}
+      strokeWidth={look.stroke ? 0.8 : undefined}
+      strokeLinejoin="round"
+    />
+  );
+}
 
-function PileLeaf({ petal, blowing, reduced }: { petal: PilePetal; blowing: boolean; reduced: boolean }) {
+function PileBitView({ bit, look, blowing, reduced }: { bit: PileBit; look: Look; blowing: boolean; reduced: boolean }) {
   return (
     <motion.svg
       viewBox="0 0 24 24"
-      width={petal.size}
-      height={petal.size}
-      className="absolute drop-shadow-[0_1px_1px_rgba(0,0,0,0.12)]"
-      style={{ left: `${petal.left}%`, top: `${petal.top}%`, translateX: '-50%', translateY: '-50%' }}
+      width={bit.size}
+      height={bit.size}
+      className={`absolute ${look.pileShadow}`}
+      style={{ left: `${bit.left}%`, top: `${bit.top}%`, translateX: '-50%', translateY: '-50%' }}
       initial={false}
       animate={
         blowing && !reduced
-          ? { x: petal.dx, y: petal.dy, rotate: petal.rotate + petal.spin, opacity: [1, 1, 0] }
+          ? { x: bit.dx, y: bit.dy, rotate: bit.rotate + bit.spin, opacity: [1, 1, 0] }
           : blowing
             ? { opacity: 0 }
-            : { x: 0, y: 0, rotate: petal.rotate, opacity: 1 }
+            : { x: 0, y: 0, rotate: bit.rotate, opacity: 1 }
       }
       transition={
         blowing
           ? reduced
             ? { duration: 0.25 }
-            : { duration: petal.duration, delay: petal.delay, ease: [0.45, 0, 0.75, 0.55], opacity: { duration: petal.duration, delay: petal.delay, times: [0, 0.8, 1] } }
+            : { duration: bit.duration, delay: bit.delay, ease: [0.45, 0, 0.75, 0.55], opacity: { duration: bit.duration, delay: bit.delay, times: [0, 0.8, 1] } }
           : { duration: 0.3 }
       }
     >
-      <path d={PETAL_PATH} fill={petalColor(petal.tint, petal.shade)} />
+      <Shape look={look} id={bit.id} tint={bit.tint} shade={bit.shade} />
     </motion.svg>
   );
 }
 
-function GustLeaf({ petal }: { petal: GustPetal }) {
+function GustBitView({ bit, look }: { bit: GustBit; look: Look }) {
   return (
     <motion.svg
       viewBox="0 0 24 24"
-      width={petal.size}
-      height={petal.size}
+      width={bit.size}
+      height={bit.size}
       className="absolute left-0 top-full"
       style={{ transformPerspective: 500 }}
-      initial={{ x: petal.x0, y: petal.y0, rotate: 0, rotateY: 0, opacity: 0 }}
-      animate={{ x: petal.x1, y: petal.y1, rotate: petal.spin, rotateY: petal.flip, opacity: [0, 1, 1, 0] }}
-      transition={{ duration: petal.duration, delay: petal.delay, ease: 'linear', opacity: { duration: petal.duration, delay: petal.delay, times: [0, 0.08, 0.85, 1] } }}
+      initial={{ x: bit.x0, y: bit.y0, rotate: 0, rotateY: 0, opacity: 0 }}
+      animate={{ x: bit.x1, y: bit.y1, rotate: bit.spin, rotateY: bit.flip, opacity: [0, 1, 1, 0] }}
+      transition={{ duration: bit.duration, delay: bit.delay, ease: 'linear', opacity: { duration: bit.duration, delay: bit.delay, times: [0, 0.08, 0.85, 1] } }}
       aria-hidden
     >
-      <path d={PETAL_PATH} fill={petalColor(petal.tint, petal.shade)} />
+      <Shape look={look} id={bit.id} tint={bit.tint} shade={bit.shade} />
     </motion.svg>
   );
 }
 
-export function SakuraLetter({ phase, names, kicker, guest, headingFamily }: { phase: GatePhase; names: string; kicker: string; guest: string | null; headingFamily: string }) {
+export function LetterGust({ kind, phase, names, kicker, guest, headingFamily }: { kind: GustKind; phase: GatePhase; names: string; kicker: string; guest: string | null; headingFamily: string }) {
   const reduced = !!useReducedMotion();
   const blowing = phase === 'opening';
+  const look = LOOKS[kind];
   // Latar terhapus di belakang muka angin: mask gradien diagonal yang batasnya (--wipe) digeser Motion.
   const mask = 'linear-gradient(45deg, transparent calc(var(--wipe) - 22%), #000 var(--wipe))';
 
@@ -190,17 +247,17 @@ export function SakuraLetter({ phase, names, kicker, guest, headingFamily }: { p
         aria-hidden
       >
         <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--p) 12%, var(--bg)), var(--bg) 78%)' }} />
-        {/* kelompok kelopak di lantai, meninggi ke belakang surat */}
+        {/* kelompok kepingan di lantai, meninggi ke belakang surat */}
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 45% at 50% 92%, color-mix(in srgb, var(--p) 16%, transparent), transparent 72%)' }} />
       </motion.div>
 
-      {PILE.map((petal) => (
-        <PileLeaf key={petal.id} petal={petal} blowing={blowing} reduced={reduced} />
+      {PILE.map((bit) => (
+        <PileBitView key={bit.id} bit={bit} look={look} blowing={blowing} reduced={reduced} />
       ))}
 
       <motion.div
-        className="absolute left-1/2 top-[42%] w-[66%] max-w-[19rem] -translate-x-1/2 -translate-y-1/2 rounded-sm bg-[#fffdf8] px-[7%] py-[9%] text-center shadow-[0_18px_38px_-16px_rgba(0,0,0,.4)]"
-        style={{ color: '#3b2a20' }}
+        className="absolute left-1/2 top-[42%] w-[66%] max-w-[19rem] -translate-x-1/2 -translate-y-1/2 rounded-sm px-[7%] py-[9%] text-center shadow-[0_18px_38px_-16px_rgba(0,0,0,.4)]"
+        style={look.letter}
         initial={false}
         animate={
           blowing
@@ -230,7 +287,7 @@ export function SakuraLetter({ phase, names, kicker, guest, headingFamily }: { p
       </motion.div>
 
       {/* embusan: hanya dipasang saat membuka (tidak ikut SSR / tidak membebani saat diam) */}
-      {blowing && !reduced && GUST.map((petal) => <GustLeaf key={petal.id} petal={petal} />)}
+      {blowing && !reduced && GUST.map((bit) => <GustBitView key={bit.id} bit={bit} look={look} />)}
     </div>
   );
 }

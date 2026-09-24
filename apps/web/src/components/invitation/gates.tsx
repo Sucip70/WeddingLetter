@@ -7,34 +7,35 @@ import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 import type { GateKind } from '@/lib/types';
 import { PatternLayer } from './effects';
 import type { PatternKind } from './motifs';
-import { SakuraLetter } from './sakura-gate';
+import { LetterGust } from './letter-gust';
 
 export type GatePhase = 'closed' | 'opening';
 
 // Lama animasi buka (ms) sampai gerbang dilepas. Dengan "kurangi gerakan" dipersingkat jadi fade.
 export const GATE_MS: Record<GateKind, number> = {
   door: 2300, glass: 2300, curtain: 2200, cloth: 2400, envelope: 2900, portal: 2500, ring: 2700, bloom: 2800, leaves: 2800,
-  balloons: 2800, waves: 2700, gift: 2500, lantern: 2700, fireworks: 2900, frost: 2200, book: 2900, pressstart: 1400, loading: 2700, neon: 2600,
-  sakura: 2700,
+  balloons: 2800, waves: 2700, gift: 2500, lantern: 2700, fireworks: 2900, book: 2900, pressstart: 1400, loading: 2700, neon: 2600,
+  // surat + embusan (letter-gust.tsx): waktu sama untuk semua variannya
+  sakura: 2700, frost: 2700,
 };
 
 // Gerbang yang menyingkap sampul sedikit demi sedikit selama fase 'opening' (latarnya menghilang di bawah
 // animasi, bukan sekaligus di akhir). InvitationView memutar animasi masuk sampul saat gerbang diketuk.
-export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true };
+export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true };
 
 const CTA: Record<GateKind, string> = {
   door: 'Ketuk untuk membuka pintu', glass: 'Ketuk untuk membuka jendela', curtain: 'Ketuk untuk membuka tirai', cloth: 'Ketuk untuk membuka kain',
   envelope: 'Ketuk untuk membuka amplop', portal: 'Ketuk untuk mengaktifkan portal', ring: 'Ketuk untuk memasangkan cincin', bloom: 'Ketuk agar bunga mekar',
   leaves: 'Ketuk untuk menyingkap', balloons: 'Ketuk untuk melepas balon', waves: 'Ketuk untuk memanggil ombak', gift: 'Ketuk untuk membuka kado',
-  lantern: 'Ketuk untuk menyalakan lentera', fireworks: 'Ketuk untuk menyalakan kembang api', frost: 'Ketuk untuk mencairkan es', book: 'Ketuk untuk membuka buku',
+  lantern: 'Ketuk untuk menyalakan lentera', fireworks: 'Ketuk untuk menyalakan kembang api', book: 'Ketuk untuk membuka buku',
   pressstart: 'Ketuk untuk mulai', loading: 'Ketuk untuk mulai', neon: 'Ketuk untuk menyalakan',
-  sakura: 'Ketuk untuk membuka surat',
+  sakura: 'Ketuk untuk membuka surat', frost: 'Ketuk untuk membuka surat',
 };
 
 // Adegan gelap memakai teks putih; adegan terang memakai warna teks tema.
 const DARK: Partial<Record<GateKind, true>> = { door: true, glass: true, curtain: true, cloth: true, portal: true, lantern: true, fireworks: true, pressstart: true, loading: true, neon: true };
 // Adegan yang punya teks sendiri (tanpa judul umum di atas).
-const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true };
+const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true };
 
 const rand = (i: number, salt: number) => {
   const x = Math.sin((i + 1) * 12.9898 + salt * 78.233) * 43758.5453;
@@ -46,10 +47,10 @@ interface SceneProps {
   kicker: string;
   pattern: PatternKind;
   headingFamily: string;
-  // Hanya dipakai gerbang yang punya kartu/judul sendiri (amplop, sakura): gerbang lain menampilkan sapaan tamu
-  // lewat wl-gate-title generik (lihat OWN_TITLE) dan tidak butuh prop ini.
+  // Hanya dipakai gerbang yang punya kartu/judul sendiri (amplop, surat sakura/es): gerbang lain menampilkan
+  // sapaan tamu lewat wl-gate-title generik (lihat OWN_TITLE) dan tidak butuh prop ini.
   guest: string | null;
-  // Hanya dipakai gerbang yang butuh tahu fase untuk animasi terkendali JS (mis. sakura/Motion); gerbang
+  // Hanya dipakai gerbang yang butuh tahu fase untuk animasi terkendali JS (letter-gust.tsx / Motion); gerbang
   // CSS lain membaca fase lewat atribut data-phase di root, bukan lewat prop ini.
   phase: GatePhase;
 }
@@ -387,25 +388,6 @@ function Fireworks() {
   );
 }
 
-// ---------- kaca beku ----------
-
-function Frost() {
-  return (
-    <div className="g-frost g-holed">
-      <svg className="g-flake" viewBox="-50 -50 100 100" aria-hidden>
-        <g stroke="#fff" strokeWidth="1.4" strokeLinecap="round" fill="none" opacity=".8">
-          {[0, 60, 120].map((r) => (
-            <g key={r} transform={`rotate(${r})`}>
-              <path d="M0 -44V44" />
-              <path d="M-9 -34L0 -26L9 -34M-9 34L0 26L9 34M-7 -18L0 -12L7 -18M-7 18L0 12L7 18" />
-            </g>
-          ))}
-        </g>
-      </svg>
-    </div>
-  );
-}
-
 // ---------- buku ----------
 
 function Book({ names, kicker, headingFamily }: SceneProps) {
@@ -481,12 +463,12 @@ function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
     case 'gift': return <Gift />;
     case 'lantern': return <Lanterns />;
     case 'fireworks': return <Fireworks />;
-    case 'frost': return <Frost />;
+    case 'frost': return <LetterGust kind="frost" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'book': return <Book {...p} />;
     case 'pressstart': return <PressStart {...p} />;
     case 'loading': return <Loading {...p} />;
     case 'neon': return <Neon {...p} />;
-    case 'sakura': return <SakuraLetter phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
+    case 'sakura': return <LetterGust kind="sakura" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
   }
 }
 
@@ -697,11 +679,6 @@ const GATE_CSS = `
 @keyframes g-spark{0%{opacity:0;transform:translate(0,0) scale(.4)}10%{opacity:1}100%{opacity:0;transform:translate(var(--dx),calc(var(--dy) + 36px)) scale(1)}}
 @keyframes g-rocket{0%{opacity:0;transform:translateY(60cqh)}20%{opacity:1}100%{opacity:0;transform:translateY(0)}}
 .wl-gate[data-phase=opening] .g-fwbg{opacity:0}
-
-/* kaca beku */
-.g-frost{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.66),rgba(205,230,252,.5) 45%,rgba(255,255,255,.7));-webkit-backdrop-filter:blur(20px) saturate(1.15);backdrop-filter:blur(20px) saturate(1.15);transition:opacity .5s ease 1.6s}
-.g-flake{position:absolute;left:50%;top:46%;width:78%;transform:translate(-50%,-50%);animation:g-breathe 5s ease-in-out infinite}
-.wl-gate[data-phase=opening] .g-frost{animation:g-hole 1.6s cubic-bezier(.5,0,.3,1) .1s forwards;opacity:0}
 
 /* buku */
 .g-bookscene{position:absolute;inset:0}
