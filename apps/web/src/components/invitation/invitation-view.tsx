@@ -291,6 +291,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             kicker={kicker}
             guest={mode === 'live' ? guest : null}
             pattern={motif.pattern}
+            motif={theme.motif ?? theme.preset}
             headingFamily={hf.family}
             onOpen={openGate}
           />

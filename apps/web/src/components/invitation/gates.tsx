@@ -8,6 +8,7 @@ import type { GateKind } from '@/lib/types';
 import { PatternLayer } from './effects';
 import type { PatternKind } from './motifs';
 import { LetterGust } from './letter-gust';
+import { MagicPortal } from './magic-portal';
 
 export type GatePhase = 'closed' | 'opening';
 
@@ -21,7 +22,7 @@ export const GATE_MS: Record<GateKind, number> = {
 
 // Gerbang yang menyingkap sampul sedikit demi sedikit selama fase 'opening' (latarnya menghilang di bawah
 // animasi, bukan sekaligus di akhir). InvitationView memutar animasi masuk sampul saat gerbang diketuk.
-export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true };
+export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, portal: true };
 
 const CTA: Record<GateKind, string> = {
   door: 'Ketuk untuk membuka pintu', glass: 'Ketuk untuk membuka jendela', curtain: 'Ketuk untuk membuka tirai', cloth: 'Ketuk untuk membuka kain',
@@ -35,7 +36,7 @@ const CTA: Record<GateKind, string> = {
 // Adegan gelap memakai teks putih; adegan terang memakai warna teks tema.
 const DARK: Partial<Record<GateKind, true>> = { door: true, glass: true, curtain: true, cloth: true, portal: true, lantern: true, fireworks: true, pressstart: true, loading: true, neon: true };
 // Adegan yang punya teks sendiri (tanpa judul umum di atas).
-const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true, leaves: true };
+const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true, leaves: true, portal: true };
 
 const rand = (i: number, salt: number) => {
   const x = Math.sin((i + 1) * 12.9898 + salt * 78.233) * 43758.5453;
@@ -47,11 +48,13 @@ interface SceneProps {
   kicker: string;
   pattern: PatternKind;
   headingFamily: string;
-  // Hanya dipakai gerbang yang punya kartu/judul sendiri (amplop, surat sakura/es): gerbang lain menampilkan
+  // Id desain (theme.motif), untuk gerbang yang punya rupa berbeda per desain (portal: rune / orbit galaksi).
+  motif: string;
+  // Hanya dipakai gerbang yang punya kartu/judul sendiri (amplop, surat, portal): gerbang lain menampilkan
   // sapaan tamu lewat wl-gate-title generik (lihat OWN_TITLE) dan tidak butuh prop ini.
   guest: string | null;
-  // Hanya dipakai gerbang yang butuh tahu fase untuk animasi terkendali JS (letter-gust.tsx / Motion); gerbang
-  // CSS lain membaca fase lewat atribut data-phase di root, bukan lewat prop ini.
+  // Hanya dipakai gerbang yang butuh tahu fase untuk animasi terkendali JS (letter-gust.tsx, magic-portal.tsx /
+  // Motion); gerbang CSS lain membaca fase lewat atribut data-phase di root, bukan lewat prop ini.
   phase: GatePhase;
 }
 
@@ -118,38 +121,6 @@ function Envelope({ names, kicker, guest, headingFamily }: SceneProps) {
         <div className="g-seal">
           <svg viewBox="0 0 24 24" width="46%" fill="currentColor" aria-hidden><path d="M12 21C5 15 2 11.5 2 8a5 5 0 0 1 10-1 5 5 0 0 1 10 1c0 3.5-3 7-10 13Z" /></svg>
         </div>
-      </div>
-    </div>
-  );
-}
-
-// ---------- portal sihir ----------
-
-const TICKS = Array.from({ length: 24 }, (_, i) => i);
-function Portal() {
-  return (
-    <div className="g-portalscene">
-      <div className="g-portalbg g-holed" />
-      <div className="g-rings">
-        <svg viewBox="-100 -100 200 200" aria-hidden>
-          <g className="g-r1">
-            <circle r="94" fill="none" stroke="var(--s)" strokeWidth="1.2" strokeDasharray="3 5" />
-            {TICKS.map((i) => (
-              <line key={i} x1="0" y1="-98" x2="0" y2={i % 2 ? -90 : -86} stroke="var(--s)" strokeWidth="1.6" transform={`rotate(${i * 15})`} />
-            ))}
-          </g>
-          <g className="g-r2">
-            <circle r="76" fill="none" stroke="var(--p)" strokeWidth="2.4" />
-            {Array.from({ length: 8 }, (_, i) => (
-              <path key={i} d="M0 -76 L5 -66 L-5 -66Z" fill="var(--s)" transform={`rotate(${i * 45})`} />
-            ))}
-          </g>
-          <g className="g-r3">
-            <path d="M0 -58 L14 -14 L58 0 L14 14 L0 58 L-14 14 L-58 0 L-14 -14Z" fill="none" stroke="var(--s)" strokeWidth="1.6" />
-            <circle r="34" fill="none" stroke="var(--p)" strokeWidth="1.4" strokeDasharray="2 4" />
-          </g>
-        </svg>
-        <div className="g-core" />
       </div>
     </div>
   );
@@ -444,7 +415,7 @@ function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
     case 'curtain': return <Curtain pattern={p.pattern} />;
     case 'cloth': return <Curtain cloth pattern={p.pattern} />;
     case 'envelope': return <Envelope {...p} />;
-    case 'portal': return <Portal />;
+    case 'portal': return <MagicPortal look={p.motif === 'galaksi' ? 'orbit' : 'rune'} phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'ring': return <Rings />;
     case 'bloom': return <Bloom />;
     case 'leaves': return <LetterGust kind="leaves" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
@@ -462,7 +433,7 @@ function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
   }
 }
 
-export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, headingFamily, onOpen }: {
+export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, motif, headingFamily, onOpen }: {
   kind: GateKind;
   phase: GatePhase;
   embedded: boolean;
@@ -470,6 +441,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, hea
   kicker: string;
   guest: string | null;
   pattern: PatternKind;
+  motif: string;
   headingFamily: string;
   onOpen: () => void;
 }) {
@@ -483,7 +455,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, hea
     <div className={embedded ? 'absolute inset-x-0 top-0 z-[60] h-[810px]' : 'fixed inset-y-0 left-1/2 z-[60] w-full max-w-[480px] -translate-x-1/2'}>
       <style>{GATE_CSS}</style>
       <div className="wl-gate" data-kind={kind} data-phase={phase} data-tone={DARK[kind] ? 'dark' : 'light'} role="button" tabIndex={0} aria-label={`Buka undangan. ${CTA[kind]}`} onClick={onOpen} onKeyDown={onKey}>
-        <Scene kind={kind} names={names} kicker={kicker} guest={guest} pattern={pattern} headingFamily={headingFamily} phase={phase} />
+        <Scene kind={kind} names={names} kicker={kicker} guest={guest} pattern={pattern} motif={motif} headingFamily={headingFamily} phase={phase} />
         {!OWN_TITLE[kind] && (
           <div className="wl-gate-title">
             <small>{kicker}</small>
@@ -516,9 +488,9 @@ const GATE_CSS = `
 
 @keyframes g-hole{to{--h:150%}}
 .g-holed{-webkit-mask-image:radial-gradient(circle at 50% 46%,transparent var(--h),#000 calc(var(--h) + 3%));mask-image:radial-gradient(circle at 50% 46%,transparent var(--h),#000 calc(var(--h) + 3%))}
+/* g-spin juga dipakai magic-portal.tsx (putaran cincin terus-menerus) */
 @keyframes g-spin{to{transform:rotate(360deg)}}
 @keyframes g-bob{0%,100%{translate:0 0}50%{translate:0 -6px}}
-@keyframes g-breathe{0%,100%{scale:1;opacity:.78}50%{scale:1.06;opacity:1}}
 @keyframes g-blink{50%{opacity:0}}
 @keyframes g-twinkle{0%,100%{opacity:.15}50%{opacity:1}}
 
@@ -573,17 +545,6 @@ const GATE_CSS = `
 .wl-gate[data-phase=opening] .g-card{transform:translateY(-52%)}
 .wl-gate[data-phase=opening] .g-envwrap{transform:translate(-50%,130%) scale(.9);opacity:0}
 .wl-gate[data-phase=opening] .g-envbg{opacity:0}
-
-/* portal sihir */
-.g-portalscene{position:absolute;inset:0}
-.g-portalbg{position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,color-mix(in srgb,var(--p) 45%,#1a0b3a) 0,#05030f 72%);transition:opacity .5s ease 2s}
-.g-rings{position:absolute;left:50%;top:46%;width:84%;aspect-ratio:1;transform:translate(-50%,-50%);filter:drop-shadow(0 0 8px var(--s));transition:transform 1.8s cubic-bezier(.6,0,.3,1) .1s,opacity 1s ease 1.2s}
-.g-rings svg{width:100%;height:100%}
-.g-rings g{transform-box:fill-box;transform-origin:center}
-.g-r1{animation:g-spin 20s linear infinite}.g-r2{animation:g-spin 13s linear infinite reverse}.g-r3{animation:g-spin 8s linear infinite}
-.g-core{position:absolute;left:50%;top:50%;width:34%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,#fff,color-mix(in srgb,var(--s) 70%,transparent) 45%,transparent 70%);animation:g-breathe 2.6s ease-in-out infinite}
-.wl-gate[data-phase=opening] .g-rings{transform:translate(-50%,-50%) scale(3.6);opacity:0}
-.wl-gate[data-phase=opening] .g-portalbg{animation:g-hole 1.9s cubic-bezier(.5,0,.3,1) .5s forwards;opacity:0}
 
 /* cincin */
 .g-ringscene{position:absolute;inset:0}

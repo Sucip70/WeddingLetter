@@ -9,6 +9,7 @@
 import { motion, useReducedMotion } from 'motion/react';
 import type { CSSProperties } from 'react';
 import type { GatePhase } from './gates';
+import { STRINGS } from './i18n';
 
 // Posisi/keacakan tetap (server = klien) — sama gayanya dengan rand() di gates.tsx/effects.tsx, tapi lokal
 // supaya file gerbang lain tidak ikut bergantung pada Motion.
@@ -342,11 +343,10 @@ export function LetterGust({ kind, phase, names, kicker, guest, headingFamily }:
         </b>
         <i className="mx-auto mt-3 block h-px w-10 not-italic" style={{ background: 'var(--s)' }} />
         <p className="mt-3 text-[11px] leading-relaxed opacity-75">
-          Kepada Yth.
+          {STRINGS.id.dear}
           <br />
-          {guest && (
-            <span className="font-semibold">{guest}</span>
-          )}
+          {/* tanpa nama tamu (demo, pratinjau, link tanpa ?to=): sapaan umum, sama dengan sampul */}
+          <span className="font-semibold">{guest || STRINGS.id.guestFallback}</span>
         </p>
       </motion.div>
 
