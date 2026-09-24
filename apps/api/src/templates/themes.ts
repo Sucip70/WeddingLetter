@@ -41,6 +41,7 @@ export const GATE_LABEL = {
   pressstart: 'Press Start',
   loading: 'Loading',
   neon: 'Papan neon',
+  sakura: 'Surat kelopak sakura',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export const GATE_KINDS = Object.keys(GATE_LABEL) as GateKind[];
@@ -140,7 +141,7 @@ const DESIGN_GATES: Record<string, GateKind> = {
   jawa: 'door', sunda: 'leaves', minang: 'curtain', batak: 'cloth', bali: 'door',
   islami: 'door', kristiani: 'glass', buddha: 'bloom',
   natal: 'gift', imlek: 'lantern', valentine: 'envelope', kemerdekaan: 'curtain', lebaran: 'envelope', tahunbaru: 'fireworks', halloween: 'door',
-  'kerajaan-es': 'frost', ceria: 'balloons', 'sakura-anime': 'bloom', dongeng: 'book',
+  'kerajaan-es': 'frost', ceria: 'balloons', 'sakura-anime': 'sakura', dongeng: 'book',
   pixel: 'pressstart', 'player-one': 'loading', rpg: 'door', neon: 'neon',
   hollywood: 'curtain', galaksi: 'portal', sihir: 'portal', paris: 'envelope',
   semi: 'bloom', panas: 'waves', gugur: 'leaves', salju: 'frost',

@@ -7,6 +7,7 @@ import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 import type { GateKind } from '@/lib/types';
 import { PatternLayer } from './effects';
 import type { PatternKind } from './motifs';
+import { SakuraLetter } from './sakura-gate';
 
 export type GatePhase = 'closed' | 'opening';
 
@@ -14,6 +15,7 @@ export type GatePhase = 'closed' | 'opening';
 export const GATE_MS: Record<GateKind, number> = {
   door: 2300, glass: 2300, curtain: 2200, cloth: 2400, envelope: 2900, portal: 2500, ring: 2700, bloom: 2800, leaves: 2800,
   balloons: 2800, waves: 2700, gift: 2500, lantern: 2700, fireworks: 2900, frost: 2200, book: 2900, pressstart: 1400, loading: 2700, neon: 2600,
+  sakura: 2600,
 };
 
 const CTA: Record<GateKind, string> = {
@@ -22,12 +24,13 @@ const CTA: Record<GateKind, string> = {
   leaves: 'Ketuk untuk menyingkap', balloons: 'Ketuk untuk melepas balon', waves: 'Ketuk untuk memanggil ombak', gift: 'Ketuk untuk membuka kado',
   lantern: 'Ketuk untuk menyalakan lentera', fireworks: 'Ketuk untuk menyalakan kembang api', frost: 'Ketuk untuk mencairkan es', book: 'Ketuk untuk membuka buku',
   pressstart: 'Ketuk untuk mulai', loading: 'Ketuk untuk mulai', neon: 'Ketuk untuk menyalakan',
+  sakura: 'Ketuk untuk membuka surat',
 };
 
 // Adegan gelap memakai teks putih; adegan terang memakai warna teks tema.
 const DARK: Partial<Record<GateKind, true>> = { door: true, glass: true, curtain: true, cloth: true, portal: true, lantern: true, fireworks: true, pressstart: true, loading: true, neon: true };
 // Adegan yang punya teks sendiri (tanpa judul umum di atas).
-const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true };
+const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true };
 
 const rand = (i: number, salt: number) => {
   const x = Math.sin((i + 1) * 12.9898 + salt * 78.233) * 43758.5453;
@@ -39,6 +42,12 @@ interface SceneProps {
   kicker: string;
   pattern: PatternKind;
   headingFamily: string;
+  // Hanya dipakai gerbang yang punya kartu/judul sendiri (amplop, sakura): gerbang lain menampilkan sapaan tamu
+  // lewat wl-gate-title generik (lihat OWN_TITLE) dan tidak butuh prop ini.
+  guest: string | null;
+  // Hanya dipakai gerbang yang butuh tahu fase untuk animasi terkendali JS (mis. sakura/Motion); gerbang
+  // CSS lain membaca fase lewat atribut data-phase di root, bukan lewat prop ini.
+  phase: GatePhase;
 }
 
 // ---------- pintu / jendela kaca patri ----------
@@ -87,7 +96,7 @@ function Curtain({ cloth, pattern }: { cloth?: boolean; pattern: PatternKind }) 
 
 // ---------- amplop ----------
 
-function Envelope({ names, kicker, headingFamily }: SceneProps) {
+function Envelope({ names, kicker, guest, headingFamily }: SceneProps) {
   return (
     <div className="g-envscene">
       <div className="g-envbg" />
@@ -97,6 +106,7 @@ function Envelope({ names, kicker, headingFamily }: SceneProps) {
           <small>{kicker}</small>
           <b style={{ fontFamily: headingFamily }}>{names}</b>
           <i />
+          {guest && <em>Kepada Yth.<br />{guest}</em>}
         </div>
         <div className="g-front" />
         <div className="g-flap" />
@@ -472,6 +482,7 @@ function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
     case 'pressstart': return <PressStart {...p} />;
     case 'loading': return <Loading {...p} />;
     case 'neon': return <Neon {...p} />;
+    case 'sakura': return <SakuraLetter phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
   }
 }
 
@@ -496,7 +507,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, hea
     <div className={embedded ? 'absolute inset-x-0 top-0 z-[60] h-[810px]' : 'fixed inset-y-0 left-1/2 z-[60] w-full max-w-[480px] -translate-x-1/2'}>
       <style>{GATE_CSS}</style>
       <div className="wl-gate" data-kind={kind} data-phase={phase} data-tone={DARK[kind] ? 'dark' : 'light'} role="button" tabIndex={0} aria-label={`Buka undangan. ${CTA[kind]}`} onClick={onOpen} onKeyDown={onKey}>
-        <Scene kind={kind} names={names} kicker={kicker} pattern={pattern} headingFamily={headingFamily} />
+        <Scene kind={kind} names={names} kicker={kicker} guest={guest} pattern={pattern} headingFamily={headingFamily} phase={phase} />
         {!OWN_TITLE[kind] && (
           <div className="wl-gate-title">
             <small>{kicker}</small>
@@ -577,6 +588,7 @@ const GATE_CSS = `
 .g-card small{font-size:9px;letter-spacing:.3em;text-transform:uppercase;opacity:.7}
 .g-card b{margin-top:.5em;font-size:1.45rem;line-height:1.15;color:var(--p);font-weight:600}
 .g-card i{display:block;width:34%;height:1px;margin-top:.9em;background:var(--s)}
+.g-card em{display:block;margin-top:.85em;font-size:11px;font-style:normal;line-height:1.5;opacity:.75}
 .g-front{position:absolute;inset:0;z-index:3;background:color-mix(in srgb,var(--s) 78%,var(--bg));clip-path:polygon(0 0,50% 54%,100% 0,100% 100%,0 100%);filter:drop-shadow(0 -2px 3px rgba(0,0,0,.18))}
 .g-flap{position:absolute;left:0;right:0;top:0;height:57%;z-index:4;transform-origin:50% 0;background:color-mix(in srgb,var(--s) 55%,var(--p));clip-path:polygon(0 0,100% 0,50% 100%);transition:transform .9s cubic-bezier(.5,0,.2,1) .05s,z-index 0s .45s}
 .g-seal{position:absolute;left:50%;top:54%;width:17%;aspect-ratio:1;transform:translate(-50%,-50%);z-index:5;border-radius:50%;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--p) 60%,#fff),var(--p) 60%,color-mix(in srgb,var(--p) 60%,#000));color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.35);animation:g-bob 3s ease-in-out infinite}
