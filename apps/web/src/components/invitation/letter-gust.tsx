@@ -1,7 +1,7 @@
 'use client';
 
-// Gerbang "surat di atas tumpukan kepingan": surat kecil beristirahat di atas tumpukan kelopak sakura (`sakura`)
-// atau kepingan kristal es (`frost`). Ketukan pada `.wl-gate` (gates.tsx) mengubah `phase` ke 'opening': embusan
+// Gerbang "surat di atas tumpukan kepingan": surat kecil beristirahat di atas tumpukan kelopak sakura (`sakura`),
+// kepingan kristal es (`frost`), atau daun musim gugur yang lebih besar (`leaves`). Ketukan pada `.wl-gate` (gates.tsx) mengubah `phase` ke 'opening': embusan
 // angin menyapu diagonal dari kiri-bawah ke kanan-atas, membawa kepingan & surat, dan latar gerbang terhapus
 // tepat di belakang muka angin sehingga sampul asli tersingkap mengikuti kepingan (REVEALS_COVER). Satu-satunya
 // gerbang yang memakai Motion (dipilih pembuat produk untuk animasi bertahap seperti ini); gerbang lain tetap CSS
@@ -37,15 +37,29 @@ const polygon = (points: number, outer: number, inner = 0) => {
 // Kristal es: bintang enam runcing & pelat heksagonal, dipakai bergantian supaya tumpukan tidak seragam.
 const ICE_STAR = polygon(6, 11.5, 3.2);
 const ICE_PLATE = polygon(6, 8.5);
+// Daun musim gugur: maple bergerigi, daun lonjong runcing, daun tetes — masing-masing dengan tulang daun.
+const MAPLE_LEAF = 'M12 1.5l2.6 4.6 3.9-1.3-.8 4.4 4.3 1.5-3.6 2.6 1.6 3.9-4.3-.6-.9 4.4H13v3.5h-2V21h-1.8l-.9-4.4-4.3.6 1.6-3.9-3.6-2.6 4.3-1.5-.8-4.4 3.9 1.3Z';
+const MAPLE_VEINS = 'M12 21V6M12 13.5 17.5 9M12 13.5 6.5 9M12 16l5 1.5M12 16l-5 1.5';
+const ELM_LEAF = 'M12 1.5C17 5.5 19.2 10.6 16.8 16c-1.3 3-3 4.6-4.1 5.4v1.6h-1.4v-1.6C10.2 20.6 8.5 19 7.2 16 4.8 10.6 7 5.5 12 1.5Z';
+const ELM_VEINS = 'M12 3.5V21M12 8.5l3-2M12 8.5l-3-2M12 12.5l3.8-2.3M12 12.5 8.2 10.2M12 16.5l3.2-1.8M12 16.5l-3.2-1.8';
+const DROP_LEAF = 'M3 21C3 10 10 3 21 3c0 11-7 18-18 18Z';
+const DROP_VEINS = 'M4 20 18 6M9 15l-1.2-4.2M12.5 11.5l-1-4M9 15l4.2 1.2M12.5 11.5l4 1';
 
-type GustKind = 'sakura' | 'frost';
+type GustKind = 'sakura' | 'frost' | 'leaves';
 
 interface Look {
   shapes: string[];
-  // Persentase warna tema yang dicampur ke putih dikali faktor ini (es lebih pucat dari kelopak).
+  // Tulang daun (sejajar dengan `shapes`, kosong = tanpa garis dalam).
+  veins?: string[];
+  // Warna dasar yang dicampur dengan warna tema (bawaan: putih). Persentase warna tema = shade x tintScale.
+  mixWith?: string[];
   tintScale: number;
   fillOpacity: number;
   stroke?: string;
+  // Pengali ukuran kepingan (1 = ukuran kelopak sakura).
+  sizeScale?: number;
+  // Bentuk tumpukan (bawaan: gundukan rendah di bawah layar). Lihat PileShape.
+  pile?: PileShape;
   pileShadow: string;
   letter: { background: string; color: string; border?: string };
 }
@@ -66,13 +80,53 @@ const LOOKS: Record<GustKind, Look> = {
     pileShadow: 'drop-shadow-[0_1px_2px_rgba(40,90,140,0.28)]',
     letter: { background: '#fbfdff', color: '#1f3347', border: '1px solid color-mix(in srgb, var(--s) 75%, transparent)' },
   },
+  leaves: {
+    shapes: [MAPLE_LEAF, ELM_LEAF, DROP_LEAF],
+    veins: [MAPLE_VEINS, ELM_VEINS, DROP_VEINS],
+    // Jingga, karat, merah bata, emas, cokelat: tetap "musim gugur" walau tema hijau; warna tema hanya menyelaraskan.
+    mixWith: ['#c2571a', '#d98b2b', '#a8321f', '#e0a83e', '#8a4b20'],
+    tintScale: 0.5,
+    fillOpacity: 1,
+    sizeScale: 1.5,
+    // Daun berserakan merata memenuhi seluruh layar (54 daun), bukan menumpuk di bawah.
+    pile: { kind: 'fill', cols: 6, rows: 9 },
+    pileShadow: 'drop-shadow-[0_2px_2px_rgba(60,30,10,0.22)]',
+    letter: { background: '#fdf6ea', color: '#4a2c16', border: '1px solid color-mix(in srgb, var(--s) 45%, transparent)' },
+  },
 };
 
 // ----- waktu embusan (detik). GATE_MS (gates.tsx) harus sedikit lebih lama dari akhir semuanya. -----
 // Muka angin (batas latar yang terhapus) bergerak dari sudut kiri-bawah ke kanan-atas.
 const WIPE = { delay: 0.3, duration: 1.55 };
-const PILE_COUNT = 34;
 const GUST_COUNT = 30;
+
+// Susunan kepingan sebelum diketuk:
+// - `mound`: gundukan `count` kepingan; tinggi `reach` (% tinggi layar dari dasar, paling tinggi di tengah
+//   horizontal); `minTop` batas teratas (%); `bias` > 1 = makin jarang ke atas; `taper` = seberapa cepat gundukan
+//   merendah ke tepi kiri/kanan (0 = rata, 0.6 = runcing di tengah).
+// - `fill`: kisi `cols` x `rows` yang digeser acak, merata di seluruh layar (tanpa gumpalan / area kosong).
+type PileShape =
+  | { kind: 'mound'; count: number; reach: number; minTop: number; bias: number; taper: number }
+  | { kind: 'fill'; cols: number; rows: number };
+// Bawaan (sakura, es): gundukan rendah di sepertiga bawah layar.
+const LOW_PILE: PileShape = { kind: 'mound', count: 34, reach: 34, minTop: 48, bias: 1, taper: 0.6 };
+
+// Posisi kepingan ke-i (% dari kiri & atas layar).
+function pilePosition(shape: PileShape, i: number) {
+  if (shape.kind === 'fill') {
+    const c = i % shape.cols;
+    const r = Math.floor(i / shape.cols);
+    return {
+      left: ((c + 0.5 + (rand(i, 1) - 0.5) * 0.9) / shape.cols) * 100,
+      top: ((r + 0.5 + (rand(i, 3) - 0.5) * 0.9) / shape.rows) * 100,
+    };
+  }
+  const centered = (rand(i, 1) - 0.5) * 2; // -1..1
+  const left = Math.min(96, Math.max(4, 50 + centered * 38 + (rand(i, 2) - 0.5) * 14));
+  const heightBias = 1 - Math.abs(centered) * shape.taper; // makin ke tengah, boleh makin tinggi tumpukannya
+  const top = Math.min(97, Math.max(shape.minTop, 96 - Math.pow(rand(i, 3), shape.bias) * shape.reach * heightBias));
+  return { left, top };
+}
 
 // Arah angin di layar (x ke kanan, y ke bawah): ke kanan-atas; tegak lurusnya untuk menyebar kepingan embusan.
 const DIR = { x: Math.SQRT1_2, y: -Math.SQRT1_2 };
@@ -93,15 +147,13 @@ interface PileBit {
   duration: number;
 }
 
-// Tumpukan berbentuk gundukan: padat di bawah-tengah, menipis ke atas/tepi. Tiap kepingan terangkat saat muka
-// angin melewatinya (yang di kiri-bawah lebih dulu), lalu terbang jauh ke kanan-atas keluar layar.
-function pileBits(): PileBit[] {
+// Kepingan sebelum diketuk (lihat PileShape). Tiap kepingan terangkat saat muka angin melewatinya (yang di
+// kiri-bawah lebih dulu), lalu terbang jauh ke kanan-atas keluar layar.
+function pileBits(shape: PileShape): PileBit[] {
   const bits: PileBit[] = [];
-  for (let i = 0; i < PILE_COUNT; i++) {
-    const centered = (rand(i, 1) - 0.5) * 2; // -1..1
-    const left = Math.min(96, Math.max(4, 50 + centered * 38 + (rand(i, 2) - 0.5) * 14));
-    const heightBias = 1 - Math.abs(centered) * 0.6; // makin ke tengah, boleh makin tinggi tumpukannya
-    const top = Math.min(97, Math.max(48, 96 - rand(i, 3) * 34 * heightBias));
+  const count = shape.kind === 'fill' ? shape.cols * shape.rows : shape.count;
+  for (let i = 0; i < count; i++) {
+    const { left, top } = pilePosition(shape, i);
     // 0 = sudut kiri-bawah, 1 = sudut kanan-atas (kira-kira posisi muka angin saat melewati kepingan ini).
     const along = (left + (100 - top)) / 200;
     const travel = 520 + rand(i, 8) * 420;
@@ -123,7 +175,11 @@ function pileBits(): PileBit[] {
   }
   return bits;
 }
-const PILE = pileBits();
+const PILES: Record<GustKind, PileBit[]> = {
+  sakura: pileBits(LOOKS.sakura.pile ?? LOW_PILE),
+  frost: pileBits(LOOKS.frost.pile ?? LOW_PILE),
+  leaves: pileBits(LOOKS.leaves.pile ?? LOW_PILE),
+};
 
 interface GustBit {
   id: number;
@@ -169,16 +225,24 @@ function gustBits(): GustBit[] {
 }
 const GUST = gustBits();
 
+const sizeOf = (look: Look, size: number) => r3(size * (look.sizeScale ?? 1));
+
 function Shape({ look, id, tint, shade }: { look: Look; id: number; tint: 'p' | 's'; shade: number }) {
+  const n = id % look.shapes.length;
+  const base = look.mixWith ? look.mixWith[id % look.mixWith.length] : '#fff';
+  const veins = look.veins?.[n];
   return (
-    <path
-      d={look.shapes[id % look.shapes.length]}
-      fill={`color-mix(in srgb, var(--${tint}) ${Math.round(shade * look.tintScale * 100)}%, #fff)`}
-      fillOpacity={look.fillOpacity}
-      stroke={look.stroke}
-      strokeWidth={look.stroke ? 0.8 : undefined}
-      strokeLinejoin="round"
-    />
+    <>
+      <path
+        d={look.shapes[n]}
+        fill={`color-mix(in srgb, var(--${tint}) ${Math.round(shade * look.tintScale * 100)}%, ${base})`}
+        fillOpacity={look.fillOpacity}
+        stroke={look.stroke}
+        strokeWidth={look.stroke ? 0.8 : undefined}
+        strokeLinejoin="round"
+      />
+      {veins && <path d={veins} fill="none" stroke="rgba(70,30,10,.38)" strokeWidth={0.7} strokeLinecap="round" />}
+    </>
   );
 }
 
@@ -186,8 +250,8 @@ function PileBitView({ bit, look, blowing, reduced }: { bit: PileBit; look: Look
   return (
     <motion.svg
       viewBox="0 0 24 24"
-      width={bit.size}
-      height={bit.size}
+      width={sizeOf(look, bit.size)}
+      height={sizeOf(look, bit.size)}
       className={`absolute ${look.pileShadow}`}
       style={{ left: `${bit.left}%`, top: `${bit.top}%`, translateX: '-50%', translateY: '-50%' }}
       initial={false}
@@ -215,8 +279,8 @@ function GustBitView({ bit, look }: { bit: GustBit; look: Look }) {
   return (
     <motion.svg
       viewBox="0 0 24 24"
-      width={bit.size}
-      height={bit.size}
+      width={sizeOf(look, bit.size)}
+      height={sizeOf(look, bit.size)}
       className="absolute left-0 top-full"
       style={{ transformPerspective: 500 }}
       initial={{ x: bit.x0, y: bit.y0, rotate: 0, rotateY: 0, opacity: 0 }}
@@ -251,7 +315,7 @@ export function LetterGust({ kind, phase, names, kicker, guest, headingFamily }:
         <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 45% at 50% 92%, color-mix(in srgb, var(--p) 16%, transparent), transparent 72%)' }} />
       </motion.div>
 
-      {PILE.map((bit) => (
+      {PILES[kind].map((bit) => (
         <PileBitView key={bit.id} bit={bit} look={look} blowing={blowing} reduced={reduced} />
       ))}
 

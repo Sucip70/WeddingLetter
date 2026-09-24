@@ -13,29 +13,29 @@ export type GatePhase = 'closed' | 'opening';
 
 // Lama animasi buka (ms) sampai gerbang dilepas. Dengan "kurangi gerakan" dipersingkat jadi fade.
 export const GATE_MS: Record<GateKind, number> = {
-  door: 2300, glass: 2300, curtain: 2200, cloth: 2400, envelope: 2900, portal: 2500, ring: 2700, bloom: 2800, leaves: 2800,
+  door: 2300, glass: 2300, curtain: 2200, cloth: 2400, envelope: 2900, portal: 2500, ring: 2700, bloom: 2800,
   balloons: 2800, waves: 2700, gift: 2500, lantern: 2700, fireworks: 2900, book: 2900, pressstart: 1400, loading: 2700, neon: 2600,
   // surat + embusan (letter-gust.tsx): waktu sama untuk semua variannya
-  sakura: 2700, frost: 2700,
+  sakura: 2700, frost: 2700, leaves: 2700,
 };
 
 // Gerbang yang menyingkap sampul sedikit demi sedikit selama fase 'opening' (latarnya menghilang di bawah
 // animasi, bukan sekaligus di akhir). InvitationView memutar animasi masuk sampul saat gerbang diketuk.
-export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true };
+export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true };
 
 const CTA: Record<GateKind, string> = {
   door: 'Ketuk untuk membuka pintu', glass: 'Ketuk untuk membuka jendela', curtain: 'Ketuk untuk membuka tirai', cloth: 'Ketuk untuk membuka kain',
   envelope: 'Ketuk untuk membuka amplop', portal: 'Ketuk untuk mengaktifkan portal', ring: 'Ketuk untuk memasangkan cincin', bloom: 'Ketuk agar bunga mekar',
-  leaves: 'Ketuk untuk menyingkap', balloons: 'Ketuk untuk melepas balon', waves: 'Ketuk untuk memanggil ombak', gift: 'Ketuk untuk membuka kado',
+  balloons: 'Ketuk untuk melepas balon', waves: 'Ketuk untuk memanggil ombak', gift: 'Ketuk untuk membuka kado',
   lantern: 'Ketuk untuk menyalakan lentera', fireworks: 'Ketuk untuk menyalakan kembang api', book: 'Ketuk untuk membuka buku',
   pressstart: 'Ketuk untuk mulai', loading: 'Ketuk untuk mulai', neon: 'Ketuk untuk menyalakan',
-  sakura: 'Ketuk untuk membuka surat', frost: 'Ketuk untuk membuka surat',
+  sakura: 'Ketuk untuk membuka surat', frost: 'Ketuk untuk membuka surat', leaves: 'Ketuk untuk membuka surat',
 };
 
 // Adegan gelap memakai teks putih; adegan terang memakai warna teks tema.
 const DARK: Partial<Record<GateKind, true>> = { door: true, glass: true, curtain: true, cloth: true, portal: true, lantern: true, fireworks: true, pressstart: true, loading: true, neon: true };
 // Adegan yang punya teks sendiri (tanpa judul umum di atas).
-const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true };
+const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true, leaves: true };
 
 const rand = (i: number, salt: number) => {
   const x = Math.sin((i + 1) * 12.9898 + salt * 78.233) * 43758.5453;
@@ -217,51 +217,41 @@ function Bloom() {
   );
 }
 
-// ---------- daun berguguran / balon ----------
+// ---------- balon ----------
 
-const LEAF_COLORS = ['var(--p)', 'var(--s)', 'color-mix(in srgb, var(--p) 55%, #2f7a3a)', 'color-mix(in srgb, var(--s) 60%, #c2571a)', 'color-mix(in srgb, var(--p) 60%, #fff)'];
 const BALLOON_COLORS = ['var(--p)', 'var(--s)', '#ff6b8b', '#4db3ff', '#ffd23f', '#7be08c', '#b18cff'];
 
-function Scatter({ kind }: { kind: 'leaves' | 'balloons' }) {
-  const leaves = kind === 'leaves';
-  const cols = leaves ? 6 : 5;
-  const rows = leaves ? 8 : 6;
+function Balloons() {
+  const cols = 5;
+  const rows = 6;
   const items = Array.from({ length: cols * rows }, (_, n) => {
     const c = n % cols;
     const r = Math.floor(n / cols);
     return {
       left: ((c + 0.5 + (rand(n, 1) - 0.5) * 0.9) / cols) * 100,
       top: ((r + 0.5 + (rand(n, 2) - 0.5) * 0.9) / rows) * 100,
-      size: leaves ? 74 + rand(n, 3) * 60 : 96 + rand(n, 3) * 44,
+      size: 96 + rand(n, 3) * 44,
       rot: Math.round((rand(n, 4) - 0.5) * 140),
-      delay: (leaves ? rand(n, 5) * 0.9 : (1 - r / rows) * 0.5 + rand(n, 5) * 0.4).toFixed(2),
+      delay: ((1 - r / rows) * 0.5 + rand(n, 5) * 0.4).toFixed(2),
       sway: Math.round((rand(n, 6) - 0.5) * 140),
-      spin: Math.round((rand(n, 7) - 0.5) * 720),
-      color: (leaves ? LEAF_COLORS : BALLOON_COLORS)[n % (leaves ? LEAF_COLORS.length : BALLOON_COLORS.length)],
+      color: BALLOON_COLORS[n % BALLOON_COLORS.length],
     };
   });
   return (
-    <div className={`g-scatter g-${kind}`}>
+    <div className="g-scatter">
       <div className="g-scbg" />
       {items.map((it, i) => (
         <span
           key={i}
           className="g-item"
-          style={{ left: `${it.left}%`, top: `${it.top}%`, width: it.size, color: it.color, '--r': `${it.rot}deg`, '--d': `${it.delay}s`, '--sw': `${it.sway}px`, '--sp': `${it.spin}deg`, zIndex: i % 5 } as CSSProperties}
+          style={{ left: `${it.left}%`, top: `${it.top}%`, width: it.size, color: it.color, '--r': `${it.rot}deg`, '--d': `${it.delay}s`, '--sw': `${it.sway}px`, zIndex: i % 5 } as CSSProperties}
         >
-          {leaves ? (
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <path d="M3 21C3 10 10 3 21 3c0 11-7 18-18 18Z" />
-              <path d="M4 20 18 6" stroke="rgba(255,255,255,.4)" strokeWidth="1" fill="none" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 40 90" fill="currentColor" aria-hidden>
-              <ellipse cx="20" cy="26" rx="18" ry="24" />
-              <ellipse cx="13" cy="16" rx="4" ry="7" fill="rgba(255,255,255,.4)" />
-              <path d="M17 50h6l-3 5z" />
-              <path d="M20 55c-6 10 6 16 0 34" fill="none" stroke="rgba(0,0,0,.35)" strokeWidth="1" />
-            </svg>
-          )}
+          <svg viewBox="0 0 40 90" fill="currentColor" aria-hidden>
+            <ellipse cx="20" cy="26" rx="18" ry="24" />
+            <ellipse cx="13" cy="16" rx="4" ry="7" fill="rgba(255,255,255,.4)" />
+            <path d="M17 50h6l-3 5z" />
+            <path d="M20 55c-6 10 6 16 0 34" fill="none" stroke="rgba(0,0,0,.35)" strokeWidth="1" />
+          </svg>
         </span>
       ))}
     </div>
@@ -457,8 +447,8 @@ function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
     case 'portal': return <Portal />;
     case 'ring': return <Rings />;
     case 'bloom': return <Bloom />;
-    case 'leaves': return <Scatter kind="leaves" />;
-    case 'balloons': return <Scatter kind="balloons" />;
+    case 'leaves': return <LetterGust kind="leaves" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
+    case 'balloons': return <Balloons />;
     case 'waves': return <Waves />;
     case 'gift': return <Gift />;
     case 'lantern': return <Lanterns />;
@@ -620,15 +610,13 @@ const GATE_CSS = `
 .wl-gate[data-phase=opening] .g-flower{transform:translate(-50%,-50%) scale(5.5);opacity:0;animation:none}
 .wl-gate[data-phase=opening] .g-bloombg{opacity:0}
 
-/* daun berguguran & balon */
+/* balon */
 .g-scatter{position:absolute;inset:0}
 .g-scbg{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--p) 16%,var(--bg)),var(--bg) 75%);transition:opacity 1s ease .55s}
 .g-item{position:absolute;transform:translate(-50%,-50%) rotate(var(--r));filter:drop-shadow(0 3px 4px rgba(0,0,0,.18))}
 .g-item svg{width:100%;height:auto}
 .wl-gate[data-phase=opening] .g-scbg{opacity:0}
-.wl-gate[data-phase=opening] .g-leaves .g-item{animation:g-fall 2.1s cubic-bezier(.5,0,.9,.6) var(--d) forwards}
-.wl-gate[data-phase=opening] .g-balloons .g-item{animation:g-rise 2.2s cubic-bezier(.4,0,.6,1) var(--d) forwards}
-@keyframes g-fall{to{transform:translate(calc(-50% + var(--sw)),150cqh) rotate(calc(var(--r) + var(--sp)))}}
+.wl-gate[data-phase=opening] .g-item{animation:g-rise 2.2s cubic-bezier(.4,0,.6,1) var(--d) forwards}
 @keyframes g-rise{to{transform:translate(calc(-50% + var(--sw)),-150cqh) rotate(calc(var(--r) * -1))}}
 
 /* ombak */
