@@ -6,8 +6,16 @@ interface Option {
   label: string;
 }
 
+interface Select {
+  name: string;
+  label: string;
+  value?: string;
+  options: Option[];
+}
+
 // Filter berbasis <form method="get"> murni HTML: tanpa JS, URL bisa dibagikan.
-export function Filters({ q, status, statuses, placeholder }: { q?: string; status?: string; statuses?: Option[]; placeholder: string }) {
+// `selects` = dropdown tambahan; opsi kosong = "Semua <label>".
+export function Filters({ q, status, statuses, selects, placeholder }: { q?: string; status?: string; statuses?: Option[]; selects?: Select[]; placeholder: string }) {
   return (
     <form method="get" className="mb-5 flex flex-wrap gap-2">
       <input
@@ -25,6 +33,14 @@ export function Filters({ q, status, statuses, placeholder }: { q?: string; stat
           ))}
         </select>
       )}
+      {selects?.map((s) => (
+        <select key={s.name} name={s.name} defaultValue={s.value ?? ''} aria-label={s.label} className="h-10 rounded-xl border border-line bg-paper px-3 text-sm focus:border-rose focus:outline-none">
+          <option value="">Semua {s.label.toLowerCase()}</option>
+          {s.options.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      ))}
       <button className="h-10 rounded-full bg-ink px-5 text-sm font-medium text-ivory hover:bg-ink/85">Cari</button>
     </form>
   );

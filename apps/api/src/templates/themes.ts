@@ -42,6 +42,7 @@ export const GATE_LABEL = {
   loading: 'Loading',
   neon: 'Papan neon',
   sakura: 'Surat kelopak sakura',
+  kayon: 'Kayon wayang',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export const GATE_KINDS = Object.keys(GATE_LABEL) as GateKind[];
@@ -138,7 +139,7 @@ const BASE_DESIGNS: Omit<Design, 'gate'>[] = [
 // Gerbang bawaan per desain (alasan pemilihan ada di riwayat diskusi: sesuaikan dengan adegan tema).
 const DESIGN_GATES: Record<string, GateKind> = {
   rustic: 'envelope', floral: 'bloom', elegant: 'ring',
-  jawa: 'door', sunda: 'leaves', minang: 'curtain', batak: 'cloth', bali: 'door',
+  jawa: 'kayon', sunda: 'leaves', minang: 'curtain', batak: 'cloth', bali: 'door',
   islami: 'door', kristiani: 'glass', buddha: 'bloom',
   natal: 'gift', imlek: 'lantern', valentine: 'envelope', kemerdekaan: 'curtain', lebaran: 'envelope', tahunbaru: 'fireworks', halloween: 'door',
   'kerajaan-es': 'frost', ceria: 'balloons', 'sakura-anime': 'sakura', dongeng: 'book',

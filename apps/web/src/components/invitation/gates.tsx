@@ -9,6 +9,7 @@ import { PatternLayer } from './effects';
 import type { PatternKind } from './motifs';
 import { LetterGust } from './letter-gust';
 import { MagicPortal } from './magic-portal';
+import { WayangKayon } from './wayang-kayon';
 
 export type GatePhase = 'closed' | 'opening';
 
@@ -18,11 +19,12 @@ export const GATE_MS: Record<GateKind, number> = {
   balloons: 2800, waves: 2700, gift: 2500, lantern: 2700, fireworks: 2900, book: 2900, pressstart: 1400, loading: 2700, neon: 2600,
   // surat + embusan (letter-gust.tsx): waktu sama untuk semua variannya
   sakura: 2700, frost: 2700, leaves: 2700,
+  kayon: 2300,
 };
 
 // Gerbang yang menyingkap sampul sedikit demi sedikit selama fase 'opening' (latarnya menghilang di bawah
 // animasi, bukan sekaligus di akhir). InvitationView memutar animasi masuk sampul saat gerbang diketuk.
-export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, portal: true };
+export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, portal: true, kayon: true };
 
 const CTA: Record<GateKind, string> = {
   door: 'Ketuk untuk membuka pintu', glass: 'Ketuk untuk membuka jendela', curtain: 'Ketuk untuk membuka tirai', cloth: 'Ketuk untuk membuka kain',
@@ -31,12 +33,13 @@ const CTA: Record<GateKind, string> = {
   lantern: 'Ketuk untuk menyalakan lentera', fireworks: 'Ketuk untuk menyalakan kembang api', book: 'Ketuk untuk membuka buku',
   pressstart: 'Ketuk untuk mulai', loading: 'Ketuk untuk mulai', neon: 'Ketuk untuk menyalakan',
   sakura: 'Ketuk untuk membuka surat', frost: 'Ketuk untuk membuka surat', leaves: 'Ketuk untuk membuka surat',
+  kayon: 'Ketuk untuk memulai lakon',
 };
 
 // Adegan gelap memakai teks putih; adegan terang memakai warna teks tema.
 const DARK: Partial<Record<GateKind, true>> = { door: true, glass: true, curtain: true, cloth: true, portal: true, lantern: true, fireworks: true, pressstart: true, loading: true, neon: true };
 // Adegan yang punya teks sendiri (tanpa judul umum di atas).
-const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true, leaves: true, portal: true };
+const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true, leaves: true, portal: true, kayon: true };
 
 const rand = (i: number, salt: number) => {
   const x = Math.sin((i + 1) * 12.9898 + salt * 78.233) * 43758.5453;
@@ -430,6 +433,7 @@ function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
     case 'loading': return <Loading {...p} />;
     case 'neon': return <Neon {...p} />;
     case 'sakura': return <LetterGust kind="sakura" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
+    case 'kayon': return <WayangKayon phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
   }
 }
 
@@ -493,6 +497,11 @@ const GATE_CSS = `
 @keyframes g-bob{0%,100%{translate:0 0}50%{translate:0 -6px}}
 @keyframes g-blink{50%{opacity:0}}
 @keyframes g-twinkle{0%,100%{opacity:.15}50%{opacity:1}}
+/* api & cahaya blencong (wayang-kayon.tsx) */
+.g-flame{transform-box:fill-box;transform-origin:50% 100%;animation:g-flame 1.3s ease-in-out infinite}
+@keyframes g-flame{0%,100%{transform:scale(1,1)}30%{transform:scale(.9,1.1)}60%{transform:scale(1.06,.94)}}
+.g-flicker{animation:g-flicker 2.6s ease-in-out infinite}
+@keyframes g-flicker{0%,100%{opacity:1}40%{opacity:.8}55%{opacity:.95}70%{opacity:.85}}
 
 /* pintu & jendela kaca patri */
 .g-door{position:absolute;inset:0;perspective:1400px}

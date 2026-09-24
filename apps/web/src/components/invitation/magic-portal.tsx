@@ -5,12 +5,12 @@
 // berputar makin cepat, bintang tersedot berpusar ke pusat, cahaya meledak, lalu lubang portal melebar dari
 // tengah menyingkap sampul (REVEALS_COVER). Rupa: `rune` (Akademi Sihir) atau `orbit` (Galaksi Cinta).
 // Putaran terus-menerus & kelip bintang memakai CSS (ringan); koreografi sekali jalan memakai Motion.
-import { Fragment } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import type { CSSProperties } from 'react';
 import { Particles } from './effects';
 import type { GatePhase } from './gates';
 import { STRINGS } from './i18n';
+import { Inscription } from './inscription';
 
 // Keacakan tetap (server = klien), dibulatkan supaya SSR = hidrasi (lihat letter-gust.tsx).
 const rand = (i: number, salt: number) => {
@@ -71,49 +71,6 @@ const VORTEX = Array.from({ length: 26 }, (_, i) => {
 // Tamu tanpa nama (demo, pratinjau, link tanpa ?to=): sapaan umum, sama dengan sampul. Gerbang selalu Indonesia
 // (tombol bahasa baru ada di sampul).
 const { dear: DEAR, guestFallback: GUEST_FALLBACK } = STRINGS.id;
-
-// Nama tamu ditulis huruf demi huruf, dengan titik cahaya yang menyapu seperti ujung pena. Per kata dibungkus
-// supaya baris hanya patah di spasi; ukuran huruf mengecil untuk nama panjang (maks. 60 karakter dari ?to=).
-function Inscription({ text, reduced }: { text: string; reduced: boolean }) {
-  const words = text.split(/\s+/).filter(Boolean);
-  const total = words.reduce((n, w) => n + w.length, 0);
-  const size = total <= 18 ? 'text-[1.05rem]' : total <= 32 ? 'text-[0.92rem]' : 'text-[0.8rem]';
-  let index = 0;
-  return (
-    <p className={`relative mt-1 font-semibold leading-snug text-white ${size}`}>
-      {words.map((word, wi) => (
-        <Fragment key={wi}>
-          {wi > 0 && ' '}
-          <span className="inline-block whitespace-nowrap">
-            {[...word].map((ch) => {
-              const i = index++;
-              return (
-                <motion.span
-                  key={i}
-                  className="inline-block"
-                  initial={{ opacity: 0, y: 5, scale: 1.3 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={reduced ? { duration: 0 } : { delay: r3(WRITE_START + i * WRITE_STEP), duration: 0.35 }}
-                >
-                  {ch}
-                </motion.span>
-              );
-            })}
-          </span>
-        </Fragment>
-      ))}
-      {!reduced && (
-        <motion.span
-          className="pointer-events-none absolute top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-white shadow-[0_0_8px_3px_var(--s)]"
-          initial={{ left: '0%', opacity: 0 }}
-          animate={{ left: ['0%', '100%'], opacity: [0, 1, 1, 0] }}
-          transition={{ delay: WRITE_START, duration: r3(total * WRITE_STEP + 0.25), ease: 'linear' }}
-          aria-hidden
-        />
-      )}
-    </p>
-  );
-}
 
 // Garis penuh yang tergambar (pathLength 0 -> 1) saat halaman dibuka.
 const draw = (reduced: boolean, delay: number, duration = DRAW) => ({
@@ -230,7 +187,7 @@ export function MagicPortal({ look, phase, names, kicker, guest, headingFamily }
           <motion.p className="mt-2.5 text-[10px] tracking-wide text-white/75" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={reduced ? { duration: 0 } : { delay: 1.05, duration: 0.4 }}>
             {DEAR}
           </motion.p>
-          <Inscription text={guest || GUEST_FALLBACK} reduced={reduced} />
+          <Inscription text={guest || GUEST_FALLBACK} reduced={reduced} start={WRITE_START} step={WRITE_STEP} className="text-white" sparkClassName="bg-white shadow-[0_0_8px_3px_var(--s)]" />
         </motion.div>
 
         {/* bintang tersedot ke pusat (hanya saat membuka) */}

@@ -11,8 +11,8 @@ import { InvitationStatusBadge, expiryText } from '@/components/status';
 import { Alert, Badge, Button, Card, Field, Input, Modal, Select, Spinner, cn } from '@/components/ui';
 import { api, errorMessage, uploadWithProgress } from '@/lib/client-api';
 import { daysLeft, formatDate, formatDateTime, mb, rupiah, whatsappLink } from '@/lib/format';
-import { findPreset } from '@/lib/presets';
-import type { InvitationData, InvitationDetail, InvitationMedia, InvitationViewData, QuoteLine, RsvpSummary, Upload } from '@/lib/types';
+import { presetToken } from '@/lib/presets';
+import type { InvitationData, InvitationDetail, InvitationMedia, InvitationViewData, MusicPreset, QuoteLine, RsvpSummary, Upload } from '@/lib/types';
 
 type Tab = 'overview' | 'edit' | 'rsvp' | 'extend';
 const TABS: { id: Tab; label: string }[] = [
@@ -337,13 +337,28 @@ function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: Invitatio
                   );
                 }
                 const v = data[section.id]?.[f.key];
-                const ids = Array.isArray(v) ? v : typeof v === 'string' && !v.startsWith('preset:') ? [v] : [];
+                if (f.type === 'song') {
+                  return (
+                    <div key={f.key} className="sm:col-span-2">
+                      <SongPicker
+                        name={`${section.id}.${f.key}`}
+                        label={f.label}
+                        required={f.required}
+                        value={typeof v === 'string' ? v : undefined}
+                        presets={inv.layout.musik.presets}
+                        uploads={inv.media.filter((m) => m.type === 'SONG')}
+                        editable={editable}
+                        onChange={(val) => onChange(section.id, f.key, val)}
+                        onReplaced={onReplaced}
+                      />
+                    </div>
+                  );
+                }
+                const ids = Array.isArray(v) ? v : typeof v === 'string' ? [v] : [];
                 return (
                   <div key={f.key} className="sm:col-span-2">
                     <p className="text-sm font-medium text-ink">{f.label}</p>
-                    {typeof v === 'string' && v.startsWith('preset:') ? (
-                      <p className="mt-1 text-sm text-ink-soft">Lagu bawaan: {findPreset(inv.layout.musik.presets, v)?.name}</p>
-                    ) : ids.length === 0 ? (
+                    {ids.length === 0 ? (
                       <p className="mt-1 text-sm text-ink-soft">Belum ada.</p>
                     ) : (
                       <div className="mt-2 flex flex-wrap gap-3">
@@ -394,6 +409,57 @@ function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: Invitatio
         </div>
       </aside>
     </div>
+  );
+}
+
+const SONG_OPTION = 'flex cursor-pointer items-center gap-3 rounded-xl border border-line bg-paper px-3 py-2.5 text-sm has-[:checked]:border-rose has-[:checked]:bg-rose-soft/40';
+
+// Lagu latar: boleh berganti kapan saja di antara lagu bawaan paket (daftar yang tersimpan saat dibeli, sama
+// dengan yang divalidasi server) dan lagu unggahan yang sudah dibayar. Mengunggah lagu baru tetap perlu
+// pesanan baru, seperti file lain; lagu unggahan hanya bisa diganti filenya.
+function SongPicker({ name, label, required, value, presets, uploads, editable, onChange, onReplaced }: {
+  name: string;
+  label: string;
+  required: boolean;
+  value: string | undefined;
+  presets: MusicPreset[];
+  uploads: InvitationMedia[];
+  editable: boolean;
+  onChange: (value: string | undefined) => void;
+  onReplaced: (oldId: string, newId: string) => Promise<void>;
+}) {
+  return (
+    <Field label={label} required={required} group hint="Lagu diputar setelah tamu membuka undangan. Tamu bisa menjeda lewat tombol musik.">
+      <div className="space-y-2">
+        {!required && (
+          <label className={SONG_OPTION}>
+            <input type="radio" name={name} checked={!value} onChange={() => onChange(undefined)} disabled={!editable} className="accent-[#b4533c]" />
+            Tanpa musik
+          </label>
+        )}
+        {presets.map((p, i) => {
+          const token = presetToken(p, i);
+          return (
+            <label key={token} className={SONG_OPTION}>
+              <input type="radio" name={name} checked={value === token} onChange={() => onChange(token)} disabled={!editable} className="accent-[#b4533c]" />
+              <span className="min-w-0 flex-1">{p.name}{p.credit && <span className="block text-[11px] text-ink-soft">{p.credit}</span>}</span>
+              <audio src={p.url} controls preload="none" className="h-8 w-40 shrink-0" />
+            </label>
+          );
+        })}
+        {uploads.map((m) => (
+          <div key={m.id} className={SONG_OPTION}>
+            <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+              <input type="radio" name={name} checked={value === m.id} onChange={() => onChange(m.id)} disabled={!editable} className="accent-[#b4533c]" />
+              <span className="min-w-0 flex-1">Lagu unggahan Anda<span className="block text-[11px] text-ink-soft">{mb(m.sizeBytes)}</span></span>
+            </label>
+            <audio src={m.url} controls preload="none" className="h-8 w-40 shrink-0" />
+            {editable && <ReplaceMedia media={m} onReplaced={(newId) => onReplaced(m.id, newId)} />}
+          </div>
+        ))}
+        {presets.length === 0 && uploads.length === 0 && <p className="text-sm text-ink-soft">Paket ini belum punya lagu bawaan.</p>}
+      </div>
+    </Field>
   );
 }
 
