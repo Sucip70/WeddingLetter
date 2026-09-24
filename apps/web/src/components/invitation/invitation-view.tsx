@@ -136,14 +136,49 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   // berjalan ketika sampul mulai terlihat dan tidak berkedip lagi saat gerbang dilepas.
   const coverKey = gateActive && !(gatePhase === 'opening' && gateKind && REVEALS_COVER[gateKind]) ? 'gate' : 'open';
 
+  // Musik baru terdengar setelah animasi gerbang selesai. Browser (terutama Safari iOS) hanya mengizinkan audio
+  // bersuara yang dimulai dari sentuhan, sedangkan akhir gerbang datang dari timer. Jadi saat gerbang diketuk,
+  // elemen audio "dibuka" dulu: diputar tanpa suara lalu dijeda (sekalian mulai memuat lagunya); setelah itu
+  // play() dari timer diizinkan. Kalau lagu belum selesai dimuat saat gerbang selesai, pemutaran bisu itu
+  // dibiarkan berlanjut dan cukup dibunyikan.
+  const musicWanted = useRef(false);
+  const unlockMusic = useCallback(() => {
+    const a = audioRef.current;
+    if (!a || !a.paused) return;
+    musicWanted.current = false;
+    a.muted = true;
+    void a
+      .play()
+      .then(() => {
+        if (!musicWanted.current) a.pause();
+      }, () => undefined)
+      .finally(() => {
+        a.muted = false;
+      });
+  }, []);
+  const startMusic = useCallback(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    musicWanted.current = true;
+    a.muted = false;
+    if (a.paused) {
+      a.currentTime = 0;
+      void a.play().catch(() => undefined);
+    }
+  }, []);
+
   const openGate = useCallback(() => {
     if (!gateKind || gatePhase !== 'closed') return;
-    // Ketukan = sentuhan pengguna, jadi musik boleh langsung diputar (di pratinjau tidak).
-    if (mode === 'live' && audioRef.current?.paused) void audioRef.current.play().catch(() => undefined);
+    // Ketukan = sentuhan pengguna: buka izin audio sekarang, bunyikan saat gerbang selesai (di pratinjau tidak).
+    const live = mode === 'live';
+    if (live) unlockMusic();
     setGatePhase('opening');
     const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    gateTimer.current = setTimeout(() => setGatePhase('open'), reduced ? 350 : GATE_MS[gateKind]);
-  }, [gateKind, gatePhase, mode]);
+    gateTimer.current = setTimeout(() => {
+      setGatePhase('open');
+      if (live) startMusic();
+    }, reduced ? 350 : GATE_MS[gateKind]);
+  }, [gateKind, gatePhase, mode, unlockMusic, startMusic]);
 
   const replayGate = useCallback(() => {
     clearTimeout(gateTimer.current);
