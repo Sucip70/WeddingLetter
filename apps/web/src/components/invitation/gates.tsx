@@ -15,8 +15,12 @@ export type GatePhase = 'closed' | 'opening';
 export const GATE_MS: Record<GateKind, number> = {
   door: 2300, glass: 2300, curtain: 2200, cloth: 2400, envelope: 2900, portal: 2500, ring: 2700, bloom: 2800, leaves: 2800,
   balloons: 2800, waves: 2700, gift: 2500, lantern: 2700, fireworks: 2900, frost: 2200, book: 2900, pressstart: 1400, loading: 2700, neon: 2600,
-  sakura: 2600,
+  sakura: 2700,
 };
+
+// Gerbang yang menyingkap sampul sedikit demi sedikit selama fase 'opening' (latarnya menghilang di bawah
+// animasi, bukan sekaligus di akhir). InvitationView memutar animasi masuk sampul saat gerbang diketuk.
+export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true };
 
 const CTA: Record<GateKind, string> = {
   door: 'Ketuk untuk membuka pintu', glass: 'Ketuk untuk membuka jendela', curtain: 'Ketuk untuk membuka tirai', cloth: 'Ketuk untuk membuka kain',

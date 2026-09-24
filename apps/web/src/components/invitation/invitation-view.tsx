@@ -8,7 +8,7 @@ import { findPreset } from '@/lib/presets';
 import type { InvitationViewData } from '@/lib/types';
 import { STRINGS } from './i18n';
 import type { Lang, Strings } from './i18n';
-import { GATE_MS, Gate } from './gates';
+import { GATE_MS, Gate, REVEALS_COVER } from './gates';
 import type { GatePhase } from './gates';
 import { isCoverKind, resolveCover } from '@/lib/cover-layouts';
 import { CoverLayout, isLightCover } from './cover';
@@ -131,6 +131,10 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   useEffect(() => () => clearTimeout(gateTimer.current), []);
   // Gerbang dinonaktifkan dari luar (mis. admin mengganti jenis di builder): pastikan tidak menggantung.
   const gateActive = gateKind !== null && gatePhase !== 'open';
+  // Isi sampul dipasang ulang (animasi masuk diputar) saat gerbang selesai. Gerbang yang menyingkap sampul
+  // sedikit demi sedikit selama membuka (REVEALS_COVER) memasangnya ulang saat diketuk, supaya animasi masuk
+  // berjalan ketika sampul mulai terlihat dan tidak berkedip lagi saat gerbang dilepas.
+  const coverKey = gateActive && !(gatePhase === 'opening' && gateKind && REVEALS_COVER[gateKind]) ? 'gate' : 'open';
 
   const openGate = useCallback(() => {
     if (!gateKind || gatePhase !== 'closed') return;
@@ -323,7 +327,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
           )}
           {photoCover ? (
             <CoverLayout
-              key={gateActive ? 'gate' : 'open'}
+              key={coverKey}
               kind={photoCover}
               photo={uploadedCover}
               groom={url(str(data, 'mempelai', 'pria_foto'))}
@@ -382,7 +386,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
           )}
 
           {!photoCover && (
-          <div key={gateActive ? 'gate' : 'open'} className="relative z-[4] flex flex-col items-center" style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
+          <div key={coverKey} className="relative z-[4] flex flex-col items-center" style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
             <p className={`text-xs uppercase tracking-[0.35em] opacity-80 ${enter(100).className}`} style={enter(100).style}>{kicker}</p>
             <h1
               className={`mt-5 leading-[1.1] ${enter(250).className} ${fx === 'premium' && !coverPhoto ? 'wl-shimmer' : ''}`}
