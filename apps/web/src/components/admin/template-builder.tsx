@@ -213,7 +213,15 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
       if (form.id) {
         const updated = await api<TemplateForm>(`admin/templates/${form.id}`, { method: 'PATCH', body });
         setForm(updated);
-        setSaved('Template tersimpan.');
+        setSaved(
+          updated.status === form.status
+            ? 'Template tersimpan.'
+            : updated.status === 'PUBLISHED'
+              ? 'Template tersimpan dan dipublikasikan.'
+              : updated.status === 'DRAFT'
+                ? 'Publikasi dibatalkan: template sekarang draf dan tidak tampil di katalog.'
+                : 'Template tersimpan dan diarsipkan.',
+        );
         router.refresh();
       } else {
         const created = await api<TemplateForm>('admin/templates', { body });
@@ -422,6 +430,11 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
           <div className="sticky bottom-4 z-10 flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-paper/95 p-3 shadow-lg backdrop-blur">
             <Button onClick={() => save()} loading={busy === 'save'} disabled={!form.name.trim()}>{form.id ? 'Simpan template' : 'Buat template'}</Button>
             {form.id && form.status !== 'PUBLISHED' && <Button variant="sage" onClick={() => save('PUBLISHED')} disabled={!!busy}>Simpan & publikasikan</Button>}
+            {form.id && form.status === 'PUBLISHED' && (
+              <Button variant="secondary" onClick={() => save('DRAFT')} disabled={!!busy} title="Template hilang dari katalog dan tidak bisa dipesan. Undangan yang sudah dibeli tidak terpengaruh.">
+                Simpan & batalkan publikasi
+              </Button>
+            )}
             {form.id && !ordered && <Button variant="ghost" onClick={remove} loading={busy === 'delete'} className="ml-auto text-danger">Hapus</Button>}
             {form.id && ordered && <span className="ml-auto text-xs text-ink-soft">Sudah dipesan {form.orders}× — arsipkan, jangan dihapus.</span>}
             {saved && <span className="text-sm text-sage" role="status">{saved}</span>}
