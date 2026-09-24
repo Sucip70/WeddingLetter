@@ -6,7 +6,7 @@ import { InvitationView } from '@/components/invitation/invitation-view';
 import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { Alert, Badge, Button, Card, Field, Input, Select, Toggle, cn } from '@/components/ui';
 import { api, errorMessage, uploadWithProgress } from '@/lib/client-api';
-import { COVER_LAYOUTS, coverLayoutsFor } from '@/lib/cover-layouts';
+import { COVER_LAYOUTS, coverLayoutsFor, defaultCoverLayout } from '@/lib/cover-layouts';
 import { sampleView } from '@/lib/sample';
 import type { DemoPhotos } from '@/lib/sample';
 import { FX_LABEL } from '@/lib/catalog';
@@ -20,6 +20,8 @@ export interface Authoring {
   galeri: { maxPhotos: number; maxVideos: number };
   musik: { allowed: boolean; presets: { name: string; url: string }[] };
   palettes: Palette[];
+  // Tata letak sampul bawaan (kosong = otomatis). Lihat coverDefault di apps/api/src/templates/layout.ts.
+  coverDefault?: string;
 }
 export interface TemplateForm {
   id?: string;
@@ -125,10 +127,11 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
 
   // Tata letak sampul yang akan tersedia bagi pembeli (Basic: tidak ada; Premium: + layout khusus desain ini).
   const coverKinds = useMemo(() => coverLayoutsFor(form.tier, layout.theme.motif), [form.tier, layout.theme.motif]);
-  const [previewCover, setPreviewCover] = useState('');
+  // Bawaan yang tersimpan tapi tidak lagi tersedia (paket/desain diganti) diperlakukan sebagai "Otomatis".
+  const coverDefault = layout.coverDefault && coverKinds.some((k) => k === layout.coverDefault) ? layout.coverDefault : undefined;
   const view = useMemo(
-    () => sampleView({ ...toPreviewLayout(layout), galeri: layout.galeri, coverLayouts: coverKinds }, { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }, photos, previewCover),
-    [layout, photos, coverKinds, previewCover],
+    () => sampleView({ ...toPreviewLayout(layout), galeri: layout.galeri, coverLayouts: coverKinds, coverDefault }, { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }, photos),
+    [layout, photos, coverKinds, coverDefault],
   );
 
   const design = meta.designs.find((d) => d.id === layout.theme.motif) ?? meta.designs.find((d) => d.id === layout.theme.preset);
@@ -203,6 +206,7 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
         galeri: { maxPhotos: Number(layout.galeri.maxPhotos), maxVideos: Number(layout.galeri.maxVideos) },
         musik: layout.musik,
         palettes: layout.palettes,
+        coverDefault,
       },
     };
     try {
@@ -288,6 +292,21 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
                 <Select value={layout.theme.gate ?? 'none'} onChange={(e) => setTheme({ gate: e.target.value as GateSetting })}>
                   <option value="none">Tanpa gerbang</option>
                   {meta.gates.map((g) => <option key={g.id} value={g.id}>{g.label}{design?.gate === g.id ? ' (bawaan desain)' : ''}</option>)}
+                </Select>
+              </Field>
+              <Field
+                label="Tata letak sampul bawaan"
+                hint={
+                  coverKinds.length > 0
+                    ? 'Tampilan halaman pertama yang terpilih otomatis di editor pembeli, demo template, dan kartu katalog. Pembeli tetap bisa menggantinya. Terlihat di pratinjau kanan.'
+                    : 'Paket Basic tidak punya pilihan tata letak sampul.'
+                }
+              >
+                <Select value={coverDefault ?? ''} onChange={(e) => setLayout({ coverDefault: e.target.value || undefined })} disabled={coverKinds.length === 0}>
+                  <option value="">Otomatis ({COVER_LAYOUTS[defaultCoverLayout(coverKinds)].label})</option>
+                  {coverKinds.map((k) => (
+                    <option key={k} value={k}>{COVER_LAYOUTS[k].label}{COVER_LAYOUTS[k].themed ? ' (khusus tema)' : ''}</option>
+                  ))}
                 </Select>
               </Field>
               {(['primary', 'secondary', 'background', 'text'] as const).map((k) => (
@@ -415,17 +434,6 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
             <PhoneFrame size="md">
               <InvitationView view={view} mode="preview" embedded placeholders />
             </PhoneFrame>
-            {coverKinds.length > 0 && (
-              <label className="mt-3 flex items-center justify-center gap-2 text-xs text-ink-soft">
-                Tata letak sampul
-                <Select value={previewCover && coverKinds.includes(previewCover as never) ? previewCover : ''} onChange={(e) => setPreviewCover(e.target.value)} className="!h-8 !w-auto !py-0 text-xs" aria-label="Tata letak sampul pratinjau">
-                  <option value="">Bawaan</option>
-                  {coverKinds.map((k) => (
-                    <option key={k} value={k}>{COVER_LAYOUTS[k].label}</option>
-                  ))}
-                </Select>
-              </label>
-            )}
           </div>
         </aside>
       </div>

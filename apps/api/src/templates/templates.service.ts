@@ -32,6 +32,7 @@ export function toListTemplate(t: Template, library: MusicPreset[]) {
       musik: { allowed: layout.musik.allowed, presets: [], count: layout.musik.presets.length },
       palettes: layout.palettes,
       coverLayouts: layout.coverLayouts,
+      coverDefault: layout.coverDefault,
     },
   };
 }

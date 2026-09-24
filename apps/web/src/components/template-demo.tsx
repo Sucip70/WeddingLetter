@@ -17,7 +17,7 @@ import { LinkButton } from './ui';
 export function TemplateDemo({ template, header, children, photos }: { template: TemplateDetail; header: ReactNode; children: ReactNode; photos: DemoPhotos }) {
   const { palettes, musik } = template.layout;
   const coverKinds = (template.layout.coverLayouts ?? []).filter(isCoverKind);
-  const [coverKind, setCoverKind] = useState<string>(() => defaultCoverLayout(coverKinds));
+  const [coverKind, setCoverKind] = useState<string>(() => defaultCoverLayout(coverKinds, template.layout.coverDefault));
   // Setelah pengunjung memilih tata letak, gerbang pembuka dilewati supaya sampulnya langsung terlihat.
   const [picked, setPicked] = useState(false);
   const [paletteId, setPaletteId] = useState(palettes[0]?.id ?? '');

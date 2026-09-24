@@ -46,8 +46,10 @@ export function coverLayoutsFor(tier: Tier, motif: string): CoverKind[] {
 
 export const isCoverKind = (v: unknown): v is CoverKind => typeof v === 'string' && v in COVER_LAYOUTS;
 
-// Layout awal untuk template ini: layout khusus tema bila ada, kalau tidak "Foto berbingkai".
-export function defaultCoverLayout(available: string[]): CoverKind {
+// Layout awal untuk template ini: bawaan pilihan admin (layout.coverDefault) bila tersedia; kalau tidak,
+// layout khusus tema bila ada, kalau tidak "Foto berbingkai".
+export function defaultCoverLayout(available: string[], preferred?: string): CoverKind {
+  if (preferred && isCoverKind(preferred) && available.includes(preferred)) return preferred;
   const themed = available.find((k) => isCoverKind(k) && COVER_LAYOUTS[k].themed);
   return (themed as CoverKind | undefined) ?? 'bingkai';
 }

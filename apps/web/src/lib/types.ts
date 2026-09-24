@@ -96,6 +96,8 @@ export interface Layout {
   palettes: Palette[];
   // Tata letak sampul yang boleh dipilih pembeli (kosong = Basic / tanpa pilihan).
   coverLayouts?: string[];
+  // Tata letak sampul bawaan pilihan admin (kosong = otomatis: khusus tema / Foto berbingkai).
+  coverDefault?: string;
 }
 
 export type Tier = 'BASIC' | 'STANDARD' | 'PREMIUM';

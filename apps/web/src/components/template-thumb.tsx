@@ -27,11 +27,13 @@ function pick(seed: string, mod: number) {
 // tersedia, kartu memakai salah satu tata letak berfoto (dipilih deterministik dari `seed`, biasanya id
 // template) supaya grid katalog memperlihatkan variasi tata letak, bukan selalu tampilan ornamen yang sama.
 // Tanpa foto (atau layout terpilih = "ornamen"), tetap jatuh ke tampilan ornamen statis seperti semula.
+// Bila admin menetapkan tata letak bawaan (`coverDefault`), kartu memakai itu, bukan pilihan dari `seed`.
 export function TemplateThumb({
   theme,
   imageUrl,
   className = '',
   coverLayouts = [],
+  coverDefault,
   photos,
   seed,
 }: {
@@ -39,6 +41,7 @@ export function TemplateThumb({
   imageUrl?: string | null;
   className?: string;
   coverLayouts?: string[];
+  coverDefault?: string;
   photos?: DemoPhotos;
   seed?: string;
 }) {
@@ -61,7 +64,8 @@ export function TemplateThumb({
   // Salah satu tata letak berfoto milik template ini (mis. hasil desain x paket), dipilih dari `seed` supaya
   // stabil per kartu. Kembali ke "ornamen" (tampilan bawaan di bawah) bila tidak ada, atau fotonya belum ada.
   const kinds = coverLayouts.filter(isCoverKind);
-  const chosen = kinds.length > 0 && seed ? kinds[pick(seed, kinds.length)] : undefined;
+  const preferred = kinds.find((k) => k === coverDefault);
+  const chosen = preferred ?? (kinds.length > 0 && seed ? kinds[pick(seed, kinds.length)] : undefined);
   const resolved = chosen ? resolveCover(chosen, { cover: photos?.cover, groom: photos?.groom, bride: photos?.bride }) : undefined;
 
   const cornersNode = (

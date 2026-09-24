@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { COVER_KINDS, GENERIC_COVERS, THEME_COVERS, THEME_COVER_BY_DESIGN, availableCoverLayouts } from './cover-layouts.js';
-import { normalizeLayout, validateInvitationData, withCoverLayouts } from './layout.js';
+import { normalizeLayout, toAuthoring, validateInvitationData, withCoverLayouts } from './layout.js';
 import { DESIGN_IDS } from './themes.js';
 
 describe('tata letak sampul', () => {
@@ -28,6 +28,17 @@ describe('tata letak sampul', () => {
     expect(base.coverLayouts).toEqual([]);
     expect(withCoverLayouts(base, 'PREMIUM').coverLayouts).toContain('gapura');
     expect(withCoverLayouts(base, 'BASIC').coverLayouts).toEqual([]);
+  });
+
+  it('coverDefault (bawaan pilihan admin): disimpan bila tersedia, dibuang bila tidak', () => {
+    const raw = (coverDefault: string) => ({ theme: { preset: 'jawa' }, sections: ['cover'], coverDefault });
+    expect(normalizeLayout(raw('jendela')).coverDefault).toBe('jendela');
+    expect(normalizeLayout(raw('meriam')).coverDefault).toBeUndefined(); // id asing
+    expect(withCoverLayouts(normalizeLayout(raw('gapura')), 'PREMIUM').coverDefault).toBe('gapura');
+    expect(withCoverLayouts(normalizeLayout(raw('gapura')), 'STANDARD').coverDefault).toBeUndefined(); // khusus tema, bukan Standard
+    expect(withCoverLayouts(normalizeLayout(raw('portal')), 'PREMIUM').coverDefault).toBeUndefined(); // milik desain lain
+    expect(withCoverLayouts(normalizeLayout(raw('penuh')), 'BASIC').coverDefault).toBeUndefined();
+    expect(toAuthoring(raw('medali')).coverDefault).toBe('medali'); // round-trip builder
   });
 
   describe('validasi data undangan', () => {

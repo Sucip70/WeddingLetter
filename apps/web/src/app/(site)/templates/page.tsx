@@ -99,6 +99,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<'/templa
                             theme={t.layout.theme}
                             imageUrl={t.thumbnailUrl}
                             coverLayouts={t.layout.coverLayouts}
+                            coverDefault={t.layout.coverDefault}
                             photos={photos}
                             seed={t.id}
                             className="transition-transform duration-500 group-hover:scale-[1.03]"

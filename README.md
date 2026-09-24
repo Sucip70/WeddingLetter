@@ -75,7 +75,7 @@ Alur uji: `/templates` → pilih template → isi (harga live di kanan) → Chec
 ## Testing
 
 ```
-npm test --workspace apps/api          # 113 unit test (kalkulator harga, skema/validasi, webhook, storage, dst.)
+npm test --workspace apps/api          # 114 unit test (kalkulator harga, skema/validasi, webhook, storage, dst.)
 ```
 
 Smoke test alur penuh (user + admin + job) terhadap API & **database khusus tes** — script ini membuat user/order, jangan arahkan ke database dev Anda:

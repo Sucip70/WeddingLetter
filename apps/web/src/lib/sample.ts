@@ -42,9 +42,10 @@ function sampleDates() {
 export type DemoPhotos = Record<string, string>;
 const GALLERY_SLOTS = ['gallery1', 'gallery2', 'gallery3', 'gallery4', 'gallery5', 'gallery6', 'gallery7', 'gallery8'];
 
-// `coverLayout`: tata letak sampul yang diperagakan (bawaan: yang khusus tema / Foto berbingkai). Hanya untuk template yang
-// punya pilihan tata letak (Standard & Premium); Basic tetap berornamen walau slot foto sampul terisi.
-export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'> & { galeri?: Layout['galeri']; coverLayouts?: string[] }, extra: Partial<InvitationViewData> = {}, photos: DemoPhotos = {}, coverLayout?: string): InvitationViewData {
+// `coverLayout`: tata letak sampul yang diperagakan (bawaan: layout.coverDefault pilihan admin, lalu yang khusus
+// tema / Foto berbingkai). Hanya untuk template yang punya pilihan tata letak (Standard & Premium); Basic tetap
+// berornamen walau slot foto sampul terisi.
+export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'> & { galeri?: Layout['galeri']; coverLayouts?: string[]; coverDefault?: string }, extra: Partial<InvitationViewData> = {}, photos: DemoPhotos = {}, coverLayout?: string): InvitationViewData {
   const dates = sampleDates();
   const data: InvitationViewData['data'] = {};
   for (const section of layout.sections) {
@@ -73,7 +74,7 @@ export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'> 
   const coverLayouts = layout.coverLayouts ?? [];
   if (coverLayouts.length > 0 && has('cover', 'tata_letak')) {
     put('cover', 'foto', ['cover']);
-    data.cover = { ...(data.cover ?? {}), tata_letak: coverLayout && coverLayouts.includes(coverLayout) ? coverLayout : defaultCoverLayout(coverLayouts) };
+    data.cover = { ...(data.cover ?? {}), tata_letak: coverLayout && coverLayouts.includes(coverLayout) ? coverLayout : defaultCoverLayout(coverLayouts, layout.coverDefault) };
   }
   put('mempelai', 'pria_foto', ['groom']);
   put('mempelai', 'wanita_foto', ['bride']);

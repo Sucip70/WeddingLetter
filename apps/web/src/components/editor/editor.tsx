@@ -75,11 +75,13 @@ export function Editor({ template, addOns, initialUser, initialPalette }: { temp
   const sections = useMemo(() => effectiveSections(template, selected), [template, selected]);
   const coverLayouts = useMemo(() => template.layout.coverLayouts ?? [], [template.layout.coverLayouts]);
 
-  // Pembeli belum memilih tata letak sampul: mulai dari yang khusus tema (Premium) atau "Foto berbingkai".
+  // Pembeli belum memilih tata letak sampul: mulai dari bawaan template (pilihan admin), atau yang khusus tema
+  // (Premium) / "Foto berbingkai". Pilihan yang sudah ada di draft (localStorage) tidak ditimpa.
+  const coverDefault = template.layout.coverDefault;
   useEffect(() => {
     if (!hydrated || coverLayouts.length === 0) return;
-    setData((d) => (typeof d.cover?.tata_letak === 'string' && coverLayouts.includes(d.cover.tata_letak) ? d : setField(d, 'cover', 'tata_letak', defaultCoverLayout(coverLayouts))));
-  }, [hydrated, coverLayouts]);
+    setData((d) => (typeof d.cover?.tata_letak === 'string' && coverLayouts.includes(d.cover.tata_letak) ? d : setField(d, 'cover', 'tata_letak', defaultCoverLayout(coverLayouts, coverDefault))));
+  }, [hydrated, coverLayouts, coverDefault]);
 
   // ----- Draft (tanpa file) di localStorage -----
   useEffect(() => {

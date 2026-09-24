@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { z } from 'zod';
 import { ADDON, LIMITS } from '../config/constants.js';
 import type { TemplateTier } from '../generated/prisma/client.js';
-import { availableCoverLayouts } from './cover-layouts.js';
+import { COVER_KINDS, availableCoverLayouts } from './cover-layouts.js';
 import { DESIGNS, GATE_KINDS, baseColors } from './themes.js';
 import type { BodyFont, GateSetting, HeadingFont, Palette } from './themes.js';
 
@@ -69,6 +69,9 @@ export interface TemplateLayout {
   palettes: Palette[];
   // Tata letak sampul yang boleh dipilih pembeli (diisi dari paket & tema template; kosong = Basic / tanpa pilihan).
   coverLayouts: string[];
+  // Tata letak sampul bawaan pilihan admin (terpilih di editor, demo template, dan kartu katalog). Kosong =
+  // otomatis (khusus tema untuk Premium, "Foto berbingkai" untuk lainnya). Dibuang bila tidak ada di coverLayouts.
+  coverDefault?: string;
 }
 
 const f = (
@@ -225,6 +228,7 @@ export const layoutInputSchema = z.object({
     })
     .optional(),
   rsvp: z.object({ allowed: z.boolean().optional() }).optional(), // legacy: diabaikan
+  coverDefault: z.string().max(40).optional(),
 });
 
 function isSectionId(id: string): id is SectionId {
@@ -277,6 +281,7 @@ export function normalizeLayout(raw: unknown, category = 'rustic'): TemplateLayo
     musik: { allowed: musikAllowed, presets: input.musik?.presets ?? [] },
     palettes: buildPalettes(theme, input.palettes ?? []),
     coverLayouts: [],
+    ...(input.coverDefault && COVER_KINDS.includes(input.coverDefault) ? { coverDefault: input.coverDefault } : {}),
   };
 }
 
@@ -346,8 +351,11 @@ export function withLibrary(layout: TemplateLayout, library: MusicPreset[]): Tem
 }
 
 // Mengisi daftar tata letak sampul yang tersedia bagi paket & tema template (Basic: kosong).
+// Bawaan pilihan admin yang tidak tersedia (mis. setelah paket/desain diganti) dibuang: jadi otomatis lagi.
 export function withCoverLayouts(layout: TemplateLayout, tier: TemplateTier): TemplateLayout {
-  return { ...layout, coverLayouts: availableCoverLayouts(tier, layout.theme.motif) };
+  const coverLayouts = availableCoverLayouts(tier, layout.theme.motif);
+  const { coverDefault, ...rest } = layout;
+  return { ...rest, coverLayouts, ...(coverDefault && coverLayouts.includes(coverDefault) ? { coverDefault } : {}) };
 }
 
 export function layoutIncludes(layout: TemplateLayout, id: SectionId) {
@@ -537,5 +545,5 @@ export function toAuthoring(raw: unknown, category = 'rustic') {
     };
   });
   // Palet mentah (tanpa "bawaan" otomatis) supaya round-trip dengan builder tidak menyimpan entri turunan.
-  return { theme: norm.theme, sections, galeri: norm.galeri, musik: norm.musik, palettes: input.palettes ?? [] };
+  return { theme: norm.theme, sections, galeri: norm.galeri, musik: norm.musik, palettes: input.palettes ?? [], coverDefault: norm.coverDefault };
 }
