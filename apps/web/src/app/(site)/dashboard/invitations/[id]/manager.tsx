@@ -34,7 +34,7 @@ const NOOP_CTX: Omit<FieldCtx, 'data' | 'errors' | 'onChange' | 'coverLayouts'> 
   setFileWeeks: () => undefined,
 };
 
-export function InvitationManager({ initial, initialTab, baseUrl }: { initial: InvitationDetail; initialTab: string; baseUrl: string }) {
+export function InvitationManager({ initial, initialTab, baseUrl, now }: { initial: InvitationDetail; initialTab: string; baseUrl: string; now: number }) {
   const [inv, setInv] = useState(initial);
   const [tab, setTab] = useState<Tab>((TABS.find((t) => t.id === initialTab)?.id ?? 'overview') as Tab);
 
@@ -66,10 +66,10 @@ export function InvitationManager({ initial, initialTab, baseUrl }: { initial: I
       </div>
 
       <div className="mt-8">
-        {tab === 'overview' && <Overview inv={inv} link={link} reload={reload} goto={setTab} />}
+        {tab === 'overview' && <Overview inv={inv} link={link} reload={reload} goto={setTab} now={now} />}
         {tab === 'edit' && <EditTab inv={inv} setInv={setInv} />}
         {tab === 'rsvp' && <RsvpTab inv={inv} />}
-        {tab === 'extend' && <ExtendTab inv={inv} />}
+        {tab === 'extend' && <ExtendTab inv={inv} now={now} />}
       </div>
     </div>
   );
@@ -77,7 +77,7 @@ export function InvitationManager({ initial, initialTab, baseUrl }: { initial: I
 
 // ================= Ringkasan =================
 
-function Overview({ inv, link, reload, goto }: { inv: InvitationDetail; link: string; reload: () => Promise<void>; goto: (t: Tab) => void }) {
+function Overview({ inv, link, reload, goto, now }: { inv: InvitationDetail; link: string; reload: () => Promise<void>; goto: (t: Tab) => void; now: number }) {
   const [publishing, setPublishing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState('');
@@ -114,7 +114,7 @@ function Overview({ inv, link, reload, goto }: { inv: InvitationDetail; link: st
   };
 
   const live = inv.status === 'ACTIVE';
-  const d = daysLeft(inv.expiresAt);
+  const d = daysLeft(inv.expiresAt, now);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
@@ -143,7 +143,7 @@ function Overview({ inv, link, reload, goto }: { inv: InvitationDetail; link: st
 
         <Card className="p-6">
           <h2 className="font-semibold text-ink">Link undangan</h2>
-          <p className="mt-1 text-sm text-ink-soft">{expiryText(inv.status, inv.expiresAt, inv.remainingDays)}</p>
+          <p className="mt-1 text-sm text-ink-soft">{expiryText(inv.status, inv.expiresAt, inv.remainingDays, now)}</p>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <code className="min-w-0 flex-1 truncate rounded-xl bg-ivory px-3 py-2.5 text-sm text-ink">{link}</code>
             <Button variant="secondary" size="sm" onClick={() => copy(link, 'link')}>{copied === 'link' ? 'Tersalin ✓' : 'Salin'}</Button>
@@ -570,7 +570,7 @@ function RsvpTab({ inv }: { inv: InvitationDetail }) {
 
 // ================= Perpanjang =================
 
-function ExtendTab({ inv }: { inv: InvitationDetail }) {
+function ExtendTab({ inv, now }: { inv: InvitationDetail; now: number }) {
   const [weeks, setWeeks] = useState(4);
   const [coupon, setCoupon] = useState('');
   const [quote, setQuote] = useState<{ lines: QuoteLine[]; discount: number; total: number; coupon: { valid: boolean; reason?: string; code: string } | null } | null>(null);
@@ -609,7 +609,7 @@ function ExtendTab({ inv }: { inv: InvitationDetail }) {
     <div className="mx-auto max-w-xl space-y-6">
       <div>
         <h2 className="font-display text-2xl text-ink">{revives ? 'Aktifkan kembali undangan' : 'Perpanjang masa aktif'}</h2>
-        <p className="mt-2 text-sm text-ink-soft">{expiryText(inv.status, inv.expiresAt, inv.remainingDays)}. {revives ? 'Setelah dibayar, link langsung bisa dibuka lagi.' : 'Tambahan masa aktif dihitung dari tanggal berakhir saat ini.'}</p>
+        <p className="mt-2 text-sm text-ink-soft">{expiryText(inv.status, inv.expiresAt, inv.remainingDays, now)}. {revives ? 'Setelah dibayar, link langsung bisa dibuka lagi.' : 'Tambahan masa aktif dihitung dari tanggal berakhir saat ini.'}</p>
       </div>
       <Card className="space-y-5 p-6">
         <Field label="Tambah masa aktif" group>

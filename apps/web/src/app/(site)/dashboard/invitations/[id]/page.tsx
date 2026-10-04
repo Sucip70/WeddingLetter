@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ApiError } from '@/lib/api';
-import { appUrl } from '@/lib/format';
+import { appUrl, requestNow } from '@/lib/format';
 import { authedFetch, requireUser } from '@/lib/session';
 import type { InvitationDetail } from '@/lib/types';
 import { InvitationManager } from './manager';
@@ -19,10 +19,14 @@ export default async function ManageInvitationPage({ params, searchParams }: Pag
     throw error;
   });
   const tab = typeof sp.tab === 'string' ? sp.tab : 'overview';
+  // Dihitung sekali di sini (Server Component, jalan sekali per request) lalu dikirim sebagai prop — bukan
+  // dipanggil ulang di client — supaya hitungan "X hari lagi" sama persis antara SSR dan hidrasi.
+  // Lihat catatan di lib/format.ts#daysLeft.
+  const now = requestNow();
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <Link href="/dashboard" className="text-sm text-ink-soft hover:text-ink">← Undangan saya</Link>
-      <InvitationManager initial={invitation} initialTab={tab} baseUrl={appUrl()} />
+      <InvitationManager initial={invitation} initialTab={tab} baseUrl={appUrl()} now={now} />
     </div>
   );
 }

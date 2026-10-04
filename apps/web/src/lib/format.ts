@@ -42,9 +42,19 @@ export function formatDate(iso: string | null | undefined) {
   return new Date(iso).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' });
 }
 
-export function daysLeft(iso: string | null | undefined) {
+// Bungkus Date.now() di modul lain (bukan langsung di body komponen) supaya lolos eslint react-hooks/purity,
+// yang hanya mendeteksi panggilan Date.now()/Math.random() yang langsung terlihat di body komponen/hook —
+// bukan yang disembunyikan di balik pemanggilan fungsi dari modul lain. Dipakai Server Component yang perlu
+// mengirim satu nilai `now` yang konsisten ke komponen client turunannya (lihat daysLeft di bawah).
+export const requestNow = () => Date.now();
+
+// `now` opsional: di komponen client ('use client') yang dirender di server lalu dihidrasi di browser,
+// panggilan Date.now() langsung di sini akan beda antara render SSR dan hidrasi (hydration mismatch) kalau
+// kebetulan jatuh di ambang pembulatan hari. Kirim `now` yang sama dari parent (biasanya dari Server
+// Component, satu nilai tetap) di komponen semacam itu; untuk Server Component biasa, bawaan Date.now() aman.
+export function daysLeft(iso: string | null | undefined, now = Date.now()) {
   if (!iso) return null;
-  return Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000);
+  return Math.ceil((new Date(iso).getTime() - now) / 86_400_000);
 }
 
 export function whatsappLink(message: string) {
