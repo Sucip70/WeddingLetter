@@ -1,5 +1,6 @@
 import { createHmac, randomInt, timingSafeEqual } from 'node:crypto';
 import {
+  ConflictException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -9,6 +10,7 @@ import {
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { MailerService } from './mailer.service.js';
+import { hashPassword, verifyPassword } from './password.js';
 import { TokenService } from './token.service.js';
 
 const OTP_TTL_MINUTES = 10;
@@ -150,6 +152,38 @@ export class AuthService {
           },
         });
 
+    return this.session(user);
+  }
+
+  // Daftar akun baru dengan kata sandi. Email harus diverifikasi lewat kode (endpoint otp/verify yang sama
+  // dipakai login tanpa kata sandi) sebelum akun bisa dipakai — kecuali sudah terverifikasi lewat Google.
+  async registerWithPassword(email: string, password: string, name: string) {
+    const existing = await this.prisma.user.findUnique({ where: { email } });
+    if (existing?.passwordHash) {
+      throw new ConflictException('Email ini sudah terdaftar. Silakan masuk.');
+    }
+
+    const passwordHash = await hashPassword(password);
+    const user = existing
+      ? await this.prisma.user.update({ where: { id: existing.id }, data: { passwordHash, name } })
+      : await this.prisma.user.create({ data: { email, name, passwordHash } });
+
+    // Akun lama yang sudah terverifikasi (misalnya pernah masuk lewat Google) tidak perlu verifikasi ulang.
+    if (user.emailVerifiedAt) {
+      return this.session(user);
+    }
+
+    const otp = await this.requestOtp(email);
+    return { ...otp, needsVerification: true as const };
+  }
+
+  async loginWithPassword(email: string, password: string) {
+    const invalid = new UnauthorizedException('Email atau kata sandi salah');
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || !(await verifyPassword(password, user.passwordHash))) throw invalid;
+    if (!user.emailVerifiedAt) {
+      throw new UnauthorizedException('Email belum diverifikasi. Minta kode verifikasi baru lewat halaman daftar.');
+    }
     return this.session(user);
   }
 

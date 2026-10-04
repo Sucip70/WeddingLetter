@@ -73,6 +73,17 @@ export async function POST(request: NextRequest, ctx: RouteContext<'/api/auth/[a
       const { res, json } = await callApi('/auth/google', { idToken: body.idToken });
       return res.ok ? withSession(json.user, json.accessToken) : fail(res.status, json, 'Login Google gagal');
     }
+    case 'register': {
+      if (otpRateLimited(request)) return NextResponse.json({ message: 'Terlalu banyak permintaan dari jaringan ini. Coba lagi nanti atau masuk dengan Google.' }, { status: 429 });
+      const { res, json } = await callApi('/auth/register', { email: body.email, password: body.password, name: body.name });
+      if (!res.ok) return fail(res.status, json, 'Gagal mendaftar');
+      // Akun yang sudah terverifikasi (misal pernah masuk via Google) langsung dapat sesi; selain itu menunggu kode.
+      return json.accessToken ? withSession(json.user, json.accessToken) : NextResponse.json(json);
+    }
+    case 'login': {
+      const { res, json } = await callApi('/auth/login', { email: body.email, password: body.password });
+      return res.ok ? withSession(json.user, json.accessToken) : fail(res.status, json, 'Email atau kata sandi salah');
+    }
     // Sesi bergulir: token lama yang masih valid ditukar dengan token baru (masa berlaku dihitung ulang).
     case 'refresh': {
       const token = request.cookies.get(SESSION_COOKIE)?.value;
