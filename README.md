@@ -74,7 +74,7 @@ Alur uji: `/templates` → pilih template → isi (harga live di kanan) → Chec
 **Sistem**
 - Siklus hidup: `DRAFT → ACTIVE → EXPIRED_GRACE (30 hari) → DELETED`, `PAUSED` menyimpan sisa hari. Job tiap jam (idempotent): kedaluwarsa, hapus permanen (file storage ikut), tutup pesanan >24 jam (kupon dikembalikan), pengingat H-3 (email + WhatsApp Fonnte).
 - Kupon di-reserve atomik saat order dibuat, dikembalikan bila batal/kedaluwarsa.
-- Pembayaran idempoten; webhook Midtrans diverifikasi signature + nominal.
+- Pembayaran idempoten; webhook Midtrans diverifikasi signature + nominal. Jaring pengaman kalau webhook tidak pernah sampai (localhost saat dev tidak bisa dihubungi dari internet, atau gagal terkirim di production): `POST /payments/:orderId/sync` menanyakan status langsung ke Midtrans Core API; dipanggil otomatis oleh halaman `/checkout/[orderId]` tiap polling.
 
 ## Testing
 

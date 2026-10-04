@@ -5,6 +5,21 @@ export function midtransSnapBase() {
   return process.env.MIDTRANS_IS_PRODUCTION === 'true' ? 'https://app.midtrans.com' : 'https://app.sandbox.midtrans.com';
 }
 
+// Core API (beda host dari Snap) — dipakai untuk menanyakan status transaksi secara aktif,
+// jaring pengaman kalau webhook notifikasi tidak pernah sampai (localhost saat dev, atau gagal di production).
+function midtransApiBase() {
+  return process.env.MIDTRANS_IS_PRODUCTION === 'true' ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com';
+}
+
+export interface MidtransStatus {
+  order_id: string;
+  status_code: string;
+  gross_amount: string;
+  transaction_status: string;
+  fraud_status?: string;
+  transaction_id?: string;
+}
+
 // Midtrans Snap: membuat transaksi, mengembalikan token + redirect_url halaman bayar Midtrans.
 export class MidtransProvider implements PaymentProvider {
   private readonly logger = new Logger(MidtransProvider.name);
@@ -39,5 +54,19 @@ export class MidtransProvider implements PaymentProvider {
     }
     const json = (await res.json()) as { token: string; redirect_url: string };
     return { provider: 'MIDTRANS', token: json.token, redirectUrl: json.redirect_url };
+  }
+
+  // GET status transaksi (Core API). Otentikasi lewat server key yang sama, bukan signature — dipanggil
+  // dari server kita sendiri, bukan webhook publik, jadi tidak perlu diverifikasi seperti notification.
+  async getStatus(orderId: string): Promise<MidtransStatus | null> {
+    const res = await fetch(`${midtransApiBase()}/v2/${encodeURIComponent(orderId)}/status`, {
+      headers: { Accept: 'application/json', Authorization: `Basic ${Buffer.from(`${this.serverKey}:`).toString('base64')}` },
+    });
+    if (res.status === 404) return null; // transaksi belum pernah dibuat di Midtrans
+    if (!res.ok) {
+      this.logger.error(`Midtrans get status gagal (${res.status}): ${await res.text()}`);
+      throw new ServiceUnavailableException('Gagal mengecek status pembayaran, coba lagi sebentar');
+    }
+    return (await res.json()) as MidtransStatus;
   }
 }
