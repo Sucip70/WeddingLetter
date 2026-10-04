@@ -9,3 +9,8 @@ generated/
 *.log
 .DS_Store
 .next-*/
+
+# Rahasia di server deploy (contoh: deploy/*/api.env.example)
+deploy/**/api.env
+deploy/**/certs/
+deploy/**/htpasswd

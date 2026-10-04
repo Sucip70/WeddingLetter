@@ -1,0 +1,72 @@
+# Stack staging di satu VPS: Postgres + API + Web + Nginx, di belakang Cloudflare (proxy oranye).
+# Image API/Web dibangun GitHub Actions (.github/workflows/staging.yml) dan ditarik dari GHCR.
+# Cara pakai & persiapan server: deploy/staging/README.md.
+name: weddingletter-staging
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: weddingletter
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?isi POSTGRES_PASSWORD di .env}
+      POSTGRES_DB: weddingletter
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U weddingletter -d weddingletter"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    image: ${API_IMAGE:?isi API_IMAGE di .env}:${TAG:-staging}
+    restart: unless-stopped
+    env_file: api.env
+    environment:
+      # Kata sandi Postgres dipakai apa adanya di URL: gunakan huruf/angka saja (mis. openssl rand -hex 24).
+      DATABASE_URL: postgresql://weddingletter:${POSTGRES_PASSWORD}@postgres:5432/weddingletter?schema=public
+      NODE_ENV: production
+      APP_PORT: "4000"
+      # IP tamu asli datang dari Nginx (yang sudah memulihkan IP dari Cloudflare).
+      TRUST_PROXY: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  web:
+    image: ${WEB_IMAGE:?isi WEB_IMAGE di .env}:${TAG:-staging}
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:4000
+    depends_on:
+      api:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      STAGING_DOMAIN: ${STAGING_DOMAIN:?isi STAGING_DOMAIN di .env}
+    volumes:
+      # *.template diproses envsubst oleh image nginx menjadi /etc/nginx/conf.d/*.conf
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./nginx/cloudflare-realip.conf:/etc/nginx/snippets/cloudflare-realip.conf:ro
+      # Sertifikat Cloudflare Origin CA & kata sandi basic auth: dibuat di server, tidak ada di git.
+      - ./certs:/etc/nginx/certs:ro
+      - ./htpasswd:/etc/nginx/htpasswd:ro
+    depends_on:
+      - web
+      - api
+
+volumes:
+  pgdata:

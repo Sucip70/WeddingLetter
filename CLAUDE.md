@@ -37,7 +37,9 @@ Semua fitur inti dari rancangan **sudah diimplementasikan dan diverifikasi**: 11
 - `components/invitation/invitation-view.tsx` = renderer undangan (dipakai halaman publik, demo template, editor, dashboard, builder). Musik di undangan bergerbang baru berbunyi saat gerbang selesai: ketukan memanggil `unlockMusic` (play bisu lalu pause, supaya Safari iOS mengizinkan play dari timer), timer akhir gerbang memanggil `startMusic`. Pemilik bisa mengganti lagu di dashboard (`SongPicker` di `dashboard/invitations/[id]/manager.tsx`): lagu bawaan dari snapshot `layout.musik.presets` atau lagu unggahan yang sudah dibayar; unggah lagu baru tetap lewat pesanan baru. `phone-frame.tsx` merender pada 390px lalu diskalakan.
 - `components/editor/*` editor + checkout; `components/admin/template-builder.tsx`; dashboard di `(site)/dashboard`; admin di `(site)/admin`.
 
-**Belum ada / ide lanjutan**: login HP+OTP (WhatsApp), penambahan file baru setelah beli (saat ini hanya *mengganti*), SEO/OG image, i18n web selain chrome undangan, tes otomatis frontend, CI, deployment (Docker/Nginx), rate limit global.
+**Deploy**: staging sudah disiapkan (belum pernah dijalankan di server sungguhan): `apps/api/Dockerfile` & `apps/web/Dockerfile` (konteks build = **root repo**, `npm ci --workspace`), `.dockerignore` root, `deploy/staging/` (Compose: Postgres + API + Web + Nginx dengan basic auth, noindex, Cloudflare Origin CA & real IP; webhook Midtrans tanpa auth), `.github/workflows/staging.yml` (push ke branch `staging` → tes → image ke GHCR → ssh VPS `compose pull && up`). Panduan: `deploy/staging/README.md`. Web memakai `output: 'standalone'` (server di `.next/standalone/apps/web/server.js`).
+
+**Belum ada / ide lanjutan**: deployment production (+ backup DB terjadwal), login HP+OTP (WhatsApp), penambahan file baru setelah beli (saat ini hanya *mengganti*), SEO/OG image, i18n web selain chrome undangan, tes otomatis frontend, rate limit global.
 
 ## Keputusan bisnis penting (jangan diubah tanpa alasan kuat — ini sudah diputuskan user)
 
@@ -54,6 +56,8 @@ Semua fitur inti dari rancangan **sudah diimplementasikan dan diverifikasi**: 11
 
 ## Catatan teknis penting (biar tidak mengulang masalah yang sudah dipecahkan)
 
+- **Lockfile yang berlaku = `package-lock.json` root** (npm workspaces; dependency ter-hoist ke `node_modules` root). `apps/*/package-lock.json` basi sejak commit awal (bahkan berisi prisma 8 rc) — `npm ci` di dalam folder app gagal, dan `npx prisma` di salinan tanpa `node_modules` root akan mengunduh prisma 8 rc. Jangan menguji build di salinan folder app saja.
+- CI web: tipe rute global `PageProps<'/…'>` dibuat `next dev/build`; tanpa `.next` jalankan `npx next typegen` sebelum `tsc`.
 - **Prisma di-pin ke `7.10.0`**, jangan upgrade ke `8.x` tanpa sengaja — tag `latest` di npm registry saat ini menunjuk ke `8.0.0-rc.x` (release candidate), bukan versi stabil.
 - **Prisma 7 wajib driver adapter** — `PrismaService` pakai `@prisma/adapter-pg`, jangan hapus.
 - Prisma client digenerate ke `apps/api/src/generated/prisma` (**di dalam `src/`**, bukan di luar) — kalau ini keluar dari `src/`, TypeScript `rootDir` akan error (`TS6059`). Sudah pernah kejadian, sudah diperbaiki, jangan diulang.

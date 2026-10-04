@@ -11,7 +11,11 @@ apps/
   api/   NestJS 12 + Prisma 7 + PostgreSQL — auth, template, harga, order, pembayaran, media, undangan, admin, job
   web/   Next.js 16 (App Router) + Tailwind 4 — katalog, editor, checkout, dashboard, halaman undangan, panel admin
 docker-compose.yml   PostgreSQL lokal (opsional)
+deploy/staging/      stack staging (Compose + Nginx) & panduan server
+.github/workflows/   CI + deploy staging
 ```
+
+Dependency dikelola **npm workspaces dari root** (`package-lock.json` root yang berlaku; `apps/*/package-lock.json` sisa awal proyek dan tidak dipakai).
 
 ## Setup lokal
 
@@ -111,6 +115,14 @@ Tombol "Lanjutkan dengan Google" otomatis tampil di atas form email begitu Clien
 Web: `API_URL` (alamat API dari server Next), `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SUPPORT_WHATSAPP`.
 
 Di production tanpa kredensial Midtrans/R2/Resend, endpoint terkait **menolak** (503), bukan jatuh ke mode simulasi.
+
+## Deploy
+
+**Staging** (`staging.weddingletter.id`): push ke branch `staging` → GitHub Actions menjalankan tes, membangun image
+`apps/api/Dockerfile` & `apps/web/Dockerfile` (konteks build = root repo) ke GHCR, lalu memperbarui stack Compose di
+VPS. Persiapan server, Cloudflare, R2, Midtrans Sandbox, dan secrets GitHub: [deploy/staging/README.md](./deploy/staging/README.md).
+
+Production belum disiapkan (rencananya pola yang sama dengan Midtrans production + backup database terjadwal).
 
 ## Asumsi yang perlu dikonfirmasi
 

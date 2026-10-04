@@ -1,0 +1,22 @@
+# Konteks build image = root repo (npm workspaces: package-lock.json root yang berlaku).
+# Tiap Dockerfile hanya menyalin bagian yang ia butuhkan.
+.git
+.github
+deploy
+**/node_modules
+**/.next
+**/.next-*
+**/dist
+**/dist-*
+**/uploads
+**/uploads-*
+**/coverage
+**/*.tsbuildinfo
+**/*.log
+**/.env
+**/.env.*
+!**/.env.example
+apps/api/src/generated
+apps/api/.claude
+# Lockfile per-app sudah tidak dipakai (basi); yang berlaku package-lock.json root.
+apps/*/package-lock.json
