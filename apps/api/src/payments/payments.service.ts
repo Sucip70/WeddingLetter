@@ -14,6 +14,7 @@ import { OrdersService } from '../orders/orders.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { DevProvider } from './dev.provider.js';
 import { MidtransProvider } from './midtrans.provider.js';
+import type { MidtransStatus } from './midtrans.provider.js';
 import type { PaymentProvider } from './payment.provider.js';
 
 interface MidtransNotification {
@@ -120,31 +121,54 @@ export class PaymentsService {
   async handleMidtrans(body: MidtransNotification) {
     const serverKey = process.env.MIDTRANS_SERVER_KEY;
     if (!serverKey) throw new ServiceUnavailableException('Midtrans belum dikonfigurasi');
-    const { order_id, status_code, gross_amount, signature_key, transaction_status, fraud_status, transaction_id } = body;
+    const { order_id, status_code, gross_amount, signature_key, transaction_status } = body;
     if (!order_id || !status_code || !gross_amount || !signature_key || !transaction_status) throw new BadRequestException('Payload tidak lengkap');
 
     const expected = createHash('sha512').update(`${order_id}${status_code}${gross_amount}${serverKey}`).digest();
     const actual = Buffer.from(signature_key, 'hex');
     if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) throw new ForbiddenException('Signature tidak valid');
 
-    const order = await this.prisma.order.findUnique({ where: { id: order_id } });
+    await this.applyMidtransStatus(order_id, body);
+    return { ok: true };
+  }
+
+  // Dipanggil dari server kita sendiri (otentikasi via server key di request GET, bukan signature publik),
+  // jadi tidak perlu diverifikasi seperti webhook. Jaring pengaman kalau notifikasi Midtrans tidak pernah sampai
+  // (localhost saat dev, atau gagal terkirim di production) — dipanggil saat user kembali ke halaman checkout.
+  async syncWithMidtrans(userId: string, orderId: string) {
+    const order = await this.prisma.order.findFirst({ where: { id: orderId, userId } });
     if (!order) throw new NotFoundException('Pesanan tidak ditemukan');
-    if (Number(gross_amount) !== order.totalAmount) {
-      this.logger.error(`Nominal tidak cocok untuk ${order_id}: gateway=${gross_amount} order=${order.totalAmount}`);
+    if (order.status !== 'PENDING' || order.paymentProvider !== 'MIDTRANS') return { status: order.status };
+
+    const serverKey = process.env.MIDTRANS_SERVER_KEY;
+    if (!serverKey) return { status: order.status };
+    const status = await new MidtransProvider(serverKey).getStatus(orderId);
+    if (!status) return { status: order.status };
+
+    await this.applyMidtransStatus(orderId, status);
+    const refreshed = await this.prisma.order.findUnique({ where: { id: orderId }, select: { status: true } });
+    return { status: refreshed?.status ?? order.status };
+  }
+
+  private async applyMidtransStatus(orderId: string, status: MidtransNotification | MidtransStatus) {
+    const { gross_amount, transaction_status, fraud_status, transaction_id } = status;
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException('Pesanan tidak ditemukan');
+    if (gross_amount !== undefined && Number(gross_amount) !== order.totalAmount) {
+      this.logger.error(`Nominal tidak cocok untuk ${orderId}: gateway=${gross_amount} order=${order.totalAmount}`);
       throw new BadRequestException('Nominal tidak cocok');
     }
 
     const settled = transaction_status === 'settlement' || (transaction_status === 'capture' && fraud_status === 'accept');
     if (settled) {
-      await this.markPaid(order_id, { provider: 'MIDTRANS', ref: transaction_id });
+      await this.markPaid(orderId, { provider: 'MIDTRANS', ref: transaction_id });
     } else if (transaction_status === 'expire') {
-      await this.orders.closeUnpaid(order_id, 'EXPIRED');
+      await this.orders.closeUnpaid(orderId, 'EXPIRED');
     } else if (transaction_status === 'cancel' || transaction_status === 'deny' || transaction_status === 'failure') {
-      await this.orders.closeUnpaid(order_id, 'CANCELLED');
+      await this.orders.closeUnpaid(orderId, 'CANCELLED');
     } else if (transaction_status === 'refund' || transaction_status === 'partial_refund') {
-      this.logger.warn(`Refund tercatat di Midtrans untuk ${order_id}: proses lewat panel admin`);
+      this.logger.warn(`Refund tercatat di Midtrans untuk ${orderId}: proses lewat panel admin`);
     }
-    return { ok: true };
   }
 
   // Simulasi bayar (development saja). Sama persis dengan jalur lunas sungguhan.

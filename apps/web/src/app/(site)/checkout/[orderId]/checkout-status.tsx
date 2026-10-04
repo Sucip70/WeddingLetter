@@ -13,10 +13,13 @@ export function CheckoutStatus({ initial }: { initial: OrderDetail }) {
   const [error, setError] = useState('');
 
   // Setelah kembali dari halaman bayar, webhook bisa tiba beberapa detik kemudian: pantau statusnya.
+  // `payments/.../sync` juga menanyakan langsung ke Midtrans (jaring pengaman kalau webhook tidak pernah
+  // sampai, misalnya server dev di localhost tidak bisa dihubungi dari internet).
   useEffect(() => {
     if (order.status !== 'PENDING') return;
     const id = setInterval(async () => {
       try {
+        await api(`payments/${order.id}/sync`, { method: 'POST', body: {} });
         setOrder(await api<OrderDetail>(`orders/${order.id}`));
       } catch {
         /* coba lagi pada tick berikutnya */

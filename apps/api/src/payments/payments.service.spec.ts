@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
-import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { MidtransProvider } from './midtrans.provider.js';
 import { PaymentsService } from './payments.service.js';
 
 const SERVER_KEY = 'SB-Mid-server-test';
@@ -72,6 +73,75 @@ describe('webhook Midtrans', () => {
   it('payload tidak lengkap -> 400', async () => {
     const { service } = setup();
     await expect(service.handleMidtrans({ order_id: 'ord1' })).rejects.toBeInstanceOf(BadRequestException);
+  });
+});
+
+describe('sinkron status (jaring pengaman kalau webhook tidak sampai)', () => {
+  beforeEach(() => {
+    process.env.MIDTRANS_SERVER_KEY = SERVER_KEY;
+  });
+  afterEach(() => {
+    delete process.env.MIDTRANS_SERVER_KEY;
+    vi.restoreAllMocks();
+  });
+
+  function setupSync(order: Record<string, unknown> | null) {
+    const rows = [order].filter(Boolean) as Record<string, unknown>[];
+    const prisma = {
+      order: {
+        findFirst: async ({ where }: { where: Record<string, unknown> }) =>
+          rows.find((r) => Object.entries(where).every(([k, v]) => r[k] === v)) ?? null,
+        findUnique: async () => rows[0] ?? null,
+      },
+    };
+    const orders = { closeUnpaid: vi.fn(async () => undefined) };
+    const service = new PaymentsService(prisma as never, orders as never, {} as never, {} as never);
+    const markPaid = vi.spyOn(service, 'markPaid').mockImplementation(async () => {
+      if (rows[0]) rows[0].status = 'PAID';
+      return { alreadyPaid: false };
+    });
+    return { service, orders, markPaid, rows };
+  }
+
+  it('settlement di Midtrans tapi webhook belum sampai -> ditandai lunas saat disinkronkan', async () => {
+    const { service, markPaid } = setupSync({ id: 'ord1', userId: 'u1', totalAmount: 53_120, status: 'PENDING', paymentProvider: 'MIDTRANS' });
+    vi.spyOn(MidtransProvider.prototype, 'getStatus').mockResolvedValue({
+      order_id: 'ord1',
+      status_code: '200',
+      gross_amount: '53120.00',
+      transaction_status: 'settlement',
+      fraud_status: 'accept',
+      transaction_id: 'tx1',
+    });
+
+    const res = await service.syncWithMidtrans('u1', 'ord1');
+    expect(res).toEqual({ status: 'PAID' });
+    expect(markPaid).toHaveBeenCalledWith('ord1', { provider: 'MIDTRANS', ref: 'tx1' });
+  });
+
+  it('belum bayar di Midtrans -> tetap PENDING, tidak menandai lunas', async () => {
+    const { service, markPaid } = setupSync({ id: 'ord1', userId: 'u1', totalAmount: 53_120, status: 'PENDING', paymentProvider: 'MIDTRANS' });
+    vi.spyOn(MidtransProvider.prototype, 'getStatus').mockResolvedValue({
+      order_id: 'ord1',
+      status_code: '201',
+      gross_amount: '53120.00',
+      transaction_status: 'pending',
+    });
+
+    await expect(service.syncWithMidtrans('u1', 'ord1')).resolves.toEqual({ status: 'PENDING' });
+    expect(markPaid).not.toHaveBeenCalled();
+  });
+
+  it('pesanan yang sudah PAID/bukan milik Midtrans tidak dicek ulang ke Midtrans', async () => {
+    const { service } = setupSync({ id: 'ord1', userId: 'u1', totalAmount: 53_120, status: 'PAID', paymentProvider: 'MIDTRANS' });
+    const spy = vi.spyOn(MidtransProvider.prototype, 'getStatus');
+    await expect(service.syncWithMidtrans('u1', 'ord1')).resolves.toEqual({ status: 'PAID' });
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('pesanan orang lain tidak bisa disinkronkan', async () => {
+    const { service } = setupSync({ id: 'ord1', userId: 'lain', totalAmount: 53_120, status: 'PENDING', paymentProvider: 'MIDTRANS' });
+    await expect(service.syncWithMidtrans('u1', 'ord1')).rejects.toBeInstanceOf(NotFoundException);
   });
 });
 
