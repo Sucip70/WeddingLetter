@@ -1,4 +1,4 @@
-import { HttpException, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, HttpException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { MailerService } from './mailer.service.js';
 import { TokenService } from './token.service.js';
@@ -183,6 +183,59 @@ describe('Sesi bergulir', () => {
     process.env.JWT_EXPIRES_IN = '7d';
     expect(days(await tokens.sign('u'))).toBe(7);
     delete process.env.JWT_EXPIRES_IN;
+  });
+});
+
+describe('AuthService password', () => {
+  beforeEach(() => {
+    process.env.JWT_SECRET = 'test-secret';
+  });
+
+  it('daftar baru mengirim kode verifikasi, bukan sesi langsung', async () => {
+    const { service, users, code } = setup();
+    const res = await service.registerWithPassword('a@b.com', 'sandi-aman', 'Andi');
+    expect(res).toMatchObject({ ok: true, needsVerification: true });
+    expect(users).toHaveLength(1);
+    expect(users[0].emailVerifiedAt).toBeUndefined();
+
+    // Kode yang dikirim sama persis yang dipakai endpoint otp/verify.
+    const verified = await service.verifyOtp('a@b.com', code());
+    expect(verified.accessToken).toBeTruthy();
+    expect(verified.user.email).toBe('a@b.com');
+  });
+
+  it('daftar dengan email yang sudah punya kata sandi ditolak (409)', async () => {
+    const { service } = setup();
+    await service.registerWithPassword('a@b.com', 'sandi-aman', 'Andi');
+    await expect(service.registerWithPassword('a@b.com', 'lain-lagi', 'Andi')).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('akun yang sudah terverifikasi (misal via Google) langsung dapat sesi saat set kata sandi', async () => {
+    const { service, users } = setup();
+    // Simulasikan akun yang sudah ada & terverifikasi lewat Google (tanpa passwordHash).
+    users.push({ id: 'u-google', email: 'a@b.com', name: 'Andi', googleId: 'g1', emailVerifiedAt: new Date(), phone: null, role: 'USER' });
+
+    const res = await service.registerWithPassword('a@b.com', 'sandi-aman', 'Andi');
+    expect('accessToken' in res).toBe(true);
+  });
+
+  it('masuk dengan kata sandi salah atau akun tanpa kata sandi ditolak', async () => {
+    const { service, code } = setup();
+    await service.requestOtp('otp-only@b.com');
+    await service.verifyOtp('otp-only@b.com', code()); // akun lama tanpa passwordHash
+
+    await expect(service.loginWithPassword('otp-only@b.com', 'apapun')).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(service.loginWithPassword('tidak-ada@b.com', 'apapun')).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('masuk sebelum verifikasi email ditolak; setelah verifikasi berhasil', async () => {
+    const { service, code } = setup();
+    await service.registerWithPassword('c@b.com', 'sandi-benar', 'Citra');
+    await expect(service.loginWithPassword('c@b.com', 'sandi-benar')).rejects.toBeInstanceOf(UnauthorizedException);
+
+    await service.verifyOtp('c@b.com', code());
+    const res = await service.loginWithPassword('c@b.com', 'sandi-benar');
+    expect(res.accessToken).toBeTruthy();
   });
 });
 

@@ -1,6 +1,13 @@
 import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { googleLoginSchema, parseBody, requestOtpSchema, verifyOtpSchema } from './auth.dto.js';
+import {
+  googleLoginSchema,
+  loginSchema,
+  parseBody,
+  registerSchema,
+  requestOtpSchema,
+  verifyOtpSchema,
+} from './auth.dto.js';
 import { AuthGuard, CurrentUser } from './auth.guard.js';
 import type { AuthUser } from './auth.guard.js';
 import { AuthService } from './auth.service.js';
@@ -29,6 +36,20 @@ export class AuthController {
   @HttpCode(200)
   google(@Body() body: unknown) {
     return this.auth.loginWithGoogle(parseBody(googleLoginSchema, body).idToken);
+  }
+
+  @Post('register')
+  @HttpCode(200)
+  register(@Body() body: unknown) {
+    const { email, password, name } = parseBody(registerSchema, body);
+    return this.auth.registerWithPassword(email, password, name);
+  }
+
+  @Post('login')
+  @HttpCode(200)
+  login(@Body() body: unknown) {
+    const { email, password } = parseBody(loginSchema, body);
+    return this.auth.loginWithPassword(email, password);
   }
 
   @Post('refresh')
