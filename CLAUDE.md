@@ -57,6 +57,7 @@ Semua fitur inti dari rancangan **sudah diimplementasikan dan diverifikasi**: 11
 ## Catatan teknis penting (biar tidak mengulang masalah yang sudah dipecahkan)
 
 - **Lockfile yang berlaku = `package-lock.json` root** (npm workspaces; dependency ter-hoist ke `node_modules` root). `apps/*/package-lock.json` basi sejak commit awal (bahkan berisi prisma 8 rc) — `npm ci` di dalam folder app gagal, dan `npx prisma` di salinan tanpa `node_modules` root akan mengunduh prisma 8 rc. Jangan menguji build di salinan folder app saja.
+- Lockfile harus memuat binary native **semua platform** (Linux untuk CI/Docker: `@rolldown/binding-linux-x64-gnu`, `@next/swc-linux-x64-gnu`, `@tailwindcss/oxide-linux-x64-gnu`, `lightningcss-linux-x64-gnu`). Bug npm #4828: lockfile yang diperbarui dari `node_modules` di Windows bisa hanya berisi varian win32 → CI gagal "Cannot find native binding". Perbaikan yang terbukti: buat ulang lockfile dari nol di salinan scratch (`npm install --package-lock-only --ignore-scripts --before=<tanggal>` supaya versi tidak melompat), uji, lalu salin.
 - CI web: tipe rute global `PageProps<'/…'>` dibuat `next dev/build`; tanpa `.next` jalankan `npx next typegen` sebelum `tsc`.
 - **Prisma di-pin ke `7.10.0`**, jangan upgrade ke `8.x` tanpa sengaja — tag `latest` di npm registry saat ini menunjuk ke `8.0.0-rc.x` (release candidate), bukan versi stabil.
 - **Prisma 7 wajib driver adapter** — `PrismaService` pakai `@prisma/adapter-pg`, jangan hapus.
