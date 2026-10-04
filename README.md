@@ -48,7 +48,7 @@ Prasyarat: Node 24+, PostgreSQL 16 (Docker **atau** instalasi lokal **atau** `np
 
 ### Mencoba alurnya secara lokal (tanpa kredensial apa pun)
 
-- **Login**: masukkan email → kode OTP 6 digit **dicetak di log server API** (tanpa `RESEND_API_KEY`). Login dengan `ADMIN_EMAIL` di atas untuk membuka `/admin`.
+- **Login**: daftar dengan email + kata sandi → kode verifikasi 6 digit **dicetak di log server API** (tanpa `RESEND_API_KEY`), atau masuk langsung dengan Google. Akun lama yang belum punya kata sandi (dibuat sebelum fitur ini) tetap bisa masuk lewat tab "Masuk tanpa kata sandi" (kode OTP ke email, sama seperti sebelumnya). Login dengan `ADMIN_EMAIL` di atas untuk membuka `/admin`.
 - **Upload media**: tanpa kredensial R2, file disimpan di `apps/api/uploads` (driver disk lokal, khusus development).
 - **Pembayaran**: tanpa `MIDTRANS_SERVER_KEY`, checkout diarahkan ke halaman **simulasi bayar** `/dev/pay/...` (dinonaktifkan otomatis di production).
 - **Notifikasi** (email/WhatsApp): hanya dicetak di log.
@@ -61,7 +61,7 @@ Alur uji: `/templates` → pilih template → isi (harga live di kanan) → Chec
 - Katalog **34 desain x 3 paket** (69 template): dikelompokkan per tema (klasik, suku & budaya, religi, perayaan, kartun, video game, film, musim). Demo interaktif dengan ganti warna dan dengar lagu bawaan; halaman harga + kalkulator sewa media.
 - **Basic** = desain Rustic dengan 8 pilihan warna (tanpa animasi). Desain yang sama juga tersedia di Standard & Premium. **Standard** = animasi sedang; **Premium** = animasi penuh + **gerbang pembuka** + 1 video. Semua paket boleh memilih lagu bawaan dari pustaka musik (lihat "Musik" di bawah). Warna dipilih pembeli gratis (di editor dan bisa diganti lagi di dashboard).
 - Editor berbasis skema template: form dinamis, pratinjau ponsel langsung (berwatermark sebelum bayar), draf otomatis di browser, kompres foto otomatis (≤2000px), kalkulator harga live (server = sumber kebenaran).
-- Akun hanya diminta saat checkout (email + OTP, atau Google bila dikonfigurasi) tanpa meninggalkan editor.
+- Akun hanya diminta saat checkout (email + kata sandi dengan verifikasi email, Google bila dikonfigurasi, atau kode OTP untuk akun lama) tanpa meninggalkan editor.
 - Checkout: buat pesanan → unggah file langsung ke storage (URL bertanda tangan, ukuran diverifikasi server) → bayar (Midtrans Snap).
 - Dashboard: daftar undangan/pesanan, publikasi, link personal per tamu (`?to=`) + kirim WhatsApp, edit isi, **ganti foto/video/lagu tanpa biaya**, rekap RSVP + unduh CSV, perpanjang masa aktif / aktifkan kembali dari masa tenggang.
 - Halaman undangan publik: sampul, mempelai, cerita, acara + simpan ke Google Calendar, hitung mundur, galeri + lightbox, video, musik latar, RSVP, amplop digital, buku tamu, toggle ID/EN.
@@ -79,7 +79,7 @@ Alur uji: `/templates` → pilih template → isi (harga live di kanan) → Chec
 ## Testing
 
 ```
-npm test --workspace apps/api          # 114 unit test (kalkulator harga, skema/validasi, webhook, storage, dst.)
+npm test --workspace apps/api          # 119 unit test (auth email+password & OTP, kalkulator harga, skema/validasi, webhook, storage, dst.)
 ```
 
 Smoke test alur penuh (user + admin + job) terhadap API & **database khusus tes** — script ini membuat user/order, jangan arahkan ke database dev Anda:
