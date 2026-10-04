@@ -20,6 +20,6 @@ ENV NODE_ENV=production
 COPY --from=build /repo /repo
 WORKDIR /repo/apps/api
 USER node
-EXPOSE 4000
+EXPOSE 4000 
 # Migrasi dulu (idempoten, aman diulang), baru jalankan server. CLI prisma ter-hoist ke node_modules root.
 CMD ["sh", "-c", "/repo/node_modules/.bin/prisma migrate deploy && exec node dist/main.js"]
