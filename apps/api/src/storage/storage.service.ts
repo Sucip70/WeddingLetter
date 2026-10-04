@@ -14,6 +14,12 @@ export class StorageService {
     if (this.driver) return this.driver;
     const env = process.env;
     if (env.R2_ACCOUNT_ID && env.R2_ACCESS_KEY_ID && env.R2_SECRET_ACCESS_KEY && env.R2_PUBLIC_URL) {
+      // Tanpa skema, publicUrl() menghasilkan string tanpa "https://" yang lalu ditafsirkan browser sebagai
+      // path RELATIF terhadap halaman saat ini (bukan domain lain) — gambar tampak "hilang" tanpa error jelas.
+      // Sudah pernah kejadian saat ganti dari domain pub-*.r2.dev ke custom domain, jangan diulang.
+      if (!/^https?:\/\//.test(env.R2_PUBLIC_URL)) {
+        throw new Error(`R2_PUBLIC_URL harus diawali "https://" (nilai saat ini: "${env.R2_PUBLIC_URL}")`);
+      }
       this.driver = new R2Driver(
         env.R2_ACCOUNT_ID,
         env.R2_ACCESS_KEY_ID,
