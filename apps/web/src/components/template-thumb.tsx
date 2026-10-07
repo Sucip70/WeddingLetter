@@ -10,7 +10,7 @@ import type { DemoPhotos } from '@/lib/sample';
 import type { Theme } from '@/lib/types';
 import { PatternLayer } from './invitation/effects';
 import { HEADING, RADIUS, motifFor } from './invitation/motifs';
-import { ORNAMENTS } from './invitation/ornaments';
+import { Monogram, ORNAMENTS } from './invitation/ornaments';
 
 // Posisi deterministik dalam [0, mod) dari sebuah string (mis. id template): dipakai memilih tata letak
 // sampul per kartu supaya berbeda-beda antar kartu tapi stabil di setiap render (SSR = hidrasi, reload tetap sama).
@@ -52,11 +52,17 @@ export function TemplateThumb({
   const motif = motifFor(theme.motif ?? theme.preset);
   const orn = ORNAMENTS[motif.ornament];
   const hf = HEADING[theme.headingFont] ?? HEADING.serif;
+  // Elegan: nama beraksara tulisan tangan berlapis emas + monogram (kelas .wl-root/.wl-gilded membawa variabel --foil).
+  const gilded = motif.skin === 'gilded';
+  const nf = HEADING[motif.names ?? motif.heading ?? theme.headingFont] ?? hf;
+  const nameSize = gilded ? 0.58 : 0.62;
+  const rootClass = gilded ? 'wl-root wl-gilded' : '';
   const dark = motif.countdown === 'neon' || motif.countdown === 'pixel';
   const rootStyle = {
     '--p': theme.primary,
     '--s': theme.secondary,
     '--bg': theme.background,
+    '--tx': theme.text,
     background: `linear-gradient(165deg, color-mix(in srgb, ${theme.primary} 22%, ${theme.background}), ${theme.background} 52%, color-mix(in srgb, ${theme.primary} 10%, color-mix(in srgb, ${theme.secondary} 12%, ${theme.background})))`,
     color: theme.primary,
   } as CSSProperties;
@@ -79,7 +85,7 @@ export function TemplateThumb({
 
   if (resolved && resolved !== 'ornamen') {
     return (
-      <div className={`relative flex h-full w-full flex-col items-center justify-center overflow-hidden text-center ${className}`} style={rootStyle}>
+      <div className={`${rootClass} relative flex h-full w-full flex-col items-center justify-center overflow-hidden text-center ${className}`} style={rootStyle}>
         <CoverLayout
           kind={resolved}
           photo={photos?.cover}
@@ -92,7 +98,8 @@ export function TemplateThumb({
           dateText="12 . 12 . 2026"
           guest={null}
           openLabel={motif.copy?.open ?? 'Buka Undangan'}
-          heading={{ ...hf, size: `calc(${hf.size} * 0.62)` }}
+          heading={{ ...nf, size: `calc(${nf.size} * ${nameSize})` }}
+          gilded={gilded}
           animated={false}
           premium={false}
           decorative
@@ -111,13 +118,14 @@ export function TemplateThumb({
   }
 
   return (
-    <div className={`relative flex h-full w-full flex-col items-center justify-center overflow-hidden text-center ${className}`} style={rootStyle}>
+    <div className={`${rootClass} relative flex h-full w-full flex-col items-center justify-center overflow-hidden text-center ${className}`} style={rootStyle}>
       <PatternLayer kind={motif.pattern} opacity={0.1} />
       {cornersNode}
-      <p className="relative text-[8px] uppercase tracking-[0.3em]" style={{ color: theme.text, opacity: 0.7 }}>{motif.copy?.kicker ?? 'Undangan Pernikahan'}</p>
+      {gilded && <Monogram a="A" b="S" size={38} className="relative mb-2" />}
+      <p className="relative text-[8px] uppercase tracking-[0.3em]" style={{ color: theme.text, opacity: 0.7, ...(gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 7, letterSpacing: '0.38em' } : null) }}>{motif.copy?.kicker ?? 'Undangan Pernikahan'}</p>
       <p
-        className="relative mt-2 leading-none"
-        style={{ fontFamily: hf.family, fontWeight: hf.weight, fontSize: `calc(${hf.size} * 0.62)`, letterSpacing: hf.tracking, textTransform: hf.upper ? 'uppercase' : undefined }}
+        className={`relative mt-2 ${gilded ? 'wl-foil leading-tight' : 'leading-none'}`}
+        style={{ fontFamily: nf.family, fontWeight: nf.weight, fontSize: `calc(${nf.size} * ${nameSize})`, letterSpacing: nf.tracking, textTransform: nf.upper ? 'uppercase' : undefined }}
       >
         Andi & Sinta
       </p>
@@ -125,7 +133,7 @@ export function TemplateThumb({
       <p className="relative mt-3 text-[9px] tracking-[0.25em]" style={{ color: theme.text, opacity: 0.75 }}>12 . 12 . 2026</p>
       <span
         className="relative mt-4 px-3 py-1 text-[8px] font-medium tracking-wide text-white"
-        style={{ background: dark ? theme.secondary : theme.primary, color: dark ? '#111' : '#fff', borderRadius: motif.radius === 'sharp' ? 0 : motif.radius === 'mid' ? 6 : 999 }}
+        style={{ background: gilded ? 'var(--foil)' : dark ? theme.secondary : theme.primary, color: gilded ? 'color-mix(in srgb, var(--tx) 92%, #000)' : dark ? '#111' : '#fff', borderRadius: gilded ? 2 : motif.radius === 'sharp' ? 0 : motif.radius === 'mid' ? 6 : 999 }}
       >
         {motif.copy?.open ?? 'Buka Undangan'}
       </span>

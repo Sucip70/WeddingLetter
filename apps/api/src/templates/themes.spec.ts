@@ -66,6 +66,22 @@ describe('palet warna', () => {
     expect(autoPalettes(designById('natal')!)).toEqual([]);
   });
 
+  it('Elegan memakai palet pilihan tangan (bukan geseran rona): id unik, warna valid, latar terang & teks gelap', () => {
+    const palettes = autoPalettes(designById('elegant')!);
+    expect(palettes.length).toBeGreaterThan(0);
+    expect(new Set(palettes.map((p) => p.id)).size).toBe(palettes.length);
+    const lum = (hex: string) => {
+      const n = parseInt(hex.slice(1), 16);
+      return (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255;
+    };
+    for (const p of palettes) {
+      for (const c of [p.primary, p.secondary, p.background, p.text]) expect(c).toMatch(HEX);
+      expect(p.id).not.toBe('bawaan');
+      expect(lum(p.background)).toBeGreaterThan(0.85);
+      expect(lum(p.text)).toBeLessThan(0.25);
+    }
+  });
+
   it('applyPalette mengganti warna snapshot dan menolak id yang tidak ada', () => {
     const layout = normalizeLayout({ theme: { preset: 'rustic' }, palettes: BASIC_PALETTES }, 'klasik');
     const lavender = BASIC_PALETTES.find((p) => p.id === 'lavender')!;

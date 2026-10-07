@@ -9,13 +9,14 @@ import { PatternLayer } from './effects';
 import type { PatternKind } from './motifs';
 import { LetterGust } from './letter-gust';
 import { MagicPortal } from './magic-portal';
+import { RingBox } from './ring-box';
 import { WayangKayon } from './wayang-kayon';
 
 export type GatePhase = 'closed' | 'opening';
 
 // Lama animasi buka (ms) sampai gerbang dilepas. Dengan "kurangi gerakan" dipersingkat jadi fade.
 export const GATE_MS: Record<GateKind, number> = {
-  door: 2300, glass: 2300, curtain: 2200, cloth: 2400, envelope: 2900, portal: 2500, ring: 2700, bloom: 2800,
+  door: 2300, glass: 2300, curtain: 2200, cloth: 2400, envelope: 2900, portal: 2500, ring: 3550, bloom: 2800,
   balloons: 2800, waves: 2700, gift: 2500, lantern: 2700, fireworks: 2900, book: 2900, pressstart: 1400, loading: 2700, neon: 2600,
   // surat + embusan (letter-gust.tsx): waktu sama untuk semua variannya
   sakura: 2700, frost: 2700, leaves: 2700,
@@ -25,11 +26,14 @@ export const GATE_MS: Record<GateKind, number> = {
 
 // Gerbang yang menyingkap sampul sedikit demi sedikit selama fase 'opening' (latarnya menghilang di bawah
 // animasi, bukan sekaligus di akhir). InvitationView memutar animasi masuk sampul saat gerbang diketuk.
-export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, portal: true, kayon: true, twine: true };
+export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, portal: true, kayon: true, twine: true, ring: true };
+
+// Gerbang yang baru menyingkap sampul setelah jeda (ms sejak ketukan): animasi masuk sampul ditunda sebesar itu.
+export const REVEAL_DELAY_MS: Partial<Record<GateKind, number>> = { ring: 1750 };
 
 const CTA: Record<GateKind, string> = {
   door: 'Ketuk untuk membuka pintu', glass: 'Ketuk untuk membuka jendela', curtain: 'Ketuk untuk membuka tirai', cloth: 'Ketuk untuk membuka kain',
-  envelope: 'Ketuk untuk membuka amplop', portal: 'Ketuk untuk mengaktifkan portal', ring: 'Ketuk untuk memasangkan cincin', bloom: 'Ketuk agar bunga mekar',
+  envelope: 'Ketuk untuk membuka amplop', portal: 'Ketuk untuk mengaktifkan portal', ring: 'Ketuk untuk membuka kotak cincin', bloom: 'Ketuk agar bunga mekar',
   balloons: 'Ketuk untuk melepas balon', waves: 'Ketuk untuk memanggil ombak', gift: 'Ketuk untuk membuka kado',
   lantern: 'Ketuk untuk menyalakan lentera', fireworks: 'Ketuk untuk menyalakan kembang api', book: 'Ketuk untuk membuka buku',
   pressstart: 'Ketuk untuk mulai', loading: 'Ketuk untuk mulai', neon: 'Ketuk untuk menyalakan',
@@ -38,9 +42,9 @@ const CTA: Record<GateKind, string> = {
 };
 
 // Adegan gelap memakai teks putih; adegan terang memakai warna teks tema.
-const DARK: Partial<Record<GateKind, true>> = { door: true, glass: true, curtain: true, cloth: true, portal: true, lantern: true, fireworks: true, pressstart: true, loading: true, neon: true };
+const DARK: Partial<Record<GateKind, true>> = { door: true, glass: true, curtain: true, cloth: true, portal: true, lantern: true, fireworks: true, pressstart: true, loading: true, neon: true, ring: true };
 // Adegan yang punya teks sendiri (tanpa judul umum di atas).
-const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true, leaves: true, portal: true, kayon: true, twine: true };
+const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true, leaves: true, portal: true, kayon: true, twine: true, ring: true };
 
 const rand = (i: number, salt: number) => {
   const x = Math.sin((i + 1) * 12.9898 + salt * 78.233) * 43758.5453;
@@ -125,38 +129,6 @@ function Envelope({ names, kicker, guest, headingFamily }: SceneProps) {
         <div className="g-seal">
           <svg viewBox="0 0 24 24" width="46%" fill="currentColor" aria-hidden><path d="M12 21C5 15 2 11.5 2 8a5 5 0 0 1 10-1 5 5 0 0 1 10 1c0 3.5-3 7-10 13Z" /></svg>
         </div>
-      </div>
-    </div>
-  );
-}
-
-// ---------- cincin ----------
-
-const sparkle = (cx: number, cy: number, r: number) => `M${cx} ${cy - r}Q${cx} ${cy} ${cx + r} ${cy}Q${cx} ${cy} ${cx} ${cy + r}Q${cx} ${cy} ${cx - r} ${cy}Q${cx} ${cy} ${cx} ${cy - r}Z`;
-function Rings() {
-  return (
-    <div className="g-ringscene">
-      <div className="g-ringbg" />
-      <div className="g-ringswrap">
-        <svg viewBox="0 0 200 120" aria-hidden>
-          <defs>
-            <linearGradient id="g-gold" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" style={{ stopColor: 'color-mix(in srgb, var(--s) 70%, #fff)' }} />
-              <stop offset="0.5" style={{ stopColor: 'var(--p)' }} />
-              <stop offset="1" style={{ stopColor: 'color-mix(in srgb, var(--s) 80%, #000)' }} />
-            </linearGradient>
-          </defs>
-          <g className="g-rA">
-            <circle cx="68" cy="66" r="36" fill="none" stroke="url(#g-gold)" strokeWidth="8" />
-            <path d="M68 24 L75 31 L68 38 L61 31Z" fill="#fff" stroke="var(--s)" strokeWidth="1.2" />
-          </g>
-          <g className="g-rB">
-            <circle cx="132" cy="66" r="36" fill="none" stroke="url(#g-gold)" strokeWidth="8" />
-          </g>
-          {[[100, 30, 9], [72, 86, 6], [128, 92, 7], [100, 66, 12], [52, 44, 5], [150, 46, 5]].map(([x, y, r], i) => (
-            <path key={i} className="g-sp" style={{ animationDelay: `${0.9 + i * 0.12}s` }} d={sparkle(x!, y!, r!)} fill="#fff" stroke="var(--s)" strokeWidth=".8" />
-          ))}
-        </svg>
       </div>
     </div>
   );
@@ -420,7 +392,7 @@ function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
     case 'cloth': return <Curtain cloth pattern={p.pattern} />;
     case 'envelope': return <Envelope {...p} />;
     case 'portal': return <MagicPortal look={p.motif === 'galaksi' ? 'orbit' : 'rune'} phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
-    case 'ring': return <Rings />;
+    case 'ring': return <RingBox phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'bloom': return <Bloom />;
     case 'leaves': return <LetterGust kind="leaves" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'balloons': return <Balloons />;
@@ -483,6 +455,9 @@ const GATE_CSS = `
 .wl-gate svg{display:block}
 .wl-gate-cta{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);z-index:30;white-space:nowrap;padding:.75em 1.6em;border-radius:var(--rb);background:var(--p);color:#fff;font-size:13.5px;font-weight:500;letter-spacing:.04em;box-shadow:0 10px 26px -8px rgba(0,0,0,.5);animation:wl-pulse 2.4s ease-in-out infinite;transition:opacity .3s}
 .wl-gate:focus-visible .wl-gate-cta{outline:2px solid #fff;outline-offset:3px}
+.wl-gate[data-kind=ring]{--vel:color-mix(in oklch,var(--tx) 84%,white);--rb-lit:color-mix(in oklch,var(--tx) 78%,white);--rb-mid:color-mix(in oklch,var(--tx) 88%,black);--rb-dark:color-mix(in oklch,var(--tx) 38%,black)}
+@supports (color:oklch(from red l c h)){.wl-gate[data-kind=ring]{--vel:oklch(from var(--tx) calc(l + .15) calc(c * 1.6) h);--rb-lit:oklch(from var(--tx) calc(l + .13) calc(c * 1.5) h);--rb-mid:oklch(from var(--tx) calc(l - .02) calc(c * 1.2) h);--rb-dark:oklch(from var(--tx) calc(l * .45) calc(c * .9) h)}}
+.wl-gate[data-kind=ring] .wl-gate-cta{background:var(--foil);color:color-mix(in srgb,var(--tx) 92%,#000);border:1px solid color-mix(in srgb,var(--p) 55%,#3a2600);border-radius:2px;font-family:var(--font-cinzel),serif;font-size:11.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;text-shadow:0 1px 0 rgba(255,255,255,.35)}
 .wl-gate-title{position:absolute;left:0;right:0;top:8%;z-index:30;text-align:center;padding:0 8%;pointer-events:none;transition:opacity .35s;text-shadow:0 2px 14px rgba(0,0,0,.28)}
 .wl-gate[data-tone=light] .wl-gate-title{text-shadow:none}
 .wl-gate[data-kind=door] .wl-gate-title,.wl-gate[data-kind=glass] .wl-gate-title,.wl-gate[data-kind=cloth] .wl-gate-title,.wl-gate[data-kind=curtain] .wl-gate-title{top:0;padding-top:8%;padding-bottom:14%;background:linear-gradient(rgba(0,0,0,.62),rgba(0,0,0,0))}
@@ -556,21 +531,6 @@ const GATE_CSS = `
 .wl-gate[data-phase=opening] .g-card{transform:translateY(-52%)}
 .wl-gate[data-phase=opening] .g-envwrap{transform:translate(-50%,130%) scale(.9);opacity:0}
 .wl-gate[data-phase=opening] .g-envbg{opacity:0}
-
-/* cincin */
-.g-ringscene{position:absolute;inset:0}
-.g-ringbg{position:absolute;inset:0;background:radial-gradient(circle at 50% 44%,color-mix(in srgb,var(--s) 38%,var(--bg)),var(--bg) 72%);transition:opacity 1s ease 1.7s}
-.g-ringswrap{position:absolute;left:50%;top:44%;width:88%;aspect-ratio:5/3;transform:translate(-50%,-50%);filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));transition:opacity .9s ease 1.8s,transform 1.2s ease 1.6s}
-.g-ringswrap svg{width:100%;height:100%;overflow:visible}
-.g-rA,.g-rB{transition:transform 1.3s cubic-bezier(.5,0,.2,1) .1s;transform-box:fill-box;transform-origin:center;animation:g-bob 3.4s ease-in-out infinite}
-.g-rB{animation-delay:-1.7s}
-.g-sp{opacity:0;transform-box:fill-box;transform-origin:center}
-.wl-gate[data-phase=opening] .g-rA{transform:translateX(17%) rotate(24deg);animation:none}
-.wl-gate[data-phase=opening] .g-rB{transform:translateX(-17%) rotate(-24deg);animation:none}
-.wl-gate[data-phase=opening] .g-sp{animation:g-pop 1.1s ease-out forwards}
-@keyframes g-pop{0%{opacity:0;transform:scale(.2)}35%{opacity:1;transform:scale(1.5)}100%{opacity:0;transform:scale(.8)}}
-.wl-gate[data-phase=opening] .g-ringswrap{opacity:0;transform:translate(-50%,-50%) scale(1.3)}
-.wl-gate[data-phase=opening] .g-ringbg{opacity:0}
 
 /* bunga */
 .g-bloomscene{position:absolute;inset:0}

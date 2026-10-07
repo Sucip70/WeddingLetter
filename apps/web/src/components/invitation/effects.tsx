@@ -13,7 +13,7 @@ const rand = (i: number, salt: number) => {
 
 // ---------- partikel ----------
 
-const SIZE: Record<ParticleKind, number> = { petal: 15, leaf: 16, maple: 18, snow: 13, heart: 16, star: 12, sparkle: 15, confetti: 9, bubble: 22, firefly: 7, pixel: 9, lantern: 17, bat: 22, coin: 13 };
+const SIZE: Record<ParticleKind, number> = { petal: 15, leaf: 16, maple: 18, snow: 13, heart: 16, star: 12, sparkle: 15, confetti: 9, bubble: 22, firefly: 7, pixel: 9, lantern: 17, bat: 22, coin: 13, dust: 9 };
 const COLORS: Record<ParticleKind, string[]> = {
   petal: ['var(--p)', 'var(--s)', 'color-mix(in srgb, var(--p) 45%, #fff)'],
   leaf: ['var(--p)', 'var(--s)'],
@@ -29,6 +29,7 @@ const COLORS: Record<ParticleKind, string[]> = {
   lantern: ['var(--p)', 'var(--s)', '#f5b342'],
   bat: ['var(--p)', 'var(--tx)'],
   coin: ['#f2c231', '#e8a90c'],
+  dust: ['var(--p)', 'color-mix(in srgb, var(--p) 55%, #fff)', '#f6dc96'],
 };
 
 function Shape({ kind }: { kind: ParticleKind }) {
@@ -106,6 +107,8 @@ function Shape({ kind }: { kind: ParticleKind }) {
           <path d="M12 8c-2-3-6-4-10-3 2 1 3 3 3 5 1-1 2-1 3 0 1-1 3-1 4 1 1-2 3-2 4-1 1-1 2-1 3 0 0-2 1-4 3-5-4-1-8 0-10 3z" />
         </svg>
       );
+    case 'dust':
+      return <span style={{ display: 'block', width: s, height: s, borderRadius: '50%', background: 'radial-gradient(circle at 36% 32%, #fff 0, currentColor 42%, transparent 74%)', boxShadow: '0 0 9px 1px currentColor' }} />;
     case 'coin':
       return (
         <svg {...common}>
@@ -243,6 +246,16 @@ export function CoverFx({ kind, animate }: { kind: CoverFxKind; animate: boolean
           ))}
         </div>
       );
+    case 'halo':
+      // Elegan: cahaya keemasan lembut dari atas + sinar sangat tipis yang berputar pelan.
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+          <div className="absolute left-1/2 top-[34%] h-[130%] w-[130%] -translate-x-1/2 -translate-y-1/2" style={{ background: 'radial-gradient(circle, color-mix(in srgb, var(--p) 20%, transparent) 0, color-mix(in srgb, var(--p) 6%, transparent) 38%, transparent 62%)' }} />
+          <div className="absolute left-1/2 top-[34%] h-[220%] w-[220%] -translate-x-1/2 -translate-y-1/2" style={{ WebkitMaskImage: 'radial-gradient(circle, #000 0, transparent 44%)', maskImage: 'radial-gradient(circle, #000 0, transparent 44%)' }}>
+            <div className={`h-full w-full ${anim('wl-rays')}`} style={{ backgroundImage: 'repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--p) 14%, transparent) 0deg 1.4deg, transparent 1.4deg 12deg)' }} />
+          </div>
+        </div>
+      );
     case 'curtain': {
       const cloth = 'repeating-linear-gradient(90deg, color-mix(in srgb, var(--p) 78%, #000) 0 13px, var(--p) 13px 27px)';
       return (
@@ -264,6 +277,35 @@ const CLIP: Partial<Record<FrameKind, string>> = {
   pixel: 'polygon(0 6%, 4% 6%, 4% 3%, 8% 3%, 8% 0, 92% 0, 92% 3%, 96% 3%, 96% 6%, 100% 6%, 100% 94%, 96% 94%, 96% 97%, 92% 97%, 92% 100%, 8% 100%, 8% 97%, 4% 97%, 4% 94%, 0 94%)',
 };
 
+// Bingkai lengkung berukir (Elegan): dua garis emas tipis bersela celah, berlian kecil di puncak lengkung, dan kilau di sudut.
+// Garis berlapis emas dibuat dengan latar gradien + padding (tetap bulat di lengkung); --foil dari .wl-root.
+export function DecoArch({ children, className = '' }: { children: ReactNode; className?: string }) {
+  const foil = { background: 'var(--foil, var(--p))' } as CSSProperties;
+  return (
+    <div className={`relative ${className}`}>
+      <div className="rounded-t-[999px] rounded-b-[10px] p-[1.5px]" style={{ ...foil, boxShadow: '0 18px 30px -18px color-mix(in srgb, var(--tx) 55%, transparent)' }}>
+        <div className="rounded-t-[999px] rounded-b-[9px] p-[5px]" style={{ background: 'var(--bg)' }}>
+          <div className="rounded-t-[999px] rounded-b-[6px] p-px" style={foil}>
+            <div className="overflow-hidden rounded-t-[999px] rounded-b-[5px]" style={{ background: 'var(--bg)' }}>
+              {children}
+            </div>
+          </div>
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" className="absolute -top-[9px] left-1/2 w-[18px] -translate-x-1/2" aria-hidden>
+        <circle cx="12" cy="12" r="11" fill="var(--bg)" />
+        <path d="M12 3l8 9-8 9-8-9z" fill="none" stroke="var(--p)" strokeWidth="1.3" />
+        <path d="M12 8l4 4-4 4-4-4z" fill="var(--p)" />
+      </svg>
+      {[['-left-[5px] bottom-5', 0], ['-right-[5px] top-1/2', 1.2]].map(([pos, delay]) => (
+        <svg key={String(pos)} viewBox="0 0 24 24" className={`wl-glint absolute w-3.5 ${pos}`} style={{ animationDelay: `${delay}s`, color: 'var(--p)' }} fill="currentColor" aria-hidden>
+          <path d="M12 1Q12 12 23 12Q12 12 12 23Q12 12 1 12Q12 12 12 1Z" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
 export function PhotoFrame({ frame, src, label, placeholders, letterFont, tilt = 0, photoRadius }: { frame: FrameKind; src?: string; label: string; placeholders?: boolean; letterFont: string; tilt?: number; photoRadius: string }) {
   const filler = (cls: string, style?: CSSProperties): ReactNode =>
     src ? (
@@ -276,6 +318,8 @@ export function PhotoFrame({ frame, src, label, placeholders, letterFont, tilt =
   const ring = { border: '1px solid color-mix(in srgb, var(--p) 45%, transparent)' };
 
   switch (frame) {
+    case 'deco':
+      return <DecoArch>{filler('h-56 w-44')}</DecoArch>;
     case 'arch':
       return <div className="rounded-t-[999px] rounded-b-3xl p-1.5" style={ring}>{filler('h-56 w-44 rounded-t-[999px] rounded-b-2xl')}</div>;
     case 'oval':

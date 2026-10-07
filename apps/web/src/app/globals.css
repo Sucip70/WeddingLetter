@@ -131,7 +131,7 @@ body {
 .wl-root[data-armed] .wl-reveal.is-in { opacity: 1; transform: none; filter: none; }
 
 /* Masuk sampul: bertahap dengan var(--d) */
-.wl-enter { animation: wl-enter 1s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: var(--d, 0ms); }
+.wl-enter { animation: wl-enter 1s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(var(--d, 0ms) + var(--gd, 0ms)); }
 @keyframes wl-enter {
   from { opacity: 0; transform: translateY(22px) scale(0.97); filter: blur(6px); }
   to { opacity: 1; transform: none; filter: none; }
@@ -235,3 +235,232 @@ body {
   box-shadow: 0 1px 2px rgba(60, 35, 15, 0.25);
 }
 .wl-kraft .wl-cover-stitch { position: absolute; inset: 14px; pointer-events: none; border: 1.8px dashed color-mix(in srgb, var(--p) 55%, transparent); border-radius: 6px; }
+
+/* ===== Emas berlapis (foil): Elegan, gerbang kotak cincin, monogram. Warna turunan dari --p, jadi mengikuti palet. ===== */
+.wl-root {
+  --foil: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--p) 56%, #2b1c00) 0%,
+    color-mix(in srgb, var(--p) 80%, #fff0bd) 17%,
+    color-mix(in srgb, var(--p) 30%, #fff7dc) 33%,
+    var(--p) 50%,
+    color-mix(in srgb, var(--p) 66%, #3a2600) 69%,
+    color-mix(in srgb, var(--p) 78%, #ffe9a6) 87%,
+    color-mix(in srgb, var(--p) 58%, #2b1c00) 100%
+  );
+  /* tinta emas untuk teks di latar terang: tanpa titik putih, supaya huruf tipis tetap terbaca */
+  --foil-ink: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--p) 68%, #2b1c00) 0%,
+    color-mix(in srgb, var(--p) 92%, #fff0bd) 24%,
+    color-mix(in srgb, var(--p) 76%, #3a2600) 44%,
+    var(--p) 58%,
+    color-mix(in srgb, var(--p) 66%, #2b1c00) 80%,
+    color-mix(in srgb, var(--p) 90%, #ffe9a6) 100%
+  );
+  /* varian terang untuk latar gelap (gerbang, hitung mundur) */
+  --foil-lit: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--p) 70%, #fff3c8) 0%,
+    color-mix(in srgb, var(--p) 18%, #fffbe9) 30%,
+    color-mix(in srgb, var(--p) 80%, #fff0b4) 52%,
+    color-mix(in srgb, var(--p) 40%, #fff6d4) 74%,
+    color-mix(in srgb, var(--p) 78%, #ffe9a6) 100%
+  );
+}
+.wl-foil,
+.wl-foil-lit {
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+}
+.wl-foil { background-image: var(--foil-ink); }
+.wl-foil-lit { background-image: var(--foil-lit); }
+.wl-foil-anim { background-size: 260% 100%; animation: wl-foil 7s ease-in-out infinite; }
+@keyframes wl-foil {
+  0%, 100% { background-position: 0% 0; }
+  50% { background-position: 100% 0; }
+}
+.wl-glint { transform-origin: center; animation: wl-glint 3.6s ease-in-out infinite; }
+@keyframes wl-glint {
+  0%, 100% { opacity: 0.15; transform: scale(0.55) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.1) rotate(45deg); }
+}
+@keyframes wl-sheen {
+  0%, 55% { transform: translateX(-130%) skewX(-18deg); }
+  100% { transform: translateX(260%) skewX(-18deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-foil-anim, .wl-glint, .wl-gilded .wl-btn::after, .wl-gilded .wl-gf, .wl-gilded .wl-corner-in { animation: none !important; }
+}
+
+/* ===== Kulit "gilded" (Elegan): gading bermarmer, garis & huruf emas, kartu berbingkai ganda ===== */
+.wl-gilded .wl-shimmer {
+  background-image: var(--foil-ink);
+  background-size: 260% 100%;
+  animation: wl-foil 7s ease-in-out infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+}
+.wl-gilded .wl-gf { position: absolute; pointer-events: none; background: color-mix(in srgb, var(--p) 72%, transparent); }
+.wl-gilded .wl-gf.i { background: color-mix(in srgb, var(--p) 40%, transparent); }
+.wl-gilded .wl-gf.h { left: 102px; right: 102px; height: 1px; }
+.wl-gilded .wl-gf.v { top: 102px; bottom: 102px; width: 1px; }
+.wl-gilded .wl-gf.t { top: 10px; }
+.wl-gilded .wl-gf.b { bottom: 10px; }
+.wl-gilded .wl-gf.l { left: 10px; }
+.wl-gilded .wl-gf.r { right: 10px; }
+.wl-gilded .wl-gf.t.i { top: 17px; }
+.wl-gilded .wl-gf.b.i { bottom: 17px; }
+.wl-gilded .wl-gf.l.i { left: 17px; }
+.wl-gilded .wl-gf.r.i { right: 17px; }
+
+.wl-gilded .wl-gf { animation: wl-gf-x 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) both; animation-delay: calc(var(--gd, 0ms) + 200ms); }
+.wl-gilded .wl-gf.v { animation-name: wl-gf-y; }
+.wl-gilded .wl-gf.i { animation-delay: calc(var(--gd, 0ms) + 450ms); }
+.wl-gilded .wl-corner-in { animation: wl-fade-in 1.4s ease both; animation-delay: calc(var(--gd, 0ms) + 100ms); }
+@keyframes wl-gf-x { from { transform: scaleX(0); } to { transform: none; } }
+@keyframes wl-gf-y { from { transform: scaleY(0); } to { transform: none; } }
+@keyframes wl-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.wl-gilded .wl-block { position: relative; }
+.wl-gilded .wl-block.wl-tint {
+  border-top: 1px solid color-mix(in srgb, var(--p) 32%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--p) 32%, transparent);
+}
+.wl-gilded .wl-heading {
+  background-image: var(--foil-ink);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+}
+
+.wl-gilded .wl-card {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--p) 58%, transparent) !important;
+  border-radius: 3px !important;
+  background: linear-gradient(180deg, color-mix(in srgb, #fff 62%, var(--bg)), var(--bg)) !important;
+  box-shadow:
+    0 24px 40px -28px color-mix(in srgb, var(--tx) 65%, transparent),
+    inset 0 0 0 5px var(--bg),
+    inset 0 0 0 6px color-mix(in srgb, var(--p) 34%, transparent);
+}
+.wl-gilded .wl-card::before {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  pointer-events: none;
+  background: var(--p);
+  -webkit-mask-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 23V9L9 1H23' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Cpath d='M6 2.5l3.5 3.5L6 9.5 2.5 6z' fill='%23000'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M23 23V9L15 1H1' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Cpath d='M18 2.5l3.5 3.5L18 9.5 14.5 6z' fill='%23000'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 1V15L9 23H23' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Cpath d='M6 14.5l3.5 3.5L6 21.5 2.5 18z' fill='%23000'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M23 1V15L15 23H1' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Cpath d='M18 14.5l3.5 3.5L18 21.5 14.5 18z' fill='%23000'/%3E%3C/svg%3E");
+  -webkit-mask-position: left top, right top, left bottom, right bottom;
+  -webkit-mask-size: 20px 20px;
+  -webkit-mask-repeat: no-repeat;
+  mask-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 23V9L9 1H23' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Cpath d='M6 2.5l3.5 3.5L6 9.5 2.5 6z' fill='%23000'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M23 23V9L15 1H1' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Cpath d='M18 2.5l3.5 3.5L18 9.5 14.5 6z' fill='%23000'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 1V15L9 23H23' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Cpath d='M6 14.5l3.5 3.5L6 21.5 2.5 18z' fill='%23000'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M23 1V15L15 23H1' fill='none' stroke='%23000' stroke-width='1.4'/%3E%3Cpath d='M18 14.5l3.5 3.5L18 21.5 14.5 18z' fill='%23000'/%3E%3C/svg%3E");
+  mask-position: left top, right top, left bottom, right bottom;
+  mask-size: 20px 20px;
+  mask-repeat: no-repeat;
+}
+.wl-gilded .wl-card::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  width: 11px;
+  height: 11px;
+  transform: translateX(-50%) rotate(45deg);
+  background: radial-gradient(circle, var(--p) 0 1.6px, var(--bg) 2.2px);
+  border: 1px solid color-mix(in srgb, var(--p) 75%, transparent);
+  pointer-events: none;
+}
+.wl-gilded .wl-card h3 {
+  font-family: var(--font-cinzel), serif !important;
+  font-size: 1.05rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+.wl-gilded .wl-ev-date { font-size: 1.5rem; font-weight: 500; line-height: 1.25; }
+.wl-gilded .wl-ev-time { font-family: var(--font-cinzel), serif; font-size: 0.78rem; letter-spacing: 0.22em; opacity: 0.75; }
+
+.wl-gilded .wl-btn {
+  position: relative;
+  overflow: hidden;
+  background: var(--foil) !important;
+  color: color-mix(in srgb, var(--tx) 92%, #000) !important;
+  border: 1px solid color-mix(in srgb, var(--p) 55%, #3a2600);
+  border-radius: 2px !important;
+  font-family: var(--font-cinzel), serif;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.wl-gilded .wl-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 38%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: wl-sheen 4.8s ease-in-out infinite;
+  pointer-events: none;
+}
+.wl-gilded .wl-btn-o {
+  background: transparent !important;
+  color: color-mix(in srgb, var(--p) 78%, #2b1c00) !important;
+  border: 1px solid color-mix(in srgb, var(--p) 70%, transparent) !important;
+  border-radius: 2px !important;
+  font-family: var(--font-cinzel), serif;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.wl-gilded form button[aria-pressed='true'] {
+  background: var(--foil) !important;
+  color: color-mix(in srgb, var(--tx) 92%, #000) !important;
+  border-color: color-mix(in srgb, var(--p) 55%, #3a2600) !important;
+}
+.wl-gilded form button[type='submit'] {
+  background: var(--foil) !important;
+  color: color-mix(in srgb, var(--tx) 92%, #000) !important;
+  border: 1px solid color-mix(in srgb, var(--p) 55%, #3a2600);
+  border-radius: 2px !important;
+  font-family: var(--font-cinzel), serif;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.wl-gilded form input,
+.wl-gilded form textarea,
+.wl-gilded form label,
+.wl-gilded form button[aria-pressed] { border-radius: 2px !important; }
+.wl-gilded .wl-fab { background: var(--foil) !important; color: color-mix(in srgb, var(--tx) 92%, #000) !important; border: 1px solid color-mix(in srgb, var(--p) 55%, #3a2600); }
+.wl-gilded .wl-gal {
+  border-radius: 2px !important;
+  box-shadow: 0 0 0 4px var(--bg), 0 0 0 5px color-mix(in srgb, var(--p) 66%, transparent), 0 24px 30px -24px color-mix(in srgb, var(--tx) 60%, transparent);
+}
+.wl-gilded .wl-quote { position: relative; font-family: var(--font-cormorant), serif; font-size: 1.5rem; line-height: 1.5; font-style: italic; }
+.wl-gilded .wl-quote::before {
+  content: '\201C';
+  display: block;
+  height: 2.9rem;
+  font-family: var(--font-cormorant), serif;
+  font-size: 5.2rem;
+  font-style: italic;
+  line-height: 1;
+  background-image: var(--foil-ink);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}

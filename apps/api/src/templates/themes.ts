@@ -28,7 +28,7 @@ export const GATE_LABEL = {
   cloth: 'Kain ditarik',
   envelope: 'Amplop',
   portal: 'Portal sihir',
-  ring: 'Cincin',
+  ring: 'Kotak cincin',
   bloom: 'Bunga bermekaran',
   leaves: 'Surat daun gugur',
   balloons: 'Balon',
@@ -195,9 +195,21 @@ export function shiftHue(hex: string, degrees: number) {
   return hslToHex((h + degrees + 360) % 360, s, l);
 }
 
+// Palet pilihan tangan untuk desain yang warnanya tidak cocok digeser rona (Elegan: emas bila digeser jadi hijau limau / merah).
+// Emas/logam tetap jadi aksen; warna gelap (teks) dipakai juga untuk gerbang & hitung mundur, jadi harus pekat.
+const CURATED_PALETTES: Record<string, Palette[]> = {
+  elegant: [
+    { id: "zamrud", name: "Emas & Zamrud", primary: "#b08d3c", secondary: "#0f3d33", background: "#f4f7f3", text: "#12352c" },
+    { id: "anggur", name: "Emas & Anggur", primary: "#b08d3c", secondary: "#5a1a2a", background: "#faf5f3", text: "#3a1420" },
+    { id: "mawar-emas", name: "Rose Gold", primary: "#b4756b", secondary: "#3a2a30", background: "#faf4f2", text: "#2f2429" },
+  ],
+};
+
 // Dua varian warna otomatis (hangat/sejuk) dengan menggeser rona aksen; latar & teks tetap agar keterbacaan terjaga.
 export function autoPalettes(design: Design): Palette[] {
   if (design.fixedColors) return [];
+  const curated = CURATED_PALETTES[design.id];
+  if (curated) return curated;
   return [
     { id: 'hangat', name: 'Varian hangat', primary: shiftHue(design.primary, 28), secondary: shiftHue(design.secondary, 28), background: design.background, text: design.text },
     { id: 'sejuk', name: 'Varian sejuk', primary: shiftHue(design.primary, -42), secondary: shiftHue(design.secondary, -42), background: design.background, text: design.text },

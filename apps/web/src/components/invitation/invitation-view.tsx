@@ -1,21 +1,21 @@
 'use client';
 
 /* eslint-disable @next/next/no-img-element */
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { CSSProperties, FormEvent, ReactNode } from 'react';
 import { formatLocalDate, formatLocalTime, localToInstant, parseLocal } from '@/lib/format';
 import { findPreset } from '@/lib/presets';
 import type { InvitationViewData } from '@/lib/types';
 import { STRINGS } from './i18n';
 import type { Lang, Strings } from './i18n';
-import { GATE_MS, Gate, REVEALS_COVER } from './gates';
+import { GATE_MS, Gate, REVEALS_COVER, REVEAL_DELAY_MS } from './gates';
 import type { GatePhase } from './gates';
 import { isCoverKind, resolveCover } from '@/lib/cover-layouts';
 import { CoverLayout, isLightCover } from './cover';
 import { CoverFx, Particles, PatternLayer, PhotoFrame, Reveal, useReveal } from './effects';
 import { BODY, HEADING, RADIUS, motifFor } from './motifs';
 import type { CountdownKind, Motif } from './motifs';
-import { ORNAMENTS, PauseIcon, PlayIcon } from './ornaments';
+import { Monogram, ORNAMENTS, PauseIcon, PlayIcon } from './ornaments';
 import type { OrnamentSet } from './ornaments';
 
 export interface InvitationViewProps {
@@ -84,6 +84,21 @@ const EMBED_HEIGHT = 810; // tinggi logis PhoneFrame
 // Tekstur kertas kraft: butiran halus + serat memanjang (SVG feTurbulence), dikalikan ke warna latar tema.
 const KRAFT_TEXTURE = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .25 0 0 0 0 .14 0 0 0 .36 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\"), url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .5' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .32 0 0 0 0 .18 0 0 0 .2 -.03'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E\")";
 
+// Tekstur Elegan: urat marmer gading + butiran halus (SVG feTurbulence, dikalikan ke warna latar tema) dan dua pasang
+// garis emas tipis di tepi halaman (rel) yang menyambung dengan bingkai sampul.
+const MARBLE = "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'800'%20height%3D'800'%3E%3Cfilter%20id%3D'a'%20x%3D'0'%20y%3D'0'%20width%3D'100%25'%20height%3D'100%25'%20color-interpolation-filters%3D'sRGB'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.0032%20.0055'%20numOctaves%3D'4'%20seed%3D'3'%20stitchTiles%3D'stitch'%20result%3D'n'%2F%3E%3CfeColorMatrix%20in%3D'n'%20type%3D'matrix'%20values%3D'0%200%200%200%20.46%200%200%200%200%20.4%200%200%200%200%20.3%201%200%200%200%200'%20result%3D'c'%2F%3E%3CfeComponentTransfer%20in%3D'c'%20result%3D'd'%3E%3CfeFuncA%20type%3D'table'%20tableValues%3D'0%200%200%200%200%200%200%200%200%200%20.5%200%200%200%200%200%200%200%200%200%200'%2F%3E%3C%2FfeComponentTransfer%3E%3CfeGaussianBlur%20in%3D'd'%20stdDeviation%3D'.6'%2F%3E%3C%2Ffilter%3E%3Cfilter%20id%3D'b'%20x%3D'0'%20y%3D'0'%20width%3D'100%25'%20height%3D'100%25'%20color-interpolation-filters%3D'sRGB'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.007%20.011'%20numOctaves%3D'3'%20seed%3D'8'%20stitchTiles%3D'stitch'%20result%3D'n'%2F%3E%3CfeColorMatrix%20in%3D'n'%20type%3D'matrix'%20values%3D'0%200%200%200%20.55%200%200%200%200%20.48%200%200%200%200%20.36%201%200%200%200%200'%20result%3D'c'%2F%3E%3CfeComponentTransfer%20in%3D'c'%3E%3CfeFuncA%20type%3D'table'%20tableValues%3D'0%200%200%200%200%200%200%200%200%200%20.3%200%200%200%200%200%200%200%200%200%200'%2F%3E%3C%2FfeComponentTransfer%3E%3C%2Ffilter%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%23a)'%20opacity%3D'.22'%2F%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%23b)'%20opacity%3D'.16'%2F%3E%3C%2Fsvg%3E\")";
+const GRAIN = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .28 0 0 0 .1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E\")";
+const RAIL = 'linear-gradient(color-mix(in srgb, var(--p) 46%, transparent), color-mix(in srgb, var(--p) 46%, transparent))';
+const RAIL_SOFT = 'linear-gradient(color-mix(in srgb, var(--p) 24%, transparent), color-mix(in srgb, var(--p) 24%, transparent))';
+const GILDED_BG: CSSProperties = {
+  backgroundImage: `${MARBLE}, ${GRAIN}, ${RAIL}, ${RAIL}, ${RAIL_SOFT}, ${RAIL_SOFT}`,
+  backgroundSize: '800px 800px, 240px 240px, 1px 100%, 1px 100%, 1px 100%, 1px 100%',
+  backgroundPosition: '0 0, 0 0, left 10px top 0, right 10px top 0, left 17px top 0, right 17px top 0',
+  backgroundRepeat: 'repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat',
+  backgroundBlendMode: 'multiply, multiply, normal, normal, normal, normal',
+};
+const initialOf = (name: string, fallback = '') => (name.trim().charAt(0) || fallback).toUpperCase();
+
 export function InvitationView({ view, mode = 'live', embedded = false, placeholders = false, gate }: InvitationViewProps) {
   const { theme } = view.layout;
   const { data } = view;
@@ -94,6 +109,10 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const radius = RADIUS[motif.radius];
   const hf = HEADING[motif.heading ?? theme.headingFont] ?? HEADING.serif;
   const bf = BODY[theme.bodyFont] ?? BODY.serif;
+  // Font nama mempelai bisa berbeda dari font judul seksi (Elegan: aksara tulisan tangan vs Cinzel).
+  const nf = HEADING[motif.names ?? motif.heading ?? theme.headingFont] ?? hf;
+  const skin = motif.skin;
+  const gilded = skin === 'gilded';
   const layerHeight = embedded ? EMBED_HEIGHT : '100svh';
 
   const [lang, setLang] = useState<Lang>('id');
@@ -131,6 +150,9 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const gateMode = gate ?? (mode === 'live' ? 'show' : 'skip');
   const [gatePhase, setGatePhase] = useState<GatePhase | 'open'>(gateKind && gateMode === 'show' ? 'closed' : 'open');
   const gateTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Jeda animasi masuk sampul (ms) untuk gerbang yang menyingkap sampul belakangan; dipertahankan sampai diputar ulang
+  // supaya animasi yang sedang berjalan tidak melompat saat gerbang dilepas.
+  const [revealDelay, setRevealDelay] = useState(0);
   useEffect(() => () => clearTimeout(gateTimer.current), []);
   // Gerbang dinonaktifkan dari luar (mis. admin mengganti jenis di builder): pastikan tidak menggantung.
   const gateActive = gateKind !== null && gatePhase !== 'open';
@@ -176,6 +198,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     const live = mode === 'live';
     if (live) unlockMusic();
     setGatePhase('opening');
+    setRevealDelay(REVEAL_DELAY_MS[gateKind] ?? 0);
     const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
     gateTimer.current = setTimeout(() => {
       setGatePhase('open');
@@ -188,6 +211,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     rootRef.current?.scrollTo({ top: 0 });
     window.scrollTo({ top: 0 });
     setGatePhase('closed');
+    setRevealDelay(0);
   }, []);
 
   // Selama gerbang tertutup, halaman tidak boleh tergulir di belakangnya.
@@ -231,7 +255,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     background: theme.background,
     color: theme.text,
     fontFamily: bf.family,
-    ...(motif.skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : null),
+    ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : gilded ? GILDED_BG : null),
   } as CSSProperties;
   const headingStyle: CSSProperties = {
     fontFamily: hf.family,
@@ -239,8 +263,16 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     letterSpacing: hf.tracking,
     textTransform: hf.upper ? 'uppercase' : undefined,
   };
-  const sectionFont: CSSProperties = { ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 500 };
-  const soft = motif.skin === 'kraft' ? 'color-mix(in srgb, var(--p) 9%, transparent)' : 'color-mix(in srgb, var(--p) 9%, var(--bg))';
+  const namesStyle: CSSProperties = { ...headingStyle, fontFamily: nf.family, letterSpacing: nf.tracking, textTransform: nf.upper ? 'uppercase' : undefined };
+  const sectionFont: CSSProperties = gilded
+    ? { ...headingStyle, fontSize: '1.35rem', fontWeight: 500, letterSpacing: '0.26em', textTransform: 'uppercase' }
+    : { ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 500 };
+  const soft = skin === 'kraft' ? 'color-mix(in srgb, var(--p) 9%, transparent)' : gilded ? 'color-mix(in srgb, var(--p) 7%, transparent)' : 'color-mix(in srgb, var(--p) 9%, var(--bg))';
+  // Elegan: kicker & tanggal di sampul memakai Cinzel berjarak lebar.
+  const monoA = initialOf(groom, placeholders ? 'A' : '');
+  const monoB = initialOf(bride, placeholders ? 'S' : '');
+  const showMono = !!(monoA && monoB);
+  const kickerStyle: CSSProperties = { fontFamily: 'var(--font-cinzel), serif', fontSize: 11, letterSpacing: '0.46em', opacity: 0.8 };
   const bodyText = bf.className;
 
   // Tata letak sampul pilihan pembeli (Standard/Premium). Kosong/tak valid = sampul bawaan (ornamen, atau foto penuh
@@ -294,17 +326,22 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const particleCount = fx === 'premium' ? motif.particles.count : Math.round(motif.particles.count * 0.6);
   const coverInk = coverPhoto ? '#fff' : 'var(--p)';
   const cornerCls = `absolute w-24 ${fx === 'premium' ? 'wl-breathe' : ''}`;
-  const kraft = motif.skin === 'kraft';
+  const kraft = skin === 'kraft';
   const coverBackground = kraft
     ? 'radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--bg) 70%, #fff) 0, transparent 62%), radial-gradient(ellipse at 50% 50%, transparent 55%, color-mix(in srgb, var(--p) 22%, transparent) 130%)'
-    : 'linear-gradient(165deg, color-mix(in srgb, var(--p) 20%, var(--bg)), var(--bg) 52%, color-mix(in srgb, var(--p) 10%, color-mix(in srgb, var(--s) 12%, var(--bg))))';
+    : gilded
+      ? 'radial-gradient(ellipse 90% 52% at 50% 33%, color-mix(in srgb, #fff 60%, var(--bg)) 0, transparent 72%), radial-gradient(ellipse 80% 40% at 50% 104%, color-mix(in srgb, var(--p) 22%, transparent), transparent 72%), linear-gradient(180deg, color-mix(in srgb, var(--p) 9%, var(--bg)), var(--bg) 42%, color-mix(in srgb, var(--p) 13%, var(--bg)))'
+      : 'linear-gradient(165deg, color-mix(in srgb, var(--p) 20%, var(--bg)), var(--bg) 52%, color-mix(in srgb, var(--p) 10%, color-mix(in srgb, var(--s) 12%, var(--bg))))';
   const cornersNode = (
-    <div className="pointer-events-none absolute inset-0" style={{ color: 'var(--p)' }} aria-hidden>
+    <div key={coverKey} className="pointer-events-none absolute inset-0" style={{ color: 'var(--p)' }} aria-hidden>
       {kraft && <div className="wl-cover-stitch" />}
-      <orn.Corner className={`${cornerCls} left-2 top-2`} rotate={0} />
-      <orn.Corner className={`${cornerCls} right-2 top-2`} rotate={90} />
-      <orn.Corner className={`${cornerCls} bottom-2 right-2`} rotate={180} />
-      <orn.Corner className={`${cornerCls} bottom-2 left-2`} rotate={270} />
+      {gilded && ['t h', 'b h', 'l v', 'r v', 't h i', 'b h i', 'l v i', 'r v i'].map((c) => <span key={c} className={`wl-gf ${c}`} />)}
+      <div className={gilded ? 'wl-corner-in' : undefined}>
+        <orn.Corner className={`${cornerCls} left-2 top-2`} rotate={0} />
+        <orn.Corner className={`${cornerCls} right-2 top-2`} rotate={90} />
+        <orn.Corner className={`${cornerCls} bottom-2 right-2`} rotate={180} />
+        <orn.Corner className={`${cornerCls} bottom-2 left-2`} rotate={270} />
+      </div>
     </div>
   );
   // Tulisan/tombol di sampul berwarna putih bila latarnya foto atau adegan gelap.
@@ -318,7 +355,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         data-reveal={motif.reveal}
         // Terpasang sejak render server: keadaan awal "tersembunyi" sudah aktif sebelum hidrasi, jadi tidak ada kedipan.
         data-armed={animated ? '' : undefined}
-        className={`wl-root ${motif.skin === 'kraft' ? 'wl-kraft' : ''} ${embedded ? 'phone-scroll relative h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}
+        className={`wl-root ${skin ? `wl-${skin}` : ''} ${embedded ? 'phone-scroll relative h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}
       >
         {animated && (
           <noscript>
@@ -335,7 +372,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             guest={mode === 'live' ? guest : null}
             pattern={motif.pattern}
             motif={theme.motif ?? theme.preset}
-            headingFamily={hf.family}
+            headingFamily={nf.family}
             onOpen={openGate}
           />
         )}
@@ -362,7 +399,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         <section
           ref={coverRef}
           className="relative flex flex-col items-center justify-center overflow-hidden px-8 text-center"
-          style={embedded ? { height: '100%' } : { minHeight: '100svh' }}
+          style={{ ...(embedded ? { height: '100%' } : { minHeight: '100svh' }), ...(revealDelay ? { '--gd': `${revealDelay}ms` } : null) } as CSSProperties}
         >
           {coverPhoto || photoCover ? null : (
             <div
@@ -385,7 +422,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               guest={mode === 'live' || placeholders ? { dear: t.dear, name: guest ?? t.guestFallback } : null}
               openLabel={openLabel}
               onOpen={open}
-              heading={{ family: hf.family, size: hf.size, weight: hf.weight, tracking: hf.tracking, upper: hf.upper }}
+              heading={{ family: nf.family, size: gilded ? '4.2rem' : nf.size, weight: nf.weight, tracking: nf.tracking, upper: nf.upper }}
               animated={animated}
               premium={fx === 'premium'}
               base={<div className="absolute inset-0" style={{ background: coverBackground }} />}
@@ -403,6 +440,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               buttonRadius="var(--rb)"
               letterFont="var(--font-script)"
               layerHeight={layerHeight}
+              gilded={gilded}
             />
           ) : (
             <>
@@ -432,26 +470,41 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 
           {!photoCover && (
           <div key={coverKey} className="relative z-[4] flex flex-col items-center" style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
-            <p className={`text-xs uppercase tracking-[0.35em] opacity-80 ${enter(100).className}`} style={enter(100).style}>{kicker}</p>
+            {gilded && !coverPhoto && showMono && (
+              <div className={`mb-6 ${enter(0).className}`} style={enter(0).style}>
+                <Monogram a={monoA} b={monoB} size={92} />
+              </div>
+            )}
+            <p className={`text-xs uppercase tracking-[0.35em] opacity-80 ${enter(100).className}`} style={{ ...(gilded ? kickerStyle : null), ...enter(100).style }}>{kicker}</p>
             <h1
-              className={`mt-5 leading-[1.1] ${enter(250).className} ${fx === 'premium' && !coverPhoto ? 'wl-shimmer' : ''}`}
-              style={{ ...headingStyle, ...enter(250).style, color: coverInk, fontSize: hf.size, fontWeight: hf.weight }}
+              className={`mt-4 ${gilded ? 'leading-[1.2]' : 'leading-[1.1]'} ${enter(250).className} ${fx === 'premium' && !coverPhoto ? 'wl-shimmer' : gilded && !coverPhoto ? 'wl-foil' : ''}`}
+              style={{ ...namesStyle, ...enter(250).style, color: coverInk, fontSize: gilded ? '4.3rem' : nf.size, fontWeight: nf.weight }}
             >
               {names}
             </h1>
-            {shortDate && <p className={`mt-5 text-sm tracking-[0.3em] ${enter(450).className}`} style={enter(450).style}>{shortDate}</p>}
+            {shortDate && (
+              gilded ? (
+                <p className={`mt-4 flex items-center gap-3 text-[13px] ${enter(450).className}`} style={{ ...enter(450).style, fontFamily: 'var(--font-cinzel), serif', letterSpacing: '0.34em' }}>
+                  <i className="inline-block h-[5px] w-[5px] rotate-45" style={{ background: 'var(--p)' }} />
+                  {shortDate}
+                  <i className="inline-block h-[5px] w-[5px] rotate-45" style={{ background: 'var(--p)' }} />
+                </p>
+              ) : (
+                <p className={`mt-5 text-sm tracking-[0.3em] ${enter(450).className}`} style={enter(450).style}>{shortDate}</p>
+              )
+            )}
             <div className={enter(600).className} style={{ ...enter(600).style, color: coverInk }}>
               <orn.Divider className="mt-6 w-32 opacity-80" />
             </div>
             {(mode === 'live' || placeholders) && (
               <div className={`mt-8 text-sm ${enter(750).className}`} style={enter(750).style}>
-                <p className="opacity-80">{t.dear}</p>
-                <p className="mt-1 text-lg font-semibold">{guest ?? t.guestFallback}</p>
+                <p className="opacity-80" style={gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 10.5, letterSpacing: '0.34em', textTransform: 'uppercase' } : undefined}>{t.dear}</p>
+                <p className={gilded ? 'mt-1 text-[1.35rem] font-semibold italic' : 'mt-1 text-lg font-semibold'} style={gilded ? { fontFamily: 'var(--font-cormorant), serif' } : undefined}>{guest ?? t.guestFallback}</p>
               </div>
             )}
             <button
               onClick={open}
-              className={`mt-10 px-7 py-3 text-sm font-medium tracking-wide shadow-lg transition-transform hover:scale-[1.03] ${fx === 'premium' ? 'wl-pulse' : ''} ${enter(900).className}`}
+              className={`wl-btn mt-10 px-7 py-3 text-sm font-medium tracking-wide shadow-lg transition-transform hover:scale-[1.03] ${fx === 'premium' ? 'wl-pulse' : ''} ${enter(900).className}`}
               style={{ ...enter(900).style, borderRadius: 'var(--rb)', background: coverPhoto ? '#fff' : 'var(--p)', color: coverPhoto ? '#222' : '#fff' }}
             >
               {openLabel}
@@ -466,7 +519,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             case 'mempelai':
               return (
                 <Block key="mempelai" title={t.couple} headingStyle={headingStyle}>
-                  <div className="space-y-12">
+                  <div className={gilded ? 'space-y-14' : 'space-y-12'}>
                     {(['pria', 'wanita'] as const).map((who, i) => {
                       const nick = str(data, 'mempelai', `${who}_nama`) || (placeholders ? (who === 'pria' ? 'Andi' : 'Sinta') : '');
                       if (!nick) return null;
@@ -475,14 +528,21 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                       const photo = url(str(data, 'mempelai', `${who}_foto`));
                       return (
                         <Reveal key={who} delay={i * 120} className="flex flex-col items-center text-center">
+                          {gilded && i === 1 && (
+                            <div className="-mt-6 mb-9 flex w-full items-center justify-center gap-4" style={{ color: 'var(--p)' }} aria-hidden>
+                              <span className="h-px w-16" style={{ background: 'linear-gradient(90deg, transparent, currentColor)' }} />
+                              <span className="wl-foil text-[3.2rem] italic leading-none" style={{ fontFamily: 'var(--font-cormorant), serif', fontWeight: 500 }}>&amp;</span>
+                              <span className="h-px w-16" style={{ background: 'linear-gradient(270deg, transparent, currentColor)' }} />
+                            </div>
+                          )}
                           <div className={`relative ${fx === 'premium' ? 'wl-float' : ''}`} style={fx === 'premium' ? { animationDelay: `${i * -2}s` } : undefined}>
                             <PhotoFrame frame={motif.frame} src={photo} label={nick} placeholders={placeholders} letterFont="var(--font-script)" tilt={i ? 2.5 : -2.5} photoRadius={radius.photo} />
                             <div className={`absolute -bottom-3 w-20 ${i ? '-right-6' : '-left-6'}`} style={{ color: 'var(--p)' }}>
                               <orn.Sprig className="w-20" flip={!!i} />
                             </div>
                           </div>
-                          <p className="mt-6 text-xs uppercase tracking-[0.3em] opacity-60">{who === 'pria' ? t.groom : t.bride}</p>
-                          <h3 className="mt-2" style={{ ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 600 }}>
+                          <p className="mt-6 text-xs uppercase tracking-[0.3em] opacity-60" style={gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 10.5, letterSpacing: '0.36em' } : undefined}>{who === 'pria' ? t.groom : t.bride}</p>
+                          <h3 className={gilded ? 'mt-2 wl-foil leading-[1.25]' : 'mt-2'} style={{ ...namesStyle, fontSize: gilded ? '2.9rem' : hf.section, fontWeight: nf.weight === 400 ? 400 : 600 }}>
                             {full || nick}
                           </h3>
                           {parents && <p className={`mt-2 max-w-[18rem] opacity-80 ${bodyText}`}>{parents}</p>}
@@ -498,7 +558,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               const story = str(data, 'cerita', 'cerita');
               return (
                 <Block key="cerita" title={t.story} headingStyle={headingStyle} tint={soft}>
-                  {quote && <blockquote className="text-center text-xl italic leading-relaxed" style={{ fontFamily: 'var(--font-cormorant)' }}>“{quote}”</blockquote>}
+                  {quote && <blockquote className={gilded ? 'wl-quote text-center' : 'text-center text-xl italic leading-relaxed'} style={{ fontFamily: 'var(--font-cormorant)' }}>{gilded ? quote : `“${quote}”`}</blockquote>}
                   {story && <p className={`mt-6 whitespace-pre-line text-center ${bodyText}`}>{story}</p>}
                 </Block>
               );
@@ -519,8 +579,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                         <Reveal key={ev} delay={i * 120}>
                           <div className="wl-card border p-7 text-center" style={{ borderRadius: 'var(--r)', borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)', background: 'var(--bg)' }}>
                             <h3 style={{ ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 600 }}>{ev === 'akad' ? t.akad : t.reception}</h3>
-                            <p className="mt-4 text-lg font-semibold">{formatLocalDate(when, lang)}</p>
-                            <p className="opacity-80">{formatLocalTime(when)}</p>
+                            <p className="wl-ev-date mt-4 text-lg font-semibold">{formatLocalDate(when, lang)}</p>
+                            <p className="wl-ev-time opacity-80">{formatLocalTime(when)}</p>
                             <div style={{ color: 'var(--p)' }}>
                               <orn.Divider className="mx-auto my-4 w-24 opacity-70" />
                             </div>
@@ -528,12 +588,12 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                             {address && <p className={`mt-1 opacity-80 ${bodyText}`}>{address}</p>}
                             <div className="mt-5 flex flex-wrap justify-center gap-2">
                               {maps && (
-                                <a href={maps} target="_blank" rel="noopener noreferrer" className="px-4 py-2 text-xs font-medium text-white" style={{ background: 'var(--p)', borderRadius: 'var(--rb)' }}>
+                                <a href={maps} target="_blank" rel="noopener noreferrer" className="wl-btn px-4 py-2 text-xs font-medium text-white" style={{ background: 'var(--p)', borderRadius: 'var(--rb)' }}>
                                   {t.openMaps}
                                 </a>
                               )}
                               {cal && (
-                                <a href={cal} target="_blank" rel="noopener noreferrer" className="border px-4 py-2 text-xs font-medium" style={{ borderColor: 'var(--p)', color: 'var(--p)', borderRadius: 'var(--rb)' }}>
+                                <a href={cal} target="_blank" rel="noopener noreferrer" className="wl-btn-o border px-4 py-2 text-xs font-medium" style={{ borderColor: 'var(--p)', color: 'var(--p)', borderRadius: 'var(--rb)' }}>
                                   {t.saveDate}
                                 </a>
                               )}
@@ -553,12 +613,12 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               return (
                 <Block key="galeri" title={t.gallery} headingStyle={headingStyle}>
                   {galleryPhotos.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-2.5">
+                    <div className={`grid grid-cols-2 ${gilded ? 'gap-4' : 'gap-2.5'}`}>
                       {galleryPhotos.map((src, i) => (
                         <button
                           key={src}
                           onClick={() => setLightbox(i)}
-                          className={`wl-reveal overflow-hidden ${i % 3 === 0 ? 'col-span-2 aspect-[16/10]' : 'aspect-[4/5]'}`}
+                          className={`wl-gal wl-reveal overflow-hidden ${i % 3 === 0 ? 'col-span-2 aspect-[16/10]' : 'aspect-[4/5]'}`}
                           style={{ borderRadius: radius.photo, '--d': `${(i % 3) * 90}ms` } as CSSProperties}
                           aria-label={`Foto ${i + 1}`}
                         >
@@ -568,9 +628,9 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                     </div>
                   ) : (
                     placeholders && (
-                      <div className="grid grid-cols-2 gap-2.5">
+                      <div className={`grid grid-cols-2 ${gilded ? 'gap-4' : 'gap-2.5'}`}>
                         {[0, 1, 2, 3].map((i) => (
-                          <PhotoPlaceholder key={i} className={i === 0 ? 'col-span-2 aspect-[16/10]' : 'aspect-[4/5]'} radius={radius.photo} delay={(i % 3) * 90} />
+                          <PhotoPlaceholder key={i} className={`wl-gal ${i === 0 ? 'col-span-2 aspect-[16/10]' : 'aspect-[4/5]'}`} radius={radius.photo} delay={(i % 3) * 90} />
                         ))}
                       </div>
                     )
@@ -619,20 +679,38 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
           return null;
         })}
 
-        <footer className="px-6 pb-24 pt-12 text-center text-xs opacity-60">
-          <div style={{ color: 'var(--p)' }}>
-            <orn.Sprig className="mx-auto mb-3 w-20" />
-          </div>
-          <p style={{ color: 'var(--tx)' }}>{names}</p>
-          <p className="mt-1">{t.madeWith}</p>
-          {preset?.credit && <p className="mt-2 opacity-80">{preset.credit}</p>}
+        <footer className={`px-6 pb-24 pt-12 text-center text-xs ${gilded ? '' : 'opacity-60'}`}>
+          {gilded ? (
+            <>
+              {showMono && (
+                <div className="flex justify-center">
+                  <Monogram a={monoA} b={monoB} size={84} />
+                </div>
+              )}
+              <p className="wl-foil mt-3 text-[2rem] leading-tight" style={{ fontFamily: 'var(--font-script), cursive' }}>{names}</p>
+              <div className="mt-3" style={{ color: 'var(--p)' }}>
+                <orn.Divider className="mx-auto w-32" />
+              </div>
+              <p className="mt-3 opacity-60">{t.madeWith}</p>
+              {preset?.credit && <p className="mt-2 opacity-50">{preset.credit}</p>}
+            </>
+          ) : (
+            <>
+              <div style={{ color: 'var(--p)' }}>
+                <orn.Sprig className="mx-auto mb-3 w-20" />
+              </div>
+              <p style={{ color: 'var(--tx)' }}>{names}</p>
+              <p className="mt-1">{t.madeWith}</p>
+              {preset?.credit && <p className="mt-2 opacity-80">{preset.credit}</p>}
+            </>
+          )}
         </footer>
 
         {musicUrl && (
           <div className="pointer-events-none sticky bottom-4 z-20 flex h-0 justify-end pr-4">
             <button
               onClick={toggleMusic}
-              className={`pointer-events-auto -mt-12 flex h-11 w-11 items-center justify-center text-white shadow-lg ${playing && animated ? 'wl-pulse' : ''}`}
+              className={`wl-fab pointer-events-auto -mt-12 flex h-11 w-11 items-center justify-center text-white shadow-lg ${playing && animated ? 'wl-pulse' : ''}`}
               style={{ background: 'var(--p)', borderRadius: radius.button === '0px' ? '0px' : '999px' }}
               aria-label={playing ? 'Jeda musik' : 'Putar musik'}
             >
@@ -650,12 +728,12 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 function Block({ title, children, headingStyle, tint }: { title: string; children: ReactNode; headingStyle: CSSProperties; tint?: string }) {
   const { orn, motif, fx, sectionFont } = useTheme();
   return (
-    <section className="relative px-6 py-16" style={{ background: tint }}>
+    <section className={`wl-block relative px-6 py-16 ${tint ? 'wl-tint' : ''}`} style={{ background: tint }}>
       {tint && fx !== 'none' && <PatternLayer kind={motif.pattern} opacity={0.05} />}
       <div className="wl-reveal relative mb-10 text-center">
-        <h2 style={{ ...headingStyle, ...sectionFont }}>{title}</h2>
+        <h2 className={motif.skin === 'gilded' ? 'wl-heading' : undefined} style={{ ...headingStyle, ...sectionFont }}>{title}</h2>
         <div style={{ color: 'var(--p)' }}>
-          <orn.Divider className="mx-auto mt-3 w-28" />
+          <orn.Divider className={motif.skin === 'gilded' ? 'mx-auto mt-4 w-36' : 'mx-auto mt-3 w-28'} />
         </div>
       </div>
       <div className="relative">{children}</div>
@@ -694,6 +772,15 @@ const COUNTDOWN_LOOK: Record<CountdownKind, { section: CSSProperties; cell: CSSP
     cell: { border: '1.5px solid var(--s)', background: 'rgba(0,0,0,.35)', boxShadow: '0 0 14px color-mix(in srgb, var(--s) 70%, transparent), inset 0 0 12px color-mix(in srgb, var(--s) 30%, transparent)' },
     num: { textShadow: '0 0 12px var(--s), 0 0 3px var(--s)' },
   },
+  luxe: {
+    section: { background: 'radial-gradient(ellipse 85% 100% at 50% 0%, color-mix(in srgb, var(--tx) 72%, #627ab8) 0, color-mix(in srgb, var(--tx) 93%, #000) 72%)', borderTop: '1px solid color-mix(in srgb, var(--p) 55%, transparent)', borderBottom: '1px solid color-mix(in srgb, var(--p) 55%, transparent)' },
+    cell: {
+      border: '1px solid color-mix(in srgb, var(--p) 64%, transparent)',
+      background: 'linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.01))',
+      boxShadow: 'inset 0 0 0 3px color-mix(in srgb, var(--tx) 90%, #000), inset 0 0 0 4px color-mix(in srgb, var(--p) 32%, transparent)',
+    },
+    num: { fontWeight: 500, backgroundImage: 'var(--foil-lit)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', WebkitTextFillColor: 'transparent' },
+  },
   flip: {
     section: { background: 'color-mix(in srgb, var(--p) 40%, #0d0d0d)' },
     cell: { background: 'linear-gradient(#2c2c2c calc(50% - 1px), #000 calc(50% - 1px) calc(50% + 1px), #1c1c1c calc(50% + 1px))', borderRadius: '8px', boxShadow: '0 6px 14px -6px rgba(0,0,0,.6)' },
@@ -701,7 +788,8 @@ const COUNTDOWN_LOOK: Record<CountdownKind, { section: CSSProperties; cell: CSSP
 };
 
 function Countdown({ target, t }: { target: string; t: Strings }) {
-  const { motif, fx, radius, sectionFont } = useTheme();
+  const { orn, motif, fx, radius, sectionFont } = useTheme();
+  const luxe = motif.countdown === 'luxe';
   const now = useNow();
   const end = localToInstant(target);
   const diff = now === null || Number.isNaN(end) ? null : Math.max(0, end - now);
@@ -710,7 +798,12 @@ function Countdown({ target, t }: { target: string; t: Strings }) {
   const look = COUNTDOWN_LOOK[motif.countdown];
   return (
     <section className="wl-reveal px-6 py-14 text-center" style={{ ...look.section, color: '#fff' }}>
-      <h2 style={{ ...sectionFont, color: '#fff' }}>{t.countdown}</h2>
+      <h2 className={luxe ? 'wl-foil-lit' : undefined} style={{ ...sectionFont, color: '#fff' }}>{t.countdown}</h2>
+      {luxe && (
+        <div className="mt-3" style={{ color: 'var(--p)' }}>
+          <orn.Divider className="mx-auto w-36" />
+        </div>
+      )}
       <div className="mt-7 grid grid-cols-4 gap-2.5" role="timer" aria-live="off">
         {labels.map((label, i) => (
           <div
@@ -721,7 +814,7 @@ function Countdown({ target, t }: { target: string; t: Strings }) {
             <div key={parts ? parts[i] : 'x'} className={`text-3xl font-semibold tabular-nums ${fx === 'premium' ? 'wl-tick' : ''}`} style={{ fontFamily: 'var(--font-cormorant)', ...look.num }}>
               {parts ? String(parts[i]).padStart(2, '0') : '--'}
             </div>
-            <div className="mt-1 text-[11px] uppercase tracking-widest opacity-80">{label}</div>
+            <div className="mt-1 text-[11px] uppercase tracking-widest opacity-80" style={luxe ? { fontFamily: 'var(--font-cinzel), serif', letterSpacing: '0.2em', fontSize: 10 } : undefined}>{label}</div>
           </div>
         ))}
       </div>
@@ -743,7 +836,7 @@ function CopyCard({ bank, number, holder, t }: { bank: string; number: string; h
             setTimeout(() => setDone(false), 1800);
           });
         }}
-        className="mt-3 border px-4 py-1.5 text-xs font-medium"
+        className="wl-btn-o mt-3 border px-4 py-1.5 text-xs font-medium"
         style={{ borderColor: 'var(--p)', color: 'var(--p)', borderRadius: 'var(--rb)' }}
       >
         {done ? t.copied : t.copy}

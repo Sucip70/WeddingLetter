@@ -26,7 +26,7 @@ export const GATE_LABEL = {
   cloth: 'Kain ditarik',
   envelope: 'Amplop',
   portal: 'Portal sihir',
-  ring: 'Cincin',
+  ring: 'Kotak cincin',
   bloom: 'Bunga bermekaran',
   leaves: 'Surat daun gugur',
   balloons: 'Balon',

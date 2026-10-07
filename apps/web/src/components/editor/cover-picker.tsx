@@ -129,6 +129,15 @@ const ICONS: Record<CoverKind, ReactNode> = {
       <rect x={13} y={45} width={14} height={4.5} fill="#fff" />
     </>
   ),
+  emas: (
+    <>
+      <path d="M9 36V21a11 11 0 0 1 22 0v15Z" {...STROKE} />
+      <path d="M12 34V21a8 8 0 0 1 16 0v13Z" {...SOFT} />
+      <path d="M20 7.500l2.200 2.200-2.200 2.200-2.200-2.200z" {...SOLID} />
+      {text(41, 18)}
+      {button(47)}
+    </>
+  ),
   poster: (
     <>
       <rect x={4} y={4} width={32} height={52} rx={1} {...SOLID} opacity={0.85} />

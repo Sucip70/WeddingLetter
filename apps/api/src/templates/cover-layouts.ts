@@ -6,7 +6,7 @@ import type { TemplateTier } from '../generated/prisma/client.js';
 // Tersedia untuk Standard dan Premium.
 export const GENERIC_COVERS = ['ornamen', 'penuh', 'penuh-atas', 'bingkai', 'jendela', 'medali', 'terbagi', 'berdua', 'bingkai-penuh'] as const;
 // Khusus tema, hanya Premium.
-export const THEME_COVERS = ['gapura', 'hati', 'portal', 'kristal', 'karakter', 'poster'] as const;
+export const THEME_COVERS = ['gapura', 'hati', 'portal', 'kristal', 'karakter', 'poster', 'emas'] as const;
 
 export const COVER_KINDS: string[] = [...GENERIC_COVERS, ...THEME_COVERS];
 export type ThemeCover = (typeof THEME_COVERS)[number];
@@ -24,7 +24,9 @@ export const THEME_COVER_BY_DESIGN: Record<string, ThemeCover> = {
   // pemilihan karakter (game)
   pixel: 'karakter', 'player-one': 'karakter', rpg: 'karakter', neon: 'karakter',
   // poster film
-  hollywood: 'poster', paris: 'poster', elegant: 'poster',
+  hollywood: 'poster', paris: 'poster',
+  // lengkungan berukir emas
+  elegant: 'emas',
 };
 
 // Daftar layout yang boleh dipilih untuk paket dan tema ini (kosong = tanpa pilihan, khusus Basic).

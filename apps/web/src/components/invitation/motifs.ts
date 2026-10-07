@@ -3,12 +3,12 @@
 import type { BodyFont, HeadingFont } from '@/lib/types';
 import type { OrnamentKind } from './ornaments';
 
-export type ParticleKind = 'petal' | 'leaf' | 'maple' | 'snow' | 'heart' | 'star' | 'sparkle' | 'confetti' | 'bubble' | 'firefly' | 'pixel' | 'lantern' | 'bat' | 'coin';
+export type ParticleKind = 'petal' | 'leaf' | 'maple' | 'snow' | 'heart' | 'star' | 'sparkle' | 'confetti' | 'bubble' | 'firefly' | 'pixel' | 'lantern' | 'bat' | 'coin' | 'dust';
 export type ParticleMode = 'fall' | 'rise' | 'twinkle' | 'drift';
 export type PatternKind = 'none' | 'dots' | 'kawung' | 'zigzag' | 'diamond' | 'scallop' | 'grid' | 'stars' | 'star8' | 'hearts' | 'leaves' | 'stripes' | 'cross';
-export type FrameKind = 'arch' | 'oval' | 'round' | 'square' | 'diamond' | 'pixel' | 'polaroid' | 'hex' | 'notch';
-export type CountdownKind = 'soft' | 'outline' | 'pixel' | 'neon' | 'ticket' | 'round' | 'flip';
-export type CoverFxKind = 'none' | 'aurora' | 'rays' | 'curtain' | 'scanlines' | 'spotlight' | 'clouds';
+export type FrameKind = 'arch' | 'oval' | 'round' | 'square' | 'diamond' | 'pixel' | 'polaroid' | 'hex' | 'notch' | 'deco';
+export type CountdownKind = 'soft' | 'outline' | 'pixel' | 'neon' | 'ticket' | 'round' | 'flip' | 'luxe';
+export type CoverFxKind = 'none' | 'aurora' | 'rays' | 'curtain' | 'scanlines' | 'spotlight' | 'clouds' | 'halo';
 export type RevealKind = 'rise' | 'zoom' | 'blur' | 'slide';
 export type Radius = 'soft' | 'mid' | 'sharp' | 'pill';
 
@@ -24,9 +24,12 @@ export interface Motif {
   // Teks pengganti (hanya bahasa Indonesia): kalimat di atas nama & tombol buka.
   copy?: { kicker?: string; open?: string };
   // Tampilan khusus: 'kraft' = kertas kraft, kartu berjahitan berpita perekat, tali goni (lihat .wl-kraft di globals.css).
-  skin?: 'kraft';
+  // 'gilded' = Elegan: kertas gading bermarmer, garis & huruf berlapis emas, bingkai berukir (lihat .wl-gilded).
+  skin?: 'kraft' | 'gilded';
   // Menimpa font judul tema (mis. rustic memakai Fraunces yang hangat walau snapshot lama bertulis serif).
   heading?: HeadingFont;
+  // Font khusus nama mempelai (sampul, gerbang, kartu mempelai); bawaan = `heading`.
+  names?: HeadingFont;
 }
 
 const m = (
@@ -45,7 +48,7 @@ export const MOTIFS: Record<string, Motif> = {
   // Klasik
   rustic: { ...m('twig', 'none', 'polaroid', 'ticket', 'none', ['leaf', 10, 'fall'], 'mid'), skin: 'kraft', heading: 'display' },
   floral: m('vine', 'leaves', 'oval', 'soft', 'none', ['petal', 14, 'fall']),
-  elegant: m('sparkle', 'diamond', 'arch', 'outline', 'rays', ['sparkle', 16, 'twinkle'], 'mid'),
+  elegant: { ...m('deco', 'diamond', 'deco', 'luxe', 'halo', ['dust', 22, 'rise'], 'mid', 'blur'), skin: 'gilded', heading: 'cinzel', names: 'script' },
 
   // Suku & budaya
   jawa: m('geo', 'kawung', 'oval', 'ticket', 'none', ['petal', 10, 'fall'], 'mid'),

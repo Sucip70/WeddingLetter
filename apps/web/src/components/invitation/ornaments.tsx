@@ -1,7 +1,7 @@
 // Ornamen SVG untuk undangan (warna mengikuti currentColor sehingga ikut tema). Tiap "jenis" ornamen punya
 // tiga bagian: Corner (sudut sampul), Divider (pemisah judul), Sprig (hiasan kecil di bawah foto/footer).
 
-export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig';
+export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco';
 
 interface CornerProps {
   className?: string;
@@ -306,7 +306,101 @@ const Twig: OrnamentSet = {
   ),
 };
 
-export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig };
+// ----- deco (Elegan): garis emas ala Art Deco — siku bersudut potong, kipas, berlian, dan ranting laurel -----
+
+// Kipas sinar seperempat lingkaran dari berlian di sudut (garis tipis).
+const DECO_FAN = [0, 18, 36, 54, 72, 90]
+  .map((deg) => {
+    const a = (deg * Math.PI) / 180;
+    const p = (r: number) => `${(22 + Math.cos(a) * r).toFixed(1)} ${(22 + Math.sin(a) * r).toFixed(1)}`;
+    return `M${p(13)}L${p(46)}`;
+  })
+  .join('');
+
+// Ranting laurel: tangkai Bezier kubik, tiap titik diberi sepasang daun menyudut ke arah ujung.
+const LAUREL = (() => {
+  const P = [[6, 54], [36, 54], [80, 44], [112, 12]] as const;
+  const at = (t: number) => {
+    const u = 1 - t;
+    const f = (i: 0 | 1) => u * u * u * P[0][i] + 3 * u * u * t * P[1][i] + 3 * u * t * t * P[2][i] + t * t * t * P[3][i];
+    const d = (i: 0 | 1) => 3 * u * u * (P[1][i] - P[0][i]) + 6 * u * t * (P[2][i] - P[1][i]) + 3 * t * t * (P[3][i] - P[2][i]);
+    return { x: f(0), y: f(1), angle: (Math.atan2(d(1), d(0)) * 180) / Math.PI };
+  };
+  return Array.from({ length: 7 }, (_, i) => {
+    const { x, y, angle } = at(0.1 + i * 0.125);
+    return { x: x.toFixed(1), y: y.toFixed(1), angle: angle.toFixed(1), scale: (1.05 - i * 0.07).toFixed(2), o: (0.55 + (i % 2) * 0.25).toFixed(2) };
+  });
+})();
+
+const Deco: OrnamentSet = {
+  Corner: ({ className = 'w-28', rotate = 0 }) => (
+    <svg viewBox="0 0 120 120" className={className} style={svgCorner(rotate)} fill="none" stroke="currentColor" aria-hidden>
+      <path d="M3 118V24L24 3H118" strokeWidth="1.4" />
+      <path d="M11 118V30L30 11H118" strokeWidth=".7" opacity=".55" />
+      <path d={DECO_FAN} strokeWidth=".7" opacity=".5" strokeLinecap="round" />
+      <path d="M22 54A32 32 0 0 0 54 22" strokeWidth=".6" opacity=".5" />
+      <path d="M22 62A40 40 0 0 0 62 22" strokeWidth=".5" opacity=".35" strokeDasharray="1 2.4" />
+      <path d="M22 14.500L29.500 22 22 29.500 14.500 22Z" fill="currentColor" stroke="none" />
+      <path d="M22 18.500L25.500 22 22 25.500 18.500 22Z" fill="var(--bg, #fff)" stroke="none" />
+      <path d="M70 4.500l3.200 3.200-3.200 3.200-3.200-3.200ZM4.500 70l3.200 3.200-3.200 3.200-3.200-3.200Z" fill="currentColor" stroke="none" opacity=".85" />
+      <circle cx="92" cy="7" r="1.1" fill="currentColor" stroke="none" opacity=".6" />
+      <circle cx="7" cy="92" r="1.1" fill="currentColor" stroke="none" opacity=".6" />
+    </svg>
+  ),
+  Divider: ({ className = 'w-40' }) => (
+    <svg viewBox="0 0 200 20" className={className} fill="none" stroke="currentColor" aria-hidden>
+      <path d="M6 10H78M122 10H194" strokeWidth="1" opacity=".55" />
+      <path d="M0 10H3M197 10H200" strokeWidth="1" opacity=".25" />
+      <path d="M100 1.500l8.500 8.500-8.500 8.500-8.500-8.500Z" strokeWidth="1.1" />
+      <path d="M100 5.800l4.200 4.200-4.200 4.200-4.200-4.200Z" fill="currentColor" stroke="none" />
+      <path d="M82 7l3 3-3 3-3-3ZM118 7l3 3-3 3-3-3Z" fill="currentColor" stroke="none" opacity=".75" />
+      <circle cx="68" cy="10" r="1.2" fill="currentColor" stroke="none" opacity=".6" />
+      <circle cx="132" cy="10" r="1.2" fill="currentColor" stroke="none" opacity=".6" />
+    </svg>
+  ),
+  Sprig: ({ className = 'w-24', flip }) => (
+    <svg viewBox="0 0 120 60" className={className} style={flip ? { transform: 'scaleX(-1)' } : undefined} fill="none" aria-hidden>
+      <path d="M6 54C36 54 80 44 112 12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      {LAUREL.map((l, i) => (
+        <g key={i} transform={`translate(${l.x} ${l.y}) scale(${l.scale})`}>
+          <path d="M0 0C3-5 11-5 15 0C11 5 3 5 0 0Z" transform={`rotate(${(Number(l.angle) - 38).toFixed(1)})`} fill="currentColor" opacity={l.o} />
+          <path d="M0 0C3-5 11-5 15 0C11 5 3 5 0 0Z" transform={`rotate(${(Number(l.angle) + 38).toFixed(1)})`} fill="currentColor" opacity={Number(l.o) - 0.12} />
+        </g>
+      ))}
+      <circle cx="113" cy="10.500" r="2.600" fill="currentColor" />
+      <circle cx="119" cy="5" r="1.400" fill="currentColor" opacity=".6" />
+    </svg>
+  ),
+};
+
+// Monogram bundar: inisial mempelai (aksara tulisan tangan, berlapis emas) di dalam cincin ganda berlian.
+// Warna cincin = warna utama tema; huruf memakai kelas .wl-foil (lihat globals.css).
+export function Monogram({ a, b, size = 96, className = '' }: { a: string; b: string; size?: number; className?: string }) {
+  return (
+    <div className={`relative inline-flex shrink-0 items-center justify-center ${className}`} style={{ width: size, height: size, color: 'var(--p)' }} aria-hidden>
+      <svg viewBox="-50 -50 100 100" className="absolute inset-0 h-full w-full overflow-visible" fill="none" stroke="currentColor">
+        <circle r="46" strokeWidth="1.1" />
+        <circle r="41.500" strokeWidth=".55" opacity=".75" strokeDasharray="1.200 2.400" />
+        <circle r="37" strokeWidth=".6" opacity=".5" />
+        {[0, 90, 180, 270].map((deg) => (
+          <path key={deg} transform={`rotate(${deg})`} d="M0 -50l3.800 3.800-3.800 3.800-3.800-3.800Z" fill="var(--bg, #fff)" strokeWidth=".9" />
+        ))}
+        {[45, 135, 225, 315].map((deg) => (
+          <circle key={deg} r="1.100" cy="-46" fill="currentColor" stroke="none" transform={`rotate(${deg})`} />
+        ))}
+      </svg>
+      <span className="relative flex items-baseline leading-none" style={{ fontSize: size * 0.36, fontFamily: 'var(--font-script)' }}>
+        <span className="wl-foil">{a}</span>
+        <span className="wl-foil" style={{ fontFamily: 'var(--font-cormorant)', fontSize: '0.44em', fontStyle: 'italic', margin: '0 0.1em', transform: 'translateY(-0.3em)' }}>
+          &amp;
+        </span>
+        <span className="wl-foil">{b}</span>
+      </span>
+    </div>
+  );
+}
+
+export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco };
 
 // Ekspor lama (kartu katalog, halaman lain) = jenis vine.
 export const Corner = Vine.Corner;
