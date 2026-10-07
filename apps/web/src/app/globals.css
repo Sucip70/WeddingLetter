@@ -207,3 +207,31 @@ body {
   .wl-root[data-armed] .wl-reveal { opacity: 1 !important; transform: none !important; filter: none !important; transition: none; }
   .wl-shimmer { color: var(--p) !important; background: none; }
 }
+
+/* ===== Kulit "kraft" (rustic): kertas kraft berserat, kartu berjahitan dengan pita perekat ===== */
+.wl-kraft .wl-card {
+  position: relative;
+  border: 0;
+  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--bg) 88%, #fff);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .4 0 0 0 0 .3 0 0 0 0 .18 0 0 0 .32 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  box-shadow: 0 1px 1px rgba(60, 35, 15, 0.2), 0 12px 22px -12px rgba(60, 35, 15, 0.45);
+  outline: 1.6px dashed color-mix(in srgb, var(--p) 55%, transparent);
+  outline-offset: -10px;
+  transform: rotate(-0.4deg);
+}
+.wl-kraft .wl-card:nth-of-type(even) { transform: rotate(0.5deg); }
+.wl-kraft .wl-card::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -11px;
+  width: 78px;
+  height: 22px;
+  transform: translateX(-50%) rotate(-3deg);
+  background: color-mix(in srgb, var(--s) 70%, rgba(255, 255, 255, 0.5));
+  opacity: 0.82;
+  clip-path: polygon(0 8%, 4% 0, 8% 10%, 12% 0, 16% 8%, 84% 8%, 88% 0, 92% 10%, 96% 0, 100% 8%, 100% 92%, 96% 100%, 92% 90%, 88% 100%, 84% 92%, 16% 92%, 12% 100%, 8% 90%, 4% 100%, 0 92%);
+  box-shadow: 0 1px 2px rgba(60, 35, 15, 0.25);
+}
+.wl-kraft .wl-cover-stitch { position: absolute; inset: 14px; pointer-events: none; border: 1.8px dashed color-mix(in srgb, var(--p) 55%, transparent); border-radius: 6px; }

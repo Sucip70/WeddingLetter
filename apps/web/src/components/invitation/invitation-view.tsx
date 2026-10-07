@@ -81,6 +81,9 @@ function gcalLink(title: string, start: string, location: string) {
 
 const EMBED_HEIGHT = 810; // tinggi logis PhoneFrame
 
+// Tekstur kertas kraft: butiran halus + serat memanjang (SVG feTurbulence), dikalikan ke warna latar tema.
+const KRAFT_TEXTURE = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .25 0 0 0 0 .14 0 0 0 .36 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\"), url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .5' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .32 0 0 0 0 .18 0 0 0 .2 -.03'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E\")";
+
 export function InvitationView({ view, mode = 'live', embedded = false, placeholders = false, gate }: InvitationViewProps) {
   const { theme } = view.layout;
   const { data } = view;
@@ -89,7 +92,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const fx = theme.fx ?? 'none';
   const orn = ORNAMENTS[motif.ornament];
   const radius = RADIUS[motif.radius];
-  const hf = HEADING[theme.headingFont] ?? HEADING.serif;
+  const hf = HEADING[motif.heading ?? theme.headingFont] ?? HEADING.serif;
   const bf = BODY[theme.bodyFont] ?? BODY.serif;
   const layerHeight = embedded ? EMBED_HEIGHT : '100svh';
 
@@ -228,6 +231,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     background: theme.background,
     color: theme.text,
     fontFamily: bf.family,
+    ...(motif.skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : null),
   } as CSSProperties;
   const headingStyle: CSSProperties = {
     fontFamily: hf.family,
@@ -236,7 +240,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     textTransform: hf.upper ? 'uppercase' : undefined,
   };
   const sectionFont: CSSProperties = { ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 500 };
-  const soft = 'color-mix(in srgb, var(--p) 9%, var(--bg))';
+  const soft = motif.skin === 'kraft' ? 'color-mix(in srgb, var(--p) 9%, transparent)' : 'color-mix(in srgb, var(--p) 9%, var(--bg))';
   const bodyText = bf.className;
 
   // Tata letak sampul pilihan pembeli (Standard/Premium). Kosong/tak valid = sampul bawaan (ornamen, atau foto penuh
@@ -290,9 +294,13 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const particleCount = fx === 'premium' ? motif.particles.count : Math.round(motif.particles.count * 0.6);
   const coverInk = coverPhoto ? '#fff' : 'var(--p)';
   const cornerCls = `absolute w-24 ${fx === 'premium' ? 'wl-breathe' : ''}`;
-  const coverBackground = 'linear-gradient(165deg, color-mix(in srgb, var(--p) 20%, var(--bg)), var(--bg) 52%, color-mix(in srgb, var(--p) 10%, color-mix(in srgb, var(--s) 12%, var(--bg))))';
+  const kraft = motif.skin === 'kraft';
+  const coverBackground = kraft
+    ? 'radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--bg) 70%, #fff) 0, transparent 62%), radial-gradient(ellipse at 50% 50%, transparent 55%, color-mix(in srgb, var(--p) 22%, transparent) 130%)'
+    : 'linear-gradient(165deg, color-mix(in srgb, var(--p) 20%, var(--bg)), var(--bg) 52%, color-mix(in srgb, var(--p) 10%, color-mix(in srgb, var(--s) 12%, var(--bg))))';
   const cornersNode = (
     <div className="pointer-events-none absolute inset-0" style={{ color: 'var(--p)' }} aria-hidden>
+      {kraft && <div className="wl-cover-stitch" />}
       <orn.Corner className={`${cornerCls} left-2 top-2`} rotate={0} />
       <orn.Corner className={`${cornerCls} right-2 top-2`} rotate={90} />
       <orn.Corner className={`${cornerCls} bottom-2 right-2`} rotate={180} />
@@ -310,7 +318,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         data-reveal={motif.reveal}
         // Terpasang sejak render server: keadaan awal "tersembunyi" sudah aktif sebelum hidrasi, jadi tidak ada kedipan.
         data-armed={animated ? '' : undefined}
-        className={`wl-root ${embedded ? 'phone-scroll relative h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}
+        className={`wl-root ${motif.skin === 'kraft' ? 'wl-kraft' : ''} ${embedded ? 'phone-scroll relative h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}
       >
         {animated && (
           <noscript>
@@ -509,7 +517,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                       const cal = gcalLink(`${ev === 'akad' ? t.akad : t.reception} ${names}`, when, [place, address].filter(Boolean).join(', '));
                       return (
                         <Reveal key={ev} delay={i * 120}>
-                          <div className="border p-7 text-center" style={{ borderRadius: 'var(--r)', borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)', background: 'var(--bg)' }}>
+                          <div className="wl-card border p-7 text-center" style={{ borderRadius: 'var(--r)', borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)', background: 'var(--bg)' }}>
                             <h3 style={{ ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 600 }}>{ev === 'akad' ? t.akad : t.reception}</h3>
                             <p className="mt-4 text-lg font-semibold">{formatLocalDate(when, lang)}</p>
                             <p className="opacity-80">{formatLocalTime(when)}</p>
@@ -595,7 +603,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                       <CopyCard key={a.number} bank={a.bank} number={a.number} holder={a.holder} t={t} />
                     ))}
                     {address && (
-                      <div className="border p-5 text-center" style={{ borderRadius: 'var(--r)', borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)' }}>
+                      <div className="wl-card border p-5 text-center" style={{ borderRadius: 'var(--r)', borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)' }}>
                         <p className="text-xs uppercase tracking-widest opacity-60">{t.giftAddress}</p>
                         <p className={`mt-2 ${bodyText}`}>{address}</p>
                       </div>
@@ -724,7 +732,7 @@ function Countdown({ target, t }: { target: string; t: Strings }) {
 function CopyCard({ bank, number, holder, t }: { bank: string; number: string; holder: string; t: Strings }) {
   const [done, setDone] = useState(false);
   return (
-    <div className="border p-5 text-center" style={{ borderRadius: 'var(--r)', borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)' }}>
+    <div className="wl-card border p-5 text-center" style={{ borderRadius: 'var(--r)', borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)' }}>
       {bank && <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--p)' }}>{bank}</p>}
       <p className="mt-2 text-2xl font-semibold tracking-wider tabular-nums" style={{ fontFamily: 'var(--font-cormorant)' }}>{number}</p>
       {holder && <p className="mt-1 text-sm opacity-75">a.n. {holder}</p>}
@@ -825,7 +833,7 @@ function Guestbook({ slug, initial, t, headingStyle, soft, placeholders }: { slu
       ) : (
         <ul className="space-y-3">
           {items.map((w, i) => (
-            <li key={i} className="wl-reveal p-4" style={{ background: 'var(--bg)', borderRadius: 'var(--r)', '--d': `${Math.min(i, 5) * 80}ms` } as CSSProperties}>
+            <li key={i} className="wl-reveal wl-card p-4" style={{ background: 'var(--bg)', borderRadius: 'var(--r)', '--d': `${Math.min(i, 5) * 80}ms` } as CSSProperties}>
               <p className="text-sm font-semibold" style={{ color: 'var(--p)' }}>{w.name}</p>
               <p className="mt-1 whitespace-pre-line text-sm leading-relaxed opacity-85">{w.message}</p>
             </li>

@@ -1,7 +1,7 @@
 // Ornamen SVG untuk undangan (warna mengikuti currentColor sehingga ikut tema). Tiap "jenis" ornamen punya
 // tiga bagian: Corner (sudut sampul), Divider (pemisah judul), Sprig (hiasan kecil di bawah foto/footer).
 
-export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow';
+export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig';
 
 interface CornerProps {
   className?: string;
@@ -255,7 +255,58 @@ const Snow: OrnamentSet = {
   ),
 };
 
-export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow };
+// ----- twig (rustic): ranting kering, baby's breath & gandum diikat tali goni -----
+
+const Twig: OrnamentSet = {
+  Corner: ({ className = 'w-28', rotate = 0 }) => (
+    <svg viewBox="0 0 120 120" className={className} style={svgCorner(rotate)} fill="none" aria-hidden>
+      {/* ranting eukaliptus melengkung di sudut */}
+      <path d="M6 112C10 70 38 30 104 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" opacity=".8" />
+      {[
+        [10, 92, 24], [18, 72, -8], [30, 54, 14], [44, 40, -16], [60, 28, 8], [78, 18, -20], [94, 12, 4],
+      ].map(([x, y, r], i) => (
+        <ellipse key={i} cx={x} cy={y} rx={i % 2 ? 6 : 7.5} ry={i % 2 ? 3.6 : 4.4} transform={`rotate(${r} ${x} ${y})`} fill="currentColor" opacity={0.42 + (i % 3) * 0.14} />
+      ))}
+      {/* baby's breath: titik-titik kecil di cabang sampingan */}
+      <path d="M16 100C32 84 44 76 66 72M40 62C54 58 62 50 70 38" stroke="currentColor" strokeWidth=".9" strokeLinecap="round" opacity=".55" />
+      {[[66, 72], [60, 74], [70, 68], [54, 78], [70, 38], [64, 44], [74, 34], [46, 66], [30, 90], [36, 84]].map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r={i % 3 === 0 ? 2.4 : 1.7} fill="currentColor" opacity={0.5 + (i % 2) * 0.25} />
+      ))}
+      {/* ikatan tali goni di pangkal ranting */}
+      <path d="M2 104l12-5M1 108l13-5M3 112l11-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" opacity=".9" />
+    </svg>
+  ),
+  Divider: ({ className = 'w-40' }) => (
+    <svg viewBox="0 0 160 22" className={className} fill="none" aria-hidden>
+      {/* tali goni terpilin */}
+      <path d="M0 11h58M102 11h58" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 1.6" opacity=".6" />
+      {/* simpul pita kecil */}
+      <path d="M80 11C72 3 64 4 66 10c1 5 9 3 14 1ZM80 11C88 3 96 4 94 10c-1 5-9 3-14 1Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M80 12l-6 8M80 12l6 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="80" cy="11" r="1.8" fill="currentColor" />
+    </svg>
+  ),
+  Sprig: ({ className = 'w-24', flip }) => (
+    <svg viewBox="0 0 120 60" className={className} style={flip ? { transform: 'scaleX(-1)' } : undefined} fill="none" aria-hidden>
+      {/* tiga tangkai gandum/lavender diikat tali */}
+      {[[-26, 0], [0, 0], [26, 0]].map(([r], i) => (
+        <g key={i} transform={`translate(60 54) rotate(${r})`}>
+          <path d="M0 0V-44" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" opacity=".8" />
+          {[-12, -20, -28, -36, -43].map((y, j) => (
+            <g key={j}>
+              <ellipse cx="-3.4" cy={y} rx="2.2" ry="4.2" transform={`rotate(-28 -3.4 ${y})`} fill="currentColor" opacity={0.5 + (j % 2) * 0.2} />
+              <ellipse cx="3.4" cy={y} rx="2.2" ry="4.2" transform={`rotate(28 3.4 ${y})`} fill="currentColor" opacity={0.5 + (j % 2) * 0.2} />
+            </g>
+          ))}
+        </g>
+      ))}
+      <path d="M50 49l20 3M50 53l20 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M60 52C54 46 48 47 50 52c1 4 7 3 10 0ZM60 52C66 46 72 47 70 52c-1 4-7 3-10 0Z" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  ),
+};
+
+export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig };
 
 // Ekspor lama (kartu katalog, halaman lain) = jenis vine.
 export const Corner = Vine.Corner;

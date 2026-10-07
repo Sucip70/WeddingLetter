@@ -41,6 +41,7 @@ export const GATE_LABEL = {
   neon: 'Papan neon',
   sakura: 'Surat kelopak sakura',
   kayon: 'Kayon wayang',
+  twine: 'Surat bertali goni',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export type GateSetting = GateKind | 'none';

@@ -23,6 +23,10 @@ export interface Motif {
   reveal: RevealKind;
   // Teks pengganti (hanya bahasa Indonesia): kalimat di atas nama & tombol buka.
   copy?: { kicker?: string; open?: string };
+  // Tampilan khusus: 'kraft' = kertas kraft, kartu berjahitan berpita perekat, tali goni (lihat .wl-kraft di globals.css).
+  skin?: 'kraft';
+  // Menimpa font judul tema (mis. rustic memakai Fraunces yang hangat walau snapshot lama bertulis serif).
+  heading?: HeadingFont;
 }
 
 const m = (
@@ -39,7 +43,7 @@ const m = (
 
 export const MOTIFS: Record<string, Motif> = {
   // Klasik
-  rustic: m('vine', 'none', 'arch', 'soft', 'none', ['leaf', 10, 'fall']),
+  rustic: { ...m('twig', 'none', 'polaroid', 'ticket', 'none', ['leaf', 10, 'fall'], 'mid'), skin: 'kraft', heading: 'display' },
   floral: m('vine', 'leaves', 'oval', 'soft', 'none', ['petal', 14, 'fall']),
   elegant: m('sparkle', 'diamond', 'arch', 'outline', 'rays', ['sparkle', 16, 'twinkle'], 'mid'),
 
