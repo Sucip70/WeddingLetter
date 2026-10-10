@@ -171,6 +171,9 @@ export const BASIC_PALETTES: Palette[] = [
   { id: 'hitam-putih', name: 'Hitam Putih', primary: '#222222', secondary: '#9a9a9a', background: '#ffffff', text: '#222222' },
 ];
 
+// Desain klasik yang punya paket Basic (Rp20.000, 8 warna siap pakai). Sisanya hanya Standard & Premium.
+export const BASIC_DESIGN_IDS: readonly string[] = ['rustic', 'floral', 'elegant'];
+
 function hexToHsl(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);
   const r = ((n >> 16) & 255) / 255;

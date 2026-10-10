@@ -41,9 +41,13 @@ const THEME_BY_DESIGN: Record<string, CoverKind> = {
 };
 
 // Untuk pratinjau di builder (paket & tema belum tersimpan). Undangan sungguhan memakai daftar dari API.
+// Layout khusus tema yang juga tersedia di Standard (sinkron dengan STANDARD_THEME_COVERS di API).
+const STANDARD_THEME_COVERS: readonly string[] = ['emas'];
+
 export function coverLayoutsFor(tier: Tier, motif: string): CoverKind[] {
   if (tier === 'BASIC') return [];
-  const special = tier === 'PREMIUM' ? THEME_BY_DESIGN[motif] : undefined;
+  const themed = THEME_BY_DESIGN[motif];
+  const special = tier === 'PREMIUM' || (tier === 'STANDARD' && themed && STANDARD_THEME_COVERS.includes(themed)) ? themed : undefined;
   return special ? [...GENERIC, special] : [...GENERIC];
 }
 

@@ -5,7 +5,7 @@
 // lewat props tidak aman melewati batas itu). Dipanggil dari Server Component (halaman katalog) seperti biasa.
 import type { CSSProperties } from 'react';
 import { CoverLayout } from './invitation/cover';
-import { isCoverKind, resolveCover } from '@/lib/cover-layouts';
+import { defaultCoverLayout, isCoverKind, resolveCover } from '@/lib/cover-layouts';
 import type { DemoPhotos } from '@/lib/sample';
 import type { Theme } from '@/lib/types';
 import { PatternLayer } from './invitation/effects';
@@ -13,22 +13,12 @@ import { HEADING, RADIUS, motifFor } from './invitation/motifs';
 import { DovePair } from './invitation/dove-art';
 import { Monogram, ORNAMENTS } from './invitation/ornaments';
 
-// Posisi deterministik dalam [0, mod) dari sebuah string (mis. id template): dipakai memilih tata letak
-// sampul per kartu supaya berbeda-beda antar kartu tapi stabil di setiap render (SSR = hidrasi, reload tetap sama).
-function pick(seed: string, mod: number) {
-  let h = 0;
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-  return h % mod;
-}
-
 // Miniatur sampul template (statis, ringan) untuk kartu katalog. Memakai motif desain: ornamen sudut,
 // pola latar, dan font judul yang sama dengan undangan sungguhan.
 //
-// Bila template punya pilihan tata letak sampul (Standard/Premium, `coverLayouts`) dan foto demo (`photos`)
-// tersedia, kartu memakai salah satu tata letak berfoto (dipilih deterministik dari `seed`, biasanya id
-// template) supaya grid katalog memperlihatkan variasi tata letak, bukan selalu tampilan ornamen yang sama.
-// Tanpa foto (atau layout terpilih = "ornamen"), tetap jatuh ke tampilan ornamen statis seperti semula.
-// Bila admin menetapkan tata letak bawaan (`coverDefault`), kartu memakai itu, bukan pilihan dari `seed`.
+// Bila template punya pilihan tata letak sampul (Standard/Premium, `coverLayouts`) dan foto demo (`photos`) tersedia, kartu
+// memakai tata letak yang sama dengan demo template & editor: `coverDefault` pilihan admin, kalau kosong yang khusus tema,
+// kalau tidak ada "Foto berbingkai". Tanpa foto (atau layout = "ornamen") jatuh ke tampilan ornamen statis.
 export function TemplateThumb({
   theme,
   imageUrl,
@@ -36,7 +26,6 @@ export function TemplateThumb({
   coverLayouts = [],
   coverDefault,
   photos,
-  seed,
 }: {
   theme: Theme;
   imageUrl?: string | null;
@@ -44,6 +33,7 @@ export function TemplateThumb({
   coverLayouts?: string[];
   coverDefault?: string;
   photos?: DemoPhotos;
+  // Tidak dipakai lagi (dulu memilih tata letak acak per kartu); dipertahankan agar pemanggil lama tetap valid.
   seed?: string;
 }) {
   if (imageUrl) {
@@ -71,8 +61,8 @@ export function TemplateThumb({
   // Salah satu tata letak berfoto milik template ini (mis. hasil desain x paket), dipilih dari `seed` supaya
   // stabil per kartu. Kembali ke "ornamen" (tampilan bawaan di bawah) bila tidak ada, atau fotonya belum ada.
   const kinds = coverLayouts.filter(isCoverKind);
-  const preferred = kinds.find((k) => k === coverDefault);
-  const chosen = preferred ?? (kinds.length > 0 && seed ? kinds[pick(seed, kinds.length)] : undefined);
+  // Aturan yang sama dengan demo template & editor (defaultCoverLayout): pilihan admin, lalu khusus tema, lalu Foto berbingkai.
+  const chosen = kinds.length > 0 ? defaultCoverLayout(kinds, coverDefault) : undefined;
   const resolved = chosen ? resolveCover(chosen, { cover: photos?.cover, groom: photos?.groom, bride: photos?.bride }) : undefined;
 
   const cornersNode = (

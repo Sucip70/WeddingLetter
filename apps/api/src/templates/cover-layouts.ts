@@ -31,9 +31,13 @@ export const THEME_COVER_BY_DESIGN: Record<string, ThemeCover> = {
   kristiani: 'merpati',
 };
 
+// Layout khusus tema yang juga tersedia di Standard (sisanya hanya Premium).
+export const STANDARD_THEME_COVERS: readonly string[] = ['emas'];
+
 // Daftar layout yang boleh dipilih untuk paket dan tema ini (kosong = tanpa pilihan, khusus Basic).
 export function availableCoverLayouts(tier: TemplateTier, motif: string): string[] {
   if (tier === 'BASIC') return [];
-  const special = tier === 'PREMIUM' ? THEME_COVER_BY_DESIGN[motif] : undefined;
+  const themed = THEME_COVER_BY_DESIGN[motif];
+  const special = tier === 'PREMIUM' || (tier === 'STANDARD' && themed && STANDARD_THEME_COVERS.includes(themed)) ? themed : undefined;
   return special ? [...GENERIC_COVERS, special] : [...GENERIC_COVERS];
 }

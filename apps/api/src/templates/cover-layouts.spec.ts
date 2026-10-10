@@ -23,6 +23,7 @@ describe('tata letak sampul', () => {
     expect(availableCoverLayouts('PREMIUM', 'kristiani')).toEqual([...GENERIC_COVERS, 'merpati']);
     expect(availableCoverLayouts('PREMIUM', 'rustic')).toEqual([...GENERIC_COVERS]); // tanpa layout khusus
     expect(availableCoverLayouts('STANDARD', 'jawa')).not.toContain('gapura');
+    expect(availableCoverLayouts('STANDARD', 'elegant')).toEqual([...GENERIC_COVERS, 'emas']); // Bingkai emas juga untuk Standard Elegan
   });
 
   it('withCoverLayouts mengisi daftar sesuai paket & motif template', () => {

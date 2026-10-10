@@ -7,7 +7,7 @@ import { PrismaClient } from "../src/generated/prisma/client.js";
 import { DEMO_SLOTS, defaultKey } from "../src/demo-photos/demo-photos.slots.js";
 import { uploadDefaultFile } from "../src/demo-photos/demo-photos.service.js";
 import { StorageService } from "../src/storage/storage.service.js";
-import { autoPalettes, BASIC_PALETTES, DESIGNS } from "../src/templates/themes.js";
+import { autoPalettes, BASIC_DESIGN_IDS, BASIC_PALETTES, DESIGNS } from "../src/templates/themes.js";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -48,7 +48,7 @@ function buildTemplates() {
   for (const design of DESIGNS) {
     const palettes = design.id === "rustic" ? BASIC_PALETTES : autoPalettes(design);
     for (const tier of ["BASIC", "STANDARD", "PREMIUM"] as const) {
-      if (tier === "BASIC" && design.id !== "rustic") continue;
+      if (tier === "BASIC" && !BASIC_DESIGN_IDS.includes(design.id)) continue;
       const cfg = TIERS[tier];
       rows.push({
         name: LEGACY_NAMES[tier + ":" + design.id] ?? cfg.label + " " + design.name,
@@ -59,7 +59,8 @@ function buildTemplates() {
         layoutSchema: {
           // Gerbang pembuka hanya untuk Premium (admin bisa mengubahnya per template di builder).
           theme: { preset: design.id, fx: cfg.fx, gate: tier === "PREMIUM" ? design.gate : "none" },
-          palettes,
+          // Basic memakai 8 warna siap pakai yang sama untuk semua desainnya; Standard/Premium memakai palet desain.
+          palettes: tier === "BASIC" ? BASIC_PALETTES : palettes,
           sections: cfg.sections,
           galeri: cfg.galeri,
           musik: { allowed: true },

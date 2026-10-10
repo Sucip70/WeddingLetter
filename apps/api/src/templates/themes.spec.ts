@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { applyPalette, normalizeLayout } from './layout.js';
-import { BASIC_PALETTES, DESIGNS, GATE_KINDS, GROUP_ORDER, autoPalettes, designById } from './themes.js';
+import { BASIC_DESIGN_IDS, BASIC_PALETTES, DESIGNS, GATE_KINDS, GROUP_ORDER, autoPalettes, designById } from './themes.js';
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
@@ -19,6 +19,13 @@ describe('registry desain', () => {
     for (const design of DESIGNS) {
       for (const color of [design.primary, design.secondary, design.background, design.text]) expect(color).toMatch(HEX);
     }
+  });
+});
+
+describe('paket Basic', () => {
+  it('desain Basic ada di registry: rustic, floral, elegant', () => {
+    expect([...BASIC_DESIGN_IDS]).toEqual(['rustic', 'floral', 'elegant']);
+    for (const id of BASIC_DESIGN_IDS) expect(designById(id)).toBeDefined();
   });
 });
 
