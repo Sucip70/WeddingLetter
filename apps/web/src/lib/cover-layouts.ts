@@ -4,7 +4,7 @@ import type { Tier } from './types';
 
 export type CoverKind =
   | 'ornamen' | 'penuh' | 'penuh-atas' | 'bingkai' | 'jendela' | 'medali' | 'terbagi' | 'berdua' | 'bingkai-penuh'
-  | 'gapura' | 'hati' | 'portal' | 'kristal' | 'karakter' | 'poster' | 'emas' | 'merpati';
+  | 'gapura' | 'hati' | 'portal' | 'kristal' | 'karakter' | 'poster' | 'emas' | 'merpati' | 'bunga';
 
 // Foto yang dibutuhkan: none = tanpa foto; cover = foto sampul; couple = foto mempelai (atau foto sampul).
 export type CoverNeeds = 'none' | 'cover' | 'couple';
@@ -26,6 +26,7 @@ export const COVER_LAYOUTS: Record<CoverKind, { label: string; hint: string; nee
   karakter: { label: 'Pilih karakter', hint: 'Dua kartu karakter bergaya game.', needs: 'couple', themed: true },
   poster: { label: 'Poster film', hint: 'Poster dengan judul dan kredit.', needs: 'cover', themed: true },
   emas: { label: 'Bingkai emas', hint: 'Foto di dalam lengkungan berukir emas.', needs: 'cover', themed: true },
+  bunga: { label: 'Lengkung bunga', hint: 'Foto di lengkungan putih bermahkota bunga warna-warni.', needs: 'cover', themed: true },
   merpati: { label: 'Sepasang merpati', hint: 'Foto oval dengan dua merpati dan lily.', needs: 'cover', themed: true },
 };
 
@@ -37,12 +38,12 @@ const THEME_BY_DESIGN: Record<string, CoverKind> = {
   'kerajaan-es': 'kristal', salju: 'kristal', natal: 'kristal',
   pixel: 'karakter', 'player-one': 'karakter', rpg: 'karakter', neon: 'karakter',
   hollywood: 'poster', paris: 'poster',
-  elegant: 'emas', kristiani: 'merpati',
+  elegant: 'emas', kristiani: 'merpati', buket: 'bunga',
 };
 
 // Untuk pratinjau di builder (paket & tema belum tersimpan). Undangan sungguhan memakai daftar dari API.
 // Layout khusus tema yang juga tersedia di Standard (sinkron dengan STANDARD_THEME_COVERS di API).
-const STANDARD_THEME_COVERS: readonly string[] = ['emas'];
+const STANDARD_THEME_COVERS: readonly string[] = ['emas', 'bunga'];
 
 export function coverLayoutsFor(tier: Tier, motif: string): CoverKind[] {
   if (tier === 'BASIC') return [];

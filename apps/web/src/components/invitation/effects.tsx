@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useLayoutEffect } from 'react';
 import type { CSSProperties, ReactNode, RefObject } from 'react';
+import { FloralArch } from './bloom-parts';
 import { Dove, LilyBloom } from './dove-art';
 import type { CoverFxKind, FrameKind, ParticleKind, ParticleMode, PatternKind } from './motifs';
 
@@ -14,7 +15,7 @@ const rand = (i: number, salt: number) => {
 
 // ---------- partikel ----------
 
-const SIZE: Record<ParticleKind, number> = { petal: 15, leaf: 16, maple: 18, snow: 13, heart: 16, star: 12, sparkle: 15, confetti: 9, bubble: 22, firefly: 7, pixel: 9, lantern: 17, bat: 22, coin: 13, dust: 9, feather: 22 };
+const SIZE: Record<ParticleKind, number> = { petal: 15, leaf: 16, maple: 18, snow: 13, heart: 16, star: 12, sparkle: 15, confetti: 9, bubble: 22, firefly: 7, pixel: 9, lantern: 17, bat: 22, coin: 13, dust: 9, feather: 22, blossom: 17, bloomflower: 15 };
 const COLORS: Record<ParticleKind, string[]> = {
   petal: ['var(--p)', 'var(--s)', 'color-mix(in srgb, var(--p) 45%, #fff)'],
   leaf: ['var(--p)', 'var(--s)'],
@@ -31,6 +32,8 @@ const COLORS: Record<ParticleKind, string[]> = {
   bat: ['var(--p)', 'var(--tx)'],
   coin: ['#f2c231', '#e8a90c'],
   dust: ['var(--p)', 'color-mix(in srgb, var(--p) 55%, #fff)', '#f6dc96'],
+  blossom: ['#f6b3c3', '#f9b98e', '#c0a6ee', '#f8d86e', '#ffffff', '#ec7f9d', '#9cc7ee'],
+  bloomflower: ['#f6b3c3', '#c0a6ee', '#f9b98e', '#ffffff', '#9cc7ee'],
   feather: ['color-mix(in srgb, var(--p) 20%, #fff)', 'color-mix(in srgb, var(--s) 40%, #fff)', 'color-mix(in srgb, var(--p) 38%, #fff)'],
 };
 
@@ -109,6 +112,22 @@ function Shape({ kind }: { kind: ParticleKind }) {
           <path d="M12 8c-2-3-6-4-10-3 2 1 3 3 3 5 1-1 2-1 3 0 1-1 3-1 4 1 1-2 3-2 4-1 1-1 2-1 3 0 0-2 1-4 3-5-4-1-8 0-10 3z" />
         </svg>
       );
+    case 'blossom':
+      return (
+        <svg {...common} fill="currentColor" style={{ filter: 'drop-shadow(0 1px 1.5px rgba(120,60,90,.22))' }}>
+          <path d="M12 1.5C17.5 6 18 14 12 22.5C6 14 6.5 6 12 1.5Z" stroke="rgba(120,60,90,.28)" strokeWidth=".6" />
+          <path d="M12 5V18" stroke="rgba(255,255,255,.6)" strokeWidth=".8" strokeLinecap="round" />
+        </svg>
+      );
+    case 'bloomflower':
+      return (
+        <svg {...common} viewBox="-12 -12 24 24" style={{ filter: 'drop-shadow(0 1px 1.5px rgba(120,60,90,.22))' }}>
+          {[0, 72, 144, 216, 288].map((a) => (
+            <circle key={a} cx="0" cy="-5.6" r="4.8" transform={`rotate(${a})`} fill="currentColor" stroke="rgba(120,60,90,.28)" strokeWidth=".5" />
+          ))}
+          <circle r="2.6" fill="#f8d86e" />
+        </svg>
+      );
     case 'feather':
       return (
         <svg {...common} fill="currentColor" style={{ filter: 'drop-shadow(0 1px 1.5px rgba(70,90,130,.3))' }}>
@@ -161,7 +180,7 @@ export function Particles({ kind, count, mode, height, enter = false }: { kind: 
         } as CSSProperties;
         return (
           <span key={i} className={`wl-particle ${MODE_CLASS[mode]}`} style={style}>
-            <Shape kind={kind} />
+            <Shape kind={kind === 'blossom' && i % 3 === 0 ? 'bloomflower' : kind} />
           </span>
         );
       })}
@@ -273,6 +292,21 @@ export function CoverFx({ kind, animate }: { kind: CoverFxKind; animate: boolean
           ))}
         </div>
       );
+    case 'bloom':
+      // Buket Pengantin: awan pastel (blush, lavender, kuning mentega, biru langit) yang melayang sangat pelan.
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+          {[
+            { x: '-14%', y: '-8%', s: '66%', c: 'rgba(246,179,195,.5)', bx: '18px', by: '14px', d: 0 },
+            { x: '52%', y: '-10%', s: '62%', c: 'rgba(192,166,238,.42)', bx: '-16px', by: '12px', d: -4 },
+            { x: '-18%', y: '62%', s: '64%', c: 'rgba(156,199,238,.4)', bx: '14px', by: '-14px', d: -8 },
+            { x: '50%', y: '66%', s: '66%', c: 'rgba(248,216,110,.36)', bx: '-18px', by: '-12px', d: -2 },
+            { x: '18%', y: '30%', s: '60%', c: 'rgba(255,255,255,.9)', bx: '8px', by: '8px', d: -6 },
+          ].map((b, i) => (
+            <div key={i} className={`absolute rounded-full ${anim('wl-blob')}`} style={{ left: b.x, top: b.y, width: b.s, aspectRatio: '1', background: `radial-gradient(circle, ${b.c} 0, transparent 68%)`, animationDelay: `${b.d}s`, ['--bx' as string]: b.bx, ['--by' as string]: b.by }} />
+          ))}
+        </div>
+      );
     case 'halo':
       // Elegan: cahaya keemasan lembut dari atas + sinar sangat tipis yang berputar pelan.
       return (
@@ -367,6 +401,8 @@ export function PhotoFrame({ frame, src, label, placeholders, letterFont, tilt =
   switch (frame) {
     case 'deco':
       return <DecoArch>{filler('h-56 w-44')}</DecoArch>;
+    case 'bloom':
+      return <FloralArch w={188} h={236}>{filler('h-56 w-44')}</FloralArch>;
     case 'dove':
       return <DoveArch>{filler('h-56 w-44')}</DoveArch>;
     case 'arch':

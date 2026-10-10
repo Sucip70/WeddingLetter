@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { applyPalette, normalizeLayout } from './layout.js';
-import { BASIC_DESIGN_IDS, BASIC_PALETTES, DESIGNS, GATE_KINDS, GROUP_ORDER, autoPalettes, designById } from './themes.js';
+import { BASIC_DESIGN_IDS, BASIC_PALETTES, basicPalettes, DESIGNS, GATE_KINDS, GROUP_ORDER, autoPalettes, designById } from './themes.js';
 
 const HEX = /^#[0-9a-f]{6}$/i;
 
@@ -23,9 +23,40 @@ describe('registry desain', () => {
 });
 
 describe('paket Basic', () => {
-  it('desain Basic ada di registry: rustic, floral, elegant', () => {
-    expect([...BASIC_DESIGN_IDS]).toEqual(['rustic', 'floral', 'elegant']);
+  it('desain Basic ada di registry: rustic, floral, elegant, buket', () => {
+    expect([...BASIC_DESIGN_IDS]).toEqual(['rustic', 'floral', 'elegant', 'buket']);
     for (const id of BASIC_DESIGN_IDS) expect(designById(id)).toBeDefined();
+  });
+});
+
+describe('Buket Pengantin', () => {
+  const lum = (hex: string) => {
+    const n = parseInt(hex.slice(1), 16);
+    const c = [16, 8, 0].map((s) => {
+      const v = ((n >> s) & 255) / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * c[0]! + 0.7152 * c[1]! + 0.0722 * c[2]!;
+  };
+  const contrast = (a: string, b: string) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+
+  it('desain klasik bergerbang "bouquet", tersedia di Basic, dan paket Basic memakai palet desain (bukan 8 warna bumi)', () => {
+    const d = designById('buket')!;
+    expect(d.group).toBe('klasik');
+    expect(d.gate).toBe('bouquet');
+    expect(BASIC_DESIGN_IDS).toContain('buket');
+    expect(basicPalettes('buket')).toEqual(autoPalettes(d));
+    expect(basicPalettes('rustic')).toBe(BASIC_PALETTES);
+  });
+
+  it('latar tetap putih di semua palet dan warna utama cukup kontras (judul & tombol) di atas putih', () => {
+    const palettes = autoPalettes(designById('buket')!);
+    expect(palettes.length).toBeGreaterThanOrEqual(5);
+    for (const p of palettes) {
+      expect(p.background.toLowerCase()).toBe('#ffffff');
+      expect(contrast(p.primary, '#ffffff')).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(p.text, '#ffffff')).toBeGreaterThanOrEqual(7);
+    }
   });
 });
 
@@ -76,7 +107,7 @@ describe('palet warna', () => {
     expect(autoPalettes(designById('natal')!)).toEqual([]);
   });
 
-  it.each(['elegant', 'kristiani'])('%s memakai palet pilihan tangan (bukan geseran rona): id unik, warna valid, latar terang & teks gelap', (id) => {
+  it.each(['elegant', 'kristiani', 'buket'])('%s memakai palet pilihan tangan (bukan geseran rona): id unik, warna valid, latar terang & teks gelap', (id) => {
     const palettes = autoPalettes(designById(id)!);
     expect(palettes.length).toBeGreaterThan(0);
     expect(new Set(palettes.map((p) => p.id)).size).toBe(palettes.length);

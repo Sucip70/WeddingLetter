@@ -3,12 +3,12 @@
 import type { BodyFont, HeadingFont } from '@/lib/types';
 import type { OrnamentKind } from './ornaments';
 
-export type ParticleKind = 'petal' | 'leaf' | 'maple' | 'snow' | 'heart' | 'star' | 'sparkle' | 'confetti' | 'bubble' | 'firefly' | 'pixel' | 'lantern' | 'bat' | 'coin' | 'dust' | 'feather';
+export type ParticleKind = 'petal' | 'leaf' | 'maple' | 'snow' | 'heart' | 'star' | 'sparkle' | 'confetti' | 'bubble' | 'firefly' | 'pixel' | 'lantern' | 'bat' | 'coin' | 'dust' | 'feather' | 'blossom' | 'bloomflower';
 export type ParticleMode = 'fall' | 'rise' | 'twinkle' | 'drift';
 export type PatternKind = 'none' | 'dots' | 'kawung' | 'zigzag' | 'diamond' | 'scallop' | 'grid' | 'stars' | 'star8' | 'hearts' | 'leaves' | 'stripes' | 'cross';
-export type FrameKind = 'arch' | 'oval' | 'round' | 'square' | 'diamond' | 'pixel' | 'polaroid' | 'hex' | 'notch' | 'deco' | 'dove';
-export type CountdownKind = 'soft' | 'outline' | 'pixel' | 'neon' | 'ticket' | 'round' | 'flip' | 'luxe' | 'sky';
-export type CoverFxKind = 'none' | 'aurora' | 'rays' | 'curtain' | 'scanlines' | 'spotlight' | 'clouds' | 'halo' | 'sky';
+export type FrameKind = 'arch' | 'oval' | 'round' | 'square' | 'diamond' | 'pixel' | 'polaroid' | 'hex' | 'notch' | 'deco' | 'dove' | 'bloom';
+export type CountdownKind = 'soft' | 'outline' | 'pixel' | 'neon' | 'ticket' | 'round' | 'flip' | 'luxe' | 'sky' | 'bloom';
+export type CoverFxKind = 'none' | 'aurora' | 'rays' | 'curtain' | 'scanlines' | 'spotlight' | 'clouds' | 'halo' | 'sky' | 'bloom';
 export type RevealKind = 'rise' | 'zoom' | 'blur' | 'slide';
 export type Radius = 'soft' | 'mid' | 'sharp' | 'pill';
 
@@ -25,11 +25,13 @@ export interface Motif {
   copy?: { kicker?: string; open?: string };
   // Tampilan khusus: 'kraft' = kertas kraft, kartu berjahitan berpita perekat, tali goni (lihat .wl-kraft di globals.css).
   // 'gilded' = Elegan: kertas gading bermarmer, garis & huruf berlapis emas, bingkai berukir (lihat .wl-gilded).
-  skin?: 'kraft' | 'gilded' | 'dove';
+  skin?: 'kraft' | 'gilded' | 'dove' | 'bloom';
   // Menimpa font judul tema (mis. rustic memakai Fraunces yang hangat walau snapshot lama bertulis serif).
   heading?: HeadingFont;
   // Font khusus nama mempelai (sampul, gerbang, kartu mempelai); bawaan = `heading`.
   names?: HeadingFont;
+  // Ukuran ornamen sudut sampul (kelas lebar Tailwind): atas & bawah; bawaan w-24 untuk semua sudut.
+  cornerSize?: { top: string; bottom: string };
 }
 
 const m = (
@@ -59,6 +61,9 @@ export const MOTIFS: Record<string, Motif> = {
 
   // Religi
   islami: m('star8', 'star8', 'arch', 'outline', 'spotlight', ['star', 14, 'twinkle'], 'mid'),
+  // Buket Pengantin: putih bersih dihiasi bunga warna-warni (mawar, peony, aster, anemon, kosmos)
+  buket: { ...m('flora', 'none', 'bloom', 'bloom', 'bloom', ['blossom', 14, 'fall'], 'pill', 'rise'), skin: 'bloom', heading: 'serif', names: 'script', cornerSize: { top: 'w-36 [@media(max-height:700px)]:w-28', bottom: 'w-28 [@media(max-height:700px)]:w-24' } },
+
   // Sepasang Merpati (id lama 'kristiani' dipertahankan: dipakai snapshot template yang sudah tersimpan)
   kristiani: { ...m('lily', 'none', 'dove', 'sky', 'sky', ['feather', 12, 'fall'], 'pill', 'rise'), skin: 'dove', heading: 'script', names: 'script' },
   buddha: m('lotus', 'scallop', 'round', 'round', 'aurora', ['lantern', 8, 'rise']),

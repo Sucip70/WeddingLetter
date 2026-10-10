@@ -581,3 +581,95 @@ body {
   color: transparent !important;
   -webkit-text-fill-color: transparent;
 }
+
+/* ===== Kulit "bloom" (Buket Pengantin): putih bersih, kartu bersudut bulat dengan untaian bunga di tepinya, tombol bulat ===== */
+@keyframes wl-blob {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(var(--bx, 14px), var(--by, -10px), 0) scale(1.12); }
+}
+.wl-blob { animation: wl-blob 15s ease-in-out infinite; will-change: transform; }
+@media (prefers-reduced-motion: reduce) { .wl-blob { animation: none !important; } }
+
+.wl-bloom .wl-card {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--s) 24%, transparent) !important;
+  border-radius: 26px !important;
+  background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--s) 3%, #fff)) !important;
+  box-shadow: 0 28px 42px -30px color-mix(in srgb, var(--s) 80%, transparent), inset 0 1px 0 #fff;
+  padding-top: 3rem !important;
+}
+.wl-bloom li.wl-card { padding-top: 1rem !important; }
+/* untaian bunga menggantung di tepi atas kartu */
+.wl-bloom .wl-card::before,
+.wl-bloom .wl-block.wl-tint::before {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  background-image: var(--bloom-garland);
+  background-repeat: repeat-x;
+  background-size: auto 54px;
+  background-position: center top;
+  height: 54px;
+}
+.wl-bloom .wl-card::before { left: 18px; right: 18px; top: -27px; }
+.wl-bloom[data-armed] .wl-reveal .wl-card::before { opacity: 0; transform: translateY(10px) scale(0.94); transition: opacity 0.9s ease 0.25s, transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s; }
+.wl-bloom[data-armed] .wl-reveal.is-in .wl-card::before { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .wl-bloom[data-armed] .wl-reveal .wl-card::before { opacity: 1; transform: none; transition: none; } }
+.wl-bloom li.wl-card::before { display: none; }
+.wl-bloom .wl-block.wl-tint::before { left: 0; right: 0; top: -27px; z-index: 1; }
+.wl-bloom .wl-card h3 {
+  font-family: var(--font-cormorant), serif !important;
+  font-size: 2rem !important;
+  font-style: italic;
+  font-weight: 600 !important;
+  line-height: 1.1;
+}
+.wl-bloom .wl-ev-date { font-size: 1.35rem; font-weight: 600; }
+.wl-bloom .wl-ev-time { letter-spacing: 0.14em; opacity: 0.8; }
+
+.wl-bloom .wl-block.wl-tint {
+  border-top: 1px solid color-mix(in srgb, var(--s) 16%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--s) 16%, transparent);
+}
+
+.wl-bloom .wl-btn {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--p) 88%, #fff), var(--p)) !important;
+  border-radius: 999px !important;
+  letter-spacing: 0.04em;
+  box-shadow: 0 16px 24px -14px color-mix(in srgb, var(--p) 85%, transparent) !important;
+}
+.wl-bloom .wl-btn-o { border-radius: 999px !important; }
+.wl-bloom form input,
+.wl-bloom form textarea,
+.wl-bloom form label,
+.wl-bloom form button[aria-pressed] { border-radius: 18px !important; }
+.wl-bloom form button[type='submit'] {
+  border-radius: 999px !important;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--p) 88%, #fff), var(--p)) !important;
+}
+.wl-bloom .wl-fab { background: linear-gradient(135deg, var(--s), var(--p)) !important; }
+
+.wl-bloom .wl-gal {
+  border-radius: 22px !important;
+  box-shadow: 0 0 0 5px #fff, 0 0 0 6px color-mix(in srgb, var(--s) 24%, transparent), 0 26px 32px -24px color-mix(in srgb, var(--s) 70%, transparent);
+}
+.wl-bloom .wl-gal:nth-child(3n + 2) { rotate: 1.2deg; }
+.wl-bloom .wl-gal:nth-child(3n + 3) { rotate: -1.2deg; }
+
+.wl-bloom .wl-quote { font-family: var(--font-cormorant), serif; font-size: 1.5rem; line-height: 1.5; font-style: italic; }
+.wl-bloom .wl-quote::before {
+  content: '';
+  display: block;
+  width: 96px;
+  height: 58px;
+  margin: 0 auto 8px;
+  background: var(--bloom-mini) center / contain no-repeat;
+}
+
+/* Goyangan buket pada gerbang "Lempar buket" (bouquet-gate.tsx) */
+@keyframes wl-sway {
+  0%, 100% { transform: rotate(-1.8deg) translateY(0); }
+  50% { transform: rotate(1.8deg) translateY(-6px); }
+}
+.wl-sway { animation: wl-sway 5.4s ease-in-out infinite; transform-origin: 50% 100%; }
+@media (prefers-reduced-motion: reduce) { .wl-sway { animation: none !important; } }

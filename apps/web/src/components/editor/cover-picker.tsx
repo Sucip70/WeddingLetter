@@ -129,6 +129,17 @@ const ICONS: Record<CoverKind, ReactNode> = {
       <rect x={13} y={45} width={14} height={4.5} fill="#fff" />
     </>
   ),
+  bunga: (
+    <>
+      <path d="M10 36V22a10 10 0 0 1 20 0v14Z" {...STROKE} />
+      <path d="M12.5 34V22a7.500 7.500 0 0 1 15 0v12Z" {...SOFT} />
+      <circle cx={20} cy={10.500} r={2.200} {...SOLID} />
+      <circle cx={11} cy={15} r={1.800} {...SOLID} opacity={0.7} />
+      <circle cx={29} cy={15} r={1.800} {...SOLID} opacity={0.7} />
+      {text(41, 18)}
+      {button(47)}
+    </>
+  ),
   merpati: (
     <>
       <ellipse cx={20} cy={25} rx={9} ry={11} {...STROKE} />

@@ -10,6 +10,7 @@ import type { DemoPhotos } from '@/lib/sample';
 import type { Theme } from '@/lib/types';
 import { PatternLayer } from './invitation/effects';
 import { HEADING, RADIUS, motifFor } from './invitation/motifs';
+import { FloralMonogram } from './invitation/bloom-parts';
 import { DovePair } from './invitation/dove-art';
 import { Monogram, ORNAMENTS } from './invitation/ornaments';
 
@@ -46,15 +47,19 @@ export function TemplateThumb({
   // Elegan: nama beraksara tulisan tangan berlapis emas + monogram (kelas .wl-root/.wl-gilded membawa variabel --foil).
   const gilded = motif.skin === 'gilded';
   const nf = HEADING[motif.names ?? motif.heading ?? theme.headingFont] ?? hf;
+  // Buket Pengantin: putih bersih dengan semburat pastel, monogram karangan bunga, dan sudut berbunga yang lebih besar.
+  const bloom = motif.skin === 'bloom';
   const nameSize = gilded ? 0.58 : 0.62;
-  const rootClass = gilded ? 'wl-root wl-gilded' : '';
+  const rootClass = gilded ? 'wl-root wl-gilded' : bloom ? 'wl-bloom' : '';
   const dark = motif.countdown === 'neon' || motif.countdown === 'pixel';
   const rootStyle = {
     '--p': theme.primary,
     '--s': theme.secondary,
     '--bg': theme.background,
     '--tx': theme.text,
-    background: `linear-gradient(165deg, color-mix(in srgb, ${theme.primary} 22%, ${theme.background}), ${theme.background} 52%, color-mix(in srgb, ${theme.primary} 10%, color-mix(in srgb, ${theme.secondary} 12%, ${theme.background})))`,
+    background: bloom
+      ? `linear-gradient(180deg, color-mix(in srgb, ${theme.secondary} 10%, #fff), #fff 34%, #fff 66%, color-mix(in srgb, ${theme.primary} 9%, #fff))`
+      : `linear-gradient(165deg, color-mix(in srgb, ${theme.primary} 22%, ${theme.background}), ${theme.background} 52%, color-mix(in srgb, ${theme.primary} 10%, color-mix(in srgb, ${theme.secondary} 12%, ${theme.background})))`,
     color: theme.primary,
   } as CSSProperties;
 
@@ -67,10 +72,10 @@ export function TemplateThumb({
 
   const cornersNode = (
     <>
-      <orn.Corner className="absolute left-1.5 top-1.5 w-14" rotate={0} />
-      <orn.Corner className="absolute right-1.5 top-1.5 w-14" rotate={90} />
-      <orn.Corner className="absolute bottom-1.5 right-1.5 w-14" rotate={180} />
-      <orn.Corner className="absolute bottom-1.5 left-1.5 w-14" rotate={270} />
+      <orn.Corner className={`absolute left-1.5 top-1.5 ${bloom ? 'w-24' : 'w-14'}`} rotate={0} />
+      <orn.Corner className={`absolute right-1.5 top-1.5 ${bloom ? 'w-24' : 'w-14'}`} rotate={90} />
+      <orn.Corner className={`absolute bottom-1.5 right-1.5 ${bloom ? 'w-[4.4rem]' : 'w-14'}`} rotate={180} />
+      <orn.Corner className={`absolute bottom-1.5 left-1.5 ${bloom ? 'w-[4.4rem]' : 'w-14'}`} rotate={270} />
     </>
   );
 
@@ -114,6 +119,7 @@ export function TemplateThumb({
       {cornersNode}
       {gilded && <Monogram a="A" b="S" size={38} className="relative mb-2" />}
       {motif.skin === 'dove' && <DovePair size="w-[2.6rem]" className="relative mb-1" />}
+      {bloom && <FloralMonogram a="A" b="S" size={70} className="relative mb-1" />}
       <p className="relative text-[8px] uppercase tracking-[0.3em]" style={{ color: theme.text, opacity: 0.7, ...(gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 7, letterSpacing: '0.38em' } : null) }}>{motif.copy?.kicker ?? 'Undangan Pernikahan'}</p>
       <p
         className={`relative mt-2 ${gilded ? 'wl-foil leading-tight' : 'leading-none'}`}
@@ -121,11 +127,11 @@ export function TemplateThumb({
       >
         Andi & Sinta
       </p>
-      <orn.Divider className="relative mt-3 w-16 opacity-70" />
+      <orn.Divider className={bloom ? 'relative mt-1 w-32' : 'relative mt-3 w-16 opacity-70'} />
       <p className="relative mt-3 text-[9px] tracking-[0.25em]" style={{ color: theme.text, opacity: 0.75 }}>12 . 12 . 2026</p>
       <span
         className="relative mt-4 px-3 py-1 text-[8px] font-medium tracking-wide text-white"
-        style={{ background: gilded ? 'var(--foil)' : dark ? theme.secondary : theme.primary, color: gilded ? 'color-mix(in srgb, var(--tx) 92%, #000)' : dark ? '#111' : '#fff', borderRadius: gilded ? 2 : motif.radius === 'sharp' ? 0 : motif.radius === 'mid' ? 6 : 999 }}
+        style={{ background: gilded ? 'var(--foil)' : bloom ? 'linear-gradient(135deg, color-mix(in srgb, var(--p) 88%, #fff), var(--p))' : dark ? theme.secondary : theme.primary, color: gilded ? 'color-mix(in srgb, var(--tx) 92%, #000)' : dark ? '#111' : '#fff', borderRadius: gilded ? 2 : motif.radius === 'sharp' ? 0 : motif.radius === 'mid' ? 6 : 999 }}
       >
         {motif.copy?.open ?? 'Buka Undangan'}
       </span>

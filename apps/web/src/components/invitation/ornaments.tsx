@@ -1,9 +1,10 @@
 // Ornamen SVG untuk undangan (warna mengikuti currentColor sehingga ikut tema). Tiap "jenis" ornamen punya
 // tiga bagian: Corner (sudut sampul), Divider (pemisah judul), Sprig (hiasan kecil di bawah foto/footer).
+import { BloomCorner, BloomDivider, BloomSprig } from './bloom-parts';
 
 import { DOVE_SILHOUETTE, LilyShapes } from './dove-art';
 
-export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily';
+export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily' | 'flora';
 
 interface CornerProps {
   className?: string;
@@ -449,7 +450,14 @@ const Lily: OrnamentSet = {
   ),
 };
 
-export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco, lily: Lily };
+// ----- flora (Buket Pengantin): karangan bunga warna-warni (digambar di flora-comp.ts, dipasang lewat bloom-parts.tsx) -----
+const Flora: OrnamentSet = {
+  Corner: ({ className = 'w-40', rotate = 0 }) => <BloomCorner className={className} rotate={rotate} />,
+  Divider: ({ className = 'w-56' }) => <BloomDivider className={className} />,
+  Sprig: ({ className = 'w-28', flip }) => <BloomSprig className={className} flip={flip} />,
+};
+
+export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco, lily: Lily, flora: Flora };
 
 // Ekspor lama (kartu katalog, halaman lain) = jenis vine.
 export const Corner = Vine.Corner;

@@ -6,7 +6,7 @@ import type { TemplateTier } from '../generated/prisma/client.js';
 // Tersedia untuk Standard dan Premium.
 export const GENERIC_COVERS = ['ornamen', 'penuh', 'penuh-atas', 'bingkai', 'jendela', 'medali', 'terbagi', 'berdua', 'bingkai-penuh'] as const;
 // Khusus tema, hanya Premium.
-export const THEME_COVERS = ['gapura', 'hati', 'portal', 'kristal', 'karakter', 'poster', 'emas', 'merpati'] as const;
+export const THEME_COVERS = ['gapura', 'hati', 'portal', 'kristal', 'karakter', 'poster', 'emas', 'merpati', 'bunga'] as const;
 
 export const COVER_KINDS: string[] = [...GENERIC_COVERS, ...THEME_COVERS];
 export type ThemeCover = (typeof THEME_COVERS)[number];
@@ -29,10 +29,12 @@ export const THEME_COVER_BY_DESIGN: Record<string, ThemeCover> = {
   elegant: 'emas',
   // sepasang merpati (id 'kristiani': lihat themes.ts)
   kristiani: 'merpati',
+  // lengkung putih bermahkota bunga
+  buket: 'bunga',
 };
 
 // Layout khusus tema yang juga tersedia di Standard (sisanya hanya Premium).
-export const STANDARD_THEME_COVERS: readonly string[] = ['emas'];
+export const STANDARD_THEME_COVERS: readonly string[] = ['emas', 'bunga'];
 
 // Daftar layout yang boleh dipilih untuk paket dan tema ini (kosong = tanpa pilihan, khusus Basic).
 export function availableCoverLayouts(tier: TemplateTier, motif: string): string[] {

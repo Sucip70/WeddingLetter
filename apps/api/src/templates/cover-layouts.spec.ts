@@ -21,6 +21,9 @@ describe('tata letak sampul', () => {
     expect(availableCoverLayouts('PREMIUM', 'hollywood')).toEqual([...GENERIC_COVERS, 'poster']);
     expect(availableCoverLayouts('PREMIUM', 'elegant')).toEqual([...GENERIC_COVERS, 'emas']);
     expect(availableCoverLayouts('PREMIUM', 'kristiani')).toEqual([...GENERIC_COVERS, 'merpati']);
+    expect(availableCoverLayouts('PREMIUM', 'buket')).toEqual([...GENERIC_COVERS, 'bunga']);
+    expect(availableCoverLayouts('STANDARD', 'buket')).toEqual([...GENERIC_COVERS, 'bunga']); // Lengkung bunga juga untuk Standard
+    expect(availableCoverLayouts('STANDARD', 'kristiani')).toEqual([...GENERIC_COVERS]); // Merpati hanya Premium
     expect(availableCoverLayouts('PREMIUM', 'rustic')).toEqual([...GENERIC_COVERS]); // tanpa layout khusus
     expect(availableCoverLayouts('STANDARD', 'jawa')).not.toContain('gapura');
     expect(availableCoverLayouts('STANDARD', 'elegant')).toEqual([...GENERIC_COVERS, 'emas']); // Bingkai emas juga untuk Standard Elegan

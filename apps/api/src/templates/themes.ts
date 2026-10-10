@@ -45,6 +45,7 @@ export const GATE_LABEL = {
   kayon: 'Kayon wayang',
   twine: 'Surat bertali goni',
   doves: 'Sepasang merpati',
+  bouquet: 'Lempar buket',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export const GATE_KINDS = Object.keys(GATE_LABEL) as GateKind[];
@@ -90,6 +91,7 @@ const BASE_DESIGNS: Omit<Design, 'gate'>[] = [
   // ---- Klasik ----
   d('rustic', 'Rustic Klasik', 'klasik', 'Hangat dan bersahaja dengan nuansa kayu dan tanah.', ['#8a5a3c', '#c9a27e', '#fbf6ef', '#3b2a20'], ['serif', 'sans']),
   d('floral', 'Floral Romantis', 'klasik', 'Bunga-bunga lembut dengan tulisan tangan yang manis.', ['#c4587a', '#e9b7c6', '#fff7f9', '#4a2c38'], ['script', 'sans']),
+  d('buket', 'Buket Pengantin', 'klasik', 'Putih bersih dihiasi mawar, peony, dan bunga warna-warni dalam satu buket.', ['#4f7a63', '#ef8fa8', '#ffffff', '#33423a'], ['script', 'serif']),
   d('elegant', 'Elegan Emas', 'klasik', 'Mewah dan bersahaja dengan aksen emas.', ['#b08d3c', '#1f2a44', '#f7f5f0', '#1f2a44'], ['serif', 'serif']),
 
   // id 'kristiani' dipertahankan (dipakai theme.preset/motif pada template yang sudah tersimpan); nama tampilan sudah umum.
@@ -149,7 +151,7 @@ const DESIGN_GATES: Record<string, GateKind> = {
   'kerajaan-es': 'frost', ceria: 'balloons', 'sakura-anime': 'sakura', dongeng: 'book',
   pixel: 'pressstart', 'player-one': 'loading', rpg: 'door', neon: 'neon',
   hollywood: 'curtain', galaksi: 'portal', sihir: 'portal', paris: 'envelope',
-  semi: 'bloom', panas: 'waves', gugur: 'leaves', salju: 'frost',
+  buket: 'bouquet', semi: 'bloom', panas: 'waves', gugur: 'leaves', salju: 'frost',
 };
 
 export const DESIGNS: Design[] = BASE_DESIGNS.map((x) => ({ ...x, gate: DESIGN_GATES[x.id]! }));
@@ -172,7 +174,7 @@ export const BASIC_PALETTES: Palette[] = [
 ];
 
 // Desain klasik yang punya paket Basic (Rp20.000, 8 warna siap pakai). Sisanya hanya Standard & Premium.
-export const BASIC_DESIGN_IDS: readonly string[] = ['rustic', 'floral', 'elegant'];
+export const BASIC_DESIGN_IDS: readonly string[] = ['rustic', 'floral', 'elegant', 'buket'];
 
 function hexToHsl(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);
@@ -203,7 +205,23 @@ export function shiftHue(hex: string, degrees: number) {
 
 // Palet pilihan tangan untuk desain yang warnanya tidak cocok digeser rona (Elegan: emas bila digeser jadi hijau limau / merah).
 // Emas/logam tetap jadi aksen; warna gelap (teks) dipakai juga untuk gerbang & hitung mundur, jadi harus pekat.
+// Buket Pengantin: latar tetap putih; warna sekunder = warna bunga utama (mawar), jadi tiap palet mengganti "suasana" buketnya.
+// Palet pertama sama dengan warna bawaan desain. Warna utama cukup gelap (≥ 4:1 di atas putih) karena dipakai untuk judul & tombol.
+const BUKET_PALETTES: Palette[] = [
+  { id: 'blush', name: 'Blush & Sage', primary: '#4f7a63', secondary: '#ef8fa8', background: '#ffffff', text: '#33423a' },
+  { id: 'persik', name: 'Persik & Zaitun', primary: '#657a3d', secondary: '#f4a06f', background: '#ffffff', text: '#3b3f2a' },
+  { id: 'lavender', name: 'Lavender', primary: '#7a64a8', secondary: '#b79fe2', background: '#ffffff', text: '#35304f' },
+  { id: 'langit', name: 'Biru Langit', primary: '#476f9a', secondary: '#8fbbe8', background: '#ffffff', text: '#2f3b4d' },
+  { id: 'mentega', name: 'Kuning Mentega', primary: '#8d6f21', secondary: '#f6cf5f', background: '#ffffff', text: '#4a3d1e' },
+  { id: 'mawar', name: 'Mawar', primary: '#a8506b', secondary: '#e8789a', background: '#ffffff', text: '#4a2c38' },
+  { id: 'koral', name: 'Koral', primary: '#ad5642', secondary: '#f4806f', background: '#ffffff', text: '#4a2b24' },
+];
+
+// Palet khusus paket Basic per desain; desain yang tidak tercantum memakai 8 warna siap pakai (BASIC_PALETTES).
+export const basicPalettes = (designId: string): Palette[] => (designId === 'buket' ? BUKET_PALETTES : BASIC_PALETTES);
+
 const CURATED_PALETTES: Record<string, Palette[]> = {
+  buket: BUKET_PALETTES,
   kristiani: [
     { id: "sage", name: "Hijau Sage", primary: "#6f8f82", secondary: "#d9c9a0", background: "#f8faf6", text: "#25352e" },
     { id: "blush", name: "Merah Muda Lembut", primary: "#b07f8d", secondary: "#e3cfa6", background: "#fcf8f7", text: "#432f37" },

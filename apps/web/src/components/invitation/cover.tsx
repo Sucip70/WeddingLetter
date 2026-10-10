@@ -6,6 +6,7 @@
 import { Fragment, useId } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { CoverKind } from '@/lib/cover-layouts';
+import { FloralArch } from './bloom-parts';
 import { Dove, LilyBloom } from './dove-art';
 import { DecoArch, Particles, PatternLayer, PhotoFrame } from './effects';
 import type { FrameKind } from './motifs';
@@ -440,6 +441,30 @@ export function CoverLayout(p: CoverProps) {
               </div>
             </div>
             {namesEl(0.74, false)}
+            {dateEl(false)}
+            {guestEl(false)}
+            {buttonEl(false, 'mt-5')}
+          </div>
+        </>
+      );
+    }
+
+    // ---------- lengkung bunga (Buket Pengantin): foto di lengkungan putih bermahkota bunga ----------
+    case 'bunga': {
+      const e = enter(300);
+      return (
+        <>
+          {backdrop}
+          <div className={column}>
+            {kickerEl(false)}
+            <div className={`${p.decorative ? 'mt-6' : 'mt-12'} ${p.premium ? 'wl-float' : ''}`}>
+              <div className={e.className} style={e.style}>
+                <FloralArch w={p.decorative ? 148 : 196} h={p.decorative ? 190 : 252}>
+                  <img src={photoOf.cover} alt="" className="h-full w-full object-cover" />
+                </FloralArch>
+              </div>
+            </div>
+            {namesEl(p.decorative ? 0.6 : 0.78, false)}
             {dateEl(false)}
             {guestEl(false)}
             {buttonEl(false, 'mt-5')}
