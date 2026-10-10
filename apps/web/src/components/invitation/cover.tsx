@@ -6,7 +6,9 @@
 import { Fragment, useId } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { CoverKind } from '@/lib/cover-layouts';
-import { Particles, PatternLayer, PhotoFrame } from './effects';
+import { FloralArch } from './bloom-parts';
+import { Dove, LilyBloom } from './dove-art';
+import { DecoArch, Particles, PatternLayer, PhotoFrame } from './effects';
 import type { FrameKind } from './motifs';
 import type { OrnamentSet } from './ornaments';
 
@@ -38,6 +40,8 @@ export interface CoverProps {
   buttonRadius: string;
   letterFont: string;
   layerHeight: number | string;
+  // Elegan: nama berlapis emas, kicker & tanggal bergaya Cinzel.
+  gilded?: boolean;
   // Pratinjau statis dalam kartu terbuka (mis. grid katalog di dalam <Link>): tombol "buka" dirender sebagai
   // <span> (bukan <button>) supaya tidak ada kontrol interaktif bersarang, dan tidak menerima klik.
   decorative?: boolean;
@@ -90,13 +94,13 @@ export function CoverLayout(p: CoverProps) {
   const ink = (l: boolean) => (l ? '#fff' : 'var(--tx)');
   const kickerEl = (l = light) => {
     const e = enter(100);
-    return <p className={`text-xs uppercase tracking-[0.35em] opacity-85 ${e.className}`} style={{ ...e.style, color: ink(l) }}>{p.kicker}</p>;
+    return <p className={`text-xs uppercase tracking-[0.35em] opacity-85 ${e.className}`} style={{ ...e.style, color: ink(l), ...(p.gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 11, letterSpacing: '0.44em' } : null) }}>{p.kicker}</p>;
   };
   const namesEl = (scale = 1, l = light) => {
     const e = enter(250);
     return (
       <h1
-        className={`mt-3 ${e.className} ${p.premium && !l ? 'wl-shimmer' : ''}`}
+        className={`mt-3 ${e.className} ${p.premium && !l ? 'wl-shimmer' : p.gilded && !l ? 'wl-foil' : ''}`}
         style={{
           ...e.style,
           fontFamily: p.heading.family,
@@ -104,7 +108,7 @@ export function CoverLayout(p: CoverProps) {
           letterSpacing: p.heading.tracking,
           textTransform: p.heading.upper ? 'uppercase' : undefined,
           fontSize: `calc(${p.heading.size} * ${scale})`,
-          lineHeight: 1.1,
+          lineHeight: p.gilded ? 1.2 : 1.1,
           color: l ? '#fff' : 'var(--p)',
           textShadow: l ? '0 2px 16px rgba(0,0,0,.5)' : undefined,
         }}
@@ -115,7 +119,7 @@ export function CoverLayout(p: CoverProps) {
   };
   const dateEl = (l = light) => {
     const e = enter(450);
-    return p.dateText ? <p className={`mt-3 text-sm tracking-[0.3em] ${e.className}`} style={{ ...e.style, color: ink(l) }}>{p.dateText}</p> : null;
+    return p.dateText ? <p className={`mt-3 text-sm tracking-[0.3em] ${e.className}`} style={{ ...e.style, color: ink(l), ...(p.gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 13, letterSpacing: '0.34em' } : null) }}>{p.dateText}</p> : null;
   };
   const guestEl = (l = light) => {
     if (!p.guest) return null;
@@ -133,7 +137,7 @@ export function CoverLayout(p: CoverProps) {
     return (
       <Tag
         {...(p.decorative ? {} : { onClick: p.onOpen })}
-        className={`${cls} px-7 py-3 text-sm font-medium tracking-wide shadow-lg transition-transform hover:scale-[1.03] ${p.premium ? 'wl-pulse' : ''} ${e.className}`}
+        className={`wl-btn ${cls} px-7 py-3 text-sm font-medium tracking-wide shadow-lg transition-transform hover:scale-[1.03] ${p.premium ? 'wl-pulse' : ''} ${e.className}`}
         style={{ ...e.style, borderRadius: p.buttonRadius, background: l ? 'rgba(255,255,255,.92)' : 'var(--p)', color: l ? '#222' : '#fff' }}
       >
         {p.openLabel}
@@ -414,6 +418,91 @@ export function CoverLayout(p: CoverProps) {
             {p.dateText && <p className="mt-3 text-[10px] tracking-[0.2em] text-white/80">{p.dateText}</p>}
             {guestEl(true)}
             {buttonEl(true, 'mt-5')}
+          </div>
+        </>
+      );
+    }
+
+    // ---------- bingkai emas (Elegan): foto di lengkungan berukir ----------
+    case 'emas': {
+      const e = enter(300);
+      return (
+        <>
+          {backdrop}
+          <div className={column}>
+            {kickerEl(false)}
+            <div className={`relative mt-5 w-[13rem] ${p.premium ? 'wl-float' : ''}`}>
+              <div className={e.className} style={e.style}>
+                <DecoArch>
+                  <div className="aspect-[3/4.1]">
+                    <img src={photoOf.cover} alt="" className="h-full w-full object-cover" />
+                  </div>
+                </DecoArch>
+              </div>
+            </div>
+            {namesEl(0.74, false)}
+            {dateEl(false)}
+            {guestEl(false)}
+            {buttonEl(false, 'mt-5')}
+          </div>
+        </>
+      );
+    }
+
+    // ---------- lengkung bunga (Buket Pengantin): foto di lengkungan putih bermahkota bunga ----------
+    case 'bunga': {
+      const e = enter(300);
+      return (
+        <>
+          {backdrop}
+          <div className={column}>
+            {kickerEl(false)}
+            <div className={`${p.decorative ? 'mt-6' : 'mt-12'} ${p.premium ? 'wl-float' : ''}`}>
+              <div className={e.className} style={e.style}>
+                <FloralArch w={p.decorative ? 148 : 196} h={p.decorative ? 190 : 252}>
+                  <img src={photoOf.cover} alt="" className="h-full w-full object-cover" />
+                </FloralArch>
+              </div>
+            </div>
+            {namesEl(p.decorative ? 0.6 : 0.78, false)}
+            {dateEl(false)}
+            {guestEl(false)}
+            {buttonEl(false, 'mt-5')}
+          </div>
+        </>
+      );
+    }
+
+    // ---------- sepasang merpati: foto oval, dua merpati terbang masuk, lily di kaki ----------
+    case 'merpati': {
+      const e = enter(300);
+      return (
+        <>
+          {backdrop}
+          <div className={column}>
+            {kickerEl(false)}
+            <div className={`relative mt-12 w-[11.6rem] ${p.premium ? 'wl-float' : ''}`}>
+              <div className={e.className} style={e.style}>
+                <div
+                  className="rounded-[50%] p-[7px]"
+                  style={{ background: 'linear-gradient(160deg, #fff, color-mix(in srgb, var(--p) 12%, #fff))', boxShadow: '0 26px 40px -24px color-mix(in srgb, var(--p) 72%, transparent), 0 0 0 1px color-mix(in srgb, var(--p) 24%, transparent)' }}
+                >
+                  <img src={photoOf.cover} alt="" className="aspect-[4/5] w-full rounded-[50%] object-cover" />
+                </div>
+                <Dove className="absolute -left-12 -top-9 w-[4.8rem] rotate-6" speed={1.5} />
+                <Dove className="absolute -right-12 -top-9 w-[4.8rem] -rotate-6 -scale-x-100" speed={1.5} style={{ '--flap-delay': '-0.45s' } as CSSProperties} />
+                <div className="absolute -bottom-3 -left-7 w-14" style={{ color: 'var(--p)' }}>
+                  <LilyBloom rotate={-20} />
+                </div>
+                <div className="absolute -bottom-1 -right-6 w-11" style={{ color: 'var(--p)' }}>
+                  <LilyBloom rotate={25} />
+                </div>
+              </div>
+            </div>
+            {namesEl(0.78, false)}
+            {dateEl(false)}
+            {guestEl(false)}
+            {buttonEl(false, 'mt-5')}
           </div>
         </>
       );

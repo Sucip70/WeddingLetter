@@ -28,7 +28,7 @@ export const GATE_LABEL = {
   cloth: 'Kain ditarik',
   envelope: 'Amplop',
   portal: 'Portal sihir',
-  ring: 'Cincin',
+  ring: 'Kotak cincin',
   bloom: 'Bunga bermekaran',
   leaves: 'Surat daun gugur',
   balloons: 'Balon',
@@ -43,6 +43,9 @@ export const GATE_LABEL = {
   neon: 'Papan neon',
   sakura: 'Surat kelopak sakura',
   kayon: 'Kayon wayang',
+  twine: 'Surat bertali goni',
+  doves: 'Sepasang merpati',
+  bouquet: 'Lempar buket',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export const GATE_KINDS = Object.keys(GATE_LABEL) as GateKind[];
@@ -88,10 +91,14 @@ const BASE_DESIGNS: Omit<Design, 'gate'>[] = [
   // ---- Klasik ----
   d('rustic', 'Rustic Klasik', 'klasik', 'Hangat dan bersahaja dengan nuansa kayu dan tanah.', ['#8a5a3c', '#c9a27e', '#fbf6ef', '#3b2a20'], ['serif', 'sans']),
   d('floral', 'Floral Romantis', 'klasik', 'Bunga-bunga lembut dengan tulisan tangan yang manis.', ['#c4587a', '#e9b7c6', '#fff7f9', '#4a2c38'], ['script', 'sans']),
+  d('buket', 'Buket Pengantin', 'klasik', 'Putih bersih dihiasi mawar, peony, dan bunga warna-warni dalam satu buket.', ['#4f7a63', '#ef8fa8', '#ffffff', '#33423a'], ['script', 'serif']),
   d('elegant', 'Elegan Emas', 'klasik', 'Mewah dan bersahaja dengan aksen emas.', ['#b08d3c', '#1f2a44', '#f7f5f0', '#1f2a44'], ['serif', 'serif']),
 
+  // id 'kristiani' dipertahankan (dipakai theme.preset/motif pada template yang sudah tersimpan); nama tampilan sudah umum.
+  d('kristiani', 'Sepasang Merpati', 'klasik', 'Sepasang merpati putih, lily, dan langit pagi yang tenang.', ['#6b7fa3', '#d7c48a', '#fbfaf6', '#2b3350'], ['script', 'serif']),
+
   // ---- Suku & Budaya ----
-  d('jawa', 'Batik Jawa', 'suku', 'Motif kawung dan warna sogan khas keraton Jawa.', ['#8b5a2b', '#d4a94f', '#f6ecd9', '#3a2412'], ['display', 'serif']),
+  d('jawa', 'Batik Jawa', 'suku', 'Keraton klasik: gunungan wayang, parang, dan kawung dalam maroon, emas, dan krem.', ['#6b1e23', '#d4af37', '#f5e6c8', '#3a1518'], ['display', 'serif']),
   d('sunda', 'Tatar Sunda', 'suku', 'Hijau bambu dan daun yang sejuk, ringan seperti angklung.', ['#3f7a4e', '#c9b26a', '#f4f8ee', '#20321f'], ['display', 'sans']),
   d('minang', 'Songket Minang', 'suku', 'Merah-emas songket dengan pola pucuk rebung.', ['#a3192a', '#d9a520', '#fdf3e3', '#3a1216'], ['display', 'sans']),
   d('batak', 'Ulos Batak', 'suku', 'Garis dan zigzag ulos dalam merah, hitam, dan putih.', ['#8e1b1b', '#2b2b2b', '#f7f1e8', '#221a17'], ['cinzel', 'sans']),
@@ -99,7 +106,6 @@ const BASE_DESIGNS: Omit<Design, 'gate'>[] = [
 
   // ---- Religi ----
   d('islami', 'Islami Arabesque', 'agama', 'Pola geometris arabesque dengan hijau zamrud dan emas.', ['#1f6f5c', '#c9a84a', '#f4f9f6', '#17352d'], ['display', 'serif']),
-  d('kristiani', 'Kristiani Lily', 'agama', 'Putih lembut, lily, dan merpati damai.', ['#6b7fa3', '#d7c48a', '#fbfaf6', '#2b3350'], ['script', 'serif']),
   d('buddha', 'Buddha Teratai', 'agama', 'Teratai dan lentera dengan warna safron yang tenteram.', ['#c46a1a', '#e8b04a', '#fff8ec', '#402a10'], ['display', 'serif']),
 
   // ---- Perayaan ----
@@ -138,14 +144,14 @@ const BASE_DESIGNS: Omit<Design, 'gate'>[] = [
 
 // Gerbang bawaan per desain (alasan pemilihan ada di riwayat diskusi: sesuaikan dengan adegan tema).
 const DESIGN_GATES: Record<string, GateKind> = {
-  rustic: 'envelope', floral: 'bloom', elegant: 'ring',
+  rustic: 'twine', floral: 'bloom', elegant: 'ring',
   jawa: 'kayon', sunda: 'leaves', minang: 'curtain', batak: 'cloth', bali: 'door',
-  islami: 'door', kristiani: 'glass', buddha: 'bloom',
+  islami: 'door', kristiani: 'doves', buddha: 'bloom',
   natal: 'gift', imlek: 'lantern', valentine: 'envelope', kemerdekaan: 'curtain', lebaran: 'envelope', tahunbaru: 'fireworks', halloween: 'door',
   'kerajaan-es': 'frost', ceria: 'balloons', 'sakura-anime': 'sakura', dongeng: 'book',
   pixel: 'pressstart', 'player-one': 'loading', rpg: 'door', neon: 'neon',
   hollywood: 'curtain', galaksi: 'portal', sihir: 'portal', paris: 'envelope',
-  semi: 'bloom', panas: 'waves', gugur: 'leaves', salju: 'frost',
+  buket: 'bouquet', semi: 'bloom', panas: 'waves', gugur: 'leaves', salju: 'frost',
 };
 
 export const DESIGNS: Design[] = BASE_DESIGNS.map((x) => ({ ...x, gate: DESIGN_GATES[x.id]! }));
@@ -166,6 +172,9 @@ export const BASIC_PALETTES: Palette[] = [
   { id: 'merah-marun', name: 'Merah Marun', primary: '#7a2233', secondary: '#d9a5ae', background: '#fdf4f5', text: '#3b1119' },
   { id: 'hitam-putih', name: 'Hitam Putih', primary: '#222222', secondary: '#9a9a9a', background: '#ffffff', text: '#222222' },
 ];
+
+// Desain klasik yang punya paket Basic (Rp20.000, 8 warna siap pakai). Sisanya hanya Standard & Premium.
+export const BASIC_DESIGN_IDS: readonly string[] = ['rustic', 'floral', 'elegant', 'buket'];
 
 function hexToHsl(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);
@@ -194,9 +203,53 @@ export function shiftHue(hex: string, degrees: number) {
   return hslToHex((h + degrees + 360) % 360, s, l);
 }
 
+// Palet pilihan tangan untuk desain yang warnanya tidak cocok digeser rona (Elegan: emas bila digeser jadi hijau limau / merah).
+// Emas/logam tetap jadi aksen; warna gelap (teks) dipakai juga untuk gerbang & hitung mundur, jadi harus pekat.
+// Buket Pengantin: latar tetap putih; warna sekunder = warna bunga utama (mawar), jadi tiap palet mengganti "suasana" buketnya.
+// Palet pertama sama dengan warna bawaan desain. Warna utama cukup gelap (≥ 4:1 di atas putih) karena dipakai untuk judul & tombol.
+const BUKET_PALETTES: Palette[] = [
+  { id: 'blush', name: 'Blush & Sage', primary: '#4f7a63', secondary: '#ef8fa8', background: '#ffffff', text: '#33423a' },
+  { id: 'persik', name: 'Persik & Zaitun', primary: '#657a3d', secondary: '#f4a06f', background: '#ffffff', text: '#3b3f2a' },
+  { id: 'lavender', name: 'Lavender', primary: '#7a64a8', secondary: '#b79fe2', background: '#ffffff', text: '#35304f' },
+  { id: 'langit', name: 'Biru Langit', primary: '#476f9a', secondary: '#8fbbe8', background: '#ffffff', text: '#2f3b4d' },
+  { id: 'mentega', name: 'Kuning Mentega', primary: '#8d6f21', secondary: '#f6cf5f', background: '#ffffff', text: '#4a3d1e' },
+  { id: 'mawar', name: 'Mawar', primary: '#a8506b', secondary: '#e8789a', background: '#ffffff', text: '#4a2c38' },
+  { id: 'koral', name: 'Koral', primary: '#ad5642', secondary: '#f4806f', background: '#ffffff', text: '#4a2b24' },
+];
+
+// Palet khusus paket Basic per desain; desain yang tidak tercantum memakai 8 warna siap pakai (BASIC_PALETTES).
+export const basicPalettes = (designId: string): Palette[] => (designId === 'buket' ? BUKET_PALETTES : BASIC_PALETTES);
+
+// Batik Jawa: warna utama = warna kain (maroon, sogan, zamrud, indigo), sekunder = emas, latar krem; teks gelap sewarna kain.
+// Warna utama harus pekat: dipakai untuk judul, tombol, dan latar gerbang & hitung mundur (teks krem di atasnya).
+const JAWA_PALETTES: Palette[] = [
+  { id: 'maroon', name: 'Maroon & Emas', primary: '#6b1e23', secondary: '#d4af37', background: '#f5e6c8', text: '#3a1518' },
+  { id: 'sogan', name: 'Sogan Cokelat', primary: '#5c3a1c', secondary: '#c9a24a', background: '#f3e6cc', text: '#33200f' },
+  { id: 'zamrud', name: 'Hijau Zamrud', primary: '#1f4a3a', secondary: '#d4af37', background: '#f2ead2', text: '#152b22' },
+  { id: 'indigo', name: 'Biru Indigo', primary: '#1f2f5c', secondary: '#d4af37', background: '#f1eadb', text: '#161f3d' },
+  { id: 'anggur', name: 'Ungu Anggur', primary: '#4d1f4a', secondary: '#d4af37', background: '#f4e8d6', text: '#2e112c' },
+];
+
+const CURATED_PALETTES: Record<string, Palette[]> = {
+  buket: BUKET_PALETTES,
+  jawa: JAWA_PALETTES,
+  kristiani: [
+    { id: "sage", name: "Hijau Sage", primary: "#6f8f82", secondary: "#d9c9a0", background: "#f8faf6", text: "#25352e" },
+    { id: "blush", name: "Merah Muda Lembut", primary: "#b07f8d", secondary: "#e3cfa6", background: "#fcf8f7", text: "#432f37" },
+    { id: "lavender", name: "Lavender", primary: "#8577b0", secondary: "#d8c9a2", background: "#faf8fc", text: "#302a4a" },
+  ],
+  elegant: [
+    { id: "zamrud", name: "Emas & Zamrud", primary: "#b08d3c", secondary: "#0f3d33", background: "#f4f7f3", text: "#12352c" },
+    { id: "anggur", name: "Emas & Anggur", primary: "#b08d3c", secondary: "#5a1a2a", background: "#faf5f3", text: "#3a1420" },
+    { id: "mawar-emas", name: "Rose Gold", primary: "#b4756b", secondary: "#3a2a30", background: "#faf4f2", text: "#2f2429" },
+  ],
+};
+
 // Dua varian warna otomatis (hangat/sejuk) dengan menggeser rona aksen; latar & teks tetap agar keterbacaan terjaga.
 export function autoPalettes(design: Design): Palette[] {
   if (design.fixedColors) return [];
+  const curated = CURATED_PALETTES[design.id];
+  if (curated) return curated;
   return [
     { id: 'hangat', name: 'Varian hangat', primary: shiftHue(design.primary, 28), secondary: shiftHue(design.secondary, 28), background: design.background, text: design.text },
     { id: 'sejuk', name: 'Varian sejuk', primary: shiftHue(design.primary, -42), secondary: shiftHue(design.secondary, -42), background: design.background, text: design.text },

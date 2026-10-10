@@ -8,38 +8,47 @@ import type { GateKind } from '@/lib/types';
 import { PatternLayer } from './effects';
 import type { PatternKind } from './motifs';
 import { LetterGust } from './letter-gust';
+import { BouquetGate } from './bouquet-gate';
+import { DovesGate } from './doves-gate';
 import { MagicPortal } from './magic-portal';
+import { RingBox } from './ring-box';
 import { WayangKayon } from './wayang-kayon';
 
 export type GatePhase = 'closed' | 'opening';
 
 // Lama animasi buka (ms) sampai gerbang dilepas. Dengan "kurangi gerakan" dipersingkat jadi fade.
 export const GATE_MS: Record<GateKind, number> = {
-  door: 2300, glass: 2300, curtain: 2200, cloth: 2400, envelope: 2900, portal: 2500, ring: 2700, bloom: 2800,
+  door: 2300, glass: 2300, curtain: 2200, cloth: 2400, envelope: 2900, portal: 2500, ring: 3550, bloom: 2800,
   balloons: 2800, waves: 2700, gift: 2500, lantern: 2700, fireworks: 2900, book: 2900, pressstart: 1400, loading: 2700, neon: 2600,
   // surat + embusan (letter-gust.tsx): waktu sama untuk semua variannya
   sakura: 2700, frost: 2700, leaves: 2700,
-  kayon: 2300,
+  kayon: 2400,
+  twine: 2700,
+  doves: 3100,
+  bouquet: 3300,
 };
 
 // Gerbang yang menyingkap sampul sedikit demi sedikit selama fase 'opening' (latarnya menghilang di bawah
 // animasi, bukan sekaligus di akhir). InvitationView memutar animasi masuk sampul saat gerbang diketuk.
-export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, portal: true, kayon: true };
+export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, portal: true, kayon: true, twine: true, ring: true, doves: true, bouquet: true };
+
+// Gerbang yang baru menyingkap sampul setelah jeda (ms sejak ketukan): animasi masuk sampul ditunda sebesar itu.
+export const REVEAL_DELAY_MS: Partial<Record<GateKind, number>> = { ring: 1750, doves: 1000, bouquet: 1200, kayon: 800 };
 
 const CTA: Record<GateKind, string> = {
   door: 'Ketuk untuk membuka pintu', glass: 'Ketuk untuk membuka jendela', curtain: 'Ketuk untuk membuka tirai', cloth: 'Ketuk untuk membuka kain',
-  envelope: 'Ketuk untuk membuka amplop', portal: 'Ketuk untuk mengaktifkan portal', ring: 'Ketuk untuk memasangkan cincin', bloom: 'Ketuk agar bunga mekar',
+  envelope: 'Ketuk untuk membuka amplop', portal: 'Ketuk untuk mengaktifkan portal', ring: 'Ketuk untuk membuka kotak cincin', bloom: 'Ketuk agar bunga mekar',
   balloons: 'Ketuk untuk melepas balon', waves: 'Ketuk untuk memanggil ombak', gift: 'Ketuk untuk membuka kado',
   lantern: 'Ketuk untuk menyalakan lentera', fireworks: 'Ketuk untuk menyalakan kembang api', book: 'Ketuk untuk membuka buku',
   pressstart: 'Ketuk untuk mulai', loading: 'Ketuk untuk mulai', neon: 'Ketuk untuk menyalakan',
   sakura: 'Ketuk untuk membuka surat', frost: 'Ketuk untuk membuka surat', leaves: 'Ketuk untuk membuka surat',
-  kayon: 'Ketuk untuk memulai lakon',
+  kayon: 'Ketuk untuk memulai lakon', twine: 'Ketuk untuk membuka surat', doves: 'Ketuk agar merpati terbang', bouquet: 'Ketuk untuk melempar buket',
 };
 
 // Adegan gelap memakai teks putih; adegan terang memakai warna teks tema.
-const DARK: Partial<Record<GateKind, true>> = { door: true, glass: true, curtain: true, cloth: true, portal: true, lantern: true, fireworks: true, pressstart: true, loading: true, neon: true };
+const DARK: Partial<Record<GateKind, true>> = { door: true, glass: true, curtain: true, cloth: true, portal: true, lantern: true, fireworks: true, pressstart: true, loading: true, neon: true, ring: true, kayon: true };
 // Adegan yang punya teks sendiri (tanpa judul umum di atas).
-const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true, leaves: true, portal: true, kayon: true };
+const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true, leaves: true, portal: true, kayon: true, twine: true, ring: true, doves: true, bouquet: true };
 
 const rand = (i: number, salt: number) => {
   const x = Math.sin((i + 1) * 12.9898 + salt * 78.233) * 43758.5453;
@@ -124,38 +133,6 @@ function Envelope({ names, kicker, guest, headingFamily }: SceneProps) {
         <div className="g-seal">
           <svg viewBox="0 0 24 24" width="46%" fill="currentColor" aria-hidden><path d="M12 21C5 15 2 11.5 2 8a5 5 0 0 1 10-1 5 5 0 0 1 10 1c0 3.5-3 7-10 13Z" /></svg>
         </div>
-      </div>
-    </div>
-  );
-}
-
-// ---------- cincin ----------
-
-const sparkle = (cx: number, cy: number, r: number) => `M${cx} ${cy - r}Q${cx} ${cy} ${cx + r} ${cy}Q${cx} ${cy} ${cx} ${cy + r}Q${cx} ${cy} ${cx - r} ${cy}Q${cx} ${cy} ${cx} ${cy - r}Z`;
-function Rings() {
-  return (
-    <div className="g-ringscene">
-      <div className="g-ringbg" />
-      <div className="g-ringswrap">
-        <svg viewBox="0 0 200 120" aria-hidden>
-          <defs>
-            <linearGradient id="g-gold" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" style={{ stopColor: 'color-mix(in srgb, var(--s) 70%, #fff)' }} />
-              <stop offset="0.5" style={{ stopColor: 'var(--p)' }} />
-              <stop offset="1" style={{ stopColor: 'color-mix(in srgb, var(--s) 80%, #000)' }} />
-            </linearGradient>
-          </defs>
-          <g className="g-rA">
-            <circle cx="68" cy="66" r="36" fill="none" stroke="url(#g-gold)" strokeWidth="8" />
-            <path d="M68 24 L75 31 L68 38 L61 31Z" fill="#fff" stroke="var(--s)" strokeWidth="1.2" />
-          </g>
-          <g className="g-rB">
-            <circle cx="132" cy="66" r="36" fill="none" stroke="url(#g-gold)" strokeWidth="8" />
-          </g>
-          {[[100, 30, 9], [72, 86, 6], [128, 92, 7], [100, 66, 12], [52, 44, 5], [150, 46, 5]].map(([x, y, r], i) => (
-            <path key={i} className="g-sp" style={{ animationDelay: `${0.9 + i * 0.12}s` }} d={sparkle(x!, y!, r!)} fill="#fff" stroke="var(--s)" strokeWidth=".8" />
-          ))}
-        </svg>
       </div>
     </div>
   );
@@ -419,7 +396,9 @@ function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
     case 'cloth': return <Curtain cloth pattern={p.pattern} />;
     case 'envelope': return <Envelope {...p} />;
     case 'portal': return <MagicPortal look={p.motif === 'galaksi' ? 'orbit' : 'rune'} phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
-    case 'ring': return <Rings />;
+    case 'bouquet': return <BouquetGate phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
+    case 'doves': return <DovesGate phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
+    case 'ring': return <RingBox phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'bloom': return <Bloom />;
     case 'leaves': return <LetterGust kind="leaves" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'balloons': return <Balloons />;
@@ -432,6 +411,7 @@ function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
     case 'pressstart': return <PressStart {...p} />;
     case 'loading': return <Loading {...p} />;
     case 'neon': return <Neon {...p} />;
+    case 'twine': return <LetterGust kind="rustic" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'sakura': return <LetterGust kind="sakura" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'kayon': return <WayangKayon phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
   }
@@ -456,7 +436,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
     }
   };
   return (
-    <div className={embedded ? 'absolute inset-x-0 top-0 z-[60] h-[810px]' : 'fixed inset-y-0 left-1/2 z-[60] w-full max-w-[480px] -translate-x-1/2'}>
+    <div className={`wl-gate-host ${embedded ? 'absolute inset-x-0 top-0 z-[60] h-[810px]' : 'fixed inset-y-0 left-1/2 z-[60] w-full max-w-[480px] -translate-x-1/2'}`}>
       <style>{GATE_CSS}</style>
       <div className="wl-gate" data-kind={kind} data-phase={phase} data-tone={DARK[kind] ? 'dark' : 'light'} role="button" tabIndex={0} aria-label={`Buka undangan. ${CTA[kind]}`} onClick={onOpen} onKeyDown={onKey}>
         <Scene kind={kind} names={names} kicker={kicker} guest={guest} pattern={pattern} motif={motif} headingFamily={headingFamily} phase={phase} />
@@ -479,8 +459,14 @@ const GATE_CSS = `
 .wl-gate[data-tone=dark]{color:#fff}
 .wl-gate *{box-sizing:border-box}
 .wl-gate svg{display:block}
-.wl-gate-cta{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);z-index:30;white-space:nowrap;padding:.75em 1.6em;border-radius:var(--rb);background:var(--p);color:#fff;font-size:13.5px;font-weight:500;letter-spacing:.04em;box-shadow:0 10px 26px -8px rgba(0,0,0,.5);animation:wl-pulse 2.4s ease-in-out infinite;transition:opacity .3s}
+.wl-gate-cta{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);z-index:30;white-space:nowrap;padding:.75em 1.6em;border-radius:var(--rb);background:var(--p);color:#fff;font-size:13.5px;font-weight:500;letter-spacing:.04em;box-shadow:0 10px 26px -8px rgba(0,0,0,.5);transition:opacity .3s}
+/* denyut tombol = cincin yang membesar & memudar (transform + opacity, jalan di compositor). Jangan menganimasikan box-shadow di sini: dicat ulang di thread utama tiap frame dan membuat gerbang lag di ponsel. */
+.wl-gate-cta::before{content:'';position:absolute;inset:0;border-radius:inherit;border:2px solid color-mix(in srgb,var(--p) 60%,transparent);opacity:0;pointer-events:none;animation:wl-cta-ring 2.4s ease-out infinite}
+@keyframes wl-cta-ring{0%{transform:scale(1);opacity:.7}70%,100%{transform:scale(1.2,1.5);opacity:0}}
 .wl-gate:focus-visible .wl-gate-cta{outline:2px solid #fff;outline-offset:3px}
+.wl-gate[data-kind=ring]{--vel:color-mix(in oklch,var(--tx) 84%,white);--rb-lit:color-mix(in oklch,var(--tx) 78%,white);--rb-mid:color-mix(in oklch,var(--tx) 88%,black);--rb-dark:color-mix(in oklch,var(--tx) 38%,black)}
+@supports (color:oklch(from red l c h)){.wl-gate[data-kind=ring]{--vel:oklch(from var(--tx) calc(l + .15) calc(c * 1.6) h);--rb-lit:oklch(from var(--tx) calc(l + .13) calc(c * 1.5) h);--rb-mid:oklch(from var(--tx) calc(l - .02) calc(c * 1.2) h);--rb-dark:oklch(from var(--tx) calc(l * .45) calc(c * .9) h)}}
+.wl-gate[data-kind=ring] .wl-gate-cta{background:var(--foil);color:color-mix(in srgb,var(--tx) 92%,#000);border:1px solid color-mix(in srgb,var(--p) 55%,#3a2600);border-radius:2px;font-family:var(--font-cinzel),serif;font-size:11.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;text-shadow:0 1px 0 rgba(255,255,255,.35)}
 .wl-gate-title{position:absolute;left:0;right:0;top:8%;z-index:30;text-align:center;padding:0 8%;pointer-events:none;transition:opacity .35s;text-shadow:0 2px 14px rgba(0,0,0,.28)}
 .wl-gate[data-tone=light] .wl-gate-title{text-shadow:none}
 .wl-gate[data-kind=door] .wl-gate-title,.wl-gate[data-kind=glass] .wl-gate-title,.wl-gate[data-kind=cloth] .wl-gate-title,.wl-gate[data-kind=curtain] .wl-gate-title{top:0;padding-top:8%;padding-bottom:14%;background:linear-gradient(rgba(0,0,0,.62),rgba(0,0,0,0))}
@@ -497,11 +483,50 @@ const GATE_CSS = `
 @keyframes g-bob{0%,100%{translate:0 0}50%{translate:0 -6px}}
 @keyframes g-blink{50%{opacity:0}}
 @keyframes g-twinkle{0%,100%{opacity:.15}50%{opacity:1}}
-/* api & cahaya blencong (wayang-kayon.tsx) */
-.g-flame{transform-box:fill-box;transform-origin:50% 100%;animation:g-flame 1.3s ease-in-out infinite}
-@keyframes g-flame{0%,100%{transform:scale(1,1)}30%{transform:scale(.9,1.1)}60%{transform:scale(1.06,.94)}}
-.g-flicker{animation:g-flicker 2.6s ease-in-out infinite}
-@keyframes g-flicker{0%,100%{opacity:1}40%{opacity:.8}55%{opacity:.95}70%{opacity:.85}}
+/* gerbang kayon (wayang-kayon.tsx): dua daun kelir bergeser, gunungan bergoyang lalu naik; hanya transform & opacity. Waktu = KAYON_T. */
+.kg-scene{position:absolute;inset:0;overflow:hidden;color:var(--bg)}
+.kg-panel{position:absolute;top:0;bottom:0;width:50.4%;overflow:hidden;z-index:2;background:var(--kr-kawung-dark,none),linear-gradient(180deg,color-mix(in srgb,var(--p) 60%,#000),color-mix(in srgb,var(--p) 84%,#000) 46%,color-mix(in srgb,var(--p) 54%,#000));will-change:transform;transition:transform 1.15s cubic-bezier(.7,0,.25,1) .8s}
+.kg-pl{left:0}
+.kg-pr{right:0;background-position:calc(-49.6cqw) 0,0 0}
+.kg-parang{position:absolute;top:0;bottom:0;width:22px;background:var(--kr-parang,none) 0 0/22px 22px repeat-y}
+.kg-pl .kg-parang{left:0;border-right:2px solid var(--s)}
+.kg-pr .kg-parang{right:0;border-left:2px solid var(--s)}
+.kg-band{position:absolute;left:0;right:0;height:14px;background:var(--kr-band,none) repeat-x 0 0/auto 14px}
+.kg-pr .kg-band{background-position:calc(-49.6cqw) 0}
+.kg-bt{top:0}.kg-bb{bottom:0}
+.kg-seam{position:absolute;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--s),color-mix(in srgb,var(--s) 55%,#3d2a00) 50%,var(--s))}
+.kg-pl .kg-seam{right:0}.kg-pr .kg-seam{left:0}
+.wl-gate[data-phase=opening] .kg-pl{transform:translateX(-101%)}
+.wl-gate[data-phase=opening] .kg-pr{transform:translateX(101%)}
+.kg-dust{position:absolute;inset:0;z-index:3;color:var(--s);pointer-events:none;transition:opacity .6s ease .5s}
+.wl-gate[data-phase=opening] .kg-dust{opacity:0}
+.kg-fade{transition:opacity .35s ease}
+.wl-gate[data-phase=opening] .kg-fade{opacity:0}
+.kg-head{position:absolute;left:0;right:0;top:6cqh;z-index:5;text-align:center;padding:0 8%}
+.kg-aksara{font-family:var(--font-javanese),serif;font-size:1.65rem;line-height:1.45;padding:0 .1em .6em;margin-bottom:-.5em}
+.kg-kicker{margin-top:.35em;font-family:var(--font-montserrat),sans-serif;font-size:10.5px;font-weight:500;letter-spacing:.36em;text-transform:uppercase;color:color-mix(in srgb,var(--bg) 82%,transparent)}
+.kg-stage{position:absolute;left:0;right:0;top:19cqh;height:44cqh;z-index:4;display:flex;justify-content:center}
+.kg-glow{position:absolute;left:50%;top:50%;width:120cqw;height:120cqw;margin:-60cqw 0 0 -60cqw;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--s) 46%,transparent) 0,color-mix(in srgb,var(--s) 14%,transparent) 38%,transparent 66%);opacity:.6;animation:kg-breathe 3.6s ease-in-out infinite alternate;will-change:transform,opacity}
+@keyframes kg-breathe{from{opacity:.42;transform:scale(.94)}to{opacity:.78;transform:scale(1.06)}}
+.wl-gate[data-phase=opening] .kg-glow{animation:kg-flash 1.3s ease-out .5s both}
+@keyframes kg-flash{0%{opacity:.6;transform:scale(1)}35%{opacity:1;transform:scale(1.5)}100%{opacity:0;transform:scale(2.6)}}
+.kg-mark{position:relative;height:100%;aspect-ratio:200/272;transform-origin:50% 92%}
+.kg-float{height:100%;width:100%;animation:kg-float 4.2s ease-in-out infinite alternate}
+@keyframes kg-float{from{transform:translateY(0)}to{transform:translateY(-6px)}}
+.wl-gate[data-phase=opening] .kg-mark{animation:kg-wobble .7s ease-in-out both;will-change:transform}
+.wl-gate[data-phase=opening] .kg-float{animation:kg-lift 1.1s cubic-bezier(.5,0,.8,.5) .6s both;will-change:transform,opacity}
+@keyframes kg-wobble{0%{transform:rotate(0)}22%{transform:rotate(-6deg)}50%{transform:rotate(5deg)}76%{transform:rotate(-2.5deg)}100%{transform:rotate(0)}}
+@keyframes kg-lift{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-16cqh) scale(1.14);opacity:0}}
+.kg-names{position:absolute;left:0;right:0;top:65cqh;z-index:5;text-align:center;padding:0 9%}
+.kg-names b{display:block;font-weight:500;font-size:2.05rem;line-height:1.12;color:var(--bg);text-shadow:0 2px 14px rgba(0,0,0,.35)}
+.kg-names b.kg-long{font-size:1.6rem}
+.kg-rule{display:block;position:relative;width:120px;height:9px;margin:.7em auto .55em}
+.kg-rule::before{content:'';position:absolute;left:0;right:0;top:4px;height:1px;background:linear-gradient(90deg,transparent,var(--s) 30%,var(--s) 70%,transparent)}
+.kg-rule i{position:absolute;left:50%;top:0;width:8px;height:8px;margin-left:-4px;transform:rotate(45deg);background:var(--s)}
+.kg-names small{display:block;font-family:var(--font-montserrat),sans-serif;font-size:9.5px;letter-spacing:.3em;text-transform:uppercase;color:color-mix(in srgb,var(--bg) 78%,transparent)}
+.kg-names em{display:block;margin-top:.25em;font-style:normal;font-family:var(--font-playfair),serif;font-size:1.15rem;font-weight:600;color:var(--bg)}
+.wl-gate[data-kind=kayon] .wl-gate-cta{background:var(--p);color:var(--bg);border:1px solid var(--s);border-radius:2px;font-family:var(--font-montserrat),sans-serif;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;box-shadow:inset 0 0 0 2px var(--p),inset 0 0 0 3px color-mix(in srgb,var(--s) 70%,transparent),0 12px 24px -10px rgba(0,0,0,.6)}
+.wl-gate[data-kind=kayon] .wl-gate-cta::before{border-color:color-mix(in srgb,var(--s) 75%,transparent);border-radius:2px}
 
 /* pintu & jendela kaca patri */
 .g-door{position:absolute;inset:0;perspective:1400px}
@@ -554,21 +579,6 @@ const GATE_CSS = `
 .wl-gate[data-phase=opening] .g-card{transform:translateY(-52%)}
 .wl-gate[data-phase=opening] .g-envwrap{transform:translate(-50%,130%) scale(.9);opacity:0}
 .wl-gate[data-phase=opening] .g-envbg{opacity:0}
-
-/* cincin */
-.g-ringscene{position:absolute;inset:0}
-.g-ringbg{position:absolute;inset:0;background:radial-gradient(circle at 50% 44%,color-mix(in srgb,var(--s) 38%,var(--bg)),var(--bg) 72%);transition:opacity 1s ease 1.7s}
-.g-ringswrap{position:absolute;left:50%;top:44%;width:88%;aspect-ratio:5/3;transform:translate(-50%,-50%);filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));transition:opacity .9s ease 1.8s,transform 1.2s ease 1.6s}
-.g-ringswrap svg{width:100%;height:100%;overflow:visible}
-.g-rA,.g-rB{transition:transform 1.3s cubic-bezier(.5,0,.2,1) .1s;transform-box:fill-box;transform-origin:center;animation:g-bob 3.4s ease-in-out infinite}
-.g-rB{animation-delay:-1.7s}
-.g-sp{opacity:0;transform-box:fill-box;transform-origin:center}
-.wl-gate[data-phase=opening] .g-rA{transform:translateX(17%) rotate(24deg);animation:none}
-.wl-gate[data-phase=opening] .g-rB{transform:translateX(-17%) rotate(-24deg);animation:none}
-.wl-gate[data-phase=opening] .g-sp{animation:g-pop 1.1s ease-out forwards}
-@keyframes g-pop{0%{opacity:0;transform:scale(.2)}35%{opacity:1;transform:scale(1.5)}100%{opacity:0;transform:scale(.8)}}
-.wl-gate[data-phase=opening] .g-ringswrap{opacity:0;transform:translate(-50%,-50%) scale(1.3)}
-.wl-gate[data-phase=opening] .g-ringbg{opacity:0}
 
 /* bunga */
 .g-bloomscene{position:absolute;inset:0}
@@ -681,9 +691,29 @@ const GATE_CSS = `
 .wl-gate[data-phase=opening] .g-neontxt{animation:none;text-shadow:0 0 10px #fff,0 0 30px var(--s),0 0 70px var(--p)}
 .wl-gate[data-phase=opening] .g-neonbg{animation:g-hole 1.5s cubic-bezier(.5,0,.3,1) .6s forwards;opacity:0}
 
+/* lempar buket (bouquet-gate.tsx): hanya animasi CSS pada transform/opacity (jalan di compositor, tanpa JS per frame); waktu sama dengan BOUQUET_T.
+   Jangan memakai mask / filter / properti kustom beranimasi di sini: berat di ponsel (dulu ada dinding bunga bermask yang menyapu layar). */
+.bq-scene{position:absolute;inset:0;transform-origin:50% 40%}
+.bq-fade{transition:opacity .35s ease}
+.wl-gate[data-phase=opening] .bq-fade{opacity:0}
+.wl-gate[data-phase=opening] .bq-scene{opacity:0;transform:scale(1.06);transition:opacity .8s ease 1.15s,transform 1.1s ease-in 1.15s}
+.bq-squash{transform-origin:50% 100%}
+.wl-gate[data-phase=opening] .bq-squash{animation:bq-squash .65s ease-out both}
+@keyframes bq-squash{0%{transform:translateY(0) scale(1,1)}45%{transform:translateY(6px) scale(1.05,.92)}80%{transform:translateY(-4px) scale(.97,1.05)}100%{transform:translateY(0) scale(1,1)}}
+.wl-gate[data-phase=opening] .bq-toss{animation:bq-toss .95s cubic-bezier(.22,.6,.3,1) .3s both;will-change:transform,opacity}
+@keyframes bq-toss{0%{transform:translate3d(0,0,0) rotate(0deg) scale(1);opacity:1}82%{opacity:1}100%{transform:translate3d(12cqw,-26cqh,0) rotate(-300deg) scale(.72);opacity:0}}
+.bq-flash,.bq-bit,.bq-trail{opacity:0}
+.bq-bit,.bq-trail{position:absolute}
+.wl-gate[data-phase=opening] .bq-flash{animation:bq-flash .75s ease-out 1.15s both;will-change:transform,opacity}
+@keyframes bq-flash{0%{opacity:0;transform:scale(.2)}30%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.5)}}
+.wl-gate[data-phase=opening] .bq-bit{animation-name:bq-pop;animation-timing-function:linear;animation-fill-mode:both;will-change:transform,opacity}
+.wl-gate[data-phase=opening] .bq-trail{animation-name:bq-trail;animation-timing-function:ease-in;animation-fill-mode:both;will-change:transform,opacity}
+@keyframes bq-pop{0%{transform:translate3d(0,0,0) scale(.2) rotate(0deg);opacity:0;animation-timing-function:cubic-bezier(.2,.7,.3,1)}10%{opacity:1}34%{transform:translate3d(var(--x1),var(--y1),0) scale(1) rotate(calc(var(--spin) * .34));animation-timing-function:cubic-bezier(.5,0,.9,.6)}72%{opacity:1}100%{transform:translate3d(var(--x2),var(--y2),0) scale(1) rotate(var(--spin));opacity:0}}
+@keyframes bq-trail{0%{transform:translate3d(0,0,0) scale(.4) rotate(0deg);opacity:0}10%{opacity:1}70%{opacity:1}100%{transform:translate3d(var(--dx),var(--dy),0) scale(1) rotate(var(--spin));opacity:0}}
+
 /* kurangi gerakan: tanpa gerak, hanya memudar */
 @media (prefers-reduced-motion:reduce){
-  .wl-gate *{animation:none!important;transition:none!important}
+  .wl-gate *,.wl-gate *::before,.wl-gate *::after{animation:none!important;transition:none!important}
   .wl-gate{transition:opacity .3s ease!important}
   .wl-gate[data-phase=opening]{opacity:0}
 }

@@ -112,7 +112,7 @@ API_URL=http://localhost:4100 DATABASE_URL=postgresql://.../weddingletter_test J
 3. Salin **Client ID** ke `apps/api/.env` (`GOOGLE_CLIENT_ID`) dan `apps/web/.env.local` (`NEXT_PUBLIC_GOOGLE_CLIENT_ID`, nilainya sama), lalu **restart** API dan `next dev` (variabel `NEXT_PUBLIC_` dibaca saat start).
 Tombol "Lanjutkan dengan Google" otomatis tampil di atas form email begitu Client ID terisi. Akun OTP yang emailnya sama otomatis tertaut.
 
-Web: `API_URL` (alamat API dari server Next), `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_SUPPORT_WHATSAPP`.
+Web: `API_URL` (alamat API dari server Next), `NEXT_PUBLIC_APP_URL`.
 
 Di production tanpa kredensial Midtrans/R2/Resend, endpoint terkait **menolak** (503), bukan jatuh ke mode simulasi.
 

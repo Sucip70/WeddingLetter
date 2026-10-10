@@ -1,8 +1,19 @@
 import Link from 'next/link';
-import { whatsappLink } from '@/lib/format';
+import { contactHref, getSupportWhatsapp } from '@/lib/contact';
 import { Logo } from './logo';
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const wa = await getSupportWhatsapp();
+  const link = (message: string, label: string) =>
+    wa ? (
+      <a href={contactHref(message, wa)} className="hover:text-ink" target="_blank" rel="noopener noreferrer">
+        {label}
+      </a>
+    ) : (
+      <Link href="/kontak" className="hover:text-ink">
+        {label}
+      </Link>
+    );
   return (
     <footer className="mt-24 border-t border-line bg-paper">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr]">
@@ -23,16 +34,8 @@ export function SiteFooter() {
         <div>
           <p className="text-sm font-semibold text-ink">Butuh bantuan?</p>
           <ul className="mt-4 space-y-2.5 text-sm text-ink-soft">
-            <li>
-              <a href={whatsappLink('Halo WeddingLetter, saya ingin bertanya tentang undangan digital.')} className="hover:text-ink" target="_blank" rel="noopener noreferrer">
-                Chat WhatsApp
-              </a>
-            </li>
-            <li>
-              <a href={whatsappLink('Halo WeddingLetter, saya ingin memesan desain undangan custom.')} className="hover:text-ink" target="_blank" rel="noopener noreferrer">
-                Pesan desain custom
-              </a>
-            </li>
+            <li>{link('Halo WeddingLetter, saya ingin bertanya tentang undangan digital.', wa ? 'Chat WhatsApp' : 'Hubungi kami')}</li>
+            <li>{link('Halo WeddingLetter, saya ingin memesan desain undangan custom.', 'Pesan desain custom')}</li>
           </ul>
         </div>
       </div>

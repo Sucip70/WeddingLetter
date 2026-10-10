@@ -129,6 +129,35 @@ const ICONS: Record<CoverKind, ReactNode> = {
       <rect x={13} y={45} width={14} height={4.5} fill="#fff" />
     </>
   ),
+  bunga: (
+    <>
+      <path d="M10 36V22a10 10 0 0 1 20 0v14Z" {...STROKE} />
+      <path d="M12.5 34V22a7.500 7.500 0 0 1 15 0v12Z" {...SOFT} />
+      <circle cx={20} cy={10.500} r={2.200} {...SOLID} />
+      <circle cx={11} cy={15} r={1.800} {...SOLID} opacity={0.7} />
+      <circle cx={29} cy={15} r={1.800} {...SOLID} opacity={0.7} />
+      {text(41, 18)}
+      {button(47)}
+    </>
+  ),
+  merpati: (
+    <>
+      <ellipse cx={20} cy={25} rx={9} ry={11} {...STROKE} />
+      <ellipse cx={20} cy={25} rx={6.800} ry={8.800} {...SOFT} />
+      <path d="M8 13l5 2.500-3.500 3zM32 13l-5 2.500 3.500 3z" {...SOLID} />
+      {text(41, 18)}
+      {button(47)}
+    </>
+  ),
+  emas: (
+    <>
+      <path d="M9 36V21a11 11 0 0 1 22 0v15Z" {...STROKE} />
+      <path d="M12 34V21a8 8 0 0 1 16 0v13Z" {...SOFT} />
+      <path d="M20 7.500l2.200 2.200-2.200 2.200-2.200-2.200z" {...SOLID} />
+      {text(41, 18)}
+      {button(47)}
+    </>
+  ),
   poster: (
     <>
       <rect x={4} y={4} width={32} height={52} rx={1} {...SOLID} opacity={0.85} />

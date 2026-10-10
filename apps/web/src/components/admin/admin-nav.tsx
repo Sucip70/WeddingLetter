@@ -13,6 +13,7 @@ const ITEMS = [
   { href: '/admin/demo-photos', label: 'Foto demo' },
   { href: '/admin/pricing', label: 'Harga & kupon' },
   { href: '/admin/users', label: 'Pengguna' },
+  { href: '/admin/settings', label: 'Pengaturan' },
 ];
 
 export function AdminNav() {

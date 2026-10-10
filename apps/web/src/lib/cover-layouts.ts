@@ -4,7 +4,7 @@ import type { Tier } from './types';
 
 export type CoverKind =
   | 'ornamen' | 'penuh' | 'penuh-atas' | 'bingkai' | 'jendela' | 'medali' | 'terbagi' | 'berdua' | 'bingkai-penuh'
-  | 'gapura' | 'hati' | 'portal' | 'kristal' | 'karakter' | 'poster';
+  | 'gapura' | 'hati' | 'portal' | 'kristal' | 'karakter' | 'poster' | 'emas' | 'merpati' | 'bunga';
 
 // Foto yang dibutuhkan: none = tanpa foto; cover = foto sampul; couple = foto mempelai (atau foto sampul).
 export type CoverNeeds = 'none' | 'cover' | 'couple';
@@ -14,33 +14,41 @@ export const COVER_LAYOUTS: Record<CoverKind, { label: string; hint: string; nee
   penuh: { label: 'Foto penuh', hint: 'Foto memenuhi layar, tulisan di bagian bawah.', needs: 'cover' },
   'penuh-atas': { label: 'Foto penuh, nama di atas', hint: 'Foto memenuhi layar, nama di atas dan tombol di bawah.', needs: 'cover' },
   bingkai: { label: 'Foto berbingkai', hint: 'Foto kecil berbingkai di tengah, ornamen tema tetap terlihat.', needs: 'cover' },
-  jendela: { label: 'Jendela', hint: 'Foto di dalam jendela lengkung.', needs: 'cover' },
+  // jendela: { label: 'Jendela', hint: 'Foto di dalam jendela lengkung.', needs: 'cover' },
   medali: { label: 'Medali bulat', hint: 'Foto bulat dengan lingkaran hiasan.', needs: 'cover' },
   terbagi: { label: 'Terbagi', hint: 'Foto di atas yang memudar, kartu bertulisan di bawah.', needs: 'cover' },
   berdua: { label: 'Berdua', hint: 'Foto mempelai pria dan wanita berdampingan.', needs: 'couple' },
   'bingkai-penuh': { label: 'Bingkai penuh', hint: 'Foto memenuhi layar dengan garis bingkai di dalam tepi.', needs: 'cover' },
   gapura: { label: 'Gapura', hint: 'Foto di dalam gapura berukir.', needs: 'cover', themed: true },
-  hati: { label: 'Hati', hint: 'Foto berbentuk hati.', needs: 'cover', themed: true },
+  // hati: { label: 'Hati', hint: 'Foto berbentuk hati.', needs: 'cover', themed: true },
   portal: { label: 'Portal', hint: 'Foto di dalam portal bercincin yang berputar.', needs: 'cover', themed: true },
-  kristal: { label: 'Kristal', hint: 'Foto di dalam kristal es.', needs: 'cover', themed: true },
+  // kristal: { label: 'Kristal', hint: 'Foto di dalam kristal es.', needs: 'cover', themed: true },
   karakter: { label: 'Pilih karakter', hint: 'Dua kartu karakter bergaya game.', needs: 'couple', themed: true },
   poster: { label: 'Poster film', hint: 'Poster dengan judul dan kredit.', needs: 'cover', themed: true },
+  emas: { label: 'Bingkai emas', hint: 'Foto di dalam lengkungan berukir emas.', needs: 'cover', themed: true },
+  bunga: { label: 'Lengkung bunga', hint: 'Foto di lengkungan putih bermahkota bunga warna-warni.', needs: 'cover', themed: true },
+  merpati: { label: 'Sepasang merpati', hint: 'Foto oval dengan dua merpati dan lily.', needs: 'cover', themed: true },
 };
 
 const GENERIC: CoverKind[] = ['ornamen', 'penuh', 'penuh-atas', 'bingkai', 'jendela', 'medali', 'terbagi', 'berdua', 'bingkai-penuh'];
 const THEME_BY_DESIGN: Record<string, CoverKind> = {
-  jawa: 'gapura', minang: 'gapura', batak: 'gapura', bali: 'gapura', islami: 'gapura', lebaran: 'gapura', kristiani: 'gapura', buddha: 'gapura', imlek: 'gapura',
+  jawa: 'gapura', minang: 'gapura', batak: 'gapura', bali: 'gapura', islami: 'gapura', lebaran: 'gapura', buddha: 'gapura', imlek: 'gapura',
   valentine: 'hati', floral: 'hati', 'sakura-anime': 'hati',
   sihir: 'portal', galaksi: 'portal', halloween: 'portal',
   'kerajaan-es': 'kristal', salju: 'kristal', natal: 'kristal',
   pixel: 'karakter', 'player-one': 'karakter', rpg: 'karakter', neon: 'karakter',
-  hollywood: 'poster', paris: 'poster', elegant: 'poster',
+  hollywood: 'poster', paris: 'poster',
+  elegant: 'emas', kristiani: 'merpati', buket: 'bunga',
 };
 
 // Untuk pratinjau di builder (paket & tema belum tersimpan). Undangan sungguhan memakai daftar dari API.
+// Layout khusus tema yang juga tersedia di Standard (sinkron dengan STANDARD_THEME_COVERS di API).
+const STANDARD_THEME_COVERS: readonly string[] = ['emas', 'bunga'];
+
 export function coverLayoutsFor(tier: Tier, motif: string): CoverKind[] {
   if (tier === 'BASIC') return [];
-  const special = tier === 'PREMIUM' ? THEME_BY_DESIGN[motif] : undefined;
+  const themed = THEME_BY_DESIGN[motif];
+  const special = tier === 'PREMIUM' || (tier === 'STANDARD' && themed && STANDARD_THEME_COVERS.includes(themed)) ? themed : undefined;
   return special ? [...GENERIC, special] : [...GENERIC];
 }
 

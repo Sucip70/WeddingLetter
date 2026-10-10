@@ -65,6 +65,15 @@ export async function POST(request: NextRequest, ctx: RouteContext<'/api/auth/[a
       const { res, json } = await callApi('/auth/otp/request', { email: body.email });
       return res.ok ? NextResponse.json(json) : fail(res.status, json, 'Gagal mengirim kode');
     }
+    case 'forgot': {
+      if (otpRateLimited(request)) return NextResponse.json({ message: 'Terlalu banyak permintaan kode dari jaringan ini. Coba lagi nanti.' }, { status: 429 });
+      const { res, json } = await callApi('/auth/password/forgot', { email: body.email });
+      return res.ok ? NextResponse.json(json) : fail(res.status, json, 'Gagal mengirim kode');
+    }
+    case 'reset': {
+      const { res, json } = await callApi('/auth/password/reset', { email: body.email, code: body.code, password: body.password });
+      return res.ok ? withSession(json.user, json.accessToken) : fail(res.status, json, 'Kode salah atau kedaluwarsa');
+    }
     case 'otp-verify': {
       const { res, json } = await callApi('/auth/otp/verify', { email: body.email, code: body.code, name: body.name || undefined });
       return res.ok ? withSession(json.user, json.accessToken) : fail(res.status, json, 'Kode salah atau kedaluwarsa');

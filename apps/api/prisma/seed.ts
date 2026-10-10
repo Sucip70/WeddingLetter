@@ -7,7 +7,7 @@ import { PrismaClient } from "../src/generated/prisma/client.js";
 import { DEMO_SLOTS, defaultKey } from "../src/demo-photos/demo-photos.slots.js";
 import { uploadDefaultFile } from "../src/demo-photos/demo-photos.service.js";
 import { StorageService } from "../src/storage/storage.service.js";
-import { autoPalettes, BASIC_PALETTES, DESIGNS } from "../src/templates/themes.js";
+import { autoPalettes, BASIC_DESIGN_IDS, BASIC_PALETTES, basicPalettes, DESIGNS } from "../src/templates/themes.js";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -48,7 +48,7 @@ function buildTemplates() {
   for (const design of DESIGNS) {
     const palettes = design.id === "rustic" ? BASIC_PALETTES : autoPalettes(design);
     for (const tier of ["BASIC", "STANDARD", "PREMIUM"] as const) {
-      if (tier === "BASIC" && design.id !== "rustic") continue;
+      if (tier === "BASIC" && !BASIC_DESIGN_IDS.includes(design.id)) continue;
       const cfg = TIERS[tier];
       rows.push({
         name: LEGACY_NAMES[tier + ":" + design.id] ?? cfg.label + " " + design.name,
@@ -59,7 +59,8 @@ function buildTemplates() {
         layoutSchema: {
           // Gerbang pembuka hanya untuk Premium (admin bisa mengubahnya per template di builder).
           theme: { preset: design.id, fx: cfg.fx, gate: tier === "PREMIUM" ? design.gate : "none" },
-          palettes,
+          // Basic memakai 8 warna siap pakai yang sama untuk semua desainnya; Standard/Premium memakai palet desain.
+          palettes: tier === "BASIC" ? basicPalettes(design.id) : palettes,
           sections: cfg.sections,
           galeri: cfg.galeri,
           musik: { allowed: true },
@@ -95,12 +96,27 @@ async function installDemoPhotos() {
   }
 }
 
+// Desain yang namanya diganti: baris lama diganti nama (bukan dibuat ulang), supaya pesanan lama tetap menunjuk ke
+// template yang sama. Aman diulang: tidak menyentuh bila nama baru sudah ada.
+const RENAMED_TEMPLATES: Record<string, string> = {
+  "Standard Kristiani Lily": "Standard Sepasang Merpati",
+  "Premium Kristiani Lily": "Premium Sepasang Merpati",
+};
+
 async function main() {
+  for (const [from, to] of Object.entries(RENAMED_TEMPLATES)) {
+    if (await prisma.template.findFirst({ where: { name: to }, select: { id: true } })) continue;
+    await prisma.template.updateMany({ where: { name: from }, data: { name: to } });
+  }
   for (const t of templates) {
     const existing = await prisma.template.findFirst({ where: { name: t.name }, select: { id: true } });
     if (existing) {
-      // Skema lama (dari seed awal) dimutakhirkan ke bentuk baru; harga & status tidak disentuh.
-      await prisma.template.update({ where: { id: existing.id }, data: { layoutSchema: t.layoutSchema, includedWeeks: t.includedWeeks, category: t.category } });
+      // Template yang sudah ada TIDAK ditimpa (perubahan admin di builder: tema, palet, gerbang, bagian, harga, status tetap
+      // aman). Untuk sengaja memutakhirkan skema dari seed, jalankan dengan SEED_OVERWRITE_TEMPLATES=1.
+      if (process.env.SEED_OVERWRITE_TEMPLATES === "1") {
+        await prisma.template.update({ where: { id: existing.id }, data: { layoutSchema: t.layoutSchema, includedWeeks: t.includedWeeks, category: t.category } });
+        console.log(`Skema dimutakhirkan: ${t.name}`);
+      }
     } else {
       await prisma.template.create({ data: { ...t, status: "PUBLISHED" } });
     }

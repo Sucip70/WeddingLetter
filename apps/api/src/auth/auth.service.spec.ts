@@ -237,6 +237,27 @@ describe('AuthService password', () => {
     const res = await service.loginWithPassword('c@b.com', 'sandi-benar');
     expect(res.accessToken).toBeTruthy();
   });
+
+  it('lupa kata sandi: kode dari email mengganti kata sandi lama dan langsung masuk', async () => {
+    const { service, code, otps } = setup();
+    await service.registerWithPassword('d@b.com', 'sandi-lama-1', 'Dewi');
+    await service.verifyOtp('d@b.com', code());
+
+    for (const o of otps) o.createdAt = new Date(Date.now() - 120_000); // lewati jeda kirim ulang
+    await service.forgotPassword('d@b.com');
+    const res = await service.resetPassword('d@b.com', code(), 'sandi-baru-2');
+    expect(res.accessToken).toBeTruthy();
+    await expect(service.loginWithPassword('d@b.com', 'sandi-lama-1')).rejects.toBeInstanceOf(UnauthorizedException);
+    expect((await service.loginWithPassword('d@b.com', 'sandi-baru-2')).accessToken).toBeTruthy();
+  });
+
+  it('lupa kata sandi: email tak terdaftar tidak mengirim kode & tidak membocorkan; kode salah ditolak', async () => {
+    const { service, code } = setup();
+    expect(await service.forgotPassword('hantu@b.com')).toMatchObject({ ok: true });
+    expect(code()).toBe('');
+    await service.registerWithPassword('e@b.com', 'sandi-lama-1', 'Eka');
+    await expect(service.resetPassword('e@b.com', '000000', 'sandi-baru-2')).rejects.toBeInstanceOf(UnauthorizedException);
+  });
 });
 
 describe('TokenService', () => {

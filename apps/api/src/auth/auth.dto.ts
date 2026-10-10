@@ -13,6 +13,8 @@ export const verifyOtpSchema = z.object({
   name: z.string().trim().min(1).max(100).optional(),
 });
 
+export const resetPasswordSchema = z.object({ email, code: z.string().regex(/^\d{6}$/, 'Kode harus 6 digit'), password });
+
 export const googleLoginSchema = z.object({ idToken: z.string().min(1) });
 
 export const registerSchema = z.object({

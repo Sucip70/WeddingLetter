@@ -1,7 +1,10 @@
 // Ornamen SVG untuk undangan (warna mengikuti currentColor sehingga ikut tema). Tiap "jenis" ornamen punya
 // tiga bagian: Corner (sudut sampul), Divider (pemisah judul), Sprig (hiasan kecil di bawah foto/footer).
+import { BloomCorner, BloomDivider, BloomSprig } from './bloom-parts';
 
-export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow';
+import { DOVE_SILHOUETTE, LilyShapes } from './dove-art';
+
+export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily' | 'flora' | 'keraton';
 
 interface CornerProps {
   className?: string;
@@ -45,7 +48,8 @@ function Flake({ cx, cy, r, o = 1 }: { cx: number; cy: number; r: number; o?: nu
   );
 }
 
-const svgCorner = (rotate: number | undefined) => ({ transform: `rotate(${rotate ?? 0}deg)` });
+// Pakai properti `rotate` (bukan `transform`): animasi sudut Premium (.wl-breathe) memakai transform: scale() dan akan menimpa rotasi.
+const svgCorner = (rotate: number | undefined) => ({ rotate: `${rotate ?? 0}deg` });
 
 // ----- vine (bawaan: rustic, floral, semi, gugur) -----
 
@@ -255,7 +259,256 @@ const Snow: OrnamentSet = {
   ),
 };
 
-export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow };
+// ----- twig (rustic): ranting kering, baby's breath & gandum diikat tali goni -----
+
+const Twig: OrnamentSet = {
+  Corner: ({ className = 'w-28', rotate = 0 }) => (
+    <svg viewBox="0 0 120 120" className={className} style={svgCorner(rotate)} fill="none" aria-hidden>
+      {/* ranting eukaliptus melengkung di sudut */}
+      <path d="M6 112C10 70 38 30 104 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" opacity=".8" />
+      {[
+        [10, 92, 24], [18, 72, -8], [30, 54, 14], [44, 40, -16], [60, 28, 8], [78, 18, -20], [94, 12, 4],
+      ].map(([x, y, r], i) => (
+        <ellipse key={i} cx={x} cy={y} rx={i % 2 ? 6 : 7.5} ry={i % 2 ? 3.6 : 4.4} transform={`rotate(${r} ${x} ${y})`} fill="currentColor" opacity={0.42 + (i % 3) * 0.14} />
+      ))}
+      {/* baby's breath: titik-titik kecil di cabang sampingan */}
+      <path d="M16 100C32 84 44 76 66 72M40 62C54 58 62 50 70 38" stroke="currentColor" strokeWidth=".9" strokeLinecap="round" opacity=".55" />
+      {[[66, 72], [60, 74], [70, 68], [54, 78], [70, 38], [64, 44], [74, 34], [46, 66], [30, 90], [36, 84]].map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r={i % 3 === 0 ? 2.4 : 1.7} fill="currentColor" opacity={0.5 + (i % 2) * 0.25} />
+      ))}
+      {/* ikatan tali goni di pangkal ranting */}
+      <path d="M2 104l12-5M1 108l13-5M3 112l11-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" opacity=".9" />
+    </svg>
+  ),
+  Divider: ({ className = 'w-40' }) => (
+    <svg viewBox="0 0 160 22" className={className} fill="none" aria-hidden>
+      {/* tali goni terpilin */}
+      <path d="M0 11h58M102 11h58" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 1.6" opacity=".6" />
+      {/* simpul pita kecil */}
+      <path d="M80 11C72 3 64 4 66 10c1 5 9 3 14 1ZM80 11C88 3 96 4 94 10c-1 5-9 3-14 1Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M80 12l-6 8M80 12l6 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      <circle cx="80" cy="11" r="1.8" fill="currentColor" />
+    </svg>
+  ),
+  Sprig: ({ className = 'w-24', flip }) => (
+    <svg viewBox="0 0 120 60" className={className} style={flip ? { transform: 'scaleX(-1)' } : undefined} fill="none" aria-hidden>
+      {/* tiga tangkai gandum/lavender diikat tali */}
+      {[[-26, 0], [0, 0], [26, 0]].map(([r], i) => (
+        <g key={i} transform={`translate(60 54) rotate(${r})`}>
+          <path d="M0 0V-44" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" opacity=".8" />
+          {[-12, -20, -28, -36, -43].map((y, j) => (
+            <g key={j}>
+              <ellipse cx="-3.4" cy={y} rx="2.2" ry="4.2" transform={`rotate(-28 -3.4 ${y})`} fill="currentColor" opacity={0.5 + (j % 2) * 0.2} />
+              <ellipse cx="3.4" cy={y} rx="2.2" ry="4.2" transform={`rotate(28 3.4 ${y})`} fill="currentColor" opacity={0.5 + (j % 2) * 0.2} />
+            </g>
+          ))}
+        </g>
+      ))}
+      <path d="M50 49l20 3M50 53l20 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M60 52C54 46 48 47 50 52c1 4 7 3 10 0ZM60 52C66 46 72 47 70 52c-1 4-7 3-10 0Z" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  ),
+};
+
+// ----- deco (Elegan): garis emas ala Art Deco — siku bersudut potong, kipas, berlian, dan ranting laurel -----
+
+// Kipas sinar seperempat lingkaran dari berlian di sudut (garis tipis).
+const DECO_FAN = [0, 18, 36, 54, 72, 90]
+  .map((deg) => {
+    const a = (deg * Math.PI) / 180;
+    const p = (r: number) => `${(22 + Math.cos(a) * r).toFixed(1)} ${(22 + Math.sin(a) * r).toFixed(1)}`;
+    return `M${p(13)}L${p(46)}`;
+  })
+  .join('');
+
+// Ranting laurel: tangkai Bezier kubik, tiap titik diberi sepasang daun menyudut ke arah ujung.
+const LAUREL = (() => {
+  const P = [[6, 54], [36, 54], [80, 44], [112, 12]] as const;
+  const at = (t: number) => {
+    const u = 1 - t;
+    const f = (i: 0 | 1) => u * u * u * P[0][i] + 3 * u * u * t * P[1][i] + 3 * u * t * t * P[2][i] + t * t * t * P[3][i];
+    const d = (i: 0 | 1) => 3 * u * u * (P[1][i] - P[0][i]) + 6 * u * t * (P[2][i] - P[1][i]) + 3 * t * t * (P[3][i] - P[2][i]);
+    return { x: f(0), y: f(1), angle: (Math.atan2(d(1), d(0)) * 180) / Math.PI };
+  };
+  return Array.from({ length: 7 }, (_, i) => {
+    const { x, y, angle } = at(0.1 + i * 0.125);
+    return { x: x.toFixed(1), y: y.toFixed(1), angle: angle.toFixed(1), scale: (1.05 - i * 0.07).toFixed(2), o: (0.55 + (i % 2) * 0.25).toFixed(2) };
+  });
+})();
+
+const Deco: OrnamentSet = {
+  Corner: ({ className = 'w-28', rotate = 0 }) => (
+    <svg viewBox="0 0 120 120" className={className} style={svgCorner(rotate)} fill="none" stroke="currentColor" aria-hidden>
+      <path d="M3 118V24L24 3H118" strokeWidth="1.4" />
+      <path d="M11 118V30L30 11H118" strokeWidth=".7" opacity=".55" />
+      <path d={DECO_FAN} strokeWidth=".7" opacity=".5" strokeLinecap="round" />
+      <path d="M22 54A32 32 0 0 0 54 22" strokeWidth=".6" opacity=".5" />
+      <path d="M22 62A40 40 0 0 0 62 22" strokeWidth=".5" opacity=".35" strokeDasharray="1 2.4" />
+      <path d="M22 14.500L29.500 22 22 29.500 14.500 22Z" fill="currentColor" stroke="none" />
+      <path d="M22 18.500L25.500 22 22 25.500 18.500 22Z" fill="var(--bg, #fff)" stroke="none" />
+      <path d="M70 4.500l3.200 3.200-3.200 3.200-3.200-3.200ZM4.500 70l3.200 3.200-3.200 3.200-3.200-3.200Z" fill="currentColor" stroke="none" opacity=".85" />
+      <circle cx="92" cy="7" r="1.1" fill="currentColor" stroke="none" opacity=".6" />
+      <circle cx="7" cy="92" r="1.1" fill="currentColor" stroke="none" opacity=".6" />
+    </svg>
+  ),
+  Divider: ({ className = 'w-40' }) => (
+    <svg viewBox="0 0 200 20" className={className} fill="none" stroke="currentColor" aria-hidden>
+      <path d="M6 10H78M122 10H194" strokeWidth="1" opacity=".55" />
+      <path d="M0 10H3M197 10H200" strokeWidth="1" opacity=".25" />
+      <path d="M100 1.500l8.500 8.500-8.500 8.500-8.500-8.500Z" strokeWidth="1.1" />
+      <path d="M100 5.800l4.200 4.200-4.200 4.200-4.200-4.200Z" fill="currentColor" stroke="none" />
+      <path d="M82 7l3 3-3 3-3-3ZM118 7l3 3-3 3-3-3Z" fill="currentColor" stroke="none" opacity=".75" />
+      <circle cx="68" cy="10" r="1.2" fill="currentColor" stroke="none" opacity=".6" />
+      <circle cx="132" cy="10" r="1.2" fill="currentColor" stroke="none" opacity=".6" />
+    </svg>
+  ),
+  Sprig: ({ className = 'w-24', flip }) => (
+    <svg viewBox="0 0 120 60" className={className} style={flip ? { transform: 'scaleX(-1)' } : undefined} fill="none" aria-hidden>
+      <path d="M6 54C36 54 80 44 112 12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      {LAUREL.map((l, i) => (
+        <g key={i} transform={`translate(${l.x} ${l.y}) scale(${l.scale})`}>
+          <path d="M0 0C3-5 11-5 15 0C11 5 3 5 0 0Z" transform={`rotate(${(Number(l.angle) - 38).toFixed(1)})`} fill="currentColor" opacity={l.o} />
+          <path d="M0 0C3-5 11-5 15 0C11 5 3 5 0 0Z" transform={`rotate(${(Number(l.angle) + 38).toFixed(1)})`} fill="currentColor" opacity={Number(l.o) - 0.12} />
+        </g>
+      ))}
+      <circle cx="113" cy="10.500" r="2.600" fill="currentColor" />
+      <circle cx="119" cy="5" r="1.400" fill="currentColor" opacity=".6" />
+    </svg>
+  ),
+};
+
+// Monogram bundar: inisial mempelai (aksara tulisan tangan, berlapis emas) di dalam cincin ganda berlian.
+// Warna cincin = warna utama tema; huruf memakai kelas .wl-foil (lihat globals.css).
+export function Monogram({ a, b, size = 96, className = '' }: { a: string; b: string; size?: number; className?: string }) {
+  return (
+    <div className={`relative inline-flex shrink-0 items-center justify-center ${className}`} style={{ width: size, height: size, color: 'var(--p)' }} aria-hidden>
+      <svg viewBox="-50 -50 100 100" className="absolute inset-0 h-full w-full overflow-visible" fill="none" stroke="currentColor">
+        <circle r="46" strokeWidth="1.1" />
+        <circle r="41.500" strokeWidth=".55" opacity=".75" strokeDasharray="1.200 2.400" />
+        <circle r="37" strokeWidth=".6" opacity=".5" />
+        {[0, 90, 180, 270].map((deg) => (
+          <path key={deg} transform={`rotate(${deg})`} d="M0 -50l3.800 3.800-3.800 3.800-3.800-3.800Z" fill="var(--bg, #fff)" strokeWidth=".9" />
+        ))}
+        {[45, 135, 225, 315].map((deg) => (
+          <circle key={deg} r="1.100" cy="-46" fill="currentColor" stroke="none" transform={`rotate(${deg})`} />
+        ))}
+      </svg>
+      <span className="relative flex items-baseline leading-none" style={{ fontSize: size * 0.36, fontFamily: 'var(--font-script)' }}>
+        <span className="wl-foil">{a}</span>
+        <span className="wl-foil" style={{ fontFamily: 'var(--font-cormorant)', fontSize: '0.44em', fontStyle: 'italic', margin: '0 0.1em', transform: 'translateY(-0.3em)' }}>
+          &amp;
+        </span>
+        <span className="wl-foil">{b}</span>
+      </span>
+    </div>
+  );
+}
+
+// ----- lily (Sepasang Merpati): rangkaian lily di sudut, pemisah bermerpati terbang, ranting lily kecil -----
+
+const LILY_LEAF = 'M0 0C6-6 17-6 26 0C17 6 6 6 0 0Z';
+const LILY_LEAF_FILL = 'color-mix(in srgb, var(--p, #6b7fa3) 28%, #d6e6da)';
+
+const Lily: OrnamentSet = {
+  Corner: ({ className = 'w-28', rotate = 0 }) => (
+    <svg viewBox="0 0 120 120" className={className} style={svgCorner(rotate)} fill="none" stroke="currentColor" aria-hidden>
+      {/* tangkai melengkung di sepanjang sudut */}
+      <path d="M4 116C6 70 30 30 78 10" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M22 62C34 62 46 54 52 42M44 30C54 34 66 30 72 20" strokeWidth="1" strokeLinecap="round" opacity=".8" />
+      {[
+        [10, 92, -62], [16, 74, -22], [28, 52, -78], [46, 34, -30], [60, 22, -80],
+      ].map(([x, y, r], i) => (
+        <path key={i} d={LILY_LEAF} transform={`translate(${x} ${y}) rotate(${r}) scale(${1 - i * 0.07})`} fill={LILY_LEAF_FILL} strokeWidth=".8" strokeLinejoin="round" />
+      ))}
+      <g transform="translate(40 50) rotate(-18) scale(.46)"><LilyShapes /></g>
+      <g transform="translate(78 22) rotate(12) scale(.26)"><LilyShapes /></g>
+      <path d="M96 12C98 8 102 8 104 12C102 18 98 18 96 12Z" fill="#fff" strokeWidth=".7" />
+      <circle cx="20" cy="104" r="1.6" fill="currentColor" stroke="none" opacity=".5" />
+      <circle cx="104" cy="22" r="1.3" fill="currentColor" stroke="none" opacity=".4" />
+    </svg>
+  ),
+  Divider: ({ className = 'w-40' }) => (
+    <svg viewBox="0 0 200 26" className={className} fill="none" stroke="currentColor" aria-hidden>
+      <path d="M8 13H76M124 13H192" strokeWidth="1" opacity=".5" strokeLinecap="round" />
+      <circle cx="70" cy="13" r="1.3" fill="currentColor" stroke="none" opacity=".6" />
+      <circle cx="130" cy="13" r="1.3" fill="currentColor" stroke="none" opacity=".6" />
+      <path d={LILY_LEAF} transform="translate(56 13) rotate(-20) scale(.5)" fill={LILY_LEAF_FILL} strokeWidth=".9" />
+      <path d={LILY_LEAF} transform="translate(144 13) rotate(200) scale(.5)" fill={LILY_LEAF_FILL} strokeWidth=".9" />
+      <g transform="translate(100 13) scale(.086) translate(-150 -102)">
+        <path d={DOVE_SILHOUETTE} fill="currentColor" stroke="none" />
+      </g>
+    </svg>
+  ),
+  Sprig: ({ className = 'w-24', flip }) => (
+    <svg viewBox="0 0 120 60" className={className} style={flip ? { transform: 'scaleX(-1)' } : undefined} fill="none" stroke="currentColor" aria-hidden>
+      <path d="M4 54C30 52 62 42 92 22" strokeWidth="1.2" strokeLinecap="round" />
+      {[[22, 51, -20], [38, 46, 24], [52, 40, -28], [66, 33, 22]].map(([x, y, r], i) => (
+        <path key={i} d={LILY_LEAF} transform={`translate(${x} ${y}) rotate(${r}) scale(.55)`} fill={LILY_LEAF_FILL} strokeWidth=".8" />
+      ))}
+      <g transform="translate(96 20) rotate(-14) scale(.3)"><LilyShapes /></g>
+    </svg>
+  ),
+};
+
+// ----- flora (Buket Pengantin): karangan bunga warna-warni (digambar di flora-comp.ts, dipasang lewat bloom-parts.tsx) -----
+const Flora: OrnamentSet = {
+  Corner: ({ className = 'w-40', rotate = 0 }) => <BloomCorner className={className} rotate={rotate} />,
+  Divider: ({ className = 'w-56' }) => <BloomDivider className={className} />,
+  Sprig: ({ className = 'w-28', flip }) => <BloomSprig className={className} flip={flip} />,
+};
+
+
+// ----- keraton (Batik Jawa): kawung emas, ukel (gulungan), dan belah ketupat; emas = --s, aksen maroon = currentColor -----
+const KR_GOLD = 'color-mix(in srgb, var(--s) 80%, #3d2a00)';
+function KawungFlower({ cx, cy, r }: { cx: number; cy: number; r: number }) {
+  const a = r * 0.34;
+  const b = r * 0.62;
+  return (
+    <g transform={`translate(${cx} ${cy})`}>
+      <g fill="var(--s)" fillOpacity=".28" stroke={KR_GOLD} strokeWidth=".8">
+        <ellipse cy={-b} rx={a} ry={b} />
+        <ellipse cy={b} rx={a} ry={b} />
+        <ellipse cx={-b} rx={b} ry={a} />
+        <ellipse cx={b} rx={b} ry={a} />
+      </g>
+      <circle r={r * 0.15} fill={KR_GOLD} />
+    </g>
+  );
+}
+const Keraton: OrnamentSet = {
+  Corner: ({ className = 'w-24', rotate = 0 }) => (
+    <svg viewBox="0 0 120 120" className={className} style={svgCorner(rotate)} fill="none" aria-hidden>
+      <path d="M3 117V3H117" stroke={KR_GOLD} strokeWidth="1.6" />
+      <path d="M11 117V11H117" stroke={KR_GOLD} strokeWidth=".7" opacity=".6" />
+      <path d="M3 3L3 40M3 3L40 3" stroke="var(--s)" strokeWidth="3.4" strokeLinecap="round" opacity=".55" />
+      <KawungFlower cx={30} cy={30} r={17} />
+      <path d="M62 7l4 4-4 4-4-4zM7 62l4 4-4 4-4-4z" fill={KR_GOLD} />
+      <path d="M86 7l2.600 2.600L86 12.200l-2.600-2.600zM7 86l2.600 2.600L7 91.200l-2.600-2.600z" fill="var(--s)" />
+      <circle cx="104" cy="9" r="1.300" fill={KR_GOLD} />
+      <circle cx="9" cy="104" r="1.300" fill={KR_GOLD} />
+    </svg>
+  ),
+  Divider: ({ className = 'w-48' }) => (
+    <svg viewBox="0 0 240 28" className={className} fill="none" aria-hidden>
+      <path d="M8 14H88M152 14H232" stroke={KR_GOLD} strokeWidth="1" strokeLinecap="round" opacity=".75" />
+      <path d="M0 14H4M236 14H240" stroke={KR_GOLD} strokeWidth="1" opacity=".35" />
+      <path d="M92 14C98 7 106 7 108 14M148 14C142 7 134 7 132 14" stroke={KR_GOLD} strokeWidth="1" strokeLinecap="round" />
+      <path d="M78 14l5-5 5 5-5 5zM152 14l5-5 5 5-5 5z" fill="var(--s)" stroke={KR_GOLD} strokeWidth=".8" />
+      <KawungFlower cx={120} cy={14} r={12} />
+      <circle cx="68" cy="14" r="1.500" fill={KR_GOLD} />
+      <circle cx="172" cy="14" r="1.500" fill={KR_GOLD} />
+    </svg>
+  ),
+  Sprig: ({ className = 'w-24', flip }) => (
+    <svg viewBox="0 0 120 46" className={className} style={flip ? { transform: 'scaleX(-1)' } : undefined} fill="none" aria-hidden>
+      <path d="M4 40C28 40 48 34 64 22C76 13 88 10 100 14C110 18 110 29 101 29C94 29 92 21 98 20" stroke={KR_GOLD} strokeWidth="1.500" strokeLinecap="round" />
+      <path d="M30 38C34 28 42 26 48 30C42 36 36 38 30 38ZM56 28C58 19 66 15 72 19C67 25 62 28 56 28Z" fill="var(--s)" stroke={KR_GOLD} strokeWidth=".7" />
+      <circle cx="101" cy="22" r="2" fill={KR_GOLD} />
+    </svg>
+  ),
+};
+
+export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco, lily: Lily, flora: Flora, keraton: Keraton };
 
 // Ekspor lama (kartu katalog, halaman lain) = jenis vine.
 export const Corner = Vine.Corner;
