@@ -76,7 +76,8 @@ export class AuthService {
     return { ok: true, expiresInSeconds: OTP_TTL_MINUTES * 60 };
   }
 
-  async verifyOtp(email: string, code: string, name?: string) {
+  // Memeriksa & menghabiskan kode OTP (sekali pakai). Melempar 401 bila salah, kedaluwarsa, atau percobaan habis.
+  private async consumeOtp(email: string, code: string) {
     const invalid = new UnauthorizedException('Kode salah atau sudah kedaluwarsa');
 
     const otp = await this.prisma.otpCode.findFirst({
@@ -101,6 +102,10 @@ export class AuthService {
       data: { consumedAt: new Date() },
     });
     if (consumed.count === 0) throw invalid;
+  }
+
+  async verifyOtp(email: string, code: string, name?: string) {
+    await this.consumeOtp(email, code);
 
     const existing = await this.prisma.user.findUnique({ where: { email } });
     const user = existing
@@ -113,6 +118,25 @@ export class AuthService {
         });
 
     return this.session(user);
+  }
+
+  // Lupa kata sandi: kirim kode ke email bila akunnya ada. Respons sama untuk email yang tidak terdaftar (tidak membocorkan akun).
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email }, select: { id: true } });
+    if (!user) return { ok: true, expiresInSeconds: OTP_TTL_MINUTES * 60 };
+    return this.requestOtp(email);
+  }
+
+  // Atur kata sandi baru dengan kode dari email. Kode membuktikan kepemilikan email, jadi akun sekaligus terverifikasi & langsung masuk.
+  async resetPassword(email: string, code: string, password: string) {
+    await this.consumeOtp(email, code);
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) throw new UnauthorizedException('Kode salah atau sudah kedaluwarsa');
+    const updated = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: await hashPassword(password), emailVerifiedAt: user.emailVerifiedAt ?? new Date() },
+    });
+    return this.session(updated);
   }
 
   async loginWithGoogle(idToken: string) {

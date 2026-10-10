@@ -44,7 +44,7 @@ function GoogleButton({ onCredential }: { onCredential: (idToken: string) => voi
   return <div ref={ref} className="flex justify-center" />;
 }
 
-type Mode = 'login' | 'register' | 'otp';
+type Mode = 'login' | 'register' | 'otp' | 'forgot';
 type Step = 'form' | 'code';
 
 // Login & daftar: Google, atau email + kata sandi (akun baru diverifikasi lewat kode 6 digit ke email).
@@ -55,6 +55,7 @@ export function LoginPanel({ onSuccess }: { onSuccess: (user: SessionUser) => vo
   const [step, setStep] = useState<Step>('form');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -72,6 +73,7 @@ export function LoginPanel({ onSuccess }: { onSuccess: (user: SessionUser) => vo
     setStep('form');
     setError('');
     setCode('');
+    setConfirm('');
   }
 
   async function login(e: FormEvent) {
@@ -90,6 +92,7 @@ export function LoginPanel({ onSuccess }: { onSuccess: (user: SessionUser) => vo
   async function register(e: FormEvent) {
     e.preventDefault();
     setError('');
+    if (password !== confirm) return setError('Konfirmasi kata sandi tidak sama.');
     setLoading(true);
     try {
       const result = await authApi<{ user: SessionUser } | { needsVerification: true }>('register', { email, password, name });
@@ -123,10 +126,39 @@ export function LoginPanel({ onSuccess }: { onSuccess: (user: SessionUser) => vo
   async function resendCode() {
     setError('');
     try {
-      await authApi('otp-request', { email });
+      await authApi(mode === 'forgot' ? 'forgot' : 'otp-request', { email });
       setCooldown(60);
     } catch (err) {
       setError(errorMessage(err));
+    }
+  }
+
+  async function sendResetCode(e: FormEvent) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await authApi('forgot', { email });
+      setStep('code');
+      setCooldown(60);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function resetPassword(e: FormEvent) {
+    e.preventDefault();
+    setError('');
+    if (password !== confirm) return setError('Konfirmasi kata sandi tidak sama.');
+    setLoading(true);
+    try {
+      const { user } = await authApi<{ user: SessionUser }>('reset', { email, code, password });
+      onSuccess(user);
+    } catch (err) {
+      setError(errorMessage(err));
+      setLoading(false);
     }
   }
 
@@ -180,7 +212,7 @@ export function LoginPanel({ onSuccess }: { onSuccess: (user: SessionUser) => vo
         </div>
       )}
 
-      {step === 'form' && (
+      {step === 'form' && mode !== 'forgot' && (
         <div className="flex gap-1 rounded-full bg-paper p-1">
           <button type="button" className={tabClass(mode === 'login')} onClick={() => switchMode('login')}>Masuk</button>
           <button type="button" className={tabClass(mode === 'register')} onClick={() => switchMode('register')}>Daftar</button>
@@ -195,6 +227,9 @@ export function LoginPanel({ onSuccess }: { onSuccess: (user: SessionUser) => vo
           <Field label="Kata sandi" required>
             <Input type="password" required autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
           </Field>
+          <p className="-mt-2 text-right text-sm">
+            <button type="button" className="text-rose hover:underline" onClick={() => switchMode('forgot')}>Lupa kata sandi?</button>
+          </p>
           {error && <Alert>{error}</Alert>}
           <Button type="submit" loading={loading} className="w-full" size="lg">Masuk</Button>
           <p className="text-center text-sm text-ink-soft">
@@ -214,6 +249,9 @@ export function LoginPanel({ onSuccess }: { onSuccess: (user: SessionUser) => vo
           </Field>
           <Field label="Kata sandi" required hint="Minimal 8 karakter.">
             <Input type="password" required minLength={8} autoComplete="new-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+          </Field>
+          <Field label="Konfirmasi kata sandi" required>
+            <Input type="password" required minLength={8} autoComplete="new-password" placeholder="••••••••" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
           </Field>
           {error && <Alert>{error}</Alert>}
           <Button type="submit" loading={loading} className="w-full" size="lg">Buat akun</Button>
@@ -249,6 +287,46 @@ export function LoginPanel({ onSuccess }: { onSuccess: (user: SessionUser) => vo
             </button>
           </div>
         </form>
+      )}
+
+      {mode === 'forgot' && (
+        <div className="space-y-4">
+          <button type="button" className="text-sm text-ink-soft hover:text-ink" onClick={() => switchMode('login')}>← Kembali ke masuk</button>
+          {step === 'form' ? (
+            <form onSubmit={sendResetCode} className="space-y-4">
+              <p className="text-sm text-ink-soft">Masukkan email akun Anda. Kami kirim kode 6 digit untuk membuat kata sandi baru.</p>
+              <Field label="Email" required>
+                <Input type="email" required autoComplete="email" placeholder="nama@email.com" value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
+              </Field>
+              {error && <Alert>{error}</Alert>}
+              <Button type="submit" loading={loading} className="w-full" size="lg">Kirim kode</Button>
+            </form>
+          ) : (
+            <form onSubmit={resetPassword} className="space-y-4">
+              <p className="text-sm text-ink-soft">
+                Jika <strong className="text-ink">{email}</strong> terdaftar, kode 6 digit sudah dikirim. Berlaku 10 menit.
+              </p>
+              <Field label="Kode" required>
+                <Input inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} required placeholder="123456" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} className="text-center text-lg tracking-[0.4em]" autoFocus />
+              </Field>
+              <Field label="Kata sandi baru" required hint="Minimal 8 karakter.">
+                <Input type="password" required minLength={8} autoComplete="new-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+              </Field>
+              <Field label="Konfirmasi kata sandi baru" required>
+                <Input type="password" required minLength={8} autoComplete="new-password" placeholder="••••••••" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+              </Field>
+              {process.env.NODE_ENV !== 'production' && <p className="text-xs text-ink-soft">Mode development tanpa layanan email: kode dicetak di log server API.</p>}
+              {error && <Alert>{error}</Alert>}
+              <Button type="submit" loading={loading} className="w-full" size="lg" disabled={code.length !== 6}>Simpan &amp; masuk</Button>
+              <div className="flex items-center justify-between text-sm">
+                <button type="button" className="text-ink-soft hover:text-ink" onClick={() => { setStep('form'); setCode(''); setError(''); }}>← Ganti email</button>
+                <button type="button" className="text-rose disabled:text-ink-soft" disabled={cooldown > 0} onClick={resendCode}>
+                  {cooldown > 0 ? `Kirim ulang (${cooldown}d)` : 'Kirim ulang kode'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       )}
 
       {mode === 'otp' && (
