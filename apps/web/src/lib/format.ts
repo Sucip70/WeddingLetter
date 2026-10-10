@@ -57,10 +57,8 @@ export function daysLeft(iso: string | null | undefined, now = Date.now()) {
   return Math.ceil((new Date(iso).getTime() - now) / 86_400_000);
 }
 
-export function whatsappLink(message: string) {
-  const number = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP;
-  const text = encodeURIComponent(message);
-  return number ? `https://wa.me/${number}?text=${text}` : `https://wa.me/?text=${text}`;
+export function whatsappLink(message: string, number: string) {
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
 
 export const appUrl = () => (process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').replace(/\/$/, '');

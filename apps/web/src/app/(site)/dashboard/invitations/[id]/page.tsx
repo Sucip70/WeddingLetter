@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ApiError } from '@/lib/api';
+import { getSupportWhatsapp } from '@/lib/contact';
 import { appUrl, requestNow } from '@/lib/format';
 import { authedFetch, requireUser } from '@/lib/session';
 import type { InvitationDetail } from '@/lib/types';
@@ -18,6 +19,7 @@ export default async function ManageInvitationPage({ params, searchParams }: Pag
     if (error instanceof ApiError && error.status === 404) notFound();
     throw error;
   });
+  const wa = await getSupportWhatsapp();
   const tab = typeof sp.tab === 'string' ? sp.tab : 'overview';
   // Dihitung sekali di sini (Server Component, jalan sekali per request) lalu dikirim sebagai prop — bukan
   // dipanggil ulang di client — supaya hitungan "X hari lagi" sama persis antara SSR dan hidrasi.
@@ -26,7 +28,7 @@ export default async function ManageInvitationPage({ params, searchParams }: Pag
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <Link href="/dashboard" className="text-sm text-ink-soft hover:text-ink">← Undangan saya</Link>
-      <InvitationManager initial={invitation} initialTab={tab} baseUrl={appUrl()} now={now} />
+      <InvitationManager initial={invitation} initialTab={tab} baseUrl={appUrl()} now={now} supportWhatsapp={wa} />
     </div>
   );
 }

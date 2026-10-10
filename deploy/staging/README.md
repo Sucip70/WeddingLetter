@@ -74,8 +74,8 @@ mati), email OTP lewat Resend sungguhan, file di bucket R2 khusus staging.
    | `STAGING_SSH_KEY` | private key SSH khusus deploy (`ssh-keygen -t ed25519 -f wl-staging -N ""`; public key-nya ke `~deploy/.ssh/authorized_keys`) |
    | `STAGING_SSH_KNOWN_HOSTS` | hasil `ssh-keyscan -t ed25519 <IP VPS>` |
 3. Environment variables (ditanam ke image web saat build):
-   `NEXT_PUBLIC_APP_URL=https://staging.weddingletter.id`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (opsional),
-   `NEXT_PUBLIC_SUPPORT_WHATSAPP` (opsional, format `62812…`).
+   `NEXT_PUBLIC_APP_URL=https://staging.weddingletter.id`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (opsional).
+   Nomor WhatsApp bantuan tidak lagi lewat env: admin mengisinya di Admin → Pengaturan (kosong = halaman "segera hadir").
 
 ## Deploy
 

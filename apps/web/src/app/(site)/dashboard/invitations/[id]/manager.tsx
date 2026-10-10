@@ -10,6 +10,7 @@ import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { InvitationStatusBadge, expiryText } from '@/components/status';
 import { Alert, Badge, Button, Card, Field, Input, Modal, Select, Spinner, cn } from '@/components/ui';
 import { api, errorMessage, uploadWithProgress } from '@/lib/client-api';
+import Link from 'next/link';
 import { daysLeft, formatDate, formatDateTime, mb, rupiah, whatsappLink } from '@/lib/format';
 import { presetToken } from '@/lib/presets';
 import type { InvitationData, InvitationDetail, InvitationMedia, InvitationViewData, MusicPreset, QuoteLine, RsvpSummary, Upload } from '@/lib/types';
@@ -34,7 +35,17 @@ const NOOP_CTX: Omit<FieldCtx, 'data' | 'errors' | 'onChange' | 'coverLayouts'> 
   setFileWeeks: () => undefined,
 };
 
-export function InvitationManager({ initial, initialTab, baseUrl, now }: { initial: InvitationDetail; initialTab: string; baseUrl: string; now: number }) {
+// Tautan bantuan: WhatsApp bila admin sudah mengisi nomornya, kalau belum ke halaman /kontak ("segera hadir").
+function SupportLink({ number, message, children }: { number: string; message: string; children: React.ReactNode }) {
+  const cls = 'font-medium text-rose underline';
+  return number ? (
+    <a href={whatsappLink(message, number)} target="_blank" rel="noopener noreferrer" className={cls}>{children}</a>
+  ) : (
+    <Link href="/kontak" className={cls}>{children}</Link>
+  );
+}
+
+export function InvitationManager({ initial, initialTab, baseUrl, now, supportWhatsapp }: { initial: InvitationDetail; initialTab: string; baseUrl: string; now: number; supportWhatsapp: string }) {
   const [inv, setInv] = useState(initial);
   const [tab, setTab] = useState<Tab>((TABS.find((t) => t.id === initialTab)?.id ?? 'overview') as Tab);
 
@@ -66,8 +77,8 @@ export function InvitationManager({ initial, initialTab, baseUrl, now }: { initi
       </div>
 
       <div className="mt-8">
-        {tab === 'overview' && <Overview inv={inv} link={link} reload={reload} goto={setTab} now={now} />}
-        {tab === 'edit' && <EditTab inv={inv} setInv={setInv} />}
+        {tab === 'overview' && <Overview inv={inv} link={link} reload={reload} goto={setTab} now={now} supportWhatsapp={supportWhatsapp} />}
+        {tab === 'edit' && <EditTab inv={inv} setInv={setInv} supportWhatsapp={supportWhatsapp} />}
         {tab === 'rsvp' && <RsvpTab inv={inv} />}
         {tab === 'extend' && <ExtendTab inv={inv} now={now} />}
       </div>
@@ -77,7 +88,7 @@ export function InvitationManager({ initial, initialTab, baseUrl, now }: { initi
 
 // ================= Ringkasan =================
 
-function Overview({ inv, link, reload, goto, now }: { inv: InvitationDetail; link: string; reload: () => Promise<void>; goto: (t: Tab) => void; now: number }) {
+function Overview({ inv, link, reload, goto, now, supportWhatsapp }: { inv: InvitationDetail; link: string; reload: () => Promise<void>; goto: (t: Tab) => void; now: number; supportWhatsapp: string }) {
   const [publishing, setPublishing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState('');
@@ -202,7 +213,7 @@ function Overview({ inv, link, reload, goto, now }: { inv: InvitationDetail; lin
           {inv.refundEligible && (
             <p className="mt-3 text-sm text-ink-soft">
               Masih memenuhi syarat refund penuh (belum dipublikasikan, &lt; 48 jam).{' '}
-              <a href={whatsappLink(`Halo WeddingLetter, saya ingin mengajukan refund untuk pesanan ${inv.order.id}.`)} target="_blank" rel="noopener noreferrer" className="font-medium text-rose underline">Ajukan via WhatsApp</a>
+              <SupportLink number={supportWhatsapp} message={`Halo WeddingLetter, saya ingin mengajukan refund untuk pesanan ${inv.order.id}.`}>{supportWhatsapp ? 'Ajukan via WhatsApp' : 'Cara mengajukan refund'}</SupportLink>
             </p>
           )}
         </Card>
@@ -226,7 +237,7 @@ function Overview({ inv, link, reload, goto, now }: { inv: InvitationDetail; lin
 
 const TEXT_TYPES = ['text', 'textarea', 'datetime', 'url', 'coverlayout'];
 
-function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: InvitationDetail) => void }) {
+function EditTab({ inv, setInv, supportWhatsapp }: { inv: InvitationDetail; setInv: (i: InvitationDetail) => void; supportWhatsapp: string }) {
   const [data, setData] = useState<InvitationData>(inv.data);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
@@ -381,7 +392,7 @@ function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: Invitatio
             </div>
           </Card>
         ))}
-        <p className="text-xs text-ink-soft">Anda bisa <strong>mengganti</strong> file yang sudah ada tanpa biaya (ukuran harus sama atau lebih kecil dari yang dibayar). Menambah file baru atau mengubah jumlahnya perlu pesanan baru. <a href={whatsappLink(`Halo WeddingLetter, saya butuh bantuan mengubah file pada undangan /${inv.slug}.`)} target="_blank" rel="noopener noreferrer" className="font-medium text-rose underline">Butuh bantuan? Hubungi CS</a>.</p>
+        <p className="text-xs text-ink-soft">Anda bisa <strong>mengganti</strong> file yang sudah ada tanpa biaya (ukuran harus sama atau lebih kecil dari yang dibayar). Menambah file baru atau mengubah jumlahnya perlu pesanan baru. <SupportLink number={supportWhatsapp} message={`Halo WeddingLetter, saya butuh bantuan mengubah file pada undangan /${inv.slug}.`}>Butuh bantuan? Hubungi CS</SupportLink>.</p>
 
         <div className="sticky bottom-4 z-10 flex items-center gap-3 rounded-2xl border border-line bg-paper/95 p-3 shadow-lg backdrop-blur">
           <Button onClick={save} loading={saving} disabled={!editable || !dirty}>Simpan perubahan</Button>

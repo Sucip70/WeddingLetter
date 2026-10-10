@@ -341,3 +341,12 @@ model DemoPhoto {
 
   @@map("demo_photos")
 }
+
+// Pengaturan situs yang bisa diubah admin lewat UI (key-value). Saat ini: support_whatsapp (nomor bantuan, kosong = belum ada).
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}

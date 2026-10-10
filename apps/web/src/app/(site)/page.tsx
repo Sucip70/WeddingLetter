@@ -4,32 +4,33 @@ import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { TemplateThumb } from '@/components/template-thumb';
 import { Badge, LinkButton } from '@/components/ui';
 import { GROUP_LABEL, TIER_LABEL, getAddOns, getDemoPhotos, getTemplate, getTemplates, groupByDesign, templateFeatures } from '@/lib/catalog';
-import { rupiah, whatsappLink } from '@/lib/format';
+import { contactHref, getSupportWhatsapp } from '@/lib/contact';
+import { rupiah } from '@/lib/format';
 import { sampleView } from '@/lib/sample';
 import type { AddOn, Template, TemplateDetail, ThemeGroup } from '@/lib/types';
 
 const STEPS = [
-  { n: '01', title: 'Pilih template', body: 'Jelajahi desain dengan harga yang tertulis jelas di setiap kartu. Mulai dari Rp20.000.' },
-  { n: '02', title: 'Isi data, lihat langsung', body: 'Nama, tanggal, lokasi, foto, dan musik. Pratinjau penuh muncul seketika, lengkap dengan total harga yang selalu terbarui.' },
-  { n: '03', title: 'Bayar dengan mudah', body: 'QRIS, virtual account, atau e-wallet. Akun cukup dibuat saat checkout, tanpa kata sandi.' },
-  { n: '04', title: 'Publikasikan & bagikan', body: 'Kirim link personal ke WhatsApp tamu (dengan nama mereka), lalu pantau RSVP dari dashboard.' },
+  { n: '01', title: 'Pilih template', body: 'Lihat contoh desain dan harganya. Yang paling murah Rp20.000.' },
+  { n: '02', title: 'Isi data', body: 'Isi nama, tanggal, lokasi, foto, dan musik. Hasilnya langsung tampil dan total harga ikut berubah.' },
+  { n: '03', title: 'Bayar', body: 'Bisa pakai QRIS, virtual account, atau e-wallet' },
+  { n: '04', title: 'Bagikan', body: 'Kirim link ke tamu lewat WhatsApp, lengkap dengan nama mereka. RSVP bisa dipantau dari dashboard.' },
 ];
 
 const FEATURES = [
-  ['RSVP online', 'Tamu konfirmasi hadir & jumlah orang. Anda melihat rekapnya real-time.'],
-  ['Amplop digital', 'Rekening dan e-wallet dengan tombol salin, untuk tanda kasih dari jauh.'],
-  ['Musik & galeri', 'Foto, video, dan lagu latar. Ukuran besar? Bayar sesuai pemakaian.'],
-  ['Hitung mundur', 'Menuju hari bahagia, plus tombol simpan ke Google Calendar.'],
-  ['Link personal', 'Tambahkan ?to=Nama pada link, dan tamu disapa dengan namanya.'],
-  ['Dua bahasa', 'Tombol Indonesia ↔ Inggris untuk keluarga dan tamu dari luar negeri.'],
+  ['RSVP online', 'Tamu mengisi hadir atau tidak dan jumlah orangnya. Rekapnya bisa Anda lihat kapan saja.'],
+  ['Amplop digital', 'Nomor rekening dan e-wallet dengan tombol salin.'],
+  ['Musik dan galeri', 'Foto, video, dan lagu latar. Untuk file besar, biayanya dihitung dari ukuran dan lama tayang.'],
+  ['Hitung mundur', 'Ada tombol untuk menyimpan acara ke Google Calendar.'],
+  ['Link personal', 'Tambahkan ?to=Nama di link, lalu nama tamu muncul di undangan.'],
+  ['Dua bahasa', 'Tombol Indonesia dan Inggris untuk tamu dari luar negeri.'],
 ];
 
 const FAQ = [
-  ['Apakah saya harus membuat akun dulu?', 'Tidak. Anda bebas menjelajah dan mengisi undangan tanpa akun. Akun (cukup email + kode OTP) baru dibuat saat checkout, supaya Anda bisa kembali mengedit dan memperpanjang undangan.'],
-  ['Bagaimana cara kerja harga "sewa media"?', 'Foto/video di atas kuota template dihitung seperti menyewa penyimpanan: ukuran (MB) × lama tayang (minggu) × Rp700. Contoh: video 100 MB selama 1 minggu = Rp70.000, 2 minggu = Rp140.000. Semua terlihat di kalkulator sebelum Anda membayar.'],
-  ['Berapa lama undangan aktif? Bagaimana kalau habis?', 'Setiap template sudah termasuk masa aktif awal. Bisa diperpanjang per minggu. Setelah habis, data tetap disimpan 30 hari, jadi Anda bisa memperpanjang tanpa kehilangan apa pun. Kami kirim pengingat 3 hari sebelum berakhir.'],
-  ['Bisakah minta refund?', 'Bisa, selama undangan belum dipublikasikan dan masih dalam 48 jam sejak pembayaran. Setelah dipublikasikan, transaksi bersifat final kecuali ada kendala teknis dari sistem kami.'],
-  ['Saya ingin desain sendiri, bisa?', 'Bisa. Untuk kebutuhan di atas template (desain eksklusif, tata letak khusus), pilih jalur custom: kami rancang dari nol dan didampingi sampai selesai. Mulai Rp500.000.'],
+  ['Harus punya akun dulu?', 'Tidak. Anda bisa melihat template dan mengisi data tanpa akun. Akun dibuat saat checkout, supaya Anda bisa mengedit dan memperpanjang undangan nanti.'],
+  ['Bagaimana hitungan sewa media?', 'Foto atau video di luar kuota template dihitung dari ukuran (MB) × lama tayang (minggu) × Rp700. Contoh: video 100 MB selama 1 minggu Rp70.000, 2 minggu Rp140.000. Angkanya terlihat di kalkulator sebelum Anda bayar.'],
+  ['Undangan aktif berapa lama?', 'Setiap template sudah termasuk masa aktif awal, dan bisa diperpanjang per minggu. Setelah habis, data disimpan 30 hari jadi masih bisa diperpanjang. Kami kirim pengingat 3 hari sebelum berakhir.'],
+  ['Bisa minta refund?', 'Bisa, selama undangan belum dipublikasikan dan belum lewat 48 jam dari pembayaran. Setelah dipublikasikan tidak bisa refund, kecuali ada masalah dari sistem kami.'],
+  ['Saya mau desain sendiri, bisa?', 'Bisa. Pilih jalur custom untuk desain eksklusif atau tata letak khusus. Kami kerjakan dari awal dan mendampingi sampai selesai. Mulai Rp500.000.'],
 ];
 
 export default async function HomePage() {
@@ -38,19 +39,20 @@ export default async function HomePage() {
   let photos: Record<string, string> = {};
   let heroA: TemplateDetail | undefined;
   let heroB: TemplateDetail | undefined;
+  const wa = await getSupportWhatsapp();
   try {
     [templates, addOns, photos] = await Promise.all([getTemplates(), getAddOns(), getDemoPhotos()]);
     // Daftar katalog sengaja ringan (tanpa field & lagu), jadi demo hero mengambil detail lengkapnya.
     const premium = templates.filter((t) => t.tier === 'PREMIUM');
-    const pick = (design: string) => premium.find((t) => t.design?.id === design) ?? premium[0] ?? templates[templates.length - 1];
-    const [a, b] = [pick('sakura-anime'), pick('jawa')];
+    const pick = (design: string) => premium.find((t) => t.id === design || t.design?.id === design) ?? premium[0] ?? templates[templates.length - 1];
+    const [a, b] = [pick('rustic'), pick('buket')];
     [heroA, heroB] = await Promise.all([a ? getTemplate(a.id) : undefined, b ? getTemplate(b.id) : undefined]);
   } catch {
     // API belum jalan: halaman tetap tampil tanpa bagian yang butuh data.
   }
 
   // Satu contoh desain per grup tema untuk etalase.
-  const showcase = (['suku', 'kartun', 'game', 'film', 'perayaan', 'musim'] as const)
+  const showcase = (['klasik', 'musim'] as const)
     .map((g) => groupByDesign(templates).find((e) => e.group === g))
     .filter((e): e is NonNullable<typeof e> => !!e);
 
@@ -67,19 +69,19 @@ export default async function HomePage() {
         <div className="pointer-events-none absolute -left-32 top-64 h-[26rem] w-[26rem] rounded-full bg-sage-soft/70 blur-3xl" aria-hidden />
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-12 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:pt-20">
           <div className="animate-fade-up">
-            <Badge tone="rose" className="mb-5">Undangan digital · mulai Rp20.000</Badge>
+            <Badge tone="rose" className="mb-5">Undangan digital mulai Rp20.000</Badge>
             <h1 className="font-display text-4xl leading-[1.1] text-ink sm:text-5xl lg:text-6xl">
-              Undangan pernikahan yang <em className="text-rose not-italic">cantik</em>, dengan harga yang jujur.
+              Undangan pernikahan digital
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-soft">
-              Pilih template, isi data, dan lihat hasilnya langsung. Setiap rupiah tertulis jelas sebelum Anda membayar, dan Anda hanya membayar untuk yang benar-benar dipakai.
+              Pilih template, isi data, dan lihat hasilnya langsung. Biaya tambahan seperti foto dan video dihitung sesuai pemakaian, dan terlihat sebelum Anda bayar.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <LinkButton href="/templates" size="lg">Lihat template</LinkButton>
               <LinkButton href="#cara-kerja" variant="secondary" size="lg">Cara kerja</LinkButton>
             </div>
             <ul className="mt-10 grid max-w-xl gap-3 text-sm text-ink-soft sm:grid-cols-3">
-              {['Harga transparan', 'Bayar sesuai pemakaian', 'Bisa desain custom'].map((t) => (
+              {['Harga jelas', 'Bayar sesuai pemakaian', 'Bisa pesan desain custom'].map((t) => (
                 <li key={t} className="flex items-center gap-2">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sage-soft text-sage">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg>
@@ -90,9 +92,9 @@ export default async function HomePage() {
             </ul>
           </div>
 
-          <div className="relative flex justify-center lg:justify-end" aria-hidden={false}>
+          <div className="relative flex h-[410px] justify-center sm:h-auto lg:justify-end" aria-hidden={false}>
             {heroA && heroB ? (
-              <div className="relative h-[560px] w-[500px] max-w-full scale-[0.82] sm:scale-100">
+              <div className="relative h-[560px] w-[500px] shrink-0 origin-top scale-[0.7] sm:max-w-full sm:scale-100">
                 <div className="absolute left-0 top-10 -rotate-[5deg]">
                   <PhoneFrame size="md">
                     <InvitationView view={sampleView(heroB.layout, {}, photos)} mode="preview" embedded placeholders />
@@ -118,7 +120,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
           <div className="max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-widest text-rose">Cara kerja</p>
-            <h2 className="mt-3 font-display text-3xl text-ink sm:text-4xl">Dari pilih template sampai tersebar di WhatsApp, kurang dari 15 menit.</h2>
+            <h2 className="mt-3 font-display text-3xl text-ink sm:text-4xl">Cara membuat undangan</h2>
           </div>
           <ol className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {STEPS.map((s) => (
@@ -138,7 +140,7 @@ export default async function HomePage() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-widest text-rose">Template</p>
-              <h2 className="mt-3 font-display text-3xl text-ink sm:text-4xl">Pilih tema yang paling menggambarkan Anda berdua: budaya, religi, perayaan, kartun, game, film, atau musim.</h2>
+              <h2 className="mt-3 font-display text-3xl text-ink sm:text-4xl">Pilih tema sesuai dengan keinginan Anda</h2>
             </div>
             <LinkButton href="/templates" variant="secondary">Semua template →</LinkButton>
           </div>
@@ -168,10 +170,10 @@ export default async function HomePage() {
       <section className="border-y border-line bg-paper">
         <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_1.1fr]">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-rose">Harga transparan</p>
-            <h2 className="mt-3 font-display text-3xl text-ink sm:text-4xl">Bayar untuk yang dipakai. Tidak ada biaya tersembunyi.</h2>
+            <p className="text-sm font-semibold uppercase tracking-widest text-rose">Harga</p>
+            <h2 className="mt-3 font-display text-3xl text-ink sm:text-4xl">Bayar yang dipakai saja.</h2>
             <p className="mt-5 leading-relaxed text-ink-soft">
-              Harga template sudah termasuk kuota foto dan masa aktif awal. Butuh lebih? Foto, video, dan masa aktif tambahan dihitung seperti menyewa penyimpanan: ukuran × lama tayang. Kalkulator di editor menunjukkan total Anda secara langsung.
+              Harga template sudah termasuk kuota foto dan masa aktif awal. Kalau butuh lebih, foto, video, dan masa aktif dihitung dari ukuran dan lama tayang. Totalnya terlihat di editor sebelum Anda bayar.
             </p>
             <div className="mt-6 rounded-2xl border border-line bg-ivory p-5">
               <p className="text-sm font-semibold text-ink">Contoh sewa video</p>
@@ -211,7 +213,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-widest text-rose">Fitur</p>
-          <h2 className="mt-3 font-display text-3xl text-ink sm:text-4xl">Semua yang dibutuhkan undangan modern.</h2>
+          <h2 className="mt-3 font-display text-3xl text-ink sm:text-4xl">Fitur undangan</h2>
         </div>
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map(([title, body]) => (
@@ -229,14 +231,14 @@ export default async function HomePage() {
           <div className="grid items-center gap-8 md:grid-cols-[1.4fr_1fr]">
             <div>
               <p className="text-sm font-semibold uppercase tracking-widest text-gold">Desain custom</p>
-              <h2 className="mt-3 font-display text-3xl sm:text-4xl">Punya konsep sendiri? Kami rancang dari nol.</h2>
+              <h2 className="mt-3 font-display text-3xl sm:text-4xl">Punya konsep sendiri? Kami buatkan.</h2>
               <p className="mt-4 max-w-xl leading-relaxed text-ivory/75">
-                Ceritakan tema, warna, dan referensi Anda. Kami buatkan penawaran, kerjakan desainnya, dan revisi sampai Anda puas. Mulai Rp500.000.
+                Ceritakan tema, warna, dan referensi Anda. Kami kirim penawaran, mengerjakan desainnya, dan merevisinya sampai sesuai. Mulai Rp500.000.
               </p>
             </div>
             <div className="md:text-right">
-              <LinkButton href={whatsappLink('Halo WeddingLetter, saya ingin memesan desain undangan custom.')} external size="lg" className="bg-ivory text-ink hover:bg-white">
-                Konsultasi via WhatsApp
+              <LinkButton href={contactHref('Halo WeddingLetter, saya ingin memesan desain undangan custom.', wa)} external={!!wa} size="lg" className="bg-ivory text-ink hover:bg-white">
+                {wa ? 'Konsultasi via WhatsApp' : 'Pesan desain custom'}
               </LinkButton>
             </div>
           </div>
@@ -245,7 +247,7 @@ export default async function HomePage() {
 
       {/* FAQ */}
       <section id="faq" className="mx-auto max-w-3xl scroll-mt-20 px-4 py-20 sm:px-6">
-        <h2 className="text-center font-display text-3xl text-ink sm:text-4xl">Pertanyaan yang sering diajukan</h2>
+        <h2 className="text-center font-display text-3xl text-ink sm:text-4xl">Pertanyaan umum</h2>
         <div className="mt-10 divide-y divide-line rounded-2xl border border-line bg-paper">
           {FAQ.map(([q, a]) => (
             <details key={q} className="group px-6 py-5">
