@@ -286,7 +286,9 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     '--r': radius.card,
     '--rb': radius.button,
     '--rf': radius.field,
-    background: theme.background,
+    // backgroundColor, bukan shorthand `background`: React hanya menulis ulang properti yang berubah, dan menulis shorthand saat warna
+    // berganti (pilih palet) akan menghapus backgroundImage (tekstur kraft, marmer, parang, dst.) yang nilainya tidak berubah.
+    backgroundColor: theme.background,
     color: theme.text,
     fontFamily: bf.family,
     ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : gilded ? GILDED_BG : airy ? DOVE_BG : bloom && bloomCss ? { ...BLOOM_BG, ['--bloom-garland' as string]: bloomCss.garland, ['--bloom-mini' as string]: bloomCss.mini } : keraton && keratonCss ? { ...KERATON_BG, ...keratonCss } : null),
