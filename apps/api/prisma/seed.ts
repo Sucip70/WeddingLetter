@@ -111,8 +111,12 @@ async function main() {
   for (const t of templates) {
     const existing = await prisma.template.findFirst({ where: { name: t.name }, select: { id: true } });
     if (existing) {
-      // Skema lama (dari seed awal) dimutakhirkan ke bentuk baru; harga & status tidak disentuh.
-      await prisma.template.update({ where: { id: existing.id }, data: { layoutSchema: t.layoutSchema, includedWeeks: t.includedWeeks, category: t.category } });
+      // Template yang sudah ada TIDAK ditimpa (perubahan admin di builder: tema, palet, gerbang, bagian, harga, status tetap
+      // aman). Untuk sengaja memutakhirkan skema dari seed, jalankan dengan SEED_OVERWRITE_TEMPLATES=1.
+      if (process.env.SEED_OVERWRITE_TEMPLATES === "1") {
+        await prisma.template.update({ where: { id: existing.id }, data: { layoutSchema: t.layoutSchema, includedWeeks: t.includedWeeks, category: t.category } });
+        console.log(`Skema dimutakhirkan: ${t.name}`);
+      }
     } else {
       await prisma.template.create({ data: { ...t, status: "PUBLISHED" } });
     }
