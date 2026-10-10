@@ -4,9 +4,9 @@
 import type { TemplateTier } from '../generated/prisma/client.js';
 
 // Tersedia untuk Standard dan Premium.
-export const GENERIC_COVERS = ['ornamen', 'penuh', 'penuh-atas', 'bingkai', 'jendela', 'medali', 'terbagi', 'berdua', 'bingkai-penuh'] as const;
+export const GENERIC_COVERS = ['ornamen', 'penuh', 'penuh-atas', 'bingkai', 'medali', 'terbagi', 'berdua', 'bingkai-penuh'] as const;
 // Khusus tema, hanya Premium.
-export const THEME_COVERS = ['gapura', 'hati', 'portal', 'kristal', 'karakter', 'poster', 'emas', 'merpati', 'bunga'] as const;
+export const THEME_COVERS = ['gapura', 'portal', 'karakter', 'poster', 'emas', 'merpati', 'bunga'] as const;
 
 export const COVER_KINDS: string[] = [...GENERIC_COVERS, ...THEME_COVERS];
 export type ThemeCover = (typeof THEME_COVERS)[number];
@@ -15,12 +15,8 @@ export type ThemeCover = (typeof THEME_COVERS)[number];
 export const THEME_COVER_BY_DESIGN: Record<string, ThemeCover> = {
   // gapura / gerbang berukir
   jawa: 'gapura', minang: 'gapura', batak: 'gapura', bali: 'gapura', islami: 'gapura', lebaran: 'gapura', buddha: 'gapura', imlek: 'gapura',
-  // foto berbentuk hati
-  valentine: 'hati', floral: 'hati', 'sakura-anime': 'hati',
   // portal bercincin
   sihir: 'portal', galaksi: 'portal', halloween: 'portal',
-  // kristal es
-  'kerajaan-es': 'kristal', salju: 'kristal', natal: 'kristal',
   // pemilihan karakter (game)
   pixel: 'karakter', 'player-one': 'karakter', rpg: 'karakter', neon: 'karakter',
   // poster film

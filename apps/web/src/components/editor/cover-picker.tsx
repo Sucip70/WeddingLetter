@@ -47,14 +47,6 @@ const ICONS: Record<CoverKind, ReactNode> = {
       {button(46)}
     </>
   ),
-  jendela: (
-    <>
-      <path d="M11 34V21a9 9 0 0 1 18 0v13Z" {...STROKE} />
-      <path d="M13 32V21a7 7 0 0 1 14 0v11Z" {...SOFT} />
-      {text(39, 18)}
-      {button(46)}
-    </>
-  ),
   medali: (
     <>
       <circle cx={20} cy={22} r={11} {...STROKE} strokeDasharray="1.5 2.5" />
@@ -95,14 +87,6 @@ const ICONS: Record<CoverKind, ReactNode> = {
       {button(47)}
     </>
   ),
-  hati: (
-    <>
-      <path d="M20 34C7 24 6 14 13 11c4-1.500 6 .5 7 3 1-2.500 3-4.500 7-3 7 3 6 13-7 23Z" {...STROKE} />
-      <path d="M20 31C10 23 9 15 14 13.500c3-1 5 1 6 3.500 1-2.500 3-4.500 6-3.500 5 1.500 4 9.500-6 17.500Z" {...SOFT} />
-      {text(40, 18)}
-      {button(47)}
-    </>
-  ),
   portal: (
     <>
       <rect x={4} y={4} width={32} height={52} rx={2} {...SOLID} opacity={0.85} />
@@ -110,14 +94,6 @@ const ICONS: Record<CoverKind, ReactNode> = {
       <circle cx={20} cy={24} r={8} fill="#fff" opacity={0.35} />
       <rect x={11} y={41} width={18} height={2.4} rx={1.2} fill="#fff" />
       <rect x={13} y={47} width={14} height={4.5} rx={2.2} fill="#fff" />
-    </>
-  ),
-  kristal: (
-    <>
-      <path d="M20 8l9 4 5 9v10l-5 8-9 4-9-4-5-8V21l5-9Z" {...STROKE} />
-      <path d="M20 12l7 3 3 7v8l-4 6-6 3-6-3-4-6v-8l3-7Z" {...SOFT} />
-      {text(46, 18)}
-      {button(50)}
     </>
   ),
   karakter: (
