@@ -100,14 +100,14 @@ describe('palet warna', () => {
   });
 
   it('desain lain mendapat varian otomatis + entri "bawaan"; desain warna tetap tidak', () => {
-    const jawa = designById('jawa')!;
-    const layout = normalizeLayout({ theme: { preset: 'jawa' }, palettes: autoPalettes(jawa) }, 'suku');
+    const sunda = designById('sunda')!;
+    const layout = normalizeLayout({ theme: { preset: 'sunda' }, palettes: autoPalettes(sunda) }, 'suku');
     expect(layout.palettes.map((p) => p.id)).toEqual(['bawaan', 'hangat', 'sejuk']);
     for (const p of layout.palettes) for (const c of [p.primary, p.secondary, p.background, p.text]) expect(c).toMatch(HEX);
     expect(autoPalettes(designById('natal')!)).toEqual([]);
   });
 
-  it.each(['elegant', 'kristiani', 'buket'])('%s memakai palet pilihan tangan (bukan geseran rona): id unik, warna valid, latar terang & teks gelap', (id) => {
+  it.each(['elegant', 'kristiani', 'buket', 'jawa'])('%s memakai palet pilihan tangan (bukan geseran rona): id unik, warna valid, latar terang & teks gelap', (id) => {
     const palettes = autoPalettes(designById(id)!);
     expect(palettes.length).toBeGreaterThan(0);
     expect(new Set(palettes.map((p) => p.id)).size).toBe(palettes.length);

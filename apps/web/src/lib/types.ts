@@ -47,8 +47,8 @@ export const GATE_LABEL = {
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export type GateSetting = GateKind | 'none';
-export type HeadingFont = 'script' | 'serif' | 'sans' | 'display' | 'cinzel' | 'pixel' | 'round';
-export type BodyFont = 'serif' | 'sans' | 'round';
+export type HeadingFont = 'script' | 'serif' | 'sans' | 'display' | 'cinzel' | 'pixel' | 'round' | 'playfair';
+export type BodyFont = 'serif' | 'sans' | 'round' | 'montserrat';
 
 export interface Theme {
   preset: string;

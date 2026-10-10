@@ -70,7 +70,7 @@ const premiumFull = (await call('GET', `/templates/${premium.id}`, { expect: 200
 ok(premiumFull.layout.musik.allowed && basic.layout.musik.allowed && premiumFull.layout.musik.presets.length === 0, 'semua paket boleh musik; pustaka lagu awalnya kosong (diisi admin)');
 eq(premiumFull.layout.palettes.map((p) => p.id), ['bawaan', 'hangat', 'sejuk'], 'desain non-Basic punya palet bawaan + 2 varian otomatis');
 const standardJawa = templates.find((t) => t.name === 'Standard Batik Jawa');
-eq([premium.layout.theme.gate, standardJawa.layout.theme.gate, basic.layout.theme.gate], ['door', 'none', 'none'], 'gerbang pembuka hanya di Premium (Batik Jawa = pintu)');
+eq([premium.layout.theme.gate, standardJawa.layout.theme.gate, basic.layout.theme.gate], ['kayon', 'none', 'none'], 'gerbang pembuka hanya di Premium (Batik Jawa = kayon wayang)');
 eq(templates.filter((t) => t.tier === 'PREMIUM' && t.layout.theme.gate === 'none').length, 0, 'semua template Premium punya gerbang');
 eq(standardJawa.layout.theme.fx, 'standard', 'Standard = animasi standar');
 const rusticTiers = templates.filter((t) => t.design?.id === 'rustic').map((t) => t.tier).sort();

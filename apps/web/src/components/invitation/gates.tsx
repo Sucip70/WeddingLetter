@@ -22,7 +22,7 @@ export const GATE_MS: Record<GateKind, number> = {
   balloons: 2800, waves: 2700, gift: 2500, lantern: 2700, fireworks: 2900, book: 2900, pressstart: 1400, loading: 2700, neon: 2600,
   // surat + embusan (letter-gust.tsx): waktu sama untuk semua variannya
   sakura: 2700, frost: 2700, leaves: 2700,
-  kayon: 2300,
+  kayon: 2400,
   twine: 2700,
   doves: 3100,
   bouquet: 3300,
@@ -33,7 +33,7 @@ export const GATE_MS: Record<GateKind, number> = {
 export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, portal: true, kayon: true, twine: true, ring: true, doves: true, bouquet: true };
 
 // Gerbang yang baru menyingkap sampul setelah jeda (ms sejak ketukan): animasi masuk sampul ditunda sebesar itu.
-export const REVEAL_DELAY_MS: Partial<Record<GateKind, number>> = { ring: 1750, doves: 1000, bouquet: 1200 };
+export const REVEAL_DELAY_MS: Partial<Record<GateKind, number>> = { ring: 1750, doves: 1000, bouquet: 1200, kayon: 800 };
 
 const CTA: Record<GateKind, string> = {
   door: 'Ketuk untuk membuka pintu', glass: 'Ketuk untuk membuka jendela', curtain: 'Ketuk untuk membuka tirai', cloth: 'Ketuk untuk membuka kain',
@@ -46,7 +46,7 @@ const CTA: Record<GateKind, string> = {
 };
 
 // Adegan gelap memakai teks putih; adegan terang memakai warna teks tema.
-const DARK: Partial<Record<GateKind, true>> = { door: true, glass: true, curtain: true, cloth: true, portal: true, lantern: true, fireworks: true, pressstart: true, loading: true, neon: true, ring: true };
+const DARK: Partial<Record<GateKind, true>> = { door: true, glass: true, curtain: true, cloth: true, portal: true, lantern: true, fireworks: true, pressstart: true, loading: true, neon: true, ring: true, kayon: true };
 // Adegan yang punya teks sendiri (tanpa judul umum di atas).
 const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true, leaves: true, portal: true, kayon: true, twine: true, ring: true, doves: true, bouquet: true };
 
@@ -483,11 +483,50 @@ const GATE_CSS = `
 @keyframes g-bob{0%,100%{translate:0 0}50%{translate:0 -6px}}
 @keyframes g-blink{50%{opacity:0}}
 @keyframes g-twinkle{0%,100%{opacity:.15}50%{opacity:1}}
-/* api & cahaya blencong (wayang-kayon.tsx) */
-.g-flame{transform-box:fill-box;transform-origin:50% 100%;animation:g-flame 1.3s ease-in-out infinite}
-@keyframes g-flame{0%,100%{transform:scale(1,1)}30%{transform:scale(.9,1.1)}60%{transform:scale(1.06,.94)}}
-.g-flicker{animation:g-flicker 2.6s ease-in-out infinite}
-@keyframes g-flicker{0%,100%{opacity:1}40%{opacity:.8}55%{opacity:.95}70%{opacity:.85}}
+/* gerbang kayon (wayang-kayon.tsx): dua daun kelir bergeser, gunungan bergoyang lalu naik; hanya transform & opacity. Waktu = KAYON_T. */
+.kg-scene{position:absolute;inset:0;overflow:hidden;color:var(--bg)}
+.kg-panel{position:absolute;top:0;bottom:0;width:50.4%;overflow:hidden;z-index:2;background:var(--kr-kawung-dark,none),linear-gradient(180deg,color-mix(in srgb,var(--p) 60%,#000),color-mix(in srgb,var(--p) 84%,#000) 46%,color-mix(in srgb,var(--p) 54%,#000));will-change:transform;transition:transform 1.15s cubic-bezier(.7,0,.25,1) .8s}
+.kg-pl{left:0}
+.kg-pr{right:0;background-position:calc(-49.6cqw) 0,0 0}
+.kg-parang{position:absolute;top:0;bottom:0;width:22px;background:var(--kr-parang,none) 0 0/22px 22px repeat-y}
+.kg-pl .kg-parang{left:0;border-right:2px solid var(--s)}
+.kg-pr .kg-parang{right:0;border-left:2px solid var(--s)}
+.kg-band{position:absolute;left:0;right:0;height:14px;background:var(--kr-band,none) repeat-x 0 0/auto 14px}
+.kg-pr .kg-band{background-position:calc(-49.6cqw) 0}
+.kg-bt{top:0}.kg-bb{bottom:0}
+.kg-seam{position:absolute;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--s),color-mix(in srgb,var(--s) 55%,#3d2a00) 50%,var(--s))}
+.kg-pl .kg-seam{right:0}.kg-pr .kg-seam{left:0}
+.wl-gate[data-phase=opening] .kg-pl{transform:translateX(-101%)}
+.wl-gate[data-phase=opening] .kg-pr{transform:translateX(101%)}
+.kg-dust{position:absolute;inset:0;z-index:3;color:var(--s);pointer-events:none;transition:opacity .6s ease .5s}
+.wl-gate[data-phase=opening] .kg-dust{opacity:0}
+.kg-fade{transition:opacity .35s ease}
+.wl-gate[data-phase=opening] .kg-fade{opacity:0}
+.kg-head{position:absolute;left:0;right:0;top:6cqh;z-index:5;text-align:center;padding:0 8%}
+.kg-aksara{font-family:var(--font-javanese),serif;font-size:1.65rem;line-height:1.45;padding:0 .1em .6em;margin-bottom:-.5em}
+.kg-kicker{margin-top:.35em;font-family:var(--font-montserrat),sans-serif;font-size:10.5px;font-weight:500;letter-spacing:.36em;text-transform:uppercase;color:color-mix(in srgb,var(--bg) 82%,transparent)}
+.kg-stage{position:absolute;left:0;right:0;top:19cqh;height:44cqh;z-index:4;display:flex;justify-content:center}
+.kg-glow{position:absolute;left:50%;top:50%;width:120cqw;height:120cqw;margin:-60cqw 0 0 -60cqw;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--s) 46%,transparent) 0,color-mix(in srgb,var(--s) 14%,transparent) 38%,transparent 66%);opacity:.6;animation:kg-breathe 3.6s ease-in-out infinite alternate;will-change:transform,opacity}
+@keyframes kg-breathe{from{opacity:.42;transform:scale(.94)}to{opacity:.78;transform:scale(1.06)}}
+.wl-gate[data-phase=opening] .kg-glow{animation:kg-flash 1.3s ease-out .5s both}
+@keyframes kg-flash{0%{opacity:.6;transform:scale(1)}35%{opacity:1;transform:scale(1.5)}100%{opacity:0;transform:scale(2.6)}}
+.kg-mark{position:relative;height:100%;aspect-ratio:200/272;transform-origin:50% 92%}
+.kg-float{height:100%;width:100%;animation:kg-float 4.2s ease-in-out infinite alternate}
+@keyframes kg-float{from{transform:translateY(0)}to{transform:translateY(-6px)}}
+.wl-gate[data-phase=opening] .kg-mark{animation:kg-wobble .7s ease-in-out both;will-change:transform}
+.wl-gate[data-phase=opening] .kg-float{animation:kg-lift 1.1s cubic-bezier(.5,0,.8,.5) .6s both;will-change:transform,opacity}
+@keyframes kg-wobble{0%{transform:rotate(0)}22%{transform:rotate(-6deg)}50%{transform:rotate(5deg)}76%{transform:rotate(-2.5deg)}100%{transform:rotate(0)}}
+@keyframes kg-lift{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-16cqh) scale(1.14);opacity:0}}
+.kg-names{position:absolute;left:0;right:0;top:65cqh;z-index:5;text-align:center;padding:0 9%}
+.kg-names b{display:block;font-weight:500;font-size:2.05rem;line-height:1.12;color:var(--bg);text-shadow:0 2px 14px rgba(0,0,0,.35)}
+.kg-names b.kg-long{font-size:1.6rem}
+.kg-rule{display:block;position:relative;width:120px;height:9px;margin:.7em auto .55em}
+.kg-rule::before{content:'';position:absolute;left:0;right:0;top:4px;height:1px;background:linear-gradient(90deg,transparent,var(--s) 30%,var(--s) 70%,transparent)}
+.kg-rule i{position:absolute;left:50%;top:0;width:8px;height:8px;margin-left:-4px;transform:rotate(45deg);background:var(--s)}
+.kg-names small{display:block;font-family:var(--font-montserrat),sans-serif;font-size:9.5px;letter-spacing:.3em;text-transform:uppercase;color:color-mix(in srgb,var(--bg) 78%,transparent)}
+.kg-names em{display:block;margin-top:.25em;font-style:normal;font-family:var(--font-playfair),serif;font-size:1.15rem;font-weight:600;color:var(--bg)}
+.wl-gate[data-kind=kayon] .wl-gate-cta{background:var(--p);color:var(--bg);border:1px solid var(--s);border-radius:2px;font-family:var(--font-montserrat),sans-serif;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;box-shadow:inset 0 0 0 2px var(--p),inset 0 0 0 3px color-mix(in srgb,var(--s) 70%,transparent),0 12px 24px -10px rgba(0,0,0,.6)}
+.wl-gate[data-kind=kayon] .wl-gate-cta::before{border-color:color-mix(in srgb,var(--s) 75%,transparent);border-radius:2px}
 
 /* pintu & jendela kaca patri */
 .g-door{position:absolute;inset:0;perspective:1400px}

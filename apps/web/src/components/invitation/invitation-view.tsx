@@ -19,6 +19,8 @@ import { DOVE_SILHOUETTE, DOVE_VIEWBOX, Dove, DovePair } from './dove-art';
 import { Monogram, ORNAMENTS, PauseIcon, PlayIcon } from './ornaments';
 import type { OrnamentSet } from './ornaments';
 import { BloomMini, FloralMonogram, garlandCss, miniBloomCss } from './bloom-parts';
+import { KERATON_BG, keratonVars } from './batik-art';
+import { Gunungan } from './gunungan-art';
 
 export interface InvitationViewProps {
   view: InvitationViewData;
@@ -121,6 +123,7 @@ const BLOOM_BG: CSSProperties = {
   backgroundSize: '100% 1800px',
   backgroundRepeat: 'repeat-y',
 };
+const AKSARA = 'ꦲꦸꦤ꧀ꦝꦁꦔꦤ꧀'; // "undhangan" (undangan), aksara Jawa dekoratif
 const initialOf = (name: string, fallback = '') => (name.trim().charAt(0) || fallback).toUpperCase();
 
 export function InvitationView({ view, mode = 'live', embedded = false, placeholders = false, gate }: InvitationViewProps) {
@@ -132,15 +135,18 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const orn = ORNAMENTS[motif.ornament];
   const radius = RADIUS[motif.radius];
   const hf = HEADING[motif.heading ?? theme.headingFont] ?? HEADING.serif;
-  const bf = BODY[theme.bodyFont] ?? BODY.serif;
+  const bf = BODY[motif.body ?? theme.bodyFont] ?? BODY.serif;
   // Font nama mempelai bisa berbeda dari font judul seksi (Elegan: aksara tulisan tangan vs Cinzel).
   const nf = HEADING[motif.names ?? motif.heading ?? theme.headingFont] ?? hf;
   const skin = motif.skin;
   const gilded = skin === 'gilded';
   const airy = skin === 'dove';
   const bloom = skin === 'bloom';
+  const keraton = skin === 'keraton';
   // Untaian bunga & ikon bunga mini sebagai gambar CSS (data URI): bunga utamanya berwarna sekunder tema, jadi dihitung per tema.
   const bloomCss = useMemo(() => (bloom ? { garland: garlandCss(theme.secondary), mini: miniBloomCss(theme.secondary) } : null), [bloom, theme.secondary]);
+  // Batik Jawa: parang, kawung, dan ikon gunungan sebagai gambar CSS (data URI) yang warnanya ikut tema; lihat batik-art.ts.
+  const keratonCss = useMemo(() => (keraton ? keratonVars(theme.primary, theme.secondary, theme.background) : null), [keraton, theme.primary, theme.secondary, theme.background]);
   const layerHeight = embedded ? EMBED_HEIGHT : '100svh';
 
   const [lang, setLang] = useState<Lang>('id');
@@ -283,7 +289,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     background: theme.background,
     color: theme.text,
     fontFamily: bf.family,
-    ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : gilded ? GILDED_BG : airy ? DOVE_BG : bloom && bloomCss ? { ...BLOOM_BG, ['--bloom-garland' as string]: bloomCss.garland, ['--bloom-mini' as string]: bloomCss.mini } : null),
+    ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : gilded ? GILDED_BG : airy ? DOVE_BG : bloom && bloomCss ? { ...BLOOM_BG, ['--bloom-garland' as string]: bloomCss.garland, ['--bloom-mini' as string]: bloomCss.mini } : keraton && keratonCss ? { ...KERATON_BG, ...keratonCss } : null),
   } as CSSProperties;
   const headingStyle: CSSProperties = {
     fontFamily: hf.family,
@@ -292,12 +298,14 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     textTransform: hf.upper ? 'uppercase' : undefined,
   };
   const namesStyle: CSSProperties = { ...headingStyle, fontFamily: nf.family, letterSpacing: nf.tracking, textTransform: nf.upper ? 'uppercase' : undefined };
-  const sectionFont: CSSProperties = gilded
+  const sectionFont: CSSProperties = keraton
+    ? { ...headingStyle, fontSize: '1.5rem', fontWeight: 500, letterSpacing: '0.2em', textTransform: 'uppercase' }
+    : gilded
     ? { ...headingStyle, fontSize: '1.35rem', fontWeight: 500, letterSpacing: '0.26em', textTransform: 'uppercase' }
     : bloom
       ? { ...headingStyle, fontSize: '2.5rem', fontWeight: 600, fontStyle: 'italic', lineHeight: 1.1 }
       : { ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 500 };
-  const soft = skin === 'kraft' ? 'color-mix(in srgb, var(--p) 9%, transparent)' : gilded ? 'color-mix(in srgb, var(--p) 7%, transparent)' : airy ? 'color-mix(in srgb, var(--p) 6%, transparent)' : bloom ? 'color-mix(in srgb, var(--s) 6%, transparent)' : 'color-mix(in srgb, var(--p) 9%, var(--bg))';
+  const soft = skin === 'kraft' ? 'color-mix(in srgb, var(--p) 9%, transparent)' : keraton ? 'color-mix(in srgb, var(--p) 6%, transparent)' : gilded ? 'color-mix(in srgb, var(--p) 7%, transparent)' : airy ? 'color-mix(in srgb, var(--p) 6%, transparent)' : bloom ? 'color-mix(in srgb, var(--s) 6%, transparent)' : 'color-mix(in srgb, var(--p) 9%, var(--bg))';
   // Elegan: kicker & tanggal di sampul memakai Cinzel berjarak lebar.
   const monoA = initialOf(groom, placeholders ? 'A' : '');
   const monoB = initialOf(bride, placeholders ? 'S' : '');
@@ -306,6 +314,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const nameScale = names.length > 34 ? 0.55 : names.length > 22 ? 0.72 : 1;
   const scaled = (size: string) => (nameScale === 1 ? size : `calc(${size} * ${nameScale})`);
   const kickerBloom: CSSProperties = { fontFamily: 'var(--font-cormorant), serif', fontSize: 13, fontWeight: 600, letterSpacing: '0.42em', opacity: 0.8 };
+  const kickerKr: CSSProperties = { fontFamily: 'var(--font-montserrat), sans-serif', fontSize: 11, fontWeight: 500, letterSpacing: '0.42em', opacity: 0.85 };
   const kickerStyle: CSSProperties = { fontFamily: 'var(--font-cinzel), serif', fontSize: 11, letterSpacing: '0.46em', opacity: 0.8 };
   const bodyText = bf.className;
 
@@ -365,6 +374,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const kraft = skin === 'kraft';
   const coverBackground = kraft
     ? 'radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--bg) 70%, #fff) 0, transparent 62%), radial-gradient(ellipse at 50% 50%, transparent 55%, color-mix(in srgb, var(--p) 22%, transparent) 130%)'
+    : keraton
+      ? 'radial-gradient(ellipse 78% 36% at 50% 36%, color-mix(in srgb, #fff 62%, var(--bg)) 0, transparent 72%), radial-gradient(ellipse 120% 40% at 50% 108%, color-mix(in srgb, var(--p) 16%, transparent), transparent 74%)'
     : bloom
       ? 'radial-gradient(ellipse 80% 40% at 50% 40%, #fff 0, rgba(255,255,255,0) 72%), linear-gradient(180deg, color-mix(in srgb, var(--s) 9%, #fff) 0%, #fff 32%, #fff 68%, color-mix(in srgb, var(--p) 9%, #fff) 100%)'
       : airy
@@ -377,10 +388,10 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
       {kraft && <div className="wl-cover-stitch" />}
       {gilded && ['t h', 'b h', 'l v', 'r v', 't h i', 'b h i', 'l v i', 'r v i'].map((c) => <span key={c} className={`wl-gf ${c}`} />)}
       <div className={gilded ? 'wl-corner-in' : undefined}>
-        <orn.Corner className={`${cornerTop} left-2 top-2`} rotate={0} />
-        <orn.Corner className={`${cornerTop} right-2 top-2`} rotate={90} />
-        <orn.Corner className={`${cornerBottom} bottom-2 right-2`} rotate={180} />
-        <orn.Corner className={`${cornerBottom} bottom-2 left-2`} rotate={270} />
+        <orn.Corner className={`${cornerTop} ${keraton ? 'left-[30px] top-[30px]' : 'left-2 top-2'}`} rotate={0} />
+        <orn.Corner className={`${cornerTop} ${keraton ? 'right-[30px] top-[30px]' : 'right-2 top-2'}`} rotate={90} />
+        <orn.Corner className={`${cornerBottom} ${keraton ? 'bottom-[30px] right-[30px]' : 'bottom-2 right-2'}`} rotate={180} />
+        <orn.Corner className={`${cornerBottom} ${keraton ? 'bottom-[30px] left-[30px]' : 'bottom-2 left-2'}`} rotate={270} />
       </div>
     </div>
   );
@@ -430,7 +441,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         {/* Premium: partikel melayang di seluruh halaman (lapisan lengket seukuran layar). Dengan gerbang, baru
             dipasang saat sampul mulai terlihat dan masuk bertahap dari tepi layar, bukan muncul di tengah. */}
         {fx === 'premium' && (!gateKind || coverKey === 'open') && (
-          <div className="pointer-events-none sticky top-0 z-[5] h-0" aria-hidden>
+          <div className="pointer-events-none sticky top-0 z-[5] h-0" style={keraton ? { color: 'var(--s)' } : undefined} aria-hidden>
             <div className="relative" style={{ height: layerHeight }}>
               <Particles kind={motif.particles.kind} count={particleCount} mode={motif.particles.mode} height={layerHeight} enter={!!gateKind} />
             </div>
@@ -527,9 +538,17 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                 <Monogram a={monoA} b={monoB} size={92} />
               </div>
             )}
-            <p className={`text-xs uppercase tracking-[0.35em] opacity-80 ${enter(100).className}`} style={{ ...(gilded ? kickerStyle : bloom ? kickerBloom : null), ...enter(100).style }}>{kicker}</p>
+            {keraton && !coverPhoto && (
+              <p className={`wl-foil wl-aksara mb-1 ${enter(0).className}`} style={enter(0).style} lang="jv">{AKSARA}</p>
+            )}
+            <p className={`text-xs uppercase tracking-[0.35em] opacity-80 ${enter(100).className}`} style={{ ...(gilded ? kickerStyle : bloom ? kickerBloom : keraton ? kickerKr : null), ...enter(100).style }}>{kicker}</p>
+            {keraton && !coverPhoto && (
+              <div className={`mt-6 h-[13.5rem] [@media(max-height:700px)]:mt-3 [@media(max-height:700px)]:h-[9.5rem] ${enter(180).className}`} style={{ ...enter(180).style, aspectRatio: '200 / 272' }}>
+                <Gunungan />
+              </div>
+            )}
             <h1
-              className={`mt-4 ${gilded ? 'leading-[1.2]' : 'leading-[1.1]'} ${enter(250).className} ${fx === 'premium' && !coverPhoto ? 'wl-shimmer' : gilded && !coverPhoto ? 'wl-foil' : ''}`}
+              className={`${keraton ? 'mt-7' : 'mt-4'} ${gilded ? 'leading-[1.2]' : 'leading-[1.1]'} ${enter(250).className} ${fx === 'premium' && !coverPhoto ? 'wl-shimmer' : gilded && !coverPhoto ? 'wl-foil' : ''}`}
               style={{ ...namesStyle, ...enter(250).style, color: coverInk, fontSize: scaled(gilded ? '4.3rem' : nf.size), fontWeight: nf.weight }}
             >
               {names}
@@ -540,6 +559,12 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                   <i className="inline-block h-[5px] w-[5px] rotate-45" style={{ background: 'var(--p)' }} />
                   {shortDate}
                   <i className="inline-block h-[5px] w-[5px] rotate-45" style={{ background: 'var(--p)' }} />
+                </p>
+              ) : keraton ? (
+                <p className={`mt-4 flex items-center gap-3 text-[12.5px] ${enter(450).className}`} style={{ ...enter(450).style, fontFamily: 'var(--font-montserrat), sans-serif', fontWeight: 500, letterSpacing: '0.32em' }}>
+                  <i className="inline-block h-[5px] w-[5px] rotate-45" style={{ background: 'var(--kr-gold-d)' }} />
+                  {shortDate}
+                  <i className="inline-block h-[5px] w-[5px] rotate-45" style={{ background: 'var(--kr-gold-d)' }} />
                 </p>
               ) : bloom ? (
                 <p className={`mt-3 flex items-center gap-3 text-[15px] ${enter(450).className}`} style={{ ...enter(450).style, fontFamily: 'var(--font-cormorant), serif', fontWeight: 600, letterSpacing: '0.3em' }}>
@@ -552,12 +577,12 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               )
             )}
             <div className={enter(600).className} style={{ ...enter(600).style, color: coverInk }}>
-              <orn.Divider className={bloom ? 'mt-2 w-60' : 'mt-6 w-32 opacity-80'} />
+              <orn.Divider className={keraton ? 'mt-5 w-52' : bloom ? 'mt-2 w-60' : 'mt-6 w-32 opacity-80'} />
             </div>
             {(mode === 'live' || placeholders) && (
               <div className={`mt-8 text-sm ${enter(750).className}`} style={enter(750).style}>
-                <p className="opacity-80" style={gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 10.5, letterSpacing: '0.34em', textTransform: 'uppercase' } : bloom ? { fontFamily: 'var(--font-cormorant), serif', fontStyle: 'italic', fontSize: 14 } : undefined}>{t.dear}</p>
-                <p className={gilded ? 'mt-1 text-[1.35rem] font-semibold italic' : bloom ? 'mt-0.5 text-[1.45rem] font-semibold' : 'mt-1 text-lg font-semibold'} style={gilded || bloom ? { fontFamily: 'var(--font-cormorant), serif' } : undefined}>{guest ?? t.guestFallback}</p>
+                <p className="opacity-80" style={keraton ? { fontFamily: 'var(--font-montserrat), sans-serif', fontSize: 10.5, letterSpacing: '0.3em', textTransform: 'uppercase' } : gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 10.5, letterSpacing: '0.34em', textTransform: 'uppercase' } : bloom ? { fontFamily: 'var(--font-cormorant), serif', fontStyle: 'italic', fontSize: 14 } : undefined}>{t.dear}</p>
+                <p className={keraton ? 'mt-1 text-[1.35rem] font-semibold italic' : gilded ? 'mt-1 text-[1.35rem] font-semibold italic' : bloom ? 'mt-0.5 text-[1.45rem] font-semibold' : 'mt-1 text-lg font-semibold'} style={keraton ? { fontFamily: 'var(--font-playfair), serif' } : gilded || bloom ? { fontFamily: 'var(--font-cormorant), serif' } : undefined}>{guest ?? t.guestFallback}</p>
               </div>
             )}
             <button
@@ -596,6 +621,13 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                               <DovePair size="w-[3rem]" />
                             </div>
                           )}
+                          {keraton && i === 1 && (
+                            <div className="-mt-6 mb-9 flex w-full items-center justify-center gap-4" aria-hidden>
+                              <span className="h-px w-16" style={{ background: 'linear-gradient(90deg, transparent, var(--kr-gold-d))' }} />
+                              <span className="wl-foil text-[3rem] italic leading-none" style={{ fontFamily: 'var(--font-playfair), serif' }}>&amp;</span>
+                              <span className="h-px w-16" style={{ background: 'linear-gradient(270deg, transparent, var(--kr-gold-d))' }} />
+                            </div>
+                          )}
                           {gilded && i === 1 && (
                             <div className="-mt-6 mb-9 flex w-full items-center justify-center gap-4" style={{ color: 'var(--p)' }} aria-hidden>
                               <span className="h-px w-16" style={{ background: 'linear-gradient(90deg, transparent, currentColor)' }} />
@@ -612,7 +644,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                             )}
                           </div>
                           <p className="mt-6 text-xs uppercase tracking-[0.3em] opacity-60" style={gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 10.5, letterSpacing: '0.36em' } : undefined}>{who === 'pria' ? t.groom : t.bride}</p>
-                          <h3 className={gilded ? 'mt-2 wl-foil leading-[1.25]' : 'mt-2'} style={{ ...namesStyle, fontSize: gilded || airy || bloom ? '2.9rem' : hf.section, fontWeight: nf.weight === 400 ? 400 : 600 }}>
+                          <h3 className={gilded ? 'mt-2 wl-foil leading-[1.25]' : 'mt-2'} style={{ ...namesStyle, fontSize: keraton ? '2.3rem' : gilded || airy || bloom ? '2.9rem' : hf.section, fontWeight: nf.weight === 400 ? 400 : 500 }}>
                             {full || nick}
                           </h3>
                           {parents && <p className={`mt-2 max-w-[18rem] opacity-80 ${bodyText}`}>{parents}</p>}
@@ -628,7 +660,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               const story = str(data, 'cerita', 'cerita');
               return (
                 <Block key="cerita" title={t.story} headingStyle={headingStyle} tint={soft}>
-                  {quote && <blockquote className={gilded || airy || bloom ? 'wl-quote text-center' : 'text-center text-xl italic leading-relaxed'} style={{ fontFamily: 'var(--font-cormorant)' }}>{gilded || airy || bloom ? quote : `“${quote}”`}</blockquote>}
+                  {quote && <blockquote className={gilded || airy || bloom || keraton ? 'wl-quote text-center' : 'text-center text-xl italic leading-relaxed'} style={{ fontFamily: 'var(--font-cormorant)' }}>{gilded || airy || bloom || keraton ? quote : `“${quote}”`}</blockquote>}
                   {story && <p className={`mt-6 whitespace-pre-line text-center ${bodyText}`}>{story}</p>}
                 </Block>
               );
@@ -749,8 +781,20 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
           return null;
         })}
 
-        <footer className={`px-6 pb-24 pt-12 text-center text-xs ${gilded || airy || bloom ? '' : 'opacity-60'}`}>
-          {bloom ? (
+        <footer className={`px-6 pb-24 pt-12 text-center text-xs ${gilded || airy || bloom || keraton ? '' : 'opacity-60'}`}>
+          {keraton ? (
+            <>
+              <div className="mx-auto h-[6rem]" style={{ aspectRatio: '200 / 272' }}>
+                <Gunungan />
+              </div>
+              <p className="mt-4 text-[1.9rem] leading-tight" style={{ fontFamily: 'var(--font-playfair), serif', color: 'var(--p)' }}>{names}</p>
+              <div className="mt-3" style={{ color: 'var(--p)' }}>
+                <orn.Divider className="mx-auto w-48" />
+              </div>
+              <p className="mt-3 opacity-60">{t.madeWith}</p>
+              {preset?.credit && <p className="mt-2 opacity-50">{preset.credit}</p>}
+            </>
+          ) : bloom ? (
             <>
               {showMono && (
                 <div className="flex justify-center">
@@ -827,7 +871,7 @@ function Block({ title, children, headingStyle, tint }: { title: string; childre
       <div className="wl-reveal relative mb-10 text-center">
         <h2 className={motif.skin === 'gilded' ? 'wl-heading' : undefined} style={{ ...headingStyle, ...sectionFont }}>{title}</h2>
         <div style={{ color: 'var(--p)' }}>
-          <orn.Divider className={motif.skin === 'gilded' ? 'mx-auto mt-4 w-36' : motif.skin === 'bloom' ? 'mx-auto mt-0 w-60' : 'mx-auto mt-3 w-28'} />
+          <orn.Divider className={motif.skin === 'gilded' ? 'mx-auto mt-4 w-36' : motif.skin === 'keraton' ? 'mx-auto mt-4 w-48' : motif.skin === 'bloom' ? 'mx-auto mt-0 w-60' : 'mx-auto mt-3 w-28'} />
         </div>
       </div>
       <div className="relative">{children}</div>
@@ -885,6 +929,15 @@ const COUNTDOWN_LOOK: Record<CountdownKind, { section: CSSProperties; cell: CSSP
     },
     num: { fontWeight: 500, backgroundImage: 'var(--foil-lit)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', WebkitTextFillColor: 'transparent' },
   },
+  keraton: {
+    section: { background: 'var(--kr-kawung-dark, none), linear-gradient(180deg, color-mix(in srgb, var(--p) 82%, #000), var(--p))', borderTop: '1px solid var(--s)', borderBottom: '1px solid var(--s)' },
+    cell: {
+      border: '1px solid color-mix(in srgb, var(--s) 70%, transparent)',
+      background: 'rgba(0,0,0,.2)',
+      boxShadow: 'inset 0 0 0 3px color-mix(in srgb, var(--p) 78%, #000), inset 0 0 0 4px color-mix(in srgb, var(--s) 38%, transparent)',
+    },
+    num: { fontFamily: 'var(--font-playfair), serif', fontWeight: 500, backgroundImage: 'var(--foil-lit)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', WebkitTextFillColor: 'transparent' },
+  },
   flip: {
     section: { background: 'color-mix(in srgb, var(--p) 40%, #0d0d0d)' },
     cell: { background: 'linear-gradient(#2c2c2c calc(50% - 1px), #000 calc(50% - 1px) calc(50% + 1px), #1c1c1c calc(50% + 1px))', borderRadius: '8px', boxShadow: '0 6px 14px -6px rgba(0,0,0,.6)' },
@@ -893,7 +946,8 @@ const COUNTDOWN_LOOK: Record<CountdownKind, { section: CSSProperties; cell: CSSP
 
 function Countdown({ target, t }: { target: string; t: Strings }) {
   const { orn, motif, fx, radius, sectionFont } = useTheme();
-  const luxe = motif.countdown === 'luxe';
+  const keraton = motif.countdown === 'keraton';
+  const luxe = motif.countdown === 'luxe' || keraton;
   const sky = motif.countdown === 'sky';
   const light = motif.countdown === 'bloom';
   const now = useNow();
@@ -923,7 +977,7 @@ function Countdown({ target, t }: { target: string; t: Strings }) {
             <div key={parts ? parts[i] : 'x'} className={`text-3xl font-semibold tabular-nums ${fx === 'premium' ? 'wl-tick' : ''}`} style={{ fontFamily: 'var(--font-cormorant)', ...look.num }}>
               {parts ? String(parts[i]).padStart(2, '0') : '--'}
             </div>
-            <div className="mt-1 text-[11px] uppercase tracking-widest opacity-80" style={luxe ? { fontFamily: 'var(--font-cinzel), serif', letterSpacing: '0.2em', fontSize: 10 } : undefined}>{label}</div>
+            <div className="mt-1 text-[11px] uppercase tracking-widest opacity-80" style={keraton ? { fontFamily: 'var(--font-montserrat), sans-serif', letterSpacing: '0.24em', fontSize: 9.5 } : luxe ? { fontFamily: 'var(--font-cinzel), serif', letterSpacing: '0.2em', fontSize: 10 } : undefined}>{label}</div>
           </div>
         ))}
       </div>

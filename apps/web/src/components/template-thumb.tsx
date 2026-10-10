@@ -11,6 +11,8 @@ import type { Theme } from '@/lib/types';
 import { PatternLayer } from './invitation/effects';
 import { HEADING, RADIUS, motifFor } from './invitation/motifs';
 import { FloralMonogram } from './invitation/bloom-parts';
+import { KERATON_BG, keratonVars } from './invitation/batik-art';
+import { Gunungan } from './invitation/gunungan-art';
 import { DovePair } from './invitation/dove-art';
 import { Monogram, ORNAMENTS } from './invitation/ornaments';
 
@@ -49,8 +51,10 @@ export function TemplateThumb({
   const nf = HEADING[motif.names ?? motif.heading ?? theme.headingFont] ?? hf;
   // Buket Pengantin: putih bersih dengan semburat pastel, monogram karangan bunga, dan sudut berbunga yang lebih besar.
   const bloom = motif.skin === 'bloom';
-  const nameSize = gilded ? 0.58 : 0.62;
-  const rootClass = gilded ? 'wl-root wl-gilded' : bloom ? 'wl-bloom' : '';
+  // Batik Jawa: krem dengan pita parang di tepi, gunungan emas-maroon di tengah.
+  const keraton = motif.skin === 'keraton';
+  const nameSize = gilded ? 0.58 : keraton ? 0.5 : 0.62;
+  const rootClass = gilded ? 'wl-root wl-gilded' : keraton ? 'wl-root wl-keraton' : bloom ? 'wl-bloom' : '';
   const dark = motif.countdown === 'neon' || motif.countdown === 'pixel';
   const rootStyle = {
     '--p': theme.primary,
@@ -61,6 +65,7 @@ export function TemplateThumb({
       ? `linear-gradient(180deg, color-mix(in srgb, ${theme.secondary} 10%, #fff), #fff 34%, #fff 66%, color-mix(in srgb, ${theme.primary} 9%, #fff))`
       : `linear-gradient(165deg, color-mix(in srgb, ${theme.primary} 22%, ${theme.background}), ${theme.background} 52%, color-mix(in srgb, ${theme.primary} 10%, color-mix(in srgb, ${theme.secondary} 12%, ${theme.background})))`,
     color: theme.primary,
+    ...(keraton ? { ...KERATON_BG, ...keratonVars(theme.primary, theme.secondary, theme.background), background: theme.background, backgroundSize: '9px 9px, 9px 9px, 1px 100%, 1px 100%, 14px 14px', backgroundPosition: 'left top, right top, left 9px top, right 9px top, 0 0' } : null),
   } as CSSProperties;
 
   // Salah satu tata letak berfoto milik template ini (mis. hasil desain x paket), dipilih dari `seed` supaya
@@ -120,6 +125,7 @@ export function TemplateThumb({
       {gilded && <Monogram a="A" b="S" size={38} className="relative mb-2" />}
       {motif.skin === 'dove' && <DovePair size="w-[2.6rem]" className="relative mb-1" />}
       {bloom && <FloralMonogram a="A" b="S" size={70} className="relative mb-1" />}
+      {keraton && <div className="relative mb-1 h-[4.6rem]" style={{ aspectRatio: '200 / 272' }}><Gunungan /></div>}
       <p className="relative text-[8px] uppercase tracking-[0.3em]" style={{ color: theme.text, opacity: 0.7, ...(gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 7, letterSpacing: '0.38em' } : null) }}>{motif.copy?.kicker ?? 'Undangan Pernikahan'}</p>
       <p
         className={`relative mt-2 ${gilded ? 'wl-foil leading-tight' : 'leading-none'}`}

@@ -4,7 +4,7 @@ import { BloomCorner, BloomDivider, BloomSprig } from './bloom-parts';
 
 import { DOVE_SILHOUETTE, LilyShapes } from './dove-art';
 
-export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily' | 'flora';
+export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily' | 'flora' | 'keraton';
 
 interface CornerProps {
   className?: string;
@@ -457,7 +457,58 @@ const Flora: OrnamentSet = {
   Sprig: ({ className = 'w-28', flip }) => <BloomSprig className={className} flip={flip} />,
 };
 
-export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco, lily: Lily, flora: Flora };
+
+// ----- keraton (Batik Jawa): kawung emas, ukel (gulungan), dan belah ketupat; emas = --s, aksen maroon = currentColor -----
+const KR_GOLD = 'color-mix(in srgb, var(--s) 80%, #3d2a00)';
+function KawungFlower({ cx, cy, r }: { cx: number; cy: number; r: number }) {
+  const a = r * 0.34;
+  const b = r * 0.62;
+  return (
+    <g transform={`translate(${cx} ${cy})`}>
+      <g fill="var(--s)" fillOpacity=".28" stroke={KR_GOLD} strokeWidth=".8">
+        <ellipse cy={-b} rx={a} ry={b} />
+        <ellipse cy={b} rx={a} ry={b} />
+        <ellipse cx={-b} rx={b} ry={a} />
+        <ellipse cx={b} rx={b} ry={a} />
+      </g>
+      <circle r={r * 0.15} fill={KR_GOLD} />
+    </g>
+  );
+}
+const Keraton: OrnamentSet = {
+  Corner: ({ className = 'w-24', rotate = 0 }) => (
+    <svg viewBox="0 0 120 120" className={className} style={svgCorner(rotate)} fill="none" aria-hidden>
+      <path d="M3 117V3H117" stroke={KR_GOLD} strokeWidth="1.6" />
+      <path d="M11 117V11H117" stroke={KR_GOLD} strokeWidth=".7" opacity=".6" />
+      <path d="M3 3L3 40M3 3L40 3" stroke="var(--s)" strokeWidth="3.4" strokeLinecap="round" opacity=".55" />
+      <KawungFlower cx={30} cy={30} r={17} />
+      <path d="M62 7l4 4-4 4-4-4zM7 62l4 4-4 4-4-4z" fill={KR_GOLD} />
+      <path d="M86 7l2.600 2.600L86 12.200l-2.600-2.600zM7 86l2.600 2.600L7 91.200l-2.600-2.600z" fill="var(--s)" />
+      <circle cx="104" cy="9" r="1.300" fill={KR_GOLD} />
+      <circle cx="9" cy="104" r="1.300" fill={KR_GOLD} />
+    </svg>
+  ),
+  Divider: ({ className = 'w-48' }) => (
+    <svg viewBox="0 0 240 28" className={className} fill="none" aria-hidden>
+      <path d="M8 14H88M152 14H232" stroke={KR_GOLD} strokeWidth="1" strokeLinecap="round" opacity=".75" />
+      <path d="M0 14H4M236 14H240" stroke={KR_GOLD} strokeWidth="1" opacity=".35" />
+      <path d="M92 14C98 7 106 7 108 14M148 14C142 7 134 7 132 14" stroke={KR_GOLD} strokeWidth="1" strokeLinecap="round" />
+      <path d="M78 14l5-5 5 5-5 5zM152 14l5-5 5 5-5 5z" fill="var(--s)" stroke={KR_GOLD} strokeWidth=".8" />
+      <KawungFlower cx={120} cy={14} r={12} />
+      <circle cx="68" cy="14" r="1.500" fill={KR_GOLD} />
+      <circle cx="172" cy="14" r="1.500" fill={KR_GOLD} />
+    </svg>
+  ),
+  Sprig: ({ className = 'w-24', flip }) => (
+    <svg viewBox="0 0 120 46" className={className} style={flip ? { transform: 'scaleX(-1)' } : undefined} fill="none" aria-hidden>
+      <path d="M4 40C28 40 48 34 64 22C76 13 88 10 100 14C110 18 110 29 101 29C94 29 92 21 98 20" stroke={KR_GOLD} strokeWidth="1.500" strokeLinecap="round" />
+      <path d="M30 38C34 28 42 26 48 30C42 36 36 38 30 38ZM56 28C58 19 66 15 72 19C67 25 62 28 56 28Z" fill="var(--s)" stroke={KR_GOLD} strokeWidth=".7" />
+      <circle cx="101" cy="22" r="2" fill={KR_GOLD} />
+    </svg>
+  ),
+};
+
+export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco, lily: Lily, flora: Flora, keraton: Keraton };
 
 // Ekspor lama (kartu katalog, halaman lain) = jenis vine.
 export const Corner = Vine.Corner;

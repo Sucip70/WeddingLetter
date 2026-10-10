@@ -387,6 +387,29 @@ export function DoveArch({ children, className = '' }: { children: ReactNode; cl
   );
 }
 
+// Bingkai foto Batik Jawa: lengkung runcing seperti badan gunungan, garis emas ganda dengan titik tatahan di antaranya.
+const kayonPath = (w: number, h: number) => {
+  const x = (n: number) => Math.round(n * w * 10) / 10;
+  const y = (n: number) => Math.round(n * h * 10) / 10;
+  return `M${x(0.5)} 0C${x(0.57)} ${y(0.1)} ${x(0.73)} ${y(0.2)} ${x(0.85)} ${y(0.34)}C${x(0.95)} ${y(0.48)} ${w} ${y(0.7)} ${w} ${y(0.84)}C${w} ${y(0.92)} ${x(0.98)} ${y(0.97)} ${x(0.94)} ${h}H${x(0.06)}C${x(0.02)} ${y(0.97)} 0 ${y(0.92)} 0 ${y(0.84)}C0 ${y(0.7)} ${x(0.05)} ${y(0.48)} ${x(0.15)} ${y(0.34)}C${x(0.27)} ${y(0.2)} ${x(0.43)} ${y(0.1)} ${x(0.5)} 0Z`;
+};
+const KAYON_GOLD = 'color-mix(in srgb, var(--s) 82%, #3d2a00)';
+function KayonFrame({ filler }: { filler: (cls: string, style?: CSSProperties) => ReactNode }) {
+  return (
+    <div className="relative" style={{ width: 196, height: 252 }}>
+      <div className="absolute" style={{ left: 9, top: 10, width: 178, height: 234 }}>
+        {filler('h-full w-full', { clipPath: `path('${kayonPath(178, 234)}')` })}
+      </div>
+      <svg viewBox="0 0 196 252" className="pointer-events-none absolute inset-0 h-full w-full overflow-visible" fill="none" aria-hidden>
+        <path d={kayonPath(192, 248)} transform="translate(2 2)" stroke={KAYON_GOLD} strokeWidth="2.2" />
+        <path d={kayonPath(184, 240)} transform="translate(6 6)" stroke="var(--s)" strokeWidth="1.4" strokeDasharray="0 4.600" strokeLinecap="round" />
+        <path d="M98 -7l5 7-5 7-5-7z" fill="var(--s)" stroke={KAYON_GOLD} strokeWidth=".9" />
+        <path d="M70 250H126" stroke={KAYON_GOLD} strokeWidth="2.4" strokeLinecap="round" />
+      </svg>
+    </div>
+  );
+}
+
 export function PhotoFrame({ frame, src, label, placeholders, letterFont, tilt = 0, photoRadius }: { frame: FrameKind; src?: string; label: string; placeholders?: boolean; letterFont: string; tilt?: number; photoRadius: string }) {
   const filler = (cls: string, style?: CSSProperties): ReactNode =>
     src ? (
@@ -399,6 +422,8 @@ export function PhotoFrame({ frame, src, label, placeholders, letterFont, tilt =
   const ring = { border: '1px solid color-mix(in srgb, var(--p) 45%, transparent)' };
 
   switch (frame) {
+    case 'kayon':
+      return <KayonFrame filler={filler} />;
     case 'deco':
       return <DecoArch>{filler('h-56 w-44')}</DecoArch>;
     case 'bloom':

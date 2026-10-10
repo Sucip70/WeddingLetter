@@ -98,7 +98,7 @@ const BASE_DESIGNS: Omit<Design, 'gate'>[] = [
   d('kristiani', 'Sepasang Merpati', 'klasik', 'Sepasang merpati putih, lily, dan langit pagi yang tenang.', ['#6b7fa3', '#d7c48a', '#fbfaf6', '#2b3350'], ['script', 'serif']),
 
   // ---- Suku & Budaya ----
-  d('jawa', 'Batik Jawa', 'suku', 'Motif kawung dan warna sogan khas keraton Jawa.', ['#8b5a2b', '#d4a94f', '#f6ecd9', '#3a2412'], ['display', 'serif']),
+  d('jawa', 'Batik Jawa', 'suku', 'Keraton klasik: gunungan wayang, parang, dan kawung dalam maroon, emas, dan krem.', ['#6b1e23', '#d4af37', '#f5e6c8', '#3a1518'], ['display', 'serif']),
   d('sunda', 'Tatar Sunda', 'suku', 'Hijau bambu dan daun yang sejuk, ringan seperti angklung.', ['#3f7a4e', '#c9b26a', '#f4f8ee', '#20321f'], ['display', 'sans']),
   d('minang', 'Songket Minang', 'suku', 'Merah-emas songket dengan pola pucuk rebung.', ['#a3192a', '#d9a520', '#fdf3e3', '#3a1216'], ['display', 'sans']),
   d('batak', 'Ulos Batak', 'suku', 'Garis dan zigzag ulos dalam merah, hitam, dan putih.', ['#8e1b1b', '#2b2b2b', '#f7f1e8', '#221a17'], ['cinzel', 'sans']),
@@ -220,8 +220,19 @@ const BUKET_PALETTES: Palette[] = [
 // Palet khusus paket Basic per desain; desain yang tidak tercantum memakai 8 warna siap pakai (BASIC_PALETTES).
 export const basicPalettes = (designId: string): Palette[] => (designId === 'buket' ? BUKET_PALETTES : BASIC_PALETTES);
 
+// Batik Jawa: warna utama = warna kain (maroon, sogan, zamrud, indigo), sekunder = emas, latar krem; teks gelap sewarna kain.
+// Warna utama harus pekat: dipakai untuk judul, tombol, dan latar gerbang & hitung mundur (teks krem di atasnya).
+const JAWA_PALETTES: Palette[] = [
+  { id: 'maroon', name: 'Maroon & Emas', primary: '#6b1e23', secondary: '#d4af37', background: '#f5e6c8', text: '#3a1518' },
+  { id: 'sogan', name: 'Sogan Cokelat', primary: '#5c3a1c', secondary: '#c9a24a', background: '#f3e6cc', text: '#33200f' },
+  { id: 'zamrud', name: 'Hijau Zamrud', primary: '#1f4a3a', secondary: '#d4af37', background: '#f2ead2', text: '#152b22' },
+  { id: 'indigo', name: 'Biru Indigo', primary: '#1f2f5c', secondary: '#d4af37', background: '#f1eadb', text: '#161f3d' },
+  { id: 'anggur', name: 'Ungu Anggur', primary: '#4d1f4a', secondary: '#d4af37', background: '#f4e8d6', text: '#2e112c' },
+];
+
 const CURATED_PALETTES: Record<string, Palette[]> = {
   buket: BUKET_PALETTES,
+  jawa: JAWA_PALETTES,
   kristiani: [
     { id: "sage", name: "Hijau Sage", primary: "#6f8f82", secondary: "#d9c9a0", background: "#f8faf6", text: "#25352e" },
     { id: "blush", name: "Merah Muda Lembut", primary: "#b07f8d", secondary: "#e3cfa6", background: "#fcf8f7", text: "#432f37" },
