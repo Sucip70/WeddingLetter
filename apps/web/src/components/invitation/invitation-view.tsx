@@ -393,6 +393,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         ref={rootRef}
         style={gateActive && embedded ? { ...rootStyle, overflowY: 'hidden' } : rootStyle}
         data-reveal={motif.reveal}
+        // Selama gerbang menutupi sampul, isi undangan di belakangnya tidak terlihat: CSS menjeda semua animasinya (globals.css).
+        data-gate={coverKey === 'gate' ? 'closed' : undefined}
         // Terpasang sejak render server: keadaan awal "tersembunyi" sudah aktif sebelum hidrasi, jadi tidak ada kedipan.
         data-armed={animated ? '' : undefined}
         className={`wl-root ${skin ? `wl-${skin}` : ''} ${embedded ? 'phone-scroll relative h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}

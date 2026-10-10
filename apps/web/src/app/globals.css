@@ -673,3 +673,12 @@ body {
 }
 .wl-sway { animation: wl-sway 5.4s ease-in-out infinite; transform-origin: 50% 100%; }
 @media (prefers-reduced-motion: reduce) { .wl-sway { animation: none !important; } }
+
+/* Selama gerbang pembuka menutupi sampul, isi undangan di belakangnya tidak terlihat. Animasinya dijeda supaya tidak membebani
+   ponsel (awan, sudut bernapas, kilau nama, denyut tombol, kelopak jatuh, dst.); jalan lagi begitu gerbang diketuk/dilepas. */
+.wl-root[data-gate='closed'] > :not(.wl-gate-host),
+.wl-root[data-gate='closed'] > :not(.wl-gate-host) *,
+.wl-root[data-gate='closed'] > :not(.wl-gate-host) *::before,
+.wl-root[data-gate='closed'] > :not(.wl-gate-host) *::after {
+  animation-play-state: paused !important;
+}

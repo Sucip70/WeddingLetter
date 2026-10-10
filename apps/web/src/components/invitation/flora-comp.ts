@@ -116,32 +116,6 @@ export function ribbonBow() {
   return `<path d="M150 312C128 282 96 290 104 316C112 336 140 328 150 312Z" fill="${ribbonColor}" stroke="${ribbonDark}" stroke-opacity=".55" stroke-width="1.1" stroke-linejoin="round"/><path d="M150 312C172 282 204 290 196 316C188 336 160 328 150 312Z" fill="${ribbonColor}" stroke="${ribbonDark}" stroke-opacity=".55" stroke-width="1.1" stroke-linejoin="round"/><path d="M150 312C140 336 126 360 108 376L120 380L134 372L142 392Z" fill="${ribbonColor}" stroke="${ribbonDark}" stroke-opacity=".55" stroke-width="1.1" stroke-linejoin="round"/><path d="M150 312C160 336 174 360 192 376L180 380L166 372L158 392Z" fill="${ribbonColor}" stroke="${ribbonDark}" stroke-opacity=".55" stroke-width="1.1" stroke-linejoin="round"/><circle cx="150" cy="314" r="9" fill="${ribbonDark}" fill-opacity=".85"/>`;
 }
 
-// Ombak bunga untuk sapuan gerbang (kotak 0 0 400 100): dua baris bunga & daun di sepanjang garis bergelombang.
-export function flowerBand(g: Garden = GARDEN) {
-  let s = '';
-  const xs = [14, 52, 90, 128, 166, 204, 242, 280, 318, 356, 394];
-  xs.forEach((x, i) => {
-    const y = 56 + Math.sin(i * 1.7) * 8;
-    s += leaf(g, 40, 10, -40 + (i % 2) * 80, x - 10, y + 12);
-    s += leaf(g, 34, 9, 200 + (i % 3) * 20, x + 8, y + 10);
-  });
-  xs.forEach((x, i) => {
-    const y = 40 + Math.sin(i * 1.7) * 8;
-    const kinds = [
-      () => rose(24 + (i % 3) * 3, g.hero),
-      () => peony(22, g.soft),
-      () => cosmos(19, g.cool),
-      () => anemone(20),
-      () => daisy(17, BLOOM.blush, BLOOM.butter, '#e39aae'),
-      () => cosmos(19, g.warm),
-      () => peony(21, g.cool),
-    ];
-    s += put(x, y + 6, (i * 37) % 60, 1, kinds[i % kinds.length]!());
-    if (i % 2 === 0) s += put(x + 19, y + 24, 0, 1, blossom(8, skyTone));
-  });
-  return s;
-}
-
 // Mahkota bunga di tepi lengkung foto: kotak lebar `w` x tinggi `h` (px), bunga disebar sepanjang setengah lingkaran atas dan sisi.
 export function archCrown(w: number, h: number, g: Garden = GARDEN) {
   const cx = w / 2;

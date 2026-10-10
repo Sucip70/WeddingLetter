@@ -33,7 +33,7 @@ export const GATE_MS: Record<GateKind, number> = {
 export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, portal: true, kayon: true, twine: true, ring: true, doves: true, bouquet: true };
 
 // Gerbang yang baru menyingkap sampul setelah jeda (ms sejak ketukan): animasi masuk sampul ditunda sebesar itu.
-export const REVEAL_DELAY_MS: Partial<Record<GateKind, number>> = { ring: 1750, doves: 1000, bouquet: 1700 };
+export const REVEAL_DELAY_MS: Partial<Record<GateKind, number>> = { ring: 1750, doves: 1000, bouquet: 1200 };
 
 const CTA: Record<GateKind, string> = {
   door: 'Ketuk untuk membuka pintu', glass: 'Ketuk untuk membuka jendela', curtain: 'Ketuk untuk membuka tirai', cloth: 'Ketuk untuk membuka kain',
@@ -436,7 +436,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
     }
   };
   return (
-    <div className={embedded ? 'absolute inset-x-0 top-0 z-[60] h-[810px]' : 'fixed inset-y-0 left-1/2 z-[60] w-full max-w-[480px] -translate-x-1/2'}>
+    <div className={`wl-gate-host ${embedded ? 'absolute inset-x-0 top-0 z-[60] h-[810px]' : 'fixed inset-y-0 left-1/2 z-[60] w-full max-w-[480px] -translate-x-1/2'}`}>
       <style>{GATE_CSS}</style>
       <div className="wl-gate" data-kind={kind} data-phase={phase} data-tone={DARK[kind] ? 'dark' : 'light'} role="button" tabIndex={0} aria-label={`Buka undangan. ${CTA[kind]}`} onClick={onOpen} onKeyDown={onKey}>
         <Scene kind={kind} names={names} kicker={kicker} guest={guest} pattern={pattern} motif={motif} headingFamily={headingFamily} phase={phase} />
@@ -459,7 +459,10 @@ const GATE_CSS = `
 .wl-gate[data-tone=dark]{color:#fff}
 .wl-gate *{box-sizing:border-box}
 .wl-gate svg{display:block}
-.wl-gate-cta{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);z-index:30;white-space:nowrap;padding:.75em 1.6em;border-radius:var(--rb);background:var(--p);color:#fff;font-size:13.5px;font-weight:500;letter-spacing:.04em;box-shadow:0 10px 26px -8px rgba(0,0,0,.5);animation:wl-pulse 2.4s ease-in-out infinite;transition:opacity .3s}
+.wl-gate-cta{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);z-index:30;white-space:nowrap;padding:.75em 1.6em;border-radius:var(--rb);background:var(--p);color:#fff;font-size:13.5px;font-weight:500;letter-spacing:.04em;box-shadow:0 10px 26px -8px rgba(0,0,0,.5);transition:opacity .3s}
+/* denyut tombol = cincin yang membesar & memudar (transform + opacity, jalan di compositor). Jangan menganimasikan box-shadow di sini: dicat ulang di thread utama tiap frame dan membuat gerbang lag di ponsel. */
+.wl-gate-cta::before{content:'';position:absolute;inset:0;border-radius:inherit;border:2px solid color-mix(in srgb,var(--p) 60%,transparent);opacity:0;pointer-events:none;animation:wl-cta-ring 2.4s ease-out infinite}
+@keyframes wl-cta-ring{0%{transform:scale(1);opacity:.7}70%,100%{transform:scale(1.2,1.5);opacity:0}}
 .wl-gate:focus-visible .wl-gate-cta{outline:2px solid #fff;outline-offset:3px}
 .wl-gate[data-kind=ring]{--vel:color-mix(in oklch,var(--tx) 84%,white);--rb-lit:color-mix(in oklch,var(--tx) 78%,white);--rb-mid:color-mix(in oklch,var(--tx) 88%,black);--rb-dark:color-mix(in oklch,var(--tx) 38%,black)}
 @supports (color:oklch(from red l c h)){.wl-gate[data-kind=ring]{--vel:oklch(from var(--tx) calc(l + .15) calc(c * 1.6) h);--rb-lit:oklch(from var(--tx) calc(l + .13) calc(c * 1.5) h);--rb-mid:oklch(from var(--tx) calc(l - .02) calc(c * 1.2) h);--rb-dark:oklch(from var(--tx) calc(l * .45) calc(c * .9) h)}}
@@ -649,9 +652,29 @@ const GATE_CSS = `
 .wl-gate[data-phase=opening] .g-neontxt{animation:none;text-shadow:0 0 10px #fff,0 0 30px var(--s),0 0 70px var(--p)}
 .wl-gate[data-phase=opening] .g-neonbg{animation:g-hole 1.5s cubic-bezier(.5,0,.3,1) .6s forwards;opacity:0}
 
+/* lempar buket (bouquet-gate.tsx): hanya animasi CSS pada transform/opacity (jalan di compositor, tanpa JS per frame); waktu sama dengan BOUQUET_T.
+   Jangan memakai mask / filter / properti kustom beranimasi di sini: berat di ponsel (dulu ada dinding bunga bermask yang menyapu layar). */
+.bq-scene{position:absolute;inset:0;transform-origin:50% 40%}
+.bq-fade{transition:opacity .35s ease}
+.wl-gate[data-phase=opening] .bq-fade{opacity:0}
+.wl-gate[data-phase=opening] .bq-scene{opacity:0;transform:scale(1.06);transition:opacity .8s ease 1.15s,transform 1.1s ease-in 1.15s}
+.bq-squash{transform-origin:50% 100%}
+.wl-gate[data-phase=opening] .bq-squash{animation:bq-squash .65s ease-out both}
+@keyframes bq-squash{0%{transform:translateY(0) scale(1,1)}45%{transform:translateY(6px) scale(1.05,.92)}80%{transform:translateY(-4px) scale(.97,1.05)}100%{transform:translateY(0) scale(1,1)}}
+.wl-gate[data-phase=opening] .bq-toss{animation:bq-toss .95s cubic-bezier(.22,.6,.3,1) .3s both;will-change:transform,opacity}
+@keyframes bq-toss{0%{transform:translate3d(0,0,0) rotate(0deg) scale(1);opacity:1}82%{opacity:1}100%{transform:translate3d(12cqw,-26cqh,0) rotate(-300deg) scale(.72);opacity:0}}
+.bq-flash,.bq-bit,.bq-trail{opacity:0}
+.bq-bit,.bq-trail{position:absolute}
+.wl-gate[data-phase=opening] .bq-flash{animation:bq-flash .75s ease-out 1.15s both;will-change:transform,opacity}
+@keyframes bq-flash{0%{opacity:0;transform:scale(.2)}30%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.5)}}
+.wl-gate[data-phase=opening] .bq-bit{animation-name:bq-pop;animation-timing-function:linear;animation-fill-mode:both;will-change:transform,opacity}
+.wl-gate[data-phase=opening] .bq-trail{animation-name:bq-trail;animation-timing-function:ease-in;animation-fill-mode:both;will-change:transform,opacity}
+@keyframes bq-pop{0%{transform:translate3d(0,0,0) scale(.2) rotate(0deg);opacity:0;animation-timing-function:cubic-bezier(.2,.7,.3,1)}10%{opacity:1}34%{transform:translate3d(var(--x1),var(--y1),0) scale(1) rotate(calc(var(--spin) * .34));animation-timing-function:cubic-bezier(.5,0,.9,.6)}72%{opacity:1}100%{transform:translate3d(var(--x2),var(--y2),0) scale(1) rotate(var(--spin));opacity:0}}
+@keyframes bq-trail{0%{transform:translate3d(0,0,0) scale(.4) rotate(0deg);opacity:0}10%{opacity:1}70%{opacity:1}100%{transform:translate3d(var(--dx),var(--dy),0) scale(1) rotate(var(--spin));opacity:0}}
+
 /* kurangi gerakan: tanpa gerak, hanya memudar */
 @media (prefers-reduced-motion:reduce){
-  .wl-gate *{animation:none!important;transition:none!important}
+  .wl-gate *,.wl-gate *::before,.wl-gate *::after{animation:none!important;transition:none!important}
   .wl-gate{transition:opacity .3s ease!important}
   .wl-gate[data-phase=opening]{opacity:0}
 }
