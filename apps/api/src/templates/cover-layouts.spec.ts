@@ -38,7 +38,7 @@ describe('tata letak sampul', () => {
 
   it('coverDefault (bawaan pilihan admin): disimpan bila tersedia, dibuang bila tidak', () => {
     const raw = (coverDefault: string) => ({ theme: { preset: 'jawa' }, sections: ['cover'], coverDefault });
-    expect(normalizeLayout(raw('jendela')).coverDefault).toBe('jendela');
+    expect(normalizeLayout(raw('medali')).coverDefault).toBe('medali');
     expect(normalizeLayout(raw('meriam')).coverDefault).toBeUndefined(); // id asing
     expect(withCoverLayouts(normalizeLayout(raw('gapura')), 'PREMIUM').coverDefault).toBe('gapura');
     expect(withCoverLayouts(normalizeLayout(raw('gapura')), 'STANDARD').coverDefault).toBeUndefined(); // khusus tema, bukan Standard

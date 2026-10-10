@@ -52,8 +52,6 @@ const PIXEL_CLIP = 'polygon(0 6%, 4% 6%, 4% 3%, 8% 3%, 8% 0, 92% 0, 92% 3%, 96% 
 // Bentuk foto berupa path SVG (foto dipotong lewat clipPath, lalu diberi pita warna tema).
 const SHAPES = {
   gapura: { box: [100, 130] as const, path: 'M6 130V62C6 42 28 36 37 23C43 15 47 8 50 0C53 8 57 15 63 23C72 36 94 42 94 62V130Z', inset: 0.9 },
-  hati: { box: [100, 90] as const, path: 'M50 86C8 54-2 22 18 8C34-2 48 8 50 20C52 8 66-2 82 8C102 22 92 54 50 86Z', inset: 0.92 },
-  kristal: { box: [100, 110] as const, path: 'M50 0L80 14L96 40L96 70L80 96L50 110L20 96L4 70L4 40L20 14Z', inset: 0.9 },
 };
 
 function ShapedPhoto({ uid, src, shape, className, extra }: { uid: string; src: string; shape: keyof typeof SHAPES; className?: string; extra?: ReactNode }) {
@@ -80,7 +78,6 @@ function ShapedPhoto({ uid, src, shape, className, extra }: { uid: string; src: 
   );
 }
 
-const sparkle = (cx: number, cy: number, r: number) => `M${cx} ${cy - r}Q${cx} ${cy} ${cx + r} ${cy}Q${cx} ${cy} ${cx} ${cy + r}Q${cx} ${cy} ${cx - r} ${cy}Q${cx} ${cy} ${cx} ${cy - r}Z`;
 const LIGHT_KINDS: Partial<Record<CoverProps['kind'], true>> = { penuh: true, 'penuh-atas': true, 'bingkai-penuh': true, portal: true, karakter: true, poster: true };
 export const isLightCover = (kind: CoverProps['kind']) => !!LIGHT_KINDS[kind];
 
@@ -215,33 +212,6 @@ export function CoverLayout(p: CoverProps) {
       );
     }
 
-    // ---------- jendela lengkung ----------
-    case 'jendela': {
-      const e = enter(300);
-      return (
-        <>
-          {backdrop}
-          <div className={column}>
-            {kickerEl()}
-            <div className={`relative mt-5 w-[14.5rem] ${e.className}`} style={e.style}>
-              <div className="overflow-hidden rounded-b-md rounded-t-[999px] border-[7px]" style={{ borderColor: 'var(--bg)', outline: '2px solid var(--p)', boxShadow: '0 18px 30px -14px rgba(0,0,0,.4)' }}>
-                <div className="relative aspect-[3/4.1]">
-                  <img src={photoOf.cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                  <span className="absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2" style={{ background: 'var(--bg)', opacity: 0.85 }} aria-hidden />
-                  <span className="absolute inset-x-0 top-[44%] h-[3px]" style={{ background: 'var(--bg)', opacity: 0.85 }} aria-hidden />
-                </div>
-              </div>
-              <div className="-mx-2 mt-1 h-3 rounded-sm" style={{ background: 'var(--p)' }} aria-hidden />
-            </div>
-            {namesEl(0.85, false)}
-            {dateEl(false)}
-            {guestEl(false)}
-            {buttonEl(false, 'mt-5')}
-          </div>
-        </>
-      );
-    }
-
     // ---------- medali bulat ----------
     case 'medali': {
       const e = enter(300);
@@ -314,31 +284,17 @@ export function CoverLayout(p: CoverProps) {
       );
     }
 
-    // ---------- khusus tema: gapura / hati / kristal ----------
-    case 'gapura':
-    case 'hati':
-    case 'kristal': {
+    // ---------- khusus tema: gapura ----------
+    case 'gapura': {
       const e = enter(300);
       const shape = p.kind;
-      const width = shape === 'hati' ? 'w-[17rem]' : shape === 'kristal' ? 'w-[14.5rem]' : 'w-[13.5rem]';
-      const extra =
-        shape === 'gapura' ? (
-          <>
-            <path d="M50 -9l4 7-4 7-4-7z" fill="var(--s)" />
-            {[20, 35, 65, 80].map((x, i) => <circle key={i} cx={x} cy={i % 2 ? 44 : 50} r="1.6" fill="var(--s)" opacity=".8" />)}
-          </>
-        ) : shape === 'kristal' ? (
-          <>
-            <path d="M50 8L50 102M14 30L86 80M86 30L14 80" stroke="#fff" strokeWidth=".8" opacity=".45" />
-            <path d={sparkle(84, 16, 6)} fill="#fff" opacity=".9" />
-            <path d={sparkle(14, 96, 4)} fill="#fff" opacity=".8" />
-          </>
-        ) : (
-          <>
-            <path d={sparkle(92, 12, 5)} fill="var(--s)" />
-            <path d={sparkle(8, 70, 4)} fill="var(--s)" opacity=".8" />
-          </>
-        );
+      const width = 'w-[13.5rem]';
+      const extra = (
+        <>
+          <path d="M50 -9l4 7-4 7-4-7z" fill="var(--s)" />
+          {[20, 35, 65, 80].map((x, i) => <circle key={i} cx={x} cy={i % 2 ? 44 : 50} r="1.6" fill="var(--s)" opacity=".8" />)}
+        </>
+      );
       return (
         <>
           {backdrop}

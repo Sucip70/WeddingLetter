@@ -115,7 +115,7 @@ await call('POST', '/orders', { token: user, body: { ...orderBody, data: { ...or
 ok(true, 'order menolak field wajib yang kosong (400)');
 
 step('Tata letak sampul: Basic tanpa pilihan; Standard = 9 umum; Premium = 9 umum + 1 khusus tema');
-eq([basic.layout.coverLayouts.length, standardJawa.layout.coverLayouts.length, premium.layout.coverLayouts.length], [0, 9, 10], 'katalog memuat daftar tata letak sesuai paket');
+eq([basic.layout.coverLayouts.length, standardJawa.layout.coverLayouts.length, premium.layout.coverLayouts.length], [0, 8, 9], 'katalog memuat daftar tata letak sesuai paket');
 ok(premium.layout.coverLayouts.includes('gapura') && !standardJawa.layout.coverLayouts.includes('gapura'), 'layout khusus tema (gapura) hanya di Premium Batik Jawa');
 // Kalkulator bersifat lenient (tidak menolak isi keliru), jadi validasi dicek lewat order sungguhan.
 const coverOrder = (templateId, tata_letak) =>
