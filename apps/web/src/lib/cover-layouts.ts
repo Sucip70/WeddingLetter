@@ -3,8 +3,8 @@
 import type { Tier } from './types';
 
 export type CoverKind =
-  | 'ornamen' | 'penuh' | 'penuh-atas' | 'bingkai' | 'jendela' | 'medali' | 'terbagi' | 'berdua' | 'bingkai-penuh'
-  | 'gapura' | 'hati' | 'portal' | 'kristal' | 'karakter' | 'poster' | 'emas' | 'merpati' | 'bunga';
+  | 'ornamen' | 'penuh' | 'penuh-atas' | 'bingkai' | 'medali' | 'terbagi' | 'berdua' | 'bingkai-penuh'
+  | 'gapura' | 'portal' | 'karakter' | 'poster' | 'emas' | 'merpati' | 'bunga';
 
 // Foto yang dibutuhkan: none = tanpa foto; cover = foto sampul; couple = foto mempelai (atau foto sampul).
 export type CoverNeeds = 'none' | 'cover' | 'couple';
@@ -30,12 +30,10 @@ export const COVER_LAYOUTS: Record<CoverKind, { label: string; hint: string; nee
   merpati: { label: 'Sepasang merpati', hint: 'Foto oval dengan dua merpati dan lily.', needs: 'cover', themed: true },
 };
 
-const GENERIC: CoverKind[] = ['ornamen', 'penuh', 'penuh-atas', 'bingkai', 'jendela', 'medali', 'terbagi', 'berdua', 'bingkai-penuh'];
+const GENERIC: CoverKind[] = ['ornamen', 'penuh', 'penuh-atas', 'bingkai', 'medali', 'terbagi', 'berdua', 'bingkai-penuh'];
 const THEME_BY_DESIGN: Record<string, CoverKind> = {
   jawa: 'gapura', minang: 'gapura', batak: 'gapura', bali: 'gapura', islami: 'gapura', lebaran: 'gapura', buddha: 'gapura', imlek: 'gapura',
-  valentine: 'hati', floral: 'hati', 'sakura-anime': 'hati',
   sihir: 'portal', galaksi: 'portal', halloween: 'portal',
-  'kerajaan-es': 'kristal', salju: 'kristal', natal: 'kristal',
   pixel: 'karakter', 'player-one': 'karakter', rpg: 'karakter', neon: 'karakter',
   hollywood: 'poster', paris: 'poster',
   elegant: 'emas', kristiani: 'merpati', buket: 'bunga',
