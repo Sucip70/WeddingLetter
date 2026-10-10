@@ -1,7 +1,9 @@
 // Ornamen SVG untuk undangan (warna mengikuti currentColor sehingga ikut tema). Tiap "jenis" ornamen punya
 // tiga bagian: Corner (sudut sampul), Divider (pemisah judul), Sprig (hiasan kecil di bawah foto/footer).
 
-export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco';
+import { DOVE_SILHOUETTE, LilyShapes } from './dove-art';
+
+export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily';
 
 interface CornerProps {
   className?: string;
@@ -400,7 +402,53 @@ export function Monogram({ a, b, size = 96, className = '' }: { a: string; b: st
   );
 }
 
-export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco };
+// ----- lily (Sepasang Merpati): rangkaian lily di sudut, pemisah bermerpati terbang, ranting lily kecil -----
+
+const LILY_LEAF = 'M0 0C6-6 17-6 26 0C17 6 6 6 0 0Z';
+const LILY_LEAF_FILL = 'color-mix(in srgb, var(--p, #6b7fa3) 28%, #d6e6da)';
+
+const Lily: OrnamentSet = {
+  Corner: ({ className = 'w-28', rotate = 0 }) => (
+    <svg viewBox="0 0 120 120" className={className} style={svgCorner(rotate)} fill="none" stroke="currentColor" aria-hidden>
+      {/* tangkai melengkung di sepanjang sudut */}
+      <path d="M4 116C6 70 30 30 78 10" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M22 62C34 62 46 54 52 42M44 30C54 34 66 30 72 20" strokeWidth="1" strokeLinecap="round" opacity=".8" />
+      {[
+        [10, 92, -62], [16, 74, -22], [28, 52, -78], [46, 34, -30], [60, 22, -80],
+      ].map(([x, y, r], i) => (
+        <path key={i} d={LILY_LEAF} transform={`translate(${x} ${y}) rotate(${r}) scale(${1 - i * 0.07})`} fill={LILY_LEAF_FILL} strokeWidth=".8" strokeLinejoin="round" />
+      ))}
+      <g transform="translate(40 50) rotate(-18) scale(.46)"><LilyShapes /></g>
+      <g transform="translate(78 22) rotate(12) scale(.26)"><LilyShapes /></g>
+      <path d="M96 12C98 8 102 8 104 12C102 18 98 18 96 12Z" fill="#fff" strokeWidth=".7" />
+      <circle cx="20" cy="104" r="1.6" fill="currentColor" stroke="none" opacity=".5" />
+      <circle cx="104" cy="22" r="1.3" fill="currentColor" stroke="none" opacity=".4" />
+    </svg>
+  ),
+  Divider: ({ className = 'w-40' }) => (
+    <svg viewBox="0 0 200 26" className={className} fill="none" stroke="currentColor" aria-hidden>
+      <path d="M8 13H76M124 13H192" strokeWidth="1" opacity=".5" strokeLinecap="round" />
+      <circle cx="70" cy="13" r="1.3" fill="currentColor" stroke="none" opacity=".6" />
+      <circle cx="130" cy="13" r="1.3" fill="currentColor" stroke="none" opacity=".6" />
+      <path d={LILY_LEAF} transform="translate(56 13) rotate(-20) scale(.5)" fill={LILY_LEAF_FILL} strokeWidth=".9" />
+      <path d={LILY_LEAF} transform="translate(144 13) rotate(200) scale(.5)" fill={LILY_LEAF_FILL} strokeWidth=".9" />
+      <g transform="translate(100 13) scale(.086) translate(-150 -102)">
+        <path d={DOVE_SILHOUETTE} fill="currentColor" stroke="none" />
+      </g>
+    </svg>
+  ),
+  Sprig: ({ className = 'w-24', flip }) => (
+    <svg viewBox="0 0 120 60" className={className} style={flip ? { transform: 'scaleX(-1)' } : undefined} fill="none" stroke="currentColor" aria-hidden>
+      <path d="M4 54C30 52 62 42 92 22" strokeWidth="1.2" strokeLinecap="round" />
+      {[[22, 51, -20], [38, 46, 24], [52, 40, -28], [66, 33, 22]].map(([x, y, r], i) => (
+        <path key={i} d={LILY_LEAF} transform={`translate(${x} ${y}) rotate(${r}) scale(.55)`} fill={LILY_LEAF_FILL} strokeWidth=".8" />
+      ))}
+      <g transform="translate(96 20) rotate(-14) scale(.3)"><LilyShapes /></g>
+    </svg>
+  ),
+};
+
+export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco, lily: Lily };
 
 // Ekspor lama (kartu katalog, halaman lain) = jenis vine.
 export const Corner = Vine.Corner;

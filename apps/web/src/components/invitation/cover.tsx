@@ -6,6 +6,7 @@
 import { Fragment, useId } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { CoverKind } from '@/lib/cover-layouts';
+import { Dove, LilyBloom } from './dove-art';
 import { DecoArch, Particles, PatternLayer, PhotoFrame } from './effects';
 import type { FrameKind } from './motifs';
 import type { OrnamentSet } from './ornaments';
@@ -439,6 +440,41 @@ export function CoverLayout(p: CoverProps) {
               </div>
             </div>
             {namesEl(0.74, false)}
+            {dateEl(false)}
+            {guestEl(false)}
+            {buttonEl(false, 'mt-5')}
+          </div>
+        </>
+      );
+    }
+
+    // ---------- sepasang merpati: foto oval, dua merpati terbang masuk, lily di kaki ----------
+    case 'merpati': {
+      const e = enter(300);
+      return (
+        <>
+          {backdrop}
+          <div className={column}>
+            {kickerEl(false)}
+            <div className={`relative mt-12 w-[11.6rem] ${p.premium ? 'wl-float' : ''}`}>
+              <div className={e.className} style={e.style}>
+                <div
+                  className="rounded-[50%] p-[7px]"
+                  style={{ background: 'linear-gradient(160deg, #fff, color-mix(in srgb, var(--p) 12%, #fff))', boxShadow: '0 26px 40px -24px color-mix(in srgb, var(--p) 72%, transparent), 0 0 0 1px color-mix(in srgb, var(--p) 24%, transparent)' }}
+                >
+                  <img src={photoOf.cover} alt="" className="aspect-[4/5] w-full rounded-[50%] object-cover" />
+                </div>
+                <Dove className="absolute -left-12 -top-9 w-[4.8rem] rotate-6" speed={1.5} />
+                <Dove className="absolute -right-12 -top-9 w-[4.8rem] -rotate-6 -scale-x-100" speed={1.5} style={{ '--flap-delay': '-0.45s' } as CSSProperties} />
+                <div className="absolute -bottom-3 -left-7 w-14" style={{ color: 'var(--p)' }}>
+                  <LilyBloom rotate={-20} />
+                </div>
+                <div className="absolute -bottom-1 -right-6 w-11" style={{ color: 'var(--p)' }}>
+                  <LilyBloom rotate={25} />
+                </div>
+              </div>
+            </div>
+            {namesEl(0.78, false)}
             {dateEl(false)}
             {guestEl(false)}
             {buttonEl(false, 'mt-5')}

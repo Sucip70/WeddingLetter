@@ -15,6 +15,7 @@ import { CoverLayout, isLightCover } from './cover';
 import { CoverFx, Particles, PatternLayer, PhotoFrame, Reveal, useReveal } from './effects';
 import { BODY, HEADING, RADIUS, motifFor } from './motifs';
 import type { CountdownKind, Motif } from './motifs';
+import { DOVE_SILHOUETTE, DOVE_VIEWBOX, Dove, DovePair } from './dove-art';
 import { Monogram, ORNAMENTS, PauseIcon, PlayIcon } from './ornaments';
 import type { OrnamentSet } from './ornaments';
 
@@ -97,6 +98,16 @@ const GILDED_BG: CSSProperties = {
   backgroundRepeat: 'repeat, repeat, no-repeat, no-repeat, no-repeat, no-repeat',
   backgroundBlendMode: 'multiply, multiply, normal, normal, normal, normal',
 };
+// Tekstur Sepasang Merpati: awan biru sangat tipis di atas warna latar (dikalikan), dan siluet merpati sebagai mask ikon.
+const CLOUD_TEX = "url(\"data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'700'%20height%3D'700'%3E%3Cfilter%20id%3D'c'%20x%3D'0'%20y%3D'0'%20width%3D'100%25'%20height%3D'100%25'%20color-interpolation-filters%3D'sRGB'%3E%3CfeTurbulence%20type%3D'fractalNoise'%20baseFrequency%3D'.0035%20.0065'%20numOctaves%3D'4'%20seed%3D'5'%20stitchTiles%3D'stitch'%20result%3D'n'%2F%3E%3CfeColorMatrix%20in%3D'n'%20type%3D'matrix'%20values%3D'0%200%200%200%20.55%200%200%200%200%20.66%200%200%200%200%20.86%201.7%200%200%200%20-.62'%2F%3E%3CfeGaussianBlur%20stdDeviation%3D'6'%2F%3E%3C%2Ffilter%3E%3Crect%20width%3D'100%25'%20height%3D'100%25'%20filter%3D'url(%23c)'%20opacity%3D'.26'%2F%3E%3C%2Fsvg%3E\")";
+const DOVE_ICON = `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='${DOVE_VIEWBOX}'><path d='${DOVE_SILHOUETTE}'/></svg>`)}")`;
+const DOVE_BG: CSSProperties = {
+  backgroundImage: `radial-gradient(ellipse 120% 26% at 50% 0%, color-mix(in srgb, var(--p) 16%, transparent), transparent 80%), ${CLOUD_TEX}`,
+  backgroundSize: '100% 100%, 700px 700px',
+  backgroundRepeat: 'no-repeat, repeat',
+  backgroundBlendMode: 'normal, multiply',
+  ['--dove-icon' as string]: DOVE_ICON,
+};
 const initialOf = (name: string, fallback = '') => (name.trim().charAt(0) || fallback).toUpperCase();
 
 export function InvitationView({ view, mode = 'live', embedded = false, placeholders = false, gate }: InvitationViewProps) {
@@ -113,6 +124,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const nf = HEADING[motif.names ?? motif.heading ?? theme.headingFont] ?? hf;
   const skin = motif.skin;
   const gilded = skin === 'gilded';
+  const airy = skin === 'dove';
   const layerHeight = embedded ? EMBED_HEIGHT : '100svh';
 
   const [lang, setLang] = useState<Lang>('id');
@@ -255,7 +267,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     background: theme.background,
     color: theme.text,
     fontFamily: bf.family,
-    ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : gilded ? GILDED_BG : null),
+    ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : gilded ? GILDED_BG : airy ? DOVE_BG : null),
   } as CSSProperties;
   const headingStyle: CSSProperties = {
     fontFamily: hf.family,
@@ -267,7 +279,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const sectionFont: CSSProperties = gilded
     ? { ...headingStyle, fontSize: '1.35rem', fontWeight: 500, letterSpacing: '0.26em', textTransform: 'uppercase' }
     : { ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 500 };
-  const soft = skin === 'kraft' ? 'color-mix(in srgb, var(--p) 9%, transparent)' : gilded ? 'color-mix(in srgb, var(--p) 7%, transparent)' : 'color-mix(in srgb, var(--p) 9%, var(--bg))';
+  const soft = skin === 'kraft' ? 'color-mix(in srgb, var(--p) 9%, transparent)' : gilded ? 'color-mix(in srgb, var(--p) 7%, transparent)' : airy ? 'color-mix(in srgb, var(--p) 6%, transparent)' : 'color-mix(in srgb, var(--p) 9%, var(--bg))';
   // Elegan: kicker & tanggal di sampul memakai Cinzel berjarak lebar.
   const monoA = initialOf(groom, placeholders ? 'A' : '');
   const monoB = initialOf(bride, placeholders ? 'S' : '');
@@ -329,7 +341,9 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const kraft = skin === 'kraft';
   const coverBackground = kraft
     ? 'radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--bg) 70%, #fff) 0, transparent 62%), radial-gradient(ellipse at 50% 50%, transparent 55%, color-mix(in srgb, var(--p) 22%, transparent) 130%)'
-    : gilded
+    : airy
+      ? 'radial-gradient(ellipse 100% 36% at 50% 104%, color-mix(in srgb, var(--s) 38%, transparent), transparent 74%), linear-gradient(180deg, color-mix(in oklch, var(--p) 56%, white) 0%, color-mix(in oklch, var(--p) 34%, white) 34%, color-mix(in oklch, var(--p) 12%, white) 62%, #fffdf9 82%, color-mix(in srgb, var(--s) 22%, #fffdf9) 100%)'
+      : gilded
       ? 'radial-gradient(ellipse 90% 52% at 50% 33%, color-mix(in srgb, #fff 60%, var(--bg)) 0, transparent 72%), radial-gradient(ellipse 80% 40% at 50% 104%, color-mix(in srgb, var(--p) 22%, transparent), transparent 72%), linear-gradient(180deg, color-mix(in srgb, var(--p) 9%, var(--bg)), var(--bg) 42%, color-mix(in srgb, var(--p) 13%, var(--bg)))'
       : 'linear-gradient(165deg, color-mix(in srgb, var(--p) 20%, var(--bg)), var(--bg) 52%, color-mix(in srgb, var(--p) 10%, color-mix(in srgb, var(--s) 12%, var(--bg))))';
   const cornersNode = (
@@ -470,6 +484,11 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 
           {!photoCover && (
           <div key={coverKey} className="relative z-[4] flex flex-col items-center" style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
+            {airy && !coverPhoto && (
+              <div className={`mb-3 ${enter(0).className}`} style={enter(0).style}>
+                <DovePair size="w-[4.4rem]" />
+              </div>
+            )}
             {gilded && !coverPhoto && showMono && (
               <div className={`mb-6 ${enter(0).className}`} style={enter(0).style}>
                 <Monogram a={monoA} b={monoB} size={92} />
@@ -519,7 +538,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             case 'mempelai':
               return (
                 <Block key="mempelai" title={t.couple} headingStyle={headingStyle}>
-                  <div className={gilded ? 'space-y-14' : 'space-y-12'}>
+                  <div className={gilded || airy ? 'space-y-14' : 'space-y-12'}>
                     {(['pria', 'wanita'] as const).map((who, i) => {
                       const nick = str(data, 'mempelai', `${who}_nama`) || (placeholders ? (who === 'pria' ? 'Andi' : 'Sinta') : '');
                       if (!nick) return null;
@@ -528,6 +547,11 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                       const photo = url(str(data, 'mempelai', `${who}_foto`));
                       return (
                         <Reveal key={who} delay={i * 120} className="flex flex-col items-center text-center">
+                          {airy && i === 1 && (
+                            <div className="-mt-5 mb-8 flex w-full justify-center">
+                              <DovePair size="w-[3rem]" />
+                            </div>
+                          )}
                           {gilded && i === 1 && (
                             <div className="-mt-6 mb-9 flex w-full items-center justify-center gap-4" style={{ color: 'var(--p)' }} aria-hidden>
                               <span className="h-px w-16" style={{ background: 'linear-gradient(90deg, transparent, currentColor)' }} />
@@ -542,7 +566,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                             </div>
                           </div>
                           <p className="mt-6 text-xs uppercase tracking-[0.3em] opacity-60" style={gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 10.5, letterSpacing: '0.36em' } : undefined}>{who === 'pria' ? t.groom : t.bride}</p>
-                          <h3 className={gilded ? 'mt-2 wl-foil leading-[1.25]' : 'mt-2'} style={{ ...namesStyle, fontSize: gilded ? '2.9rem' : hf.section, fontWeight: nf.weight === 400 ? 400 : 600 }}>
+                          <h3 className={gilded ? 'mt-2 wl-foil leading-[1.25]' : 'mt-2'} style={{ ...namesStyle, fontSize: gilded || airy ? '2.9rem' : hf.section, fontWeight: nf.weight === 400 ? 400 : 600 }}>
                             {full || nick}
                           </h3>
                           {parents && <p className={`mt-2 max-w-[18rem] opacity-80 ${bodyText}`}>{parents}</p>}
@@ -558,7 +582,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               const story = str(data, 'cerita', 'cerita');
               return (
                 <Block key="cerita" title={t.story} headingStyle={headingStyle} tint={soft}>
-                  {quote && <blockquote className={gilded ? 'wl-quote text-center' : 'text-center text-xl italic leading-relaxed'} style={{ fontFamily: 'var(--font-cormorant)' }}>{gilded ? quote : `“${quote}”`}</blockquote>}
+                  {quote && <blockquote className={gilded || airy ? 'wl-quote text-center' : 'text-center text-xl italic leading-relaxed'} style={{ fontFamily: 'var(--font-cormorant)' }}>{gilded || airy ? quote : `“${quote}”`}</blockquote>}
                   {story && <p className={`mt-6 whitespace-pre-line text-center ${bodyText}`}>{story}</p>}
                 </Block>
               );
@@ -613,7 +637,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               return (
                 <Block key="galeri" title={t.gallery} headingStyle={headingStyle}>
                   {galleryPhotos.length > 0 ? (
-                    <div className={`grid grid-cols-2 ${gilded ? 'gap-4' : 'gap-2.5'}`}>
+                    <div className={`grid grid-cols-2 ${gilded || airy ? 'gap-4' : 'gap-2.5'}`}>
                       {galleryPhotos.map((src, i) => (
                         <button
                           key={src}
@@ -628,7 +652,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                     </div>
                   ) : (
                     placeholders && (
-                      <div className={`grid grid-cols-2 ${gilded ? 'gap-4' : 'gap-2.5'}`}>
+                      <div className={`grid grid-cols-2 ${gilded || airy ? 'gap-4' : 'gap-2.5'}`}>
                         {[0, 1, 2, 3].map((i) => (
                           <PhotoPlaceholder key={i} className={`wl-gal ${i === 0 ? 'col-span-2 aspect-[16/10]' : 'aspect-[4/5]'}`} radius={radius.photo} delay={(i % 3) * 90} />
                         ))}
@@ -679,8 +703,18 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
           return null;
         })}
 
-        <footer className={`px-6 pb-24 pt-12 text-center text-xs ${gilded ? '' : 'opacity-60'}`}>
-          {gilded ? (
+        <footer className={`px-6 pb-24 pt-12 text-center text-xs ${gilded || airy ? '' : 'opacity-60'}`}>
+          {airy ? (
+            <>
+              <DovePair className="mx-auto" size="w-[4.2rem]" />
+              <p className="mt-2 text-[2.1rem] leading-tight" style={{ fontFamily: 'var(--font-script), cursive', color: 'var(--p)' }}>{names}</p>
+              <div className="mt-2" style={{ color: 'var(--p)' }}>
+                <orn.Divider className="mx-auto w-36" />
+              </div>
+              <p className="mt-3 opacity-60">{t.madeWith}</p>
+              {preset?.credit && <p className="mt-2 opacity-50">{preset.credit}</p>}
+            </>
+          ) : gilded ? (
             <>
               {showMono && (
                 <div className="flex justify-center">
@@ -772,6 +806,11 @@ const COUNTDOWN_LOOK: Record<CountdownKind, { section: CSSProperties; cell: CSSP
     cell: { border: '1.5px solid var(--s)', background: 'rgba(0,0,0,.35)', boxShadow: '0 0 14px color-mix(in srgb, var(--s) 70%, transparent), inset 0 0 12px color-mix(in srgb, var(--s) 30%, transparent)' },
     num: { textShadow: '0 0 12px var(--s), 0 0 3px var(--s)' },
   },
+  sky: {
+    section: { background: 'radial-gradient(ellipse 60% 40% at 12% 100%, rgba(255,255,255,.4), transparent 70%), radial-gradient(ellipse 50% 36% at 88% 96%, rgba(255,255,255,.34), transparent 70%), linear-gradient(180deg, color-mix(in oklch, var(--p) 100%, black 14%), color-mix(in oklch, var(--p) 66%, white))' },
+    cell: { background: 'rgba(255,255,255,.17)', border: '1px solid rgba(255,255,255,.55)', backdropFilter: 'blur(6px)', boxShadow: '0 14px 26px -18px rgba(20,30,60,.55), inset 0 1px 0 rgba(255,255,255,.5)' },
+    num: { fontWeight: 600 },
+  },
   luxe: {
     section: { background: 'radial-gradient(ellipse 85% 100% at 50% 0%, color-mix(in srgb, var(--tx) 72%, #627ab8) 0, color-mix(in srgb, var(--tx) 93%, #000) 72%)', borderTop: '1px solid color-mix(in srgb, var(--p) 55%, transparent)', borderBottom: '1px solid color-mix(in srgb, var(--p) 55%, transparent)' },
     cell: {
@@ -790,6 +829,7 @@ const COUNTDOWN_LOOK: Record<CountdownKind, { section: CSSProperties; cell: CSSP
 function Countdown({ target, t }: { target: string; t: Strings }) {
   const { orn, motif, fx, radius, sectionFont } = useTheme();
   const luxe = motif.countdown === 'luxe';
+  const sky = motif.countdown === 'sky';
   const now = useNow();
   const end = localToInstant(target);
   const diff = now === null || Number.isNaN(end) ? null : Math.max(0, end - now);
@@ -797,7 +837,10 @@ function Countdown({ target, t }: { target: string; t: Strings }) {
   const labels = [t.days, t.hours, t.minutes, t.seconds];
   const look = COUNTDOWN_LOOK[motif.countdown];
   return (
-    <section className="wl-reveal px-6 py-14 text-center" style={{ ...look.section, color: '#fff' }}>
+    <section className="wl-reveal relative overflow-hidden px-6 py-14 text-center" style={{ ...look.section, color: '#fff' }}>
+      {sky && (
+        <Dove className="wl-glide pointer-events-none absolute left-0 top-5 w-[3.4rem] opacity-90" speed={0.8} />
+      )}
       <h2 className={luxe ? 'wl-foil-lit' : undefined} style={{ ...sectionFont, color: '#fff' }}>{t.countdown}</h2>
       {luxe && (
         <div className="mt-3" style={{ color: 'var(--p)' }}>

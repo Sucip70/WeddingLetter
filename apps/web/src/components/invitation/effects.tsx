@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useLayoutEffect } from 'react';
 import type { CSSProperties, ReactNode, RefObject } from 'react';
+import { Dove, LilyBloom } from './dove-art';
 import type { CoverFxKind, FrameKind, ParticleKind, ParticleMode, PatternKind } from './motifs';
 
 // Pseudo-acak deterministik (sama di server & klien) supaya hidrasi konsisten.
@@ -13,7 +14,7 @@ const rand = (i: number, salt: number) => {
 
 // ---------- partikel ----------
 
-const SIZE: Record<ParticleKind, number> = { petal: 15, leaf: 16, maple: 18, snow: 13, heart: 16, star: 12, sparkle: 15, confetti: 9, bubble: 22, firefly: 7, pixel: 9, lantern: 17, bat: 22, coin: 13, dust: 9 };
+const SIZE: Record<ParticleKind, number> = { petal: 15, leaf: 16, maple: 18, snow: 13, heart: 16, star: 12, sparkle: 15, confetti: 9, bubble: 22, firefly: 7, pixel: 9, lantern: 17, bat: 22, coin: 13, dust: 9, feather: 22 };
 const COLORS: Record<ParticleKind, string[]> = {
   petal: ['var(--p)', 'var(--s)', 'color-mix(in srgb, var(--p) 45%, #fff)'],
   leaf: ['var(--p)', 'var(--s)'],
@@ -30,6 +31,7 @@ const COLORS: Record<ParticleKind, string[]> = {
   bat: ['var(--p)', 'var(--tx)'],
   coin: ['#f2c231', '#e8a90c'],
   dust: ['var(--p)', 'color-mix(in srgb, var(--p) 55%, #fff)', '#f6dc96'],
+  feather: ['color-mix(in srgb, var(--p) 20%, #fff)', 'color-mix(in srgb, var(--s) 40%, #fff)', 'color-mix(in srgb, var(--p) 38%, #fff)'],
 };
 
 function Shape({ kind }: { kind: ParticleKind }) {
@@ -105,6 +107,13 @@ function Shape({ kind }: { kind: ParticleKind }) {
       return (
         <svg {...common} fill="currentColor">
           <path d="M12 8c-2-3-6-4-10-3 2 1 3 3 3 5 1-1 2-1 3 0 1-1 3-1 4 1 1-2 3-2 4-1 1-1 2-1 3 0 0-2 1-4 3-5-4-1-8 0-10 3z" />
+        </svg>
+      );
+    case 'feather':
+      return (
+        <svg {...common} fill="currentColor" style={{ filter: 'drop-shadow(0 1px 1.5px rgba(70,90,130,.3))' }}>
+          <path d="M20.5 2.5C11 3 5.5 8.5 4 19.5c.9-1.1 2-2 3.2-2.4C13.5 17 18.5 11.5 20.5 2.5Z" />
+          <path d="M4 21C7 16 11 11 17 6" stroke="rgba(255,255,255,.75)" strokeWidth="1" fill="none" strokeLinecap="round" />
         </svg>
       );
     case 'dust':
@@ -199,6 +208,10 @@ export function PatternLayer({ kind, opacity = 0.09, color = 'var(--p)' }: { kin
 
 // ---------- efek latar sampul ----------
 
+// Awan bergumpal (beberapa elips putih bertumpuk) untuk langit: dipakai CoverFx 'sky' & gerbang merpati.
+export const CLOUD_BG =
+  'radial-gradient(ellipse 30% 55% at 26% 64%, #fff 0 50%, transparent 74%), radial-gradient(ellipse 34% 74% at 50% 44%, #fff 0 52%, transparent 74%), radial-gradient(ellipse 28% 54% at 76% 62%, #fff 0 50%, transparent 74%), radial-gradient(ellipse 48% 38% at 50% 82%, rgba(255,255,255,.9) 0 50%, transparent 76%)';
+
 export function CoverFx({ kind, animate }: { kind: CoverFxKind; animate: boolean }) {
   const anim = (cls: string) => (animate ? cls : '');
   switch (kind) {
@@ -243,6 +256,20 @@ export function CoverFx({ kind, animate }: { kind: CoverFxKind; animate: boolean
             { top: '68%', w: 150, dur: 64, del: -22, o: 0.5 },
           ].map((c, i) => (
             <div key={i} className={`absolute left-0 ${anim('wl-cloud')}`} style={{ top: c.top, width: c.w, height: c.w * 0.3, borderRadius: 999, background: '#fff', opacity: c.o, filter: 'blur(7px)', animationDuration: `${c.dur}s`, animationDelay: `${c.del}s` }} />
+          ))}
+        </div>
+      );
+    case 'sky':
+      // Sepasang Merpati: cahaya pagi di belakang nama + awan bergumpal yang melayang pelan.
+      return (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 85% 34% at 50% 40%, rgba(255,255,255,.8) 0, rgba(255,255,255,.3) 50%, transparent 76%)' }} />
+          {[
+            { top: 0, w: 58, h: 11, dur: 110, del: -30, o: 0.9 },
+            { top: 70, w: 66, h: 14, dur: 120, del: -52, o: 0.8 },
+            { top: 84, w: 48, h: 11, dur: 100, del: -12, o: 0.75 },
+          ].map((c, i) => (
+            <div key={i} className={`absolute left-0 ${anim('wl-cloud')}`} style={{ top: `${c.top}%`, width: `${c.w}%`, aspectRatio: `${c.w / c.h * 0.62}`, background: CLOUD_BG, opacity: c.o, animationDuration: `${c.dur}s`, animationDelay: `${c.del}s` }} />
           ))}
         </div>
       );
@@ -306,6 +333,26 @@ export function DecoArch({ children, className = '' }: { children: ReactNode; cl
   );
 }
 
+// Bingkai lengkung putih lembut (Sepasang Merpati): seekor merpati hinggap di sudut atas, bunga lily di kaki bingkai.
+export function DoveArch({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return (
+    <div className={`relative ${className}`}>
+      <div
+        className="rounded-t-[999px] rounded-b-[26px] p-[7px]"
+        style={{ background: 'linear-gradient(160deg, #fff, color-mix(in srgb, var(--p) 12%, #fff))', boxShadow: '0 24px 38px -24px color-mix(in srgb, var(--p) 70%, transparent), 0 0 0 1px color-mix(in srgb, var(--p) 24%, transparent)' }}
+      >
+        <div className="overflow-hidden rounded-t-[999px] rounded-b-[20px]" style={{ boxShadow: '0 0 0 1px color-mix(in srgb, var(--p) 18%, transparent)' }}>
+          {children}
+        </div>
+      </div>
+      <Dove className="absolute -right-7 -top-6 w-[4.6rem] -rotate-6" speed={1.6} style={{ '--flap-delay': '-0.3s' } as CSSProperties} />
+      <div className="absolute -bottom-4 -left-6 w-14" style={{ color: 'var(--p)' }}>
+        <LilyBloom />
+      </div>
+    </div>
+  );
+}
+
 export function PhotoFrame({ frame, src, label, placeholders, letterFont, tilt = 0, photoRadius }: { frame: FrameKind; src?: string; label: string; placeholders?: boolean; letterFont: string; tilt?: number; photoRadius: string }) {
   const filler = (cls: string, style?: CSSProperties): ReactNode =>
     src ? (
@@ -320,6 +367,8 @@ export function PhotoFrame({ frame, src, label, placeholders, letterFont, tilt =
   switch (frame) {
     case 'deco':
       return <DecoArch>{filler('h-56 w-44')}</DecoArch>;
+    case 'dove':
+      return <DoveArch>{filler('h-56 w-44')}</DoveArch>;
     case 'arch':
       return <div className="rounded-t-[999px] rounded-b-3xl p-1.5" style={ring}>{filler('h-56 w-44 rounded-t-[999px] rounded-b-2xl')}</div>;
     case 'oval':

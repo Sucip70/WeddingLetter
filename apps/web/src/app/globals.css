@@ -464,3 +464,120 @@ body {
   color: transparent;
   -webkit-text-fill-color: transparent;
 }
+
+/* ===== Merpati: kepakan. Lengan sayap berayun di sekitar bahu (.wl-arm), tiap bulu ikut melengkung dengan jeda fase berbeda
+   (.wl-fe, --sw = amplitudo derajat, --lag = jeda dalam pecahan periode), badan naik-turun mengikuti (.wl-bob). ===== */
+@keyframes wl-arm {
+  0%, 100% { transform: rotate(10deg); }
+  50% { transform: rotate(-96deg); }
+}
+@keyframes wl-fe {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(calc(var(--sw, 8) * 1deg)); }
+  75% { transform: rotate(calc(var(--sw, 8) * -1deg)); }
+}
+@keyframes wl-bob {
+  0%, 100% { transform: translateY(4px); }
+  50% { transform: translateY(-5px); }
+}
+.wl-arm, .wl-fe, .wl-bob { transform-origin: 0 0; }
+.wl-arm { transform: rotate(4deg); }
+.wl-flapping .wl-arm { animation: wl-arm var(--flap, 0.9s) cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite; animation-delay: var(--flap-delay, 0s); }
+.wl-flapping .wl-arm-far { animation-delay: calc(var(--flap-delay, 0s) + var(--flap, 0.9s) * -0.06); }
+.wl-flapping .wl-fe { animation: wl-fe var(--flap, 0.9s) ease-in-out infinite; animation-delay: calc(var(--flap-delay, 0s) + var(--flap, 0.9s) * var(--lag, 0) * -1); }
+.wl-flapping .wl-bob { animation: wl-bob var(--flap, 0.9s) ease-in-out infinite; animation-delay: var(--flap-delay, 0s); }
+@media (prefers-reduced-motion: reduce) {
+  .wl-flapping .wl-arm, .wl-flapping .wl-fe, .wl-flapping .wl-bob { animation: none !important; }
+}
+
+/* ===== Kulit "dove" (Sepasang Merpati): putih lembut, biru langit, kartu bulat dengan lencana merpati ===== */
+@keyframes wl-glide {
+  from { transform: translateX(-30vw) translateY(0); }
+  50% { transform: translateX(45vw) translateY(-10px); }
+  to { transform: translateX(120vw) translateY(4px); }
+}
+.wl-glide { animation: wl-glide 26s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .wl-glide { animation: none !important; display: none; } }
+
+.wl-dove .wl-card {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--p) 22%, transparent) !important;
+  border-radius: 28px !important;
+  background: linear-gradient(180deg, #fff, color-mix(in srgb, var(--p) 4%, #fff)) !important;
+  box-shadow: 0 28px 42px -32px color-mix(in srgb, var(--p) 75%, transparent), inset 0 1px 0 #fff;
+}
+/* lencana bulat bergambar merpati di tepi atas kartu */
+.wl-dove .wl-card::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -19px;
+  width: 38px;
+  height: 38px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--p) 26%, transparent);
+  box-shadow: 0 6px 12px -6px color-mix(in srgb, var(--p) 60%, transparent);
+  pointer-events: none;
+}
+.wl-dove .wl-card::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -19px;
+  width: 38px;
+  height: 38px;
+  transform: translateX(-50%);
+  background: var(--p);
+  -webkit-mask: var(--dove-icon) center / 24px no-repeat;
+  mask: var(--dove-icon) center / 24px no-repeat;
+  pointer-events: none;
+}
+.wl-dove .wl-card { padding-top: 2.4rem !important; }
+.wl-dove li.wl-card { padding-top: 1rem !important; }
+.wl-dove li.wl-card::before, .wl-dove li.wl-card::after { display: none; }
+.wl-dove .wl-card h3 { font-family: var(--font-script), cursive !important; font-size: 2.1rem !important; font-weight: 400 !important; line-height: 1.1; }
+.wl-dove .wl-ev-date { font-size: 1.35rem; font-weight: 600; }
+.wl-dove .wl-ev-time { opacity: 0.8; letter-spacing: 0.08em; }
+
+.wl-dove .wl-btn {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--p) 78%, #fff), var(--p)) !important;
+  border-radius: 999px !important;
+  letter-spacing: 0.05em;
+}
+.wl-dove .wl-btn-o { border-radius: 999px !important; }
+.wl-dove form input,
+.wl-dove form textarea,
+.wl-dove form label,
+.wl-dove form button[aria-pressed] { border-radius: 18px !important; }
+.wl-dove form button[type='submit'] { border-radius: 999px !important; }
+.wl-dove .wl-gal {
+  border-radius: 24px !important;
+  box-shadow: 0 0 0 5px #fff, 0 0 0 6px color-mix(in srgb, var(--p) 22%, transparent), 0 26px 32px -24px color-mix(in srgb, var(--p) 70%, transparent);
+}
+.wl-dove .wl-quote { font-family: var(--font-cormorant), serif; font-size: 1.5rem; line-height: 1.5; font-style: italic; }
+.wl-dove .wl-quote::before {
+  content: '';
+  display: block;
+  width: 46px;
+  height: 34px;
+  margin: 0 auto 14px;
+  background: var(--p);
+  -webkit-mask: var(--dove-icon) center / contain no-repeat;
+  mask: var(--dove-icon) center / contain no-repeat;
+  opacity: 0.85;
+}
+.wl-dove .wl-block.wl-tint {
+  border-top: 1px solid color-mix(in srgb, var(--p) 14%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--p) 14%, transparent);
+}
+
+.wl-dove .wl-shimmer {
+  background-image: linear-gradient(100deg, color-mix(in srgb, var(--p) 88%, #1b2a4a) 18%, color-mix(in srgb, var(--p) 55%, #fff) 46%, color-mix(in srgb, var(--p) 88%, #1b2a4a) 74%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent;
+}

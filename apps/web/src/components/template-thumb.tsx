@@ -10,6 +10,7 @@ import type { DemoPhotos } from '@/lib/sample';
 import type { Theme } from '@/lib/types';
 import { PatternLayer } from './invitation/effects';
 import { HEADING, RADIUS, motifFor } from './invitation/motifs';
+import { DovePair } from './invitation/dove-art';
 import { Monogram, ORNAMENTS } from './invitation/ornaments';
 
 // Posisi deterministik dalam [0, mod) dari sebuah string (mis. id template): dipakai memilih tata letak
@@ -122,6 +123,7 @@ export function TemplateThumb({
       <PatternLayer kind={motif.pattern} opacity={0.1} />
       {cornersNode}
       {gilded && <Monogram a="A" b="S" size={38} className="relative mb-2" />}
+      {motif.skin === 'dove' && <DovePair size="w-[2.6rem]" className="relative mb-1" />}
       <p className="relative text-[8px] uppercase tracking-[0.3em]" style={{ color: theme.text, opacity: 0.7, ...(gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 7, letterSpacing: '0.38em' } : null) }}>{motif.copy?.kicker ?? 'Undangan Pernikahan'}</p>
       <p
         className={`relative mt-2 ${gilded ? 'wl-foil leading-tight' : 'leading-none'}`}

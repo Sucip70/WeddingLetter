@@ -95,7 +95,18 @@ async function installDemoPhotos() {
   }
 }
 
+// Desain yang namanya diganti: baris lama diganti nama (bukan dibuat ulang), supaya pesanan lama tetap menunjuk ke
+// template yang sama. Aman diulang: tidak menyentuh bila nama baru sudah ada.
+const RENAMED_TEMPLATES: Record<string, string> = {
+  "Standard Kristiani Lily": "Standard Sepasang Merpati",
+  "Premium Kristiani Lily": "Premium Sepasang Merpati",
+};
+
 async function main() {
+  for (const [from, to] of Object.entries(RENAMED_TEMPLATES)) {
+    if (await prisma.template.findFirst({ where: { name: to }, select: { id: true } })) continue;
+    await prisma.template.updateMany({ where: { name: from }, data: { name: to } });
+  }
   for (const t of templates) {
     const existing = await prisma.template.findFirst({ where: { name: t.name }, select: { id: true } });
     if (existing) {

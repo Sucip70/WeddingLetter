@@ -129,6 +129,15 @@ const ICONS: Record<CoverKind, ReactNode> = {
       <rect x={13} y={45} width={14} height={4.5} fill="#fff" />
     </>
   ),
+  merpati: (
+    <>
+      <ellipse cx={20} cy={25} rx={9} ry={11} {...STROKE} />
+      <ellipse cx={20} cy={25} rx={6.800} ry={8.800} {...SOFT} />
+      <path d="M8 13l5 2.500-3.500 3zM32 13l-5 2.500 3.500 3z" {...SOLID} />
+      {text(41, 18)}
+      {button(47)}
+    </>
+  ),
   emas: (
     <>
       <path d="M9 36V21a11 11 0 0 1 22 0v15Z" {...STROKE} />

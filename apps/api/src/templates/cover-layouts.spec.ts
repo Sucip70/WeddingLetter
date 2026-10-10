@@ -20,6 +20,7 @@ describe('tata letak sampul', () => {
     expect(availableCoverLayouts('PREMIUM', 'sihir')).toEqual([...GENERIC_COVERS, 'portal']);
     expect(availableCoverLayouts('PREMIUM', 'hollywood')).toEqual([...GENERIC_COVERS, 'poster']);
     expect(availableCoverLayouts('PREMIUM', 'elegant')).toEqual([...GENERIC_COVERS, 'emas']);
+    expect(availableCoverLayouts('PREMIUM', 'kristiani')).toEqual([...GENERIC_COVERS, 'merpati']);
     expect(availableCoverLayouts('PREMIUM', 'rustic')).toEqual([...GENERIC_COVERS]); // tanpa layout khusus
     expect(availableCoverLayouts('STANDARD', 'jawa')).not.toContain('gapura');
   });

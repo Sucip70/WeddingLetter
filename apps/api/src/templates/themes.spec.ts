@@ -25,8 +25,11 @@ describe('registry desain', () => {
 describe('gerbang pembuka', () => {
   it('setiap desain punya gerbang bawaan yang valid; semua jenis gerbang dipakai minimal satu desain', () => {
     for (const design of DESIGNS) expect(GATE_KINDS).toContain(design.gate);
+    // 'glass' (jendela kaca patri) tidak lagi jadi bawaan desain mana pun, tapi tetap bisa dipilih admin di builder dan
+    // dipakai template lama.
+    const builderOnly = ['glass'];
     const used = new Set(DESIGNS.map((x) => x.gate));
-    expect([...used].sort()).toEqual([...GATE_KINDS].sort());
+    expect([...used, ...builderOnly].sort()).toEqual([...GATE_KINDS].sort());
   });
 
   it('normalizeLayout: gerbang bawaan none; nilai sah dipakai; nilai asing dibuang tanpa melempar', () => {
@@ -66,8 +69,8 @@ describe('palet warna', () => {
     expect(autoPalettes(designById('natal')!)).toEqual([]);
   });
 
-  it('Elegan memakai palet pilihan tangan (bukan geseran rona): id unik, warna valid, latar terang & teks gelap', () => {
-    const palettes = autoPalettes(designById('elegant')!);
+  it.each(['elegant', 'kristiani'])('%s memakai palet pilihan tangan (bukan geseran rona): id unik, warna valid, latar terang & teks gelap', (id) => {
+    const palettes = autoPalettes(designById(id)!);
     expect(palettes.length).toBeGreaterThan(0);
     expect(new Set(palettes.map((p) => p.id)).size).toBe(palettes.length);
     const lum = (hex: string) => {
