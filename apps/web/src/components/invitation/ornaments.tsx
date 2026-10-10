@@ -47,7 +47,8 @@ function Flake({ cx, cy, r, o = 1 }: { cx: number; cy: number; r: number; o?: nu
   );
 }
 
-const svgCorner = (rotate: number | undefined) => ({ transform: `rotate(${rotate ?? 0}deg)` });
+// Pakai properti `rotate` (bukan `transform`): animasi sudut Premium (.wl-breathe) memakai transform: scale() dan akan menimpa rotasi.
+const svgCorner = (rotate: number | undefined) => ({ rotate: `${rotate ?? 0}deg` });
 
 // ----- vine (bawaan: rustic, floral, semi, gugur) -----
 
