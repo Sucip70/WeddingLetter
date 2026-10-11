@@ -14,7 +14,8 @@ import { isCoverKind, resolveCover } from '@/lib/cover-layouts';
 import { CoverLayout, isLightCover } from './cover';
 import { CoverFx, Particles, PatternLayer, PhotoFrame, Reveal, useReveal } from './effects';
 import { BODY, HEADING, RADIUS, motifFor } from './motifs';
-import { BLOOM_BG, DOVE_BG, GILDED_BG, KRAFT_TEXTURE, coverBackgroundFor } from './skin-bg';
+import { BLOOM_BG, DOVE_BG, GARDEN_BG, GARDEN_FLOURISH, GILDED_BG, KRAFT_TEXTURE, coverBackgroundFor } from './skin-bg';
+import { GardenPageFrame } from './garden-parts';
 import type { CountdownKind, Motif } from './motifs';
 import { Dove, DovePair } from './dove-art';
 import { Monogram, ORNAMENTS, PauseIcon, PlayIcon } from './ornaments';
@@ -107,6 +108,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const airy = skin === 'dove';
   const bloom = skin === 'bloom';
   const keraton = skin === 'keraton';
+  const garden = skin === 'garden';
   // Untaian bunga & ikon bunga mini sebagai gambar CSS (data URI): bunga utamanya berwarna sekunder tema, jadi dihitung per tema.
   const bloomCss = useMemo(() => (bloom ? { garland: garlandCss(theme.secondary), mini: miniBloomCss(theme.secondary) } : null), [bloom, theme.secondary]);
   // Batik Jawa: parang, kawung, dan ikon gunungan sebagai gambar CSS (data URI) yang warnanya ikut tema; lihat batik-art.ts.
@@ -255,7 +257,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     backgroundColor: theme.background,
     color: theme.text,
     fontFamily: bf.family,
-    ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : gilded ? GILDED_BG : airy ? DOVE_BG : bloom && bloomCss ? { ...BLOOM_BG, ['--bloom-garland' as string]: bloomCss.garland, ['--bloom-mini' as string]: bloomCss.mini } : keraton && keratonCss ? { ...KERATON_BG, ...keratonCss } : null),
+    ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : garden ? { ...GARDEN_BG, ['--garden-flourish' as string]: GARDEN_FLOURISH } : gilded ? GILDED_BG : airy ? DOVE_BG : bloom && bloomCss ? { ...BLOOM_BG, ['--bloom-garland' as string]: bloomCss.garland, ['--bloom-mini' as string]: bloomCss.mini } : keraton && keratonCss ? { ...KERATON_BG, ...keratonCss } : null),
   } as CSSProperties;
   const headingStyle: CSSProperties = {
     fontFamily: hf.family,
@@ -342,6 +344,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const cornersNode = (
     <div key={coverKey} className="pointer-events-none absolute inset-0" style={{ color: 'var(--p)' }} aria-hidden>
       {kraft && <div className="wl-cover-stitch" />}
+      {garden && <GardenPageFrame />}
       {gilded && ['t h', 'b h', 'l v', 'r v', 't h i', 'b h i', 'l v i', 'r v i'].map((c) => <span key={c} className={`wl-gf ${c}`} />)}
       <div className={gilded ? 'wl-corner-in' : undefined}>
         <orn.Corner className={`${cornerTop} ${keraton ? 'left-[30px] top-[30px]' : 'left-2 top-2'}`} rotate={0} />

@@ -16,7 +16,8 @@ import { Gunungan } from './invitation/gunungan-art';
 import { DovePair } from './invitation/dove-art';
 import { Monogram, ORNAMENTS } from './invitation/ornaments';
 import { STRINGS } from './invitation/i18n';
-import { BLOOM_BG, DOVE_BG, GILDED_BG, KRAFT_COVER, KRAFT_TEXTURE, coverBackgroundFor } from './invitation/skin-bg';
+import { BLOOM_BG, DOVE_BG, GARDEN_BG, GARDEN_FLOURISH, GILDED_BG, KRAFT_COVER, KRAFT_TEXTURE, coverBackgroundFor } from './invitation/skin-bg';
+import { GardenPageFrame } from './invitation/garden-parts';
 
 // Miniatur sampul template (statis, ringan) untuk kartu katalog. Memakai motif desain: ornamen sudut,
 // pola latar, dan font judul yang sama dengan undangan sungguhan.
@@ -61,14 +62,18 @@ export function TemplateThumb({
   const keraton = motif.skin === 'keraton';
   // Rustic: kertas kraft bertekstur + jahitan putus-putus di sampul (latar yang sama dengan undangan sungguhan: skin-bg.ts).
   const kraft = motif.skin === 'kraft';
+  // Taman Botani: kertas gading berbintik + bingkai berukir (garden-parts.tsx).
+  const garden = motif.skin === 'garden';
   const nameSize = phone ? 1 : gilded ? 0.58 : keraton ? 0.5 : 0.62;
-  const rootClass = gilded ? 'wl-root wl-gilded' : keraton ? 'wl-root wl-keraton' : bloom ? 'wl-bloom' : kraft ? 'wl-kraft' : '';
+  const rootClass = gilded ? 'wl-root wl-gilded' : keraton ? 'wl-root wl-keraton' : bloom ? 'wl-bloom' : kraft ? 'wl-kraft' : garden ? 'wl-garden' : '';
   const dark = motif.countdown === 'neon' || motif.countdown === 'pixel';
   // Ukuran ponsel: latar kulit yang sama persis dengan undangan sungguhan (skin-bg.ts / batik-art.ts). Mini: gradasi sederhana.
   const skinBg: CSSProperties | null = phone
     ? kraft
       ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' }
-      : gilded
+      : garden
+        ? { ...GARDEN_BG, ['--garden-flourish' as string]: GARDEN_FLOURISH }
+        : gilded
         ? GILDED_BG
         : motif.skin === 'dove'
           ? DOVE_BG
@@ -125,6 +130,7 @@ export function TemplateThumb({
   const cornersNode = (
     <>
       {kraft && <div className="wl-cover-stitch" />}
+      {phone && garden && <GardenPageFrame />}
       {phone && gilded && ['t h', 'b h', 'l v', 'r v', 't h i', 'b h i', 'l v i', 'r v i'].map((c) => <span key={c} className={`wl-gf ${c}`} />)}
       <div className={phone && gilded ? 'wl-corner-in' : undefined}>
         <orn.Corner className={`absolute ${POS.tl} ${cornerTop}`} rotate={0} />

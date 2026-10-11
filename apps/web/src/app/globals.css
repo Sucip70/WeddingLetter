@@ -773,3 +773,68 @@ body {
 }
 .wl-keraton .wl-quote { font-family: var(--font-playfair), serif; font-size: 1.3rem; font-style: italic; line-height: 1.65; }
 .wl-keraton .wl-quote::before { content: ''; display: block; width: 34px; height: 46px; margin: 0 auto 16px; background: var(--kr-icon) center / contain no-repeat; }
+
+/* ===== Kulit "garden" (Taman Botani): kertas gading berbintik, kartu bergaris tipis berhias flourish, tombol bergaris ===== */
+.wl-garden .wl-card {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--p) 30%, transparent) !important;
+  border-radius: 16px !important;
+  background: color-mix(in srgb, var(--bg) 62%, #fff) !important;
+  box-shadow: 0 20px 30px -26px color-mix(in srgb, var(--p) 70%, transparent), inset 0 0 0 4px color-mix(in srgb, var(--bg) 62%, #fff), inset 0 0 0 5px color-mix(in srgb, var(--p) 14%, transparent);
+  padding-top: 2.6rem !important;
+}
+.wl-garden li.wl-card { padding-top: 1rem !important; }
+/* flourish di tepi atas kartu (bentuk dari mask, warna dari --p) */
+.wl-garden .wl-card::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0.7rem;
+  width: 116px;
+  height: 15px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: var(--p);
+  opacity: 0.8;
+  -webkit-mask: var(--garden-flourish) center / 100% 100% no-repeat;
+  mask: var(--garden-flourish) center / 100% 100% no-repeat;
+}
+.wl-garden li.wl-card::before { display: none; }
+.wl-garden .wl-card h3 { font-style: italic; font-weight: 600 !important; }
+.wl-garden .wl-ev-date { font-size: 1.25rem; font-weight: 600; }
+.wl-garden .wl-ev-time { letter-spacing: 0.14em; opacity: 0.8; }
+.wl-garden .wl-block.wl-tint {
+  border-top: 1px solid color-mix(in srgb, var(--p) 16%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--p) 16%, transparent);
+}
+/* tombol bergaris (pil) seperti kotak "Buka Undangan" pada rujukan: isi transparan, garis & huruf hijau */
+.wl-garden .wl-btn {
+  background: transparent !important;
+  color: var(--p) !important;
+  border: 1.5px solid var(--p) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.8rem !important;
+}
+.wl-garden .wl-btn:hover { background: color-mix(in srgb, var(--p) 10%, transparent) !important; }
+.wl-garden .wl-btn-o { border-radius: 999px !important; }
+.wl-garden form input,
+.wl-garden form textarea,
+.wl-garden form label,
+.wl-garden form button[aria-pressed] { border-radius: 12px !important; }
+.wl-garden form button[type='submit'] {
+  border-radius: 999px !important;
+  background: transparent !important;
+  color: var(--p) !important;
+  border: 1.5px solid var(--p) !important;
+}
+.wl-garden .wl-fab { background: var(--p) !important; }
+.wl-garden .wl-gal {
+  border-radius: 8px !important;
+  background: #fff;
+  padding: 5px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--p) 30%, transparent), 0 18px 24px -20px color-mix(in srgb, var(--p) 60%, transparent);
+}
+.wl-garden .wl-quote { font-style: italic; font-size: 1.3rem; line-height: 1.55; }

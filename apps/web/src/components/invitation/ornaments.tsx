@@ -1,10 +1,11 @@
 // Ornamen SVG untuk undangan (warna mengikuti currentColor sehingga ikut tema). Tiap "jenis" ornamen punya
 // tiga bagian: Corner (sudut sampul), Divider (pemisah judul), Sprig (hiasan kecil di bawah foto/footer).
-import { BloomCorner, BloomDivider, BloomSprig, RoseCorner, RoseDivider, RoseSprig } from './bloom-parts';
+import { SeasonCorner, SeasonDivider, SeasonSprig } from './season-parts';
+import { BloomCorner, BloomDivider, BloomSprig, BotaniCorner, BotaniDivider, BotaniSprig, RoseCorner, RoseDivider, RoseSprig } from './bloom-parts';
 
 import { DOVE_SILHOUETTE, LilyShapes } from './dove-art';
 
-export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily' | 'flora' | 'romantic' | 'keraton';
+export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily' | 'flora' | 'romantic' | 'botani' | 'keraton' | 'sakura' | 'autumn' | 'winter';
 
 interface CornerProps {
   className?: string;
@@ -468,6 +469,14 @@ const Romantic: OrnamentSet = {
   Sprig: ({ className = 'w-28', flip }) => <RoseSprig className={className} flip={flip} />,
 };
 
+// ----- botani (Taman Botani): ranting daun teh & bunga liar hijau (botani-art.ts) -----
+const Botani: OrnamentSet = {
+  cardCorner: 'w-24',
+  Corner: ({ className = 'w-36', rotate = 0 }) => <BotaniCorner className={className} rotate={rotate} />,
+  Divider: ({ className = 'w-56' }) => <BotaniDivider className={className} />,
+  Sprig: ({ className = 'w-28', flip }) => <BotaniSprig className={className} flip={flip} />,
+};
+
 // ----- keraton (Batik Jawa): kawung emas, ukel (gulungan), dan belah ketupat; emas = --s, aksen maroon = currentColor -----
 const KR_GOLD = 'color-mix(in srgb, var(--s) 80%, #3d2a00)';
 function KawungFlower({ cx, cy, r }: { cx: number; cy: number; r: number }) {
@@ -518,7 +527,17 @@ const Keraton: OrnamentSet = {
   ),
 };
 
-export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco, lily: Lily, flora: Flora, romantic: Romantic, keraton: Keraton };
+// ----- musim: sakura (Semi), maple & krisan (Gugur), salju & hellebore (Dingin); digambar di season-art.ts -----
+const seasonSet = (season: 'sakura' | 'autumn' | 'winter'): OrnamentSet => ({
+  Corner: ({ className = 'w-36', rotate = 0 }) => <SeasonCorner season={season} className={className} rotate={rotate} />,
+  Divider: ({ className = 'w-56' }) => <SeasonDivider season={season} className={className} />,
+  Sprig: ({ className = 'w-28', flip }) => <SeasonSprig season={season} className={className} flip={flip} />,
+});
+const Sakura = seasonSet('sakura');
+const Autumn = seasonSet('autumn');
+const Winter = seasonSet('winter');
+
+export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco, lily: Lily, flora: Flora, romantic: Romantic, botani: Botani, keraton: Keraton, sakura: Sakura, autumn: Autumn, winter: Winter };
 
 // Ekspor lama (kartu katalog, halaman lain) = jenis vine.
 export const Corner = Vine.Corner;

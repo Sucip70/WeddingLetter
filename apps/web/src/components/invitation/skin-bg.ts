@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { DOVE_SILHOUETTE, DOVE_VIEWBOX } from './dove-art';
+import { filigreeFlourish } from './botani-art';
 
 // Latar kulit "kraft" (Rustic) yang dipakai bersama oleh undangan sungguhan (invitation-view.tsx) dan miniatur kartu katalog
 // (template-thumb.tsx), supaya keduanya tidak bisa berbeda. Modul ini sengaja kecil & tanpa dependensi agar kartu katalog
@@ -48,6 +49,25 @@ export const BLOOM_BG: CSSProperties = {
   backgroundRepeat: 'repeat-y',
 };
 
+// Taman Botani: kertas gading berbintik halus (bintik tersebar deterministik + butiran kertas, dikalikan ke warna latar tema)
+// dan hiasan flourish di tepi atas kartu (mask: warnanya mengikuti --p lewat CSS).
+const SPECKS = (() => {
+  let a = 7;
+  const r = () => (a = (Math.imul(a, 1664525) + 1013904223) >>> 0) / 4294967296;
+  let s = '';
+  for (let i = 0; i < 46; i++) s += `<circle cx="${(r() * 300).toFixed(1)}" cy="${(r() * 300).toFixed(1)}" r="${(0.5 + r() * 1.1).toFixed(2)}" fill="#6f7f4a" fill-opacity="${(0.2 + r() * 0.3).toFixed(2)}"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">${s}</svg>`;
+})();
+const PAPER_GRAIN = `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 .42 0 0 0 0 .45 0 0 0 0 .3 0 0 0 .2 0"/></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>`;
+const dataUri = (svg: string) => `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+export const GARDEN_BG: CSSProperties = {
+  backgroundImage: `${dataUri(SPECKS)}, ${dataUri(PAPER_GRAIN)}`,
+  backgroundSize: '300px 300px, 220px 220px',
+  backgroundBlendMode: 'multiply, multiply',
+};
+// Dipakai sebagai mask-image (hanya bentuk/alpha yang penting).
+export const GARDEN_FLOURISH = dataUri(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 16">${filigreeFlourish('#000')}</svg>`);
+
 // Gradasi/sorotan di atas latar sampul tiap kulit (lapisan transparan di atas latar kulit di atas, bukan bagian dari multiply).
 export function coverBackgroundFor(skin: string | undefined) {
   const kraft = skin === 'kraft';
@@ -55,7 +75,10 @@ export function coverBackgroundFor(skin: string | undefined) {
   const bloom = skin === 'bloom';
   const airy = skin === 'dove';
   const gilded = skin === 'gilded';
-  return kraft
+  const garden = skin === 'garden';
+  return garden
+    ? 'radial-gradient(ellipse 85% 55% at 50% 46%, color-mix(in srgb, #fff 55%, var(--bg)) 0, transparent 72%), radial-gradient(ellipse 120% 40% at 50% 104%, color-mix(in srgb, var(--p) 12%, transparent), transparent 74%)'
+    : kraft
       ? KRAFT_COVER
       : keraton
         ? 'radial-gradient(ellipse 78% 36% at 50% 36%, color-mix(in srgb, #fff 62%, var(--bg)) 0, transparent 72%), radial-gradient(ellipse 120% 40% at 50% 108%, color-mix(in srgb, var(--p) 16%, transparent), transparent 74%)'

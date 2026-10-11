@@ -17,7 +17,9 @@ describe('tata letak sampul', () => {
   it('Basic tanpa pilihan; Standard hanya layout umum; Premium + layout khusus tema (bila ada)', () => {
     expect(availableCoverLayouts('BASIC', 'rustic')).toEqual([]);
     expect(availableCoverLayouts('STANDARD', 'sihir')).toEqual([...GENERIC_COVERS]);
-    expect(availableCoverLayouts('PREMIUM', 'sihir')).toEqual([...GENERIC_COVERS, 'portal']);
+    expect(availableCoverLayouts('PREMIUM', 'sihir')).toEqual([...GENERIC_COVERS, 'menara']);
+    expect(availableCoverLayouts('PREMIUM', 'galaksi')).toEqual([...GENERIC_COVERS, 'orbit']);
+    expect(availableCoverLayouts('PREMIUM', 'halloween')).toEqual([...GENERIC_COVERS, 'portal']);
     expect(availableCoverLayouts('PREMIUM', 'hollywood')).toEqual([...GENERIC_COVERS, 'poster']);
     expect(availableCoverLayouts('PREMIUM', 'elegant')).toEqual([...GENERIC_COVERS, 'emas']);
     expect(availableCoverLayouts('PREMIUM', 'kristiani')).toEqual([...GENERIC_COVERS, 'merpati']);
@@ -42,7 +44,7 @@ describe('tata letak sampul', () => {
     expect(normalizeLayout(raw('meriam')).coverDefault).toBeUndefined(); // id asing
     expect(withCoverLayouts(normalizeLayout(raw('gapura')), 'PREMIUM').coverDefault).toBe('gapura');
     expect(withCoverLayouts(normalizeLayout(raw('gapura')), 'STANDARD').coverDefault).toBeUndefined(); // khusus tema, bukan Standard
-    expect(withCoverLayouts(normalizeLayout(raw('portal')), 'PREMIUM').coverDefault).toBeUndefined(); // milik desain lain
+    expect(withCoverLayouts(normalizeLayout(raw('menara')), 'PREMIUM').coverDefault).toBeUndefined(); // milik desain lain
     expect(withCoverLayouts(normalizeLayout(raw('penuh')), 'BASIC').coverDefault).toBeUndefined();
     expect(toAuthoring(raw('medali')).coverDefault).toBe('medali'); // round-trip builder
   });
@@ -52,7 +54,7 @@ describe('tata letak sampul', () => {
     const validate = (tata_letak: unknown, l = layout) => validateInvitationData(l.sections, l, { cover: { tata_letak } }, (r) => r);
 
     it('menerima layout yang tersedia', () => {
-      expect(validate('portal').data.cover).toEqual({ tata_letak: 'portal' });
+      expect(validate('menara').data.cover).toEqual({ tata_letak: 'menara' });
       expect(validate('bingkai').data.cover).toEqual({ tata_letak: 'bingkai' });
     });
 

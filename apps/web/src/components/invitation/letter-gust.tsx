@@ -46,7 +46,24 @@ const ELM_VEINS = 'M12 3.5V21M12 8.5l3-2M12 8.5l-3-2M12 12.5l3.8-2.3M12 12.5 8.2
 const DROP_LEAF = 'M3 21C3 10 10 3 21 3c0 11-7 18-18 18Z';
 const DROP_VEINS = 'M4 20 18 6M9 15l-1.2-4.2M12.5 11.5l-1-4M9 15l4.2 1.2M12.5 11.5l4 1';
 
-type GustKind = 'sakura' | 'frost' | 'leaves' | 'rustic';
+// Daun teh bergerigi halus (Taman Botani): lonjong runcing dengan tepi bergerigi; dibangkitkan dan dibulatkan 2 desimal
+// supaya hasilnya identik di server & klien.
+const TEA_LEAF = (() => {
+  const top: string[] = [];
+  const bottom: string[] = [];
+  const n = 18;
+  for (let i = 1; i < n; i++) {
+    const t = i / n;
+    const w = 6.6 * Math.pow(Math.sin(Math.PI * Math.pow(t, 0.82)), 0.85) * (i % 2 ? 1 : 0.86);
+    const y = 22 - 20 * t;
+    top.push(`${(12 - w).toFixed(2)} ${y.toFixed(2)}`);
+    bottom.push(`${(12 + w).toFixed(2)} ${y.toFixed(2)}`);
+  }
+  return `M12 22.5L${top.join('L')}L12 1.5L${bottom.reverse().join('L')}Z`;
+})();
+const TEA_VEINS = 'M12 22V3M12 17l4.2-2.8M12 17l-4.2-2.8M12 12.5l3.8-2.6M12 12.5l-3.8-2.6M12 8l2.6-1.7M12 8l-2.6-1.7';
+
+type GustKind = 'sakura' | 'frost' | 'leaves' | 'rustic' | 'taman';
 
 interface Look {
   shapes: string[];
@@ -107,6 +124,19 @@ const LOOKS: Record<GustKind, Look> = {
     pile: { kind: 'fill', cols: 6, rows: 9 },
     pileShadow: 'drop-shadow-[0_2px_2px_rgba(60,30,10,0.22)]',
     letter: { background: '#fdf6ea', color: '#4a2c16', border: '1px solid color-mix(in srgb, var(--s) 45%, transparent)' },
+  },
+  // Taman Botani: daun teh & herba hijau di atas kertas gading; warna tema hijau hanya menyelaraskan nadanya.
+  taman: {
+    shapes: [TEA_LEAF, ELM_LEAF, DROP_LEAF],
+    veins: [TEA_VEINS, ELM_VEINS, DROP_VEINS],
+    mixWith: ['#5f7f3a', '#7b9a4a', '#9db566', '#47662d', '#b9c987'],
+    tintScale: 0.4,
+    fillOpacity: 1,
+    sizeScale: 1.3,
+    // Daun berserakan merata memenuhi seluruh layar, sama dengan gerbang daun gugur.
+    pile: { kind: 'fill', cols: 6, rows: 9 },
+    pileShadow: 'drop-shadow-[0_2px_2px_rgba(30,50,15,0.22)]',
+    letter: { background: '#fbf9ef', color: '#2f3d22', border: '1px solid color-mix(in srgb, var(--p) 40%, transparent)' },
   },
 };
 
@@ -195,6 +225,7 @@ const PILES: Record<GustKind, PileBit[]> = {
   frost: pileBits(LOOKS.frost.pile ?? LOW_PILE),
   leaves: pileBits(LOOKS.leaves.pile ?? LOW_PILE),
   rustic: pileBits(LOOKS.rustic.pile ?? LOW_PILE),
+  taman: pileBits(LOOKS.taman.pile ?? LOW_PILE),
 };
 
 interface GustBit {

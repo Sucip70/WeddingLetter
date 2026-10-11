@@ -9,6 +9,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { BLOOM, GARDEN, makeGarden } from './flora-art';
 import { archCrown, cornerCluster, dividerRow, garlandTile, miniBloom, romanticCorner, romanticDivider, romanticSprig, smallSprig, wreath } from './flora-comp';
 import type { Garden } from './flora-art';
+import { botaniCorner, botaniDivider, botaniSprig, filigreeCorner } from './botani-art';
 
 const CORNER = cornerCluster();
 const DIVIDER = dividerRow();
@@ -19,13 +20,19 @@ const MINI = miniBloom();
 const ROSE_CORNER = romanticCorner();
 const ROSE_DIVIDER = romanticDivider();
 const ROSE_SPRIG = romanticSprig();
+// "Taman Botani": daun teh & bunga liar hijau (warna daun turunan --p) dan sudut filigran bingkai.
+const BOTANI_CORNER = botaniCorner();
+const BOTANI_DIVIDER = botaniDivider();
+const BOTANI_SPRIG = botaniSprig();
+const FILIGREE = filigreeCorner();
+const FILIGREE_ORN = filigreeCorner('currentColor', false);
 
 // Sprite: di halaman yang memuat banyak salinan sekaligus (katalog: tiap kartu punya 4 sudut + monogram, masing-masing
 // ±80-110 KB SVG yang persis sama) gambar besar didefinisikan SEKALI lewat <BloomSpriteScope> lalu dirujuk dengan <use>.
 // Warna tema tetap ikut: isi <use> mewarisi variabel CSS (--s) dari elemen <use>, yaitu dari kartu induknya.
 // Di luar scope ini (halaman undangan, editor) komponen menyisipkan SVG langsung seperti biasa.
 const SpriteContext = createContext(false);
-const SPRITE_ID = { corner: 'wl-bloom-corner', wreath: 'wl-bloom-wreath', roseCorner: 'wl-rose-corner' } as const;
+const SPRITE_ID = { corner: 'wl-bloom-corner', wreath: 'wl-bloom-wreath', roseCorner: 'wl-rose-corner', botaniCorner: 'wl-botani-corner' } as const;
 
 export function BloomSpriteScope({ children }: { children: ReactNode }) {
   return (
@@ -35,6 +42,7 @@ export function BloomSpriteScope({ children }: { children: ReactNode }) {
           <g id={SPRITE_ID.corner} dangerouslySetInnerHTML={{ __html: CORNER }} />
           <g id={SPRITE_ID.wreath} dangerouslySetInnerHTML={{ __html: WREATH }} />
           <g id={SPRITE_ID.roseCorner} dangerouslySetInnerHTML={{ __html: ROSE_CORNER }} />
+          <g id={SPRITE_ID.botaniCorner} dangerouslySetInnerHTML={{ __html: BOTANI_CORNER }} />
         </defs>
       </svg>
       {children}
@@ -67,6 +75,30 @@ export function RoseCorner({ className = 'w-40', rotate = 0 }: { className?: str
   ) : (
     <svg {...props} dangerouslySetInnerHTML={{ __html: ROSE_CORNER }} />
   );
+}
+// Sudut karangan daun & bunga liar (Taman Botani); pola sprite sama dengan BloomCorner.
+export function BotaniCorner({ className = 'w-40', rotate = 0 }: { className?: string; rotate?: 0 | 90 | 180 | 270 }) {
+  const mirror: Record<number, string> = { 0: '1 1', 90: '-1 1', 180: '-1 -1', 270: '1 -1' };
+  const sprite = useContext(SpriteContext);
+  const props = { viewBox: '0 0 170 170', className: `overflow-visible ${className}`, style: { scale: mirror[rotate] ?? '1 1' }, 'aria-hidden': true } as const;
+  return sprite ? (
+    <svg {...props}>
+      <use href={`#${SPRITE_ID.botaniCorner}`} />
+    </svg>
+  ) : (
+    <svg {...props} dangerouslySetInnerHTML={{ __html: BOTANI_CORNER }} />
+  );
+}
+export function BotaniDivider({ className = 'w-56' }: { className?: string }) {
+  return <svg viewBox="0 0 240 40" className={`overflow-visible ${className}`} dangerouslySetInnerHTML={{ __html: BOTANI_DIVIDER }} aria-hidden />;
+}
+export function BotaniSprig({ className = 'w-28', flip }: { className?: string; flip?: boolean }) {
+  return <svg viewBox="0 0 130 70" className={`overflow-visible ${className}`} style={flip ? { scale: '-1 1' } : undefined} dangerouslySetInnerHTML={{ __html: BOTANI_SPRIG }} aria-hidden />;
+}
+// Sudut bingkai filigran (kiri-atas, dicerminkan untuk tiga sudut lain); warna = currentColor.
+export function FiligreeCorner({ className = 'w-14', rotate = 0, lines = true }: { className?: string; rotate?: 0 | 90 | 180 | 270; lines?: boolean }) {
+  const mirror: Record<number, string> = { 0: '1 1', 90: '-1 1', 180: '-1 -1', 270: '1 -1' };
+  return <svg viewBox="0 0 64 64" className={`overflow-visible ${className}`} style={{ scale: mirror[rotate] ?? '1 1' }} dangerouslySetInnerHTML={{ __html: lines ? FILIGREE : FILIGREE_ORN }} aria-hidden />;
 }
 export function RoseDivider({ className = 'w-56' }: { className?: string }) {
   return <svg viewBox="0 0 240 40" className={`overflow-visible ${className}`} dangerouslySetInnerHTML={{ __html: ROSE_DIVIDER }} aria-hidden />;

@@ -6,7 +6,7 @@ import type { OrnamentKind } from './ornaments';
 export type ParticleKind = 'petal' | 'leaf' | 'maple' | 'snow' | 'heart' | 'star' | 'sparkle' | 'confetti' | 'bubble' | 'firefly' | 'pixel' | 'lantern' | 'bat' | 'coin' | 'dust' | 'feather' | 'blossom' | 'bloomflower';
 export type ParticleMode = 'fall' | 'rise' | 'twinkle' | 'drift';
 export type PatternKind = 'none' | 'dots' | 'kawung' | 'zigzag' | 'diamond' | 'scallop' | 'grid' | 'stars' | 'star8' | 'hearts' | 'leaves' | 'stripes' | 'cross';
-export type FrameKind = 'arch' | 'oval' | 'round' | 'square' | 'diamond' | 'pixel' | 'polaroid' | 'hex' | 'notch' | 'deco' | 'dove' | 'bloom' | 'kayon';
+export type FrameKind = 'arch' | 'oval' | 'round' | 'square' | 'diamond' | 'pixel' | 'polaroid' | 'hex' | 'notch' | 'deco' | 'dove' | 'bloom' | 'kayon' | 'garden' | 'sakura' | 'autumn' | 'winter';
 export type CountdownKind = 'soft' | 'outline' | 'pixel' | 'neon' | 'ticket' | 'round' | 'flip' | 'luxe' | 'sky' | 'bloom' | 'keraton';
 export type CoverFxKind = 'none' | 'aurora' | 'rays' | 'curtain' | 'scanlines' | 'spotlight' | 'clouds' | 'halo' | 'sky' | 'bloom';
 export type RevealKind = 'rise' | 'zoom' | 'blur' | 'slide';
@@ -26,7 +26,7 @@ export interface Motif {
   // Tampilan khusus: 'kraft' = kertas kraft, kartu berjahitan berpita perekat, tali goni (lihat .wl-kraft di globals.css).
   // 'gilded' = Elegan: kertas gading bermarmer, garis & huruf berlapis emas, bingkai berukir (lihat .wl-gilded).
   // 'keraton' = Batik Jawa: krem & maroon, emas berlapis, parang di tepi halaman, kawung pemisah, gunungan (lihat .wl-keraton).
-  skin?: 'kraft' | 'gilded' | 'dove' | 'bloom' | 'keraton';
+  skin?: 'kraft' | 'gilded' | 'dove' | 'bloom' | 'keraton' | 'garden';
   // Menimpa font judul tema (mis. rustic memakai Fraunces yang hangat walau snapshot lama bertulis serif).
   heading?: HeadingFont;
   // Font khusus nama mempelai (sampul, gerbang, kartu mempelai); bawaan = `heading`.
@@ -54,6 +54,8 @@ export const MOTIFS: Record<string, Motif> = {
   rustic: { ...m('twig', 'none', 'polaroid', 'ticket', 'none', ['leaf', 10, 'fall'], 'mid'), skin: 'kraft', heading: 'display' },
   // Floral Romantis: karangan mawar & peony merah muda di sudut/pemisah (ornamen 'romantic'), sudut dibuat besar seperti Buket.
   floral: { ...m('romantic', 'leaves', 'oval', 'soft', 'none', ['petal', 14, 'fall']), cornerSize: { top: 'w-36 [@media(max-height:700px)]:w-28', bottom: 'w-28 [@media(max-height:700px)]:w-24' } },
+  // Taman Botani: kertas gading berbintik, bingkai berukir bersudut filigran, ranting daun teh & bunga liar hijau (skin 'garden').
+  garden: { ...m('botani', 'none', 'garden', 'outline', 'none', ['leaf', 12, 'fall']), skin: 'garden', heading: 'display', names: 'display', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   elegant: { ...m('deco', 'diamond', 'deco', 'luxe', 'halo', ['dust', 22, 'rise'], 'mid', 'blur'), skin: 'gilded', heading: 'cinzel', names: 'script' },
 
   // Suku & budaya
@@ -101,10 +103,10 @@ export const MOTIFS: Record<string, Motif> = {
   paris: m('sparkle', 'stripes', 'oval', 'flip', 'rays', ['petal', 10, 'fall'], 'mid', 'rise', { kicker: 'Un Amour à Paris' }),
 
   // Musim
-  semi: m('vine', 'leaves', 'oval', 'soft', 'clouds', ['petal', 18, 'fall']),
+  semi: { ...m('sakura', 'none', 'sakura', 'soft', 'clouds', ['petal', 18, 'fall']), cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   panas: m('sparkle', 'dots', 'round', 'round', 'rays', ['bubble', 10, 'rise'], 'pill'),
-  gugur: m('vine', 'leaves', 'arch', 'ticket', 'none', ['maple', 16, 'fall'], 'mid'),
-  salju: m('snow', 'dots', 'arch', 'outline', 'aurora', ['snow', 28, 'fall'], 'mid', 'blur'),
+  gugur: { ...m('autumn', 'none', 'autumn', 'ticket', 'none', ['maple', 16, 'fall'], 'mid'), cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
+  salju: { ...m('winter', 'none', 'winter', 'outline', 'aurora', ['snow', 28, 'fall'], 'mid', 'blur'), cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
 };
 
 export const motifFor = (id: string | undefined): Motif => MOTIFS[id ?? ''] ?? MOTIFS.rustic!;
