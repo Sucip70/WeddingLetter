@@ -94,6 +94,10 @@ const BASE_DESIGNS: Omit<Design, 'gate'>[] = [
   d('floral', 'Floral Romantis', 'klasik', 'Bunga-bunga lembut dengan tulisan tangan yang manis.', ['#c4587a', '#e9b7c6', '#fff7f9', '#4a2c38'], ['script', 'sans']),
   d('buket', 'Buket Pengantin', 'klasik', 'Putih bersih dihiasi mawar, peony, dan bunga warna-warni dalam satu buket.', ['#4f7a63', '#ef8fa8', '#ffffff', '#33423a'], ['script', 'serif']),
   d('garden', 'Taman Botani', 'klasik', 'Daun teh dan bunga liar di atas kertas gading, dengan bingkai berukir bersudut filigran.', ['#4a6b2f', '#b99a3a', '#f7f5ea', '#2a3722'], ['display', 'serif']),
+  // Tiga desain berwarna dominan: ranting bunga sejajar bingkai (ornamen meadow-art.ts di web).
+  d('lavender', 'Ladang Lavender', 'klasik', 'Dahlia, anemon, dan hortensia ungu dengan ranting lavender yang berjalan rapi di tepi bingkai.', ['#6b3fa0', '#c4aef0', '#faf7ff', '#2d2147'], ['script', 'serif']),
+  d('wisteria', 'Wisteria Biru', 'klasik', 'Tandan wisteria biru menjuntai dari dahan di tepi atas, ditemani anemon putih dan forget-me-not.', ['#3f5fb0', '#9fb4f0', '#f6f8ff', '#1a2547'], ['serif', 'serif']),
+  d('marigold', 'Marigold Senja', 'klasik', 'Marigold, dahlia, dan poppy oranye hangat dengan buah beri merah dan daun zaitun.', ['#b8500f', '#f6b83a', '#fffaf0', '#4a2410'], ['display', 'serif']),
   d('elegant', 'Elegan Emas', 'klasik', 'Mewah dan bersahaja dengan aksen emas.', ['#b08d3c', '#1f2a44', '#f7f5f0', '#1f2a44'], ['serif', 'serif']),
 
   // id 'kristiani' dipertahankan (dipakai theme.preset/motif pada template yang sudah tersimpan); nama tampilan sudah umum.
@@ -153,7 +157,7 @@ const DESIGN_GATES: Record<string, GateKind> = {
   'kerajaan-es': 'frost', ceria: 'balloons', 'sakura-anime': 'sakura', dongeng: 'book',
   pixel: 'pressstart', 'player-one': 'loading', rpg: 'door', neon: 'neon',
   hollywood: 'curtain', galaksi: 'portal', sihir: 'portal', paris: 'envelope',
-  buket: 'bouquet', garden: 'taman', semi: 'bloom', panas: 'waves', gugur: 'leaves', salju: 'frost',
+  buket: 'bouquet', garden: 'taman', lavender: 'sakura', wisteria: 'envelope', marigold: 'leaves', semi: 'bloom', panas: 'waves', gugur: 'leaves', salju: 'frost',
 };
 
 export const DESIGNS: Design[] = BASE_DESIGNS.map((x) => ({ ...x, gate: DESIGN_GATES[x.id]! }));
@@ -243,9 +247,37 @@ const JAWA_PALETTES: Palette[] = [
   { id: 'anggur', name: 'Ungu Anggur', primary: '#4d1f4a', secondary: '#d4af37', background: '#f4e8d6', text: '#2e112c' },
 ];
 
+// Tiga desain berwarna dominan. Warna utama = warna bunga utama (dilunakkan jadi nada pastel di ornamen) sekaligus judul & tombol,
+// jadi harus cukup gelap (≥ 4,5:1 di atas latar); sekunder = bunga pendamping & aksen tanggal.
+const LAVENDER_PALETTES: Palette[] = [
+  { id: 'ungu-lilac', name: 'Ungu Lilac', primary: '#6b3fa0', secondary: '#c4aef0', background: '#faf7ff', text: '#2d2147' },
+  { id: 'amethyst', name: 'Amethyst', primary: '#5b2f8f', secondary: '#b48be0', background: '#f8f4fd', text: '#281a3d' },
+  { id: 'anggrek', name: 'Ungu Anggrek', primary: '#8a3f93', secondary: '#e3a7e8', background: '#fcf6fd', text: '#34163a' },
+  { id: 'lavender-sage', name: 'Lavender & Sage', primary: '#6f5a9e', secondary: '#a9c2a0', background: '#f8f8fb', text: '#2b2745' },
+  { id: 'plum-rose', name: 'Plum & Mawar', primary: '#7f3a8a', secondary: '#e8a0c0', background: '#fdf6f9', text: '#3a1a2c' },
+  { id: 'indigo-ungu', name: 'Indigo Ungu', primary: '#5a3f9a', secondary: '#9a8fe0', background: '#f6f5fd', text: '#221d4a' },
+];
+const WISTERIA_PALETTES: Palette[] = [
+  { id: 'wisteria-biru', name: 'Wisteria Biru', primary: '#3f5fb0', secondary: '#9fb4f0', background: '#f6f8ff', text: '#1a2547' },
+  { id: 'periwinkle', name: 'Periwinkle', primary: '#4a55a8', secondary: '#a9b0ee', background: '#f6f6fd', text: '#1f2347' },
+  { id: 'biru-safir', name: 'Biru Safir', primary: '#2a4f9a', secondary: '#8fb0e8', background: '#f4f8fd', text: '#10234a' },
+  { id: 'biru-langit', name: 'Biru Langit', primary: '#34689e', secondary: '#9cc8ec', background: '#f5faff', text: '#162c44' },
+  { id: 'biru-lilac', name: 'Biru Lilac', primary: '#4f4fb0', secondary: '#c0b4f0', background: '#f8f6ff', text: '#25214d' },
+];
+const MARIGOLD_PALETTES: Palette[] = [
+  { id: 'jingga', name: 'Jingga Hangat', primary: '#b8500f', secondary: '#f6b83a', background: '#fffaf0', text: '#4a2410' },
+  { id: 'terakota-senja', name: 'Terakota Senja', primary: '#a8461f', secondary: '#f0a55a', background: '#fff6ec', text: '#47200f' },
+  { id: 'kunyit', name: 'Kunyit', primary: '#9a5a0c', secondary: '#f4c542', background: '#fffbea', text: '#45290a' },
+  { id: 'koral-oranye', name: 'Koral Oranye', primary: '#b5472f', secondary: '#f59a7a', background: '#fff5f0', text: '#4a1d12' },
+  { id: 'persik-jingga', name: 'Persik', primary: '#a85624', secondary: '#f7c59a', background: '#fff8f2', text: '#4a2a14' },
+];
+
 const CURATED_PALETTES: Record<string, Palette[]> = {
   buket: BUKET_PALETTES,
   garden: GARDEN_PALETTES,
+  lavender: LAVENDER_PALETTES,
+  wisteria: WISTERIA_PALETTES,
+  marigold: MARIGOLD_PALETTES,
   jawa: JAWA_PALETTES,
   kristiani: [
     { id: "sage", name: "Hijau Sage", primary: "#6f8f82", secondary: "#d9c9a0", background: "#f8faf6", text: "#25352e" },

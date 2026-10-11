@@ -1,0 +1,515 @@
+// Ornamen tiga undangan berwarna dominan: Lavender (ungu), Hortensia (biru), dan Marigold (oranye).
+// Bunga digambar prosedural menjadi potongan teks SVG (fungsi murni, deterministik; pola sama dengan season-art.ts): dahlia,
+// anemon, hortensia, marigold, poppy, forget-me-not, lavender, beri, kuncup, dan gypsophila. Ranting SELALU berjalan sejajar
+// bingkai (horizontal atau vertikal) dengan tunas pendek di kedua sisi, bukan menjulur diagonal; klaster bunga terbesar ada di
+// sudut dan mengecil ke ujung. Warna bunga utama mengikuti palet tema lewat var(--p)/var(--s), jadi tiap palet mengubah suasananya.
+//
+// Gambar dibuat sendiri dari bentuk botani umum, bukan salinan ilustrasi pihak lain.
+import { gypsophila, leafD, put, rng } from './flora-art';
+
+export type Meadow = 'lavender' | 'wisteria' | 'marigold';
+
+const f = (n: number) => (Math.round(n * 10) / 10).toString();
+type P = [number, number];
+const rot = ([x, y]: P, deg: number): P => {
+  const a = (deg * Math.PI) / 180;
+  return [x * Math.cos(a) - y * Math.sin(a), x * Math.sin(a) + y * Math.cos(a)];
+};
+
+// ----- warna -----
+interface T {
+  light: string;
+  base: string;
+  dark: string;
+  deep: string;
+}
+// Nada warna dipasang sekali di elemen <svg> sebagai variabel CSS (meadowVars) supaya potongan SVG tidak mengulang ekspresi
+// color-mix panjang di setiap kelopak (ukuran HTML ±3x lebih kecil).
+const tv = (k: string): T => ({ light: `var(--m${k}l)`, base: `var(--m${k}b)`, dark: `var(--m${k}d)`, deep: `var(--m${k}k)` });
+const tnVars = (k: string, c: string, shadow: string): Record<string, string> => ({
+  [`--m${k}l`]: `color-mix(in srgb, ${c} 55%, #fff)`,
+  [`--m${k}b`]: c,
+  [`--m${k}d`]: `color-mix(in srgb, ${c} 80%, ${shadow})`,
+  [`--m${k}k`]: `color-mix(in srgb, ${c} 56%, ${shadow})`,
+});
+const mix = (v: string, d: string, pct: number, other = '#fff') => `color-mix(in srgb, var(${v}, ${d}) ${pct}%, ${other})`;
+
+type Kind = 'dahlia' | 'anemone' | 'hydra' | 'marigold' | 'poppy' | 'forget' | 'lav' | 'berry' | 'bud' | 'gyp' | 'blossom';
+interface Cfg {
+  vars: Record<string, string>;
+  hero: T;
+  soft: T;
+  pale: T;
+  red: T;
+  centre: string;
+  leaf: string;
+  leafDark: string;
+  leafLight: string;
+  stem: string;
+  berry: string;
+  focal: Kind[];
+  fill: Kind[];
+  seed: number;
+  // Susunan ornamen (tiap desain berbeda): edge = ranting sepanjang tepi bingkai, hang = tandan bunga menjuntai dari dahan di tepi atas,
+  // garland = untaian girlan bunga yang menjuntai.
+  comp: 'edge' | 'hang' | 'garland';
+}
+const CFG: Record<Meadow, Cfg> = {
+  lavender: {
+    vars: { ...tnVars('h', mix('--p', '#6d4aa6', 60), '#2a1445'), ...tnVars('s', mix('--s', '#c4aef0', 85), '#2a1445'), ...tnVars('p', '#f4eefc', '#4a3a70'), ...tnVars('r', '#9a5bbf', '#2a1445') },
+    hero: tv('h'),
+    soft: tv('s'),
+    pale: tv('p'),
+    red: tv('r'),
+    centre: '#2b2048',
+    leaf: '#86a38c',
+    leafDark: '#5f7f68',
+    leafLight: '#b4cbb8',
+    stem: '#6f8f76',
+    berry: '#6d3f8c',
+    focal: ['dahlia', 'anemone', 'hydra', 'dahlia'],
+    fill: ['lav', 'forget', 'lav', 'gyp', 'bud', 'berry'],
+    seed: 17,
+    comp: 'edge',
+  },
+  wisteria: {
+    vars: { ...tnVars('h', mix('--p', '#3f5fb0', 60), '#10214a'), ...tnVars('s', mix('--s', '#9fb4f0', 88), '#10214a'), ...tnVars('p', '#f3f6ff', '#4a5a90'), ...tnVars('r', '#6f8be0', '#10214a') },
+    hero: tv('h'),
+    soft: tv('s'),
+    pale: tv('p'),
+    red: tv('r'),
+    centre: '#1d2a4a',
+    leaf: '#7da283',
+    leafDark: '#5b8566',
+    leafLight: '#a8c7a8',
+    stem: '#7a6a58',
+    berry: '#2d3f8a',
+    focal: ['anemone', 'forget', 'forget', 'anemone'],
+    fill: ['forget', 'gyp', 'bud', 'forget'],
+    seed: 29,
+    comp: 'hang',
+  },
+  marigold: {
+    vars: { ...tnVars('h', mix('--p', '#e0701c', 88), '#4a1a05'), ...tnVars('s', mix('--s', '#f6b83a', 92), '#4a1a05'), ...tnVars('p', '#fff3dc', '#8a5a20'), ...tnVars('r', '#d4492a', '#4a1a05') },
+    hero: tv('h'),
+    soft: tv('s'),
+    pale: tv('p'),
+    red: tv('r'),
+    centre: '#3a1d12',
+    leaf: '#7f9459',
+    leafDark: '#5d7340',
+    leafLight: '#a9b97f',
+    stem: '#6d7f4a',
+    berry: '#c4452d',
+    focal: ['marigold', 'dahlia', 'poppy', 'marigold'],
+    fill: ['berry', 'blossom', 'bud', 'gyp', 'forget', 'berry'],
+    seed: 41,
+    comp: 'garland',
+  },
+};
+
+// Variabel CSS nada warna untuk elemen <svg> yang memuat potongan gambar jenis `v`.
+export const meadowVars = (v: Meadow): Record<string, string> => CFG[v].vars;
+
+// ----- bentuk dasar -----
+
+// n kelopak sebagai SATU path (hemat simpul). Kelopak menunjuk ke atas dari (cx,cy), dirotasi ke sekelilingnya.
+// pointed = kelopak runcing (dahlia, hortensia); selain itu membulat dengan lekukan kecil di ujung.
+function layer(n: number, L: number, W: number, off: number, pointed = false, cx = 0, cy = 0) {
+  // Kelopak kecil cukup berkoordinat bulat (jauh lebih pendek tanpa beda terlihat).
+  const q = L < 13 ? 1 : 10;
+  const f = (v: number) => (Math.round(v * q) / q).toString();
+  let d = '';
+  for (let k = 0; k < n; k++) {
+    const a = off + (k * 360) / n;
+    const p = (x: number, y: number) => {
+      const r = rot([x, y], a);
+      return `${f(r[0] + cx)} ${f(r[1] + cy)}`;
+    };
+    d += pointed
+      ? `M${f(cx)} ${f(cy)}C${p(-W, -L * 0.3)} ${p(-W * 0.7, -L * 0.8)} ${p(0, -L)}C${p(W * 0.7, -L * 0.8)} ${p(W, -L * 0.3)} ${f(cx)} ${f(cy)}Z`
+      : `M${f(cx)} ${f(cy)}C${p(-W, -L * 0.25)} ${p(-W * 1.05, -L * 0.85)} ${p(-W * 0.25, -L * 0.98)}Q${p(0, -L * 1.05)} ${p(W * 0.25, -L * 0.98)}C${p(W * 1.05, -L * 0.85)} ${p(W, -L * 0.25)} ${f(cx)} ${f(cy)}Z`;
+  }
+  return d;
+}
+// Garis memancar dari jari-jari r0 ke r1 (benang sari).
+function rays(n: number, r0: number, r1: number, off = 0) {
+  let d = '';
+  for (let k = 0; k < n; k++) {
+    const a = ((off + (k * 360) / n) * Math.PI) / 180;
+    d += `M${f(Math.sin(a) * r0)} ${f(-Math.cos(a) * r0)}L${f(Math.sin(a) * r1)} ${f(-Math.cos(a) * r1)}`;
+  }
+  return d;
+}
+const path = (d: string, fill: string, stroke: string, op = 0.4, w = 0.5) => `<path d="${d}" fill="${fill}" stroke="${stroke}" stroke-opacity="${op}" stroke-width="${w}" stroke-linejoin="round"/>`;
+
+// ----- bunga (pusat di 0,0; jari-jari ~ r) -----
+
+// Dahlia: lima lapis kelopak runcing, dari luar (terang, panjang) ke dalam (gelap, pendek).
+function dahlia(r: number, t: T) {
+  const rows: [number, number, number, number, string][] = [[15, 1, 0.2, 0, t.light], [14, 0.86, 0.19, 12, t.light], [12, 0.7, 0.18, 5, t.base], [10, 0.54, 0.17, 14, t.base], [8, 0.38, 0.16, 8, t.dark]];
+  let s = `<circle r="${f(r * 1.02)}" fill="${t.deep}" opacity=".14"/>`;
+  const small = r < 11;
+  for (const [n, h, w, off, fill] of small ? rows.slice(0, 4) : rows) s += path(layer(small ? Math.ceil(n * 0.7) : n, r * h, r * w * (small ? 1.3 : 1), off, true), fill, t.deep, 0.35);
+  return s + `<circle r="${f(r * 0.07)}" fill="${t.deep}"/>`;
+}
+function anemone(r: number, petal: T, centre: string) {
+  return (
+    path(layer(7, r, r * 0.44, 6), petal.light, petal.dark, 0.7, 0.8) +
+    `<circle r="${f(r * 0.55)}" fill="${petal.base}" fill-opacity=".35"/>` +
+    `<path d="${rays(26, r * 0.2, r * 0.36)}" stroke="${centre}" stroke-width=".7" stroke-linecap="round"/>` +
+    `<circle r="${f(r * 0.22)}" fill="${centre}"/><circle r="${f(r * 0.1)}" fill="#000" fill-opacity=".45"/>`
+  );
+}
+// Hortensia: gugusan floret empat kelopak, digabung per warna.
+function hydra(r: number, t: T, seed: number) {
+  const rnd = rng(seed);
+  const tones = [t.light, t.base, t.dark];
+  const groups: string[] = ['', '', ''];
+  const pts: [number, number][] = [];
+  const count = r < 11 ? 8 : 12;
+  for (let i = 0; i < count; i++) {
+    const a = rnd() * Math.PI * 2;
+    const d = Math.sqrt(rnd()) * r * 0.74;
+    pts.push([Math.cos(a) * d, Math.sin(a) * d * 0.92]);
+  }
+  pts.sort((a, b) => a[1] - b[1]);
+  let dots = '';
+  pts.forEach(([x, y], i) => {
+    const k = (i + Math.floor(rnd() * 3)) % 3;
+    groups[k] += layer(4, r * 0.34, r * 0.24, rnd() * 90, true, x, y);
+    dots += `M${f(x)} ${f(y)}h.1`;
+  });
+  return groups.map((d, i) => path(d, tones[i]!, t.deep, 0.35, 0.4)).join('') + `<path d="${dots}" stroke="#f6efc2" stroke-width="${f(r * 0.07)}" stroke-linecap="round"/>`;
+}
+// Marigold: lima lapis kelopak membulat berumbai, oranye ke kuning.
+function marigold(r: number, t: T, t2: T) {
+  const rows: [number, number, number, number, string][] = [[17, 1, 0.3, 0, t.base], [15, 0.82, 0.3, 9, t2.base], [12, 0.64, 0.28, 4, t.base], [9, 0.46, 0.26, 16, t2.light], [7, 0.3, 0.22, 8, t.dark]];
+  let s = `<circle r="${f(r * 1.02)}" fill="${t.deep}" opacity=".14"/>`;
+  const small = r < 11;
+  for (const [n, h, w, off, fill] of small ? rows.slice(0, 4) : rows) s += path(layer(small ? Math.ceil(n * 0.7) : n, r * h, r * w, off), fill, t.deep, 0.4);
+  return s + `<circle r="${f(r * 0.08)}" fill="${t.deep}"/>`;
+}
+function poppy(r: number, t: T) {
+  return (
+    `<circle r="${f(r * 1.02)}" fill="${t.deep}" opacity=".14"/>` +
+    path(layer(4, r, r * 0.95, 20), t.light, t.deep, 0.4) +
+    path(layer(4, r * 0.74, r * 0.8, 65), t.base, t.deep, 0.4) +
+    `<path d="${rays(14, r * 0.2, r * 0.38)}" stroke="#2b1f2b" stroke-width=".8" stroke-linecap="round"/><circle r="${f(r * 0.2)}" fill="#2b1f2b"/>`
+  );
+}
+function forget(r: number, t: T) {
+  return path(layer(5, r * 0.6, r * 0.42, 0), t.light, t.deep, 0.5) + `<circle r="${f(r * 0.2)}" fill="#f4d03f"/>`;
+}
+// Lavender: batang + floret berpasangan; menunjuk ke +x (panjang len).
+function lavender(len: number, t: T, stem: string) {
+  const n = 9;
+  let a = '';
+  let b = '';
+  for (let i = 0; i < n; i++) {
+    const x = len * (0.28 + (0.72 * i) / n);
+    const s = len * 0.06 * (1 - i / (n * 1.6));
+    const ell = (cy: number) => `M${f(x - s * 0.5)} ${f(cy)}a${f(s * 0.5)} ${f(s)} 0 1 0 ${f(s)} 0a${f(s * 0.5)} ${f(s)} 0 1 0 ${f(-s)} 0`;
+    if (i % 2) b += ell(-s * 0.9) + ell(s * 0.9);
+    else a += ell(-s * 0.9) + ell(s * 0.9);
+  }
+  return `<path d="M0 0Q${f(len * 0.5)} ${f(-len * 0.04)} ${f(len)} 0" fill="none" stroke="${stem}" stroke-width="1" stroke-linecap="round"/>` + path(a, t.base, t.deep, 0.4) + path(b, t.light, t.deep, 0.4) + `<ellipse cx="${f(len * 1.02)}" rx="${f(len * 0.05)}" ry="${f(len * 0.03)}" fill="${t.light}"/>`;
+}
+function berries(r: number, c: string, stem: string) {
+  let s = `<path d="M0 0Q${f(r * 2)} ${f(-r * 1.2)} ${f(r * 4.4)} ${f(-r * 0.4)}" fill="none" stroke="${stem}" stroke-width="1" stroke-linecap="round"/>`;
+  for (let i = 0; i < 3; i++) s += `<circle cx="${f(r * (1.2 + i * 1.4))}" cy="${f(-r * (0.2 + (i % 2) * 1.05))}" r="${f(r * 0.62)}" fill="${c}" stroke="#000" stroke-opacity=".25" stroke-width=".4"/><circle cx="${f(r * (1.2 + i * 1.4) - r * 0.2)}" cy="${f(-r * (0.2 + (i % 2) * 1.05) - r * 0.2)}" r="${f(r * 0.17)}" fill="#fff" fill-opacity=".55"/>`;
+  return s;
+}
+function bud(r: number, t: T, green: string) {
+  return `<path d="M0 0C${f(-r * 0.7)} ${f(-r * 0.3)} ${f(-r * 0.6)} ${f(-r * 1.2)} 0 ${f(-r * 1.5)}C${f(r * 0.6)} ${f(-r * 1.2)} ${f(r * 0.7)} ${f(-r * 0.3)} 0 0Z" fill="${t.light}" stroke="${t.deep}" stroke-opacity=".5" stroke-width=".5"/><path d="M-1.6 0C-3.4 2.4 0 3.6 1.6 0Z" fill="${green}"/>`;
+}
+const leaf = (L: number, w: number, fill: string, vein: string) => `<path d="${leafD(L, L * w)}" fill="${fill}" stroke="${vein}" stroke-opacity=".5" stroke-width=".4"/><path d="M0 0L${f(L * 0.86)} 0" stroke="${vein}" stroke-opacity=".5" stroke-width=".4"/>`;
+
+// Satu bunga menurut jenisnya (r = jari-jari kira-kira).
+function flower(kind: Kind, r: number, V: Cfg, i: number, seed: number) {
+  const two = i % 2 ? V.soft : V.hero;
+  switch (kind) {
+    case 'dahlia': return dahlia(r, two);
+    case 'anemone': return anemone(r, V.pale, V.centre);
+    case 'hydra': return hydra(r, two, seed);
+    case 'marigold': return marigold(r, V.hero, V.soft);
+    case 'poppy': return poppy(r, V.red);
+    case 'forget': return forget(r, i % 2 ? V.hero : V.soft);
+    case 'lav': return lavender(r * 2.4, i % 2 ? V.hero : V.soft, V.stem);
+    case 'berry': return berries(r * 0.5, V.berry, V.stem);
+    case 'bud': return bud(r * 0.7, V.soft, V.leaf);
+    case 'gyp': return gypsophila(r * 2.2, seed, '#fff', V.leafLight);
+    case 'blossom': return forget(r * 1.1, V.soft);
+  }
+}
+const isDirectional = (k: Kind) => k === 'lav' || k === 'berry' || k === 'gyp';
+const isUp = (k: Kind) => k === 'bud';
+
+// ----- ranting sejajar bingkai -----
+
+interface Out {
+  st: string[];
+  lf: string[];
+  fo: string[];
+  fi: string[];
+}
+const out = (): Out => ({ st: [], lf: [], fo: [], fi: [] });
+const render = (o: Out) => o.st.join('') + o.lf.join('') + o.fo.join('') + o.fi.join('');
+
+// Batang utama dari (ox,oy) ke arah (dx,dy) sepanjang len, bergelombang kecil; tunas bergantian di dua sisi, makin pendek ke
+// ujung. inSign = sisi dalam kartu (+1 = arah (-dy,dx)). outward = pengali panjang tunas ke luar bingkai.
+function edgeStem(o: Out, V: Cfg, rnd: () => number, ox: number, oy: number, dx: number, dy: number, len: number, opts: { from?: number; inSign?: 1 | -1; outward?: number; size?: number } = {}) {
+  const { from = 24, inSign = 1, outward = 0.55, size = 1 } = opts;
+  const px = -dy * inSign;
+  const py = dx * inSign;
+  const ph = rnd() * 6;
+  const at = (t: number): P => {
+    const w = 1.8 * Math.sin(t * 0.09 + ph);
+    return [ox + dx * t + px * w, oy + dy * t + py * w];
+  };
+  let d = `M${f(ox)} ${f(oy)}`;
+  for (let t = 4; t <= len; t += 4) {
+    const p = at(t);
+    d += `L${f(p[0])} ${f(p[1])}`;
+  }
+  o.st.push(`<path d="${d}" fill="none" stroke="${V.stem}" stroke-width="1.5" stroke-linecap="round"/>`);
+  const ang0 = (Math.atan2(dy, dx) * 180) / Math.PI;
+  const tones = [V.leaf, V.leafDark, V.leafLight];
+  // daun kecil menempel di batang
+  for (let t = from - 6; t < len; t += 14) {
+    const b = at(t);
+    const side = Math.floor(t / 14) % 2 ? 1 : -1;
+    o.lf.push(put(b[0], b[1], ang0 + side * (52 + rnd() * 16), 1, leaf((8 + rnd() * 5) * size * (1 - 0.3 * (t / len)), 0.34, tones[Math.floor(rnd() * 3)]!, V.leafDark)));
+  }
+  let side: 1 | -1 = 1;
+  let k = 0;
+  for (let t = from; t < len - 8; t += 12 + rnd() * 6) {
+    const fr = t / len;
+    const b = at(t);
+    const ln = (22 - 12 * fr) * (0.85 + rnd() * 0.3) * size * (side === 1 ? 1 : outward);
+    const vx = px * side * 0.85 + dx * 0.55;
+    const vy = py * side * 0.85 + dy * 0.55;
+    const ex = b[0] + vx * ln;
+    const ey = b[1] + vy * ln;
+    const ang = (Math.atan2(vy, vx) * 180) / Math.PI;
+    o.st.push(`<path d="M${f(b[0])} ${f(b[1])}Q${f(b[0] + vx * ln * 0.5 + dx * 3)} ${f(b[1] + vy * ln * 0.5 + dy * 3)} ${f(ex)} ${f(ey)}" fill="none" stroke="${V.stem}" stroke-width=".9" stroke-linecap="round"/>`);
+    o.lf.push(put(b[0] + vx * ln * 0.45, b[1] + vy * ln * 0.45, ang + side * 38, 1, leaf(11 * size * (1 - 0.3 * fr), 0.34, tones[k % 3]!, V.leafDark)));
+    const useFocal = fr < 0.55 && side === 1 && rnd() < 0.75;
+    const kind = useFocal ? V.focal[k % V.focal.length]! : V.fill[k % V.fill.length]!;
+    const r = useFocal ? (9 - 3.5 * fr) * size : (7.5 - 2 * fr) * size;
+    const tipRot = isDirectional(kind) ? ang : isUp(kind) ? ang + 90 : rnd() * 360;
+    (useFocal ? o.fo : o.fi).push(put(ex, ey, tipRot, 1, flower(kind, r, V, k, 100 + Math.floor(rnd() * 900))));
+    side = side === 1 ? -1 : 1;
+    k++;
+  }
+  const e = at(len);
+  o.fi.push(put(e[0], e[1], ang0, 1, flower(V.fill[(k + 1) % V.fill.length]!, 6 * size, V, k + 1, 7)));
+}
+
+const SPECKS = (V: Cfg) => {
+  const rnd = rng(V.seed + 3);
+  let d = '';
+  for (let i = 0; i < 9; i++) d += `M${f(20 + rnd() * 120)} ${f(20 + rnd() * 120)}h.1`;
+  return `<path d="${d}" stroke="#d4af37" stroke-opacity=".75" stroke-width="2" stroke-linecap="round"/>`;
+};
+
+// ----- sudut (kotak 0 0 170 170; sudut kiri-atas, dicerminkan untuk sudut lain) -----
+function edgeCorner(v: Meadow) {
+  const V = CFG[v];
+  const rnd = rng(V.seed);
+  const o = out();
+  const cx = 32;
+  const cy = 32;
+  // kipas daun di belakang klaster
+  for (let i = 0; i < 9; i++) {
+    const a = -8 + i * 13;
+    o.lf.push(put(cx, cy, a, 1, leaf(44 + rnd() * 18, 0.3, [V.leaf, V.leafDark, V.leafLight][i % 3]!, V.leafDark)));
+  }
+  edgeStem(o, V, rnd, 14, 14, 1, 0, 150, { from: 56, inSign: 1 });
+  edgeStem(o, V, rnd, 14, 14, 0, 1, 150, { from: 56, inSign: -1 });
+  const cluster: [number, number, number][] = [[cx, cy, 24], [cx + 36, cy - 6, 15], [cx - 6, cy + 36, 15], [cx + 24, cy + 22, 12]];
+  cluster.forEach(([x, y, r], i) => o.fo.push(put(x, y, rnd() * 360, 1, flower(V.focal[i % V.focal.length]!, r, V, i, 11 + i))));
+  [[cx + 54, cy + 2, 'forget'], [cx + 2, cy + 54, 'forget'], [cx + 44, cy + 36, 'bud']].forEach(([x, y, kind], i) => o.fi.push(put(x as number, y as number, 40 * i, 1, flower(kind as Kind, 7, V, i + 1, 3))));
+  return render(o) + SPECKS(V);
+}
+
+
+
+// ----- mahkota bingkai foto lengkung (kotak lebar w x tinggi h) -----
+function archCrown(v: Meadow, w: number, h: number) {
+  void h;
+  const V = CFG[v];
+  const rnd = rng(V.seed + 4);
+  const cx = w / 2;
+  const r = w / 2;
+  const n = 13;
+  const at = (i: number, k: number, extra = 0): [number, number, number] => {
+    const a = Math.PI * 0.84 + (i / (n - 1)) * Math.PI * 1.32 + (k * (Math.PI * 1.32)) / (n - 1);
+    return [cx + Math.cos(a) * (r + extra), r + Math.sin(a) * (r + extra), (a * 180) / Math.PI + 90];
+  };
+  const big = Array.from({ length: n }, (_, i) => at(i, 0));
+  const fill = Array.from({ length: n - 1 }, (_, i) => at(i, 0.5, 6));
+  const first = big[0]!;
+  const last = big[n - 1]!;
+  const o = out();
+  o.st.push(`<path d="M${f(first[0])} ${f(first[1])}A${f(r)} ${f(r)} 0 1 1 ${f(last[0])} ${f(last[1])}" fill="none" stroke="${V.stem}" stroke-width="2.2" stroke-linecap="round" opacity=".85"/>`);
+  const tones = [V.leaf, V.leafDark, V.leafLight];
+  big.forEach(([x, y, a], i) => o.lf.push(put(x, y, a + (i % 2 ? -50 : 50), 1, leaf(20 + rnd() * 5, 0.32, tones[i % 3]!, V.leafDark))));
+  fill.forEach(([x, y, a], i) => o.lf.push(put(x, y, a + (i % 2 ? 40 : -40), 1, leaf(12, 0.32, tones[(i + 1) % 3]!, V.leafDark))));
+  big.forEach(([x, y], i) => {
+    const kind = V.focal[i % V.focal.length]!;
+    o.fo.push(put(x, y, i * 31, 1, flower(kind, [15, 19, 13, 20, 16, 21, 14][i % 7]!, V, i, 20 + i)));
+  });
+  fill.forEach(([x, y, a], i) => {
+    const kind = V.fill[i % V.fill.length]!;
+    o.fi.push(put(x, y, isDirectional(kind) ? a : isUp(kind) ? a + 180 : i * 47, 1, flower(kind, 7, V, i, 40 + i)));
+  });
+  return render(o);
+}
+
+
+// ----- komposisi "garland" (Marigold): untaian kepala bunga di benang melengkung, menjuntai dari sudut -----
+// Untaian dari a ke b melalui titik kendali c: kepala bunga rapat di sepanjang benang, daun di sela-selanya.
+function strand(o: Out, V: Cfg, rnd: () => number, a: P, c: P, b: P, n: number, r0: number, r1: number) {
+  const at = (t: number): [P, number] => {
+    const x = (1 - t) * (1 - t) * a[0] + 2 * t * (1 - t) * c[0] + t * t * b[0];
+    const y = (1 - t) * (1 - t) * a[1] + 2 * t * (1 - t) * c[1] + t * t * b[1];
+    const dx = 2 * (1 - t) * (c[0] - a[0]) + 2 * t * (b[0] - c[0]);
+    const dy = 2 * (1 - t) * (c[1] - a[1]) + 2 * t * (b[1] - c[1]);
+    return [[x, y], (Math.atan2(dy, dx) * 180) / Math.PI];
+  };
+  o.st.push(`<path d="M${f(a[0])} ${f(a[1])}Q${f(c[0])} ${f(c[1])} ${f(b[0])} ${f(b[1])}" fill="none" stroke="${V.stem}" stroke-width="1.3" stroke-linecap="round"/>`);
+  const tones = tonesOf(V);
+  for (let i = 0; i < n; i++) {
+    const [p, ang] = at((i + 0.5) / n);
+    const [q] = at((i + 1) / n);
+    const r = r0 + (r1 - r0) * (i / n);
+    const kind: Kind = i % 3 === 1 ? 'dahlia' : 'marigold';
+    o.fo.push(put(p[0], p[1], rnd() * 360, 1, flower(kind, r * (kind === 'dahlia' ? 0.8 : 1), V, i, 70 + i)));
+    if (i < n - 1) o.lf.push(put(q[0], q[1], ang + (i % 2 ? 78 : -78), 1, leaf(r * 1.5, 0.34, tones[i % 3]!, V.leafDark)));
+  }
+}
+function garlandCorner(v: Meadow) {
+  const V = CFG[v];
+  const rnd = rng(V.seed);
+  const o = out();
+  strand(o, V, rnd, [16, 12], [88, 66], [164, 12], 11, 9, 7.5);
+  strand(o, V, rnd, [14, 14], [-4, 76], [26, 128], 8, 9, 6.5);
+  strand(o, V, rnd, [34, 22], [64, 34], [96, 62], 4, 8, 6);
+  for (let i = 0; i < 7; i++) o.lf.push(put(26, 26, 8 + i * 13, 1, leaf(36 + rnd() * 14, 0.3, tonesOf(V)[i % 3]!, V.leafDark)));
+  const heads: [number, number, number, Kind][] = [[28, 28, 25, 'marigold'], [60, 30, 14, 'poppy'], [28, 62, 14, 'poppy']];
+  heads.forEach(([x, y, r, k], i) => o.fo.push(put(x, y, i * 40, 1, flower(k, r, V, i, 13 + i))));
+  const fills: [number, number, Kind][] = [[46, 46, 'berry'], [74, 50, 'blossom'], [44, 82, 'bud']];
+  fills.forEach(([x, y, k], i) => o.fi.push(put(x, y, 50 + 40 * i, 1, flower(k, 7, V, i, 9))));
+  return render(o) + SPECKS(V);
+}
+
+function ringCrown(v: Meadow, w: number) {
+  const V = CFG[v];
+  const rnd = rng(V.seed + 4);
+  const o = out();
+  const c = w / 2;
+  const n = 15;
+  const tones = tonesOf(V);
+  o.st.push(`<circle cx="${f(c)}" cy="${f(c)}" r="${f(c)}" fill="none" stroke="${V.stem}" stroke-width="1.4"/>`);
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+    const b = ((i + 0.5) / n) * Math.PI * 2 - Math.PI / 2;
+    const deg = (a * 180) / Math.PI + 90;
+    o.lf.push(put(c + Math.cos(b) * c, c + Math.sin(b) * c, deg + (i % 2 ? 80 : -80), 1, leaf(15 + rnd() * 4, 0.34, tones[i % 3]!, V.leafDark)));
+    o.fo.push(put(c + Math.cos(a) * c, c + Math.sin(a) * c, i * 41, 1, flower(i % 3 === 1 ? 'dahlia' : 'marigold', i % 3 === 1 ? 9 : 12, V, i, 80 + i)));
+  }
+  o.fo.push(put(c, 0, 0, 1, flower('poppy', 11, V, 1, 3)), put(c, c * 2, 0, 1, flower('poppy', 9, V, 1, 4)));
+  return render(o);
+}
+
+
+// ----- komposisi "hang" (Wisteria): dahan di tepi atas, tandan bunga menjuntai ke bawah -----
+const tonesOf = (V: Cfg) => [V.leaf, V.leafDark, V.leafLight];
+const ellipseD = (x: number, y: number, rx: number, ry: number) => `M${f(x - rx)} ${f(y)}a${f(rx)} ${f(ry)} 0 1 0 ${f(rx * 2)} 0a${f(rx)} ${f(ry)} 0 1 0 ${f(-rx * 2)} 0`;
+// Tandan: kuntum kecil berpasangan makin ke bawah makin sempit dan kecil, tiga nada digabung menjadi tiga path.
+function raceme(o: Out, V: Cfg, rnd: () => number, x: number, y: number, len: number, w: number) {
+  const rows = Math.max(4, Math.floor(len / 5.5));
+  let a = '';
+  let b = '';
+  let c = '';
+  for (let i = 0; i < rows; i++) {
+    const t = i / rows;
+    const yy = y + 4 + t * len;
+    const half = w * (1 - 0.88 * t);
+    const rx = 2.2 + 1.8 * (1 - t);
+    const ry = rx * 1.35;
+    for (const side of [-1, 1]) {
+      const xx = x + side * half * (0.35 + 0.65 * rnd());
+      const d = ellipseD(xx, yy + (rnd() - 0.5) * 3, rx, ry);
+      const k = (i + (side > 0 ? 1 : 0)) % 3;
+      if (k === 0) a += d;
+      else if (k === 1) b += d;
+      else c += d;
+    }
+    if (i % 2 === 0) a += ellipseD(x + (rnd() - 0.5) * half, yy + 2, rx * 0.9, ry * 0.9);
+  }
+  o.st.push(`<path d="M${f(x)} ${f(y)}L${f(x)} ${f(y + len)}" stroke="${V.stem}" stroke-width=".8" stroke-linecap="round"/>`);
+  o.fo.push(path(a, V.hero.base, V.hero.deep, 0.45, 0.4) + path(b, V.soft.base, V.soft.deep, 0.45, 0.4) + path(c, V.pale.base, V.soft.deep, 0.5, 0.4));
+}
+// Daun majemuk: tangkai dengan pasangan daun lanset.
+function pinnate(o: Out, V: Cfg, rnd: () => number, x: number, y: number, ang: number, len: number) {
+  const a = (ang * Math.PI) / 180;
+  o.st.push(`<path d="M${f(x)} ${f(y)}L${f(x + Math.cos(a) * len)} ${f(y + Math.sin(a) * len)}" stroke="${V.stem}" stroke-width="1" stroke-linecap="round"/>`);
+  const n = 4;
+  for (let i = 1; i <= n; i++) {
+    const t = i / (n + 0.5);
+    for (const side of [-1, 1]) o.lf.push(put(x + Math.cos(a) * len * t, y + Math.sin(a) * len * t, ang + side * 55, 1, leaf(11 * (1 - 0.3 * t) + rnd() * 2, 0.36, tonesOf(V)[(i + (side > 0 ? 1 : 0)) % 3]!, V.leafDark)));
+  }
+  o.lf.push(put(x + Math.cos(a) * len, y + Math.sin(a) * len, ang, 1, leaf(10, 0.36, V.leaf, V.leafDark)));
+}
+function hangCorner(v: Meadow) {
+  const V = CFG[v];
+  const rnd = rng(V.seed);
+  const o = out();
+  // dahan sejajar tepi atas + dahan pendek di tepi kiri
+  o.st.push(`<path d="M8 12Q80 4 168 14" fill="none" stroke="${V.stem}" stroke-width="2.4" stroke-linecap="round"/><path d="M8 12Q10 40 16 76" fill="none" stroke="${V.stem}" stroke-width="2" stroke-linecap="round"/>`);
+  const xs: [number, number, number][] = [[30, 70, 11], [48, 104, 12], [68, 58, 10], [88, 84, 11], [108, 46, 9], [130, 66, 10], [152, 38, 8]];
+  xs.forEach(([x, len, w], i) => raceme(o, V, rnd, x, 10 - Math.sin(x / 55) * 3 + i * 0.4, len, w));
+  raceme(o, V, rnd, 12, 22, 108, 9);
+  [[40, 8, 70], [96, 6, 62], [140, 12, 60]].forEach(([x, y, ang]) => pinnate(o, V, rnd, x!, y!, ang!, 26));
+  [[16, 40, 20], [14, 66, 8]].forEach(([x, y, ang]) => pinnate(o, V, rnd, x!, y!, ang!, 22));
+  const base: [number, number, number, Kind][] = [[20, 20, 13, 'anemone'], [38, 18, 8, 'forget'], [14, 36, 8, 'forget']];
+  base.forEach(([x, y, r, k], i) => o.fi.push(put(x, y, i * 50, 1, flower(k, r, V, i, 5 + i))));
+  return render(o);
+}
+// Mahkota bingkai foto persegi bersudut bulat: dahan melintang di atas, tandan menjuntai di kedua sisi dan sebagian di depan tepi atas.
+function hangCrown(v: Meadow, w: number) {
+  const V = CFG[v];
+  const rnd = rng(V.seed + 4);
+  const o = out();
+  o.st.push(`<path d="M-6 8Q${f(w / 2)} -6 ${f(w + 6)} 8" fill="none" stroke="${V.stem}" stroke-width="2.4" stroke-linecap="round"/>`);
+  const seq: [number, number, number][] = [[2, 118, 11], [16, 84, 10], [30, 44, 9], [58, 32, 8], [w / 2, 40, 9], [w - 58, 32, 8], [w - 30, 44, 9], [w - 16, 84, 10], [w - 2, 118, 11]];
+  seq.forEach(([x, len, wd]) => raceme(o, V, rnd, x, 8 - Math.sin(Math.PI * (x / w)) * 6, len, wd));
+  [[22, 4, 80], [w / 2 - 20, -2, 70], [w / 2 + 20, -2, 110], [w - 22, 4, 100]].forEach(([x, y, ang]) => pinnate(o, V, rnd, x!, y!, ang!, 24));
+  return render(o);
+}
+
+// ----- ekspor: susunan menurut desain; pemisah & ranting kecil sengaja kosong (tidak ada ranting horizontal di tengah halaman) -----
+export function meadowCorner(v: Meadow) {
+  const comp = CFG[v].comp;
+  return comp === 'hang' ? hangCorner(v) : comp === 'garland' ? garlandCorner(v) : edgeCorner(v);
+}
+export function meadowDivider(v: Meadow) {
+  void v;
+  return '';
+}
+export function meadowSprig(v: Meadow) {
+  void v;
+  return '';
+}
+export function meadowCrown(v: Meadow, w: number, h: number) {
+  const comp = CFG[v].comp;
+  return comp === 'hang' ? hangCrown(v, w) : comp === 'garland' ? ringCrown(v, w) : archCrown(v, w, h);
+}
+// Bentuk & ukuran bingkai foto per desain: lavender = lengkung, wisteria = persegi bulat, marigold = bulat.
+export const MEADOW_FRAME: Record<Meadow, { w: number; h: number; shape: string; photo: string }> = {
+  lavender: { w: 188, h: 236, shape: 'rounded-t-[999px] rounded-b-[22px]', photo: 'h-56 w-44' },
+  wisteria: { w: 188, h: 236, shape: 'rounded-[28px]', photo: 'h-56 w-44' },
+  marigold: { w: 196, h: 196, shape: 'rounded-full', photo: 'h-[11.5rem] w-[11.5rem]' },
+};
