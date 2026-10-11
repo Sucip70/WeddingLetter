@@ -7,6 +7,8 @@ import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { Alert, Badge, Button, Card, Field, Input, Select, Toggle, cn } from '@/components/ui';
 import { api, errorMessage, uploadWithProgress } from '@/lib/client-api';
 import { COVER_LAYOUTS, coverLayoutsFor, defaultCoverLayout } from '@/lib/cover-layouts';
+import { TierPanel } from './tier-panel';
+import type { TierRow } from './tier-panel';
 import { sampleView } from '@/lib/sample';
 import type { DemoPhotos } from '@/lib/sample';
 import { FX_LABEL } from '@/lib/catalog';
@@ -100,7 +102,8 @@ function toPreviewLayout(l: Authoring) {
   };
 }
 
-export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderMeta; initial: TemplateForm | null; photos?: DemoPhotos }) {
+// `siblings` = semua paket (baris template) dari tema yang sama, termasuk yang sedang dibuka; dipakai panel harga & ketersediaan.
+export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: { meta: BuilderMeta; initial: TemplateForm | null; photos?: DemoPhotos; siblings?: TierRow[] }) {
   const router = useRouter();
   const [form, setForm] = useState<TemplateForm>(() => initial ?? blank(meta));
   const [openSection, setOpenSection] = useState<string | null>(null);
@@ -257,6 +260,9 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
 
       <div className="mt-6 grid gap-8 xl:grid-cols-[minmax(0,1fr)_330px]">
         <div className="space-y-5">
+          {form.id && siblings.length > 0 && (
+            <TierPanel rows={siblings} currentId={form.id} current={{ price: form.price, status: form.status }} onCurrentSaved={(price, status) => setForm((f) => ({ ...f, price, status }))} />
+          )}
           <Card className="p-5">
             <h2 className="font-semibold text-ink">Informasi dasar</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -267,9 +273,9 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
                 </Select>
               </Field>
               <Field label="Paket (tier)"><Select value={form.tier} onChange={(e) => changeTier(e.target.value as TemplateForm['tier'])}><option value="BASIC">Basic</option><option value="STANDARD">Standard</option><option value="PREMIUM">Premium</option></Select></Field>
-              <Field label="Harga (Rp)"><Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} /></Field>
+              {!form.id && <Field label="Harga (Rp)" hint="Setelah dibuat, harga & ketersediaan diatur di panel Paket & ketersediaan."><Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} /></Field>}
               <Field label="Masa aktif termasuk (minggu)" hint="Lama tayang yang sudah termasuk di harga template."><Input type="number" min={1} max={52} value={form.includedWeeks} onChange={(e) => setForm({ ...form, includedWeeks: Number(e.target.value) })} /></Field>
-              <Field label="Status"><Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TemplateForm['status'] })}><option value="DRAFT">Draf (tidak tampil)</option><option value="PUBLISHED">Dipublikasikan</option><option value="ARCHIVED">Diarsipkan</option></Select></Field>
+              {!form.id && <Field label="Status"><Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TemplateForm['status'] })}><option value="DRAFT">Draf (tidak tampil)</option><option value="PUBLISHED">Dipublikasikan</option><option value="ARCHIVED">Diarsipkan</option></Select></Field>}
               <Field label="Gambar thumbnail (opsional)" className="sm:col-span-2" hint="Kosongkan untuk memakai miniatur otomatis dari tema.">
                 <div className="flex gap-2">
                   <Input value={form.thumbnailUrl ?? ''} onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })} placeholder="https://…" />
