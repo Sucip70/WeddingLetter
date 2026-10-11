@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
+import { Fragment } from 'react';
 import Link from 'next/link';
+import { BloomSpriteScope } from '@/components/invitation/bloom-parts';
+import { motifFor } from '@/components/invitation/motifs';
 import { TemplateThumb } from '@/components/template-thumb';
 import { Alert, Badge, EmptyState, PageHeader } from '@/components/ui';
 import { FX_LABEL, GROUP_LABEL, GROUP_ORDER, TIER_LABEL, getDemoPhotos, getTemplates, groupByDesign } from '@/lib/catalog';
@@ -23,6 +26,23 @@ function chip(active: boolean) {
   return `rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${active ? 'border-rose bg-rose text-white' : 'border-line bg-paper text-ink-soft hover:border-ink/40 hover:text-ink'}`;
 }
 
+// Kartu per halaman. Setiap kartu adalah Client Component (miniatur sampul) yang ikut dikirim & dihidrasi di browser,
+// jadi katalog yang tumbuh ke ratusan template tidak boleh dirender sekaligus. 24 = kelipatan 2 dan 3 kolom.
+const PAGE_SIZE = 24;
+
+// Nomor halaman yang ditampilkan: selalu halaman pertama, terakhir, dan tetangga halaman aktif; celahnya "…".
+function pageList(page: number, pages: number): (number | '…')[] {
+  const keep = new Set([1, pages, page - 1, page, page + 1].filter((n) => n >= 1 && n <= pages));
+  const out: (number | '…')[] = [];
+  let prev = 0;
+  for (const n of [...keep].sort((a, b) => a - b)) {
+    if (n - prev > 1) out.push('…');
+    out.push(n);
+    prev = n;
+  }
+  return out;
+}
+
 export default async function TemplatesPage({ searchParams }: PageProps<'/templates'>) {
   const sp = await searchParams;
   const tier = typeof sp.tier === 'string' && TIERS.includes(sp.tier.toUpperCase() as Tier) ? (sp.tier.toUpperCase() as Tier) : undefined;
@@ -43,10 +63,25 @@ export default async function TemplatesPage({ searchParams }: PageProps<'/templa
   const tiers = TIERS.filter((t) => all.some((x) => x.tier === t));
   // Semua template (desain x paket), diurutkan per kelompok tema -> desain -> harga.
   const items = entries.flatMap((e) => e.rows).filter((t) => (!group || t.category === group) && (!tier || t.tier === tier));
-  const sections = GROUP_ORDER.map((g) => ({ group: g as string, rows: items.filter((t) => t.category === g) }))
-    .concat([{ group: 'lainnya', rows: items.filter((t) => !GROUP_ORDER.includes(t.category as ThemeGroup)) }])
-    .filter((x) => x.rows.length > 0);
-  const href = (next: { tier?: string; category?: string; view?: string }) => {
+  // Paginasi: hanya potongan halaman ini yang dirender. Nomor di luar rentang (mis. dari tautan lama) dirapikan.
+  const pages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  const requested = Number(typeof sp.page === 'string' ? sp.page : 1);
+  const page = Number.isFinite(requested) ? Math.min(pages, Math.max(1, Math.floor(requested))) : 1;
+  const first = (page - 1) * PAGE_SIZE;
+  const pageItems = items.slice(first, first + PAGE_SIZE);
+  const groupOf = (t: Template) => (GROUP_ORDER.includes(t.category as ThemeGroup) ? t.category : 'lainnya');
+  const groupTotal = (g: string) => items.filter((t) => groupOf(t) === g).length;
+  const sections = [...GROUP_ORDER, 'lainnya']
+    .map((g) => ({ group: g as string, rows: pageItems.filter((t) => groupOf(t) === g) }))
+    .filter((x) => x.rows.length > 0)
+    // Kelompok yang terbelah di batas halaman ditandai "lanjutan" di halaman berikutnya.
+    .map((x) => ({ ...x, continued: items.findIndex((t) => groupOf(t) === x.group) < first }));
+  // Kartu desain bunga memuat ±400 KB SVG yang sama persis per kartu; bila ada di halaman ini, gambarnya didefinisikan sekali
+  // (sprite) dan kartu hanya merujuknya. Halaman tanpa kartu bunga tidak membawa sprite sama sekali.
+  const hasBloom = pageItems.some((t) => motifFor(t.layout.theme.motif ?? t.layout.theme.preset).skin === 'bloom');
+  const SpriteScope = hasBloom ? BloomSpriteScope : Fragment;
+  // Mengganti filter mengembalikan ke halaman 1; mengganti tampilan mempertahankan halaman; tautan pager menyebut halamannya.
+  const href = (next: { tier?: string; category?: string; view?: string; page?: number }) => {
     const q = new URLSearchParams();
     const nt = 'tier' in next ? next.tier : tier?.toLowerCase();
     const nc = 'category' in next ? next.category : group;
@@ -54,6 +89,8 @@ export default async function TemplatesPage({ searchParams }: PageProps<'/templa
     if (nc) q.set('category', nc);
     const nv = 'view' in next ? next.view : view;
     if (nv && nv !== 'kecil') q.set('view', nv);
+    const np = 'page' in next ? next.page : 'view' in next ? page : 1;
+    if (np && np > 1) q.set('page', String(np));
     return `/templates${q.size ? `?${q}` : ''}`;
   };
 
@@ -97,12 +134,15 @@ export default async function TemplatesPage({ searchParams }: PageProps<'/templa
         <EmptyState title="Belum ada template yang cocok" description="Coba ubah filter, atau lihat semua template." />
       ) : (
         <>
-          <p className="mb-6 text-sm text-ink-soft">Menampilkan {items.length} dari {all.length} template</p>
+          <p className="mb-6 text-sm text-ink-soft">
+            Menampilkan {first + 1}–{first + pageItems.length} dari {items.length} template{items.length !== all.length && ` (total ${all.length})`}
+          </p>
+          <SpriteScope>
           <div className="space-y-14">
-            {sections.map(({ group: g, rows }) => (
+            {sections.map(({ group: g, rows, continued }) => (
               <section key={g} aria-labelledby={`grup-${g}`}>
                 <h2 id={`grup-${g}`} className="mb-5 font-display text-2xl text-ink">
-                  {GROUP_LABEL[g as ThemeGroup] ?? g} <span className="text-base font-normal text-ink-soft">· {rows.length} template</span>
+                  {GROUP_LABEL[g as ThemeGroup] ?? g} <span className="text-base font-normal text-ink-soft">· {groupTotal(g)} template{continued && ' (lanjutan)'}</span>
                 </h2>
                 <div className={view === 'daftar' ? 'space-y-3' : view === 'kecil' ? 'grid grid-cols-2 gap-3 sm:gap-7 lg:grid-cols-3' : 'grid gap-7 sm:grid-cols-2 lg:grid-cols-3'}>
                   {rows.map((t) => {
@@ -196,6 +236,21 @@ export default async function TemplatesPage({ searchParams }: PageProps<'/templa
               </section>
             ))}
           </div>
+          </SpriteScope>
+
+          {pages > 1 && (
+            <nav className="mt-12 flex flex-wrap items-center justify-center gap-2" aria-label="Halaman daftar template">
+              {page > 1 && <Link href={href({ page: page - 1 })} className={chip(false)} rel="prev">← Sebelumnya</Link>}
+              {pageList(page, pages).map((n, i) =>
+                n === '…' ? (
+                  <span key={`gap-${i}`} className="px-1 text-ink-soft" aria-hidden>…</span>
+                ) : (
+                  <Link key={n} href={href({ page: n })} className={chip(n === page)} aria-current={n === page ? 'page' : undefined} aria-label={`Halaman ${n}`}>{n}</Link>
+                ),
+              )}
+              {page < pages && <Link href={href({ page: page + 1 })} className={chip(false)} rel="next">Berikutnya →</Link>}
+            </nav>
+          )}
         </>
       )}
     </div>

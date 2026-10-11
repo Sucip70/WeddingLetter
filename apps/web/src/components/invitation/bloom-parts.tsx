@@ -1,7 +1,10 @@
+'use client';
+
 // Komponen React untuk desain "Buket Pengantin" (kulit `bloom`): monogram karangan bunga, lengkung foto berbunga, ornamen sudut
 // / pemisah / ranting, dan data URI untaian bunga. Bunga digambar di flora-art.ts & flora-comp.ts (potongan SVG berupa teks);
 // di sini tiap potongan dihitung sekali di tingkat modul lalu dipasang lewat dangerouslySetInnerHTML (aman: isinya statis,
 // dihasilkan kode ini sendiri, bukan input pengguna). Bunga utama memakai warna sekunder tema (var(--s)) sehingga ikut palet.
+import { createContext, useContext } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { BLOOM, GARDEN, makeGarden } from './flora-art';
 import { archCrown, cornerCluster, dividerRow, garlandTile, miniBloom, smallSprig, wreath } from './flora-comp';
@@ -13,10 +16,39 @@ const SPRIG = smallSprig();
 const WREATH = wreath();
 const MINI = miniBloom();
 
+// Sprite: di halaman yang memuat banyak salinan sekaligus (katalog: tiap kartu punya 4 sudut + monogram, masing-masing
+// ±80-110 KB SVG yang persis sama) gambar besar didefinisikan SEKALI lewat <BloomSpriteScope> lalu dirujuk dengan <use>.
+// Warna tema tetap ikut: isi <use> mewarisi variabel CSS (--s) dari elemen <use>, yaitu dari kartu induknya.
+// Di luar scope ini (halaman undangan, editor) komponen menyisipkan SVG langsung seperti biasa.
+const SpriteContext = createContext(false);
+const SPRITE_ID = { corner: 'wl-bloom-corner', wreath: 'wl-bloom-wreath' } as const;
+
+export function BloomSpriteScope({ children }: { children: ReactNode }) {
+  return (
+    <SpriteContext.Provider value>
+      <svg width="0" height="0" className="pointer-events-none absolute" aria-hidden focusable="false">
+        <defs>
+          <g id={SPRITE_ID.corner} dangerouslySetInnerHTML={{ __html: CORNER }} />
+          <g id={SPRITE_ID.wreath} dangerouslySetInnerHTML={{ __html: WREATH }} />
+        </defs>
+      </svg>
+      {children}
+    </SpriteContext.Provider>
+  );
+}
+
 // Ornamen sudut kiri-atas yang dicerminkan untuk tiga sudut lain (bunga tidak diputar supaya tidak terbalik).
 export function BloomCorner({ className = 'w-40', rotate = 0 }: { className?: string; rotate?: 0 | 90 | 180 | 270 }) {
   const mirror: Record<number, string> = { 0: '1 1', 90: '-1 1', 180: '-1 -1', 270: '1 -1' };
-  return <svg viewBox="0 0 170 170" className={`overflow-visible ${className}`} style={{ scale: mirror[rotate] ?? '1 1' }} dangerouslySetInnerHTML={{ __html: CORNER }} aria-hidden />;
+  const sprite = useContext(SpriteContext);
+  const props = { viewBox: '0 0 170 170', className: `overflow-visible ${className}`, style: { scale: mirror[rotate] ?? '1 1' }, 'aria-hidden': true } as const;
+  return sprite ? (
+    <svg {...props}>
+      <use href={`#${SPRITE_ID.corner}`} />
+    </svg>
+  ) : (
+    <svg {...props} dangerouslySetInnerHTML={{ __html: CORNER }} />
+  );
 }
 export function BloomDivider({ className = 'w-56' }: { className?: string }) {
   return <svg viewBox="0 0 240 40" className={`overflow-visible ${className}`} dangerouslySetInnerHTML={{ __html: DIVIDER }} aria-hidden />;
@@ -30,9 +62,16 @@ export function BloomMini({ className = 'w-14' }: { className?: string }) {
 
 // Monogram: inisial mempelai (aksara tulisan tangan) di tengah karangan bunga lingkaran.
 export function FloralMonogram({ a, b, size = 112, className = '' }: { a: string; b: string; size?: number; className?: string }) {
+  const sprite = useContext(SpriteContext);
   return (
     <div className={`relative inline-flex shrink-0 items-center justify-center ${className}`} style={{ width: size, height: size }} aria-hidden>
-      <svg viewBox="-100 -100 200 200" className="absolute inset-0 h-full w-full overflow-visible" dangerouslySetInnerHTML={{ __html: WREATH }} />
+      {sprite ? (
+        <svg viewBox="-100 -100 200 200" className="absolute inset-0 h-full w-full overflow-visible">
+          <use href={`#${SPRITE_ID.wreath}`} />
+        </svg>
+      ) : (
+        <svg viewBox="-100 -100 200 200" className="absolute inset-0 h-full w-full overflow-visible" dangerouslySetInnerHTML={{ __html: WREATH }} />
+      )}
       <span className="relative flex items-baseline leading-none" style={{ fontSize: size * 0.3, fontFamily: 'var(--font-script)', color: 'var(--p)' }}>
         <span>{a}</span>
         <span style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '0.5em', fontStyle: 'italic', margin: '0 0.08em', transform: 'translateY(-0.25em)', color: 'var(--s)' }}>&amp;</span>

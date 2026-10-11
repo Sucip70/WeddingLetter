@@ -3,16 +3,21 @@
 // Gerbang pembuka undangan Premium: adegan animasi tematik (pintu, amplop, tirai, ...) yang menutupi sampul
 // sampai diketuk. Semua gerak memakai CSS transform/opacity (ringan di ponsel); warna mengikuti tema lewat
 // variabel --p/--s/--bg/--tx. Fase dikendalikan InvitationView: 'closed' -> 'opening' -> (dilepas).
+import dynamic from 'next/dynamic';
 import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 import type { GateKind } from '@/lib/types';
 import { PatternLayer } from './effects';
 import type { PatternKind } from './motifs';
-import { LetterGust } from './letter-gust';
-import { BouquetGate } from './bouquet-gate';
-import { DovesGate } from './doves-gate';
-import { MagicPortal } from './magic-portal';
-import { RingBox } from './ring-box';
-import { WayangKayon } from './wayang-kayon';
+
+// Gerbang berat (Motion / CSS 3D / seni SVG) dimuat per jenis: undangan hanya mengunduh kode gerbangnya sendiri,
+// bukan keenam-enamnya. Tetap di-render di server (ssr bawaan), jadi tidak ada kedipan saat halaman dibuka.
+// Gerbang baru yang besar sebaiknya mengikuti pola ini; gerbang CSS kecil boleh tetap di berkas ini.
+const LetterGust = dynamic(() => import('./letter-gust').then((m) => m.LetterGust));
+const BouquetGate = dynamic(() => import('./bouquet-gate').then((m) => m.BouquetGate));
+const DovesGate = dynamic(() => import('./doves-gate').then((m) => m.DovesGate));
+const MagicPortal = dynamic(() => import('./magic-portal').then((m) => m.MagicPortal));
+const RingBox = dynamic(() => import('./ring-box').then((m) => m.RingBox));
+const WayangKayon = dynamic(() => import('./wayang-kayon').then((m) => m.WayangKayon));
 
 export type GatePhase = 'closed' | 'opening';
 
