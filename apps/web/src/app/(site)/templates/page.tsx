@@ -82,7 +82,10 @@ export default async function TemplatesPage({ searchParams }: PageProps<'/templa
     .map((x) => ({ ...x, continued: items.findIndex((c) => groupOf(c) === x.group) < first }));
   // Kartu desain bunga memuat ±400 KB SVG yang sama persis per kartu; bila ada di halaman ini, gambarnya didefinisikan sekali
   // (sprite) dan kartu hanya merujuknya. Halaman tanpa kartu bunga tidak membawa sprite sama sekali.
-  const hasBloom = pageItems.some(({ t }) => motifFor(t.layout.theme.motif ?? t.layout.theme.preset).skin === 'bloom');
+  const hasBloom = pageItems.some(({ t }) => {
+    const motif = motifFor(t.layout.theme.motif ?? t.layout.theme.preset);
+    return motif.skin === 'bloom' || motif.ornament === 'romantic';
+  });
   const SpriteScope = hasBloom ? BloomSpriteScope : Fragment;
   // Mengganti filter mengembalikan ke halaman 1; mengganti tampilan mempertahankan halaman; tautan pager menyebut halamannya.
   const href = (next: { category?: string; view?: string; page?: number }) => {

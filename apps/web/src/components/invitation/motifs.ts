@@ -52,7 +52,8 @@ const m = (
 export const MOTIFS: Record<string, Motif> = {
   // Klasik
   rustic: { ...m('twig', 'none', 'polaroid', 'ticket', 'none', ['leaf', 10, 'fall'], 'mid'), skin: 'kraft', heading: 'display' },
-  floral: m('vine', 'leaves', 'oval', 'soft', 'none', ['petal', 14, 'fall']),
+  // Floral Romantis: karangan mawar & peony merah muda di sudut/pemisah (ornamen 'romantic'), sudut dibuat besar seperti Buket.
+  floral: { ...m('romantic', 'leaves', 'oval', 'soft', 'none', ['petal', 14, 'fall']), cornerSize: { top: 'w-36 [@media(max-height:700px)]:w-28', bottom: 'w-28 [@media(max-height:700px)]:w-24' } },
   elegant: { ...m('deco', 'diamond', 'deco', 'luxe', 'halo', ['dust', 22, 'rise'], 'mid', 'blur'), skin: 'gilded', heading: 'cinzel', names: 'script' },
 
   // Suku & budaya

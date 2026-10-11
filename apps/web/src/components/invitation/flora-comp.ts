@@ -1,7 +1,7 @@
 // Rangkaian bunga untuk desain "Buket Pengantin" (lihat flora-art.ts untuk bunga tunggalnya). Setiap fungsi mengembalikan potongan
 // SVG (teks) dalam kotak yang disebutkan di komentarnya. `g` = palet bunga: GARDEN (hero mengikuti tema, untuk JSX) atau
 // GARDEN_FIXED (semua hex, untuk data URI).
-import { BLOOM, GARDEN, anemone, blossom, cosmos, daisy, filler, gypsophila, leafD, peony, put, rng, rose, sprig, tone } from './flora-art';
+import { BLOOM, GARDEN, ROSE_GARDEN, anemone, blossom, cosmos, daisy, filler, gypsophila, leafD, peony, put, rng, rose, sprig, tone } from './flora-art';
 import type { Garden } from './flora-art';
 
 const skyTone = tone(BLOOM.sky, '#3a5f8a');
@@ -10,6 +10,61 @@ const lilacTone = tone(BLOOM.lilac, '#4f3a7a');
 
 const leaf = (g: Garden, L: number, w: number, rot: number, x: number, y: number) =>
   put(x, y, rot, 1, `<path d="${leafD(L, w)}" fill="${g.leaf}" stroke="${g.leafDark}" stroke-opacity=".6" stroke-width=".6"/><path d="M0 0L${(L * 0.85).toFixed(1)} 0" stroke="${g.leafDark}" stroke-opacity=".4" stroke-width=".6"/>`);
+
+// ----- "taman mawar" (Floral Romantis): komposisi sama dengan karangan Buket tetapi hanya mawar, peony, dan kuncup merah muda -----
+const blushTone = tone(BLOOM.blush, '#8a3350');
+const roseTone = tone(BLOOM.rose, '#7a2a48');
+const paleTone = tone('#fde6ec', '#9a5a70');
+
+// Karangan sudut kiri-atas, kotak 0 0 170 170 (sama dengan cornerCluster).
+export function romanticCorner(g: Garden = ROSE_GARDEN) {
+  let s = '';
+  s += put(30, 52, -22, 1, sprig(118, 8, 24, g.leafLight, g.leafDark, true));
+  s += put(52, 30, 66, 1, sprig(118, 8, 24, g.leafLight, g.leafDark, true));
+  s += put(40, 42, 34, 1, sprig(100, 5, 30, g.leaf, g.leafDark));
+  s += put(42, 40, 12, 1, gypsophila(104, 11));
+  s += put(40, 44, 48, 1, gypsophila(98, 17));
+  s += leaf(g, 54, 13, -52, 30, 34);
+  s += leaf(g, 54, 13, 142, 34, 30);
+  s += put(74, 70, 0, 1, filler(26, 10, [blushTone, paleTone, roseTone], 4, 0.22));
+  s += put(20, 100, 0, 1, filler(14, 5, [blushTone, paleTone], 8, 0.24));
+  s += put(80, 26, 8, 1, peony(25, g.soft));
+  s += put(24, 94, -10, 1, rose(16, g.warm));
+  s += put(118, 24, 20, 1, rose(13, g.cool));
+  s += put(98, 64, 12, 1, peony(18, g.sun));
+  s += put(28, 28, 0, 1, rose(20, g.warm));
+  s += put(86, 90, 0, 1, blossom(9, blushTone, '#fff'));
+  s += put(50, 52, 14, 1, rose(33, g.hero));
+  s += put(70, 48, 0, 1, blossom(8, paleTone, '#f6c3d0'));
+  s += put(14, 62, 0, 1, blossom(7, roseTone));
+  return s;
+}
+
+// Pemisah horizontal, kotak 0 0 240 40 (sama dengan dividerRow).
+export function romanticDivider(g: Garden = ROSE_GARDEN) {
+  let s = `<path d="M6 20H64M176 20H234" stroke="${g.leafDark}" stroke-opacity=".45" stroke-width=".9" stroke-linecap="round"/>`;
+  for (const side of [-1, 1]) {
+    s += put(120 + side * 40, 20, side === 1 ? 0 : 180, 1, `<path d="M0 0C14 -9 28 -9 38 0C28 8 14 8 0 0Z" fill="${g.leaf}" stroke="${g.leafDark}" stroke-opacity=".6" stroke-width=".6"/>`);
+    s += put(120 + side * 79, 20, 0, 1, blossom(7, paleTone, '#f6c3d0'));
+    s += put(120 + side * 56, 20, 0, 1, side === 1 ? rose(12, g.warm) : peony(12, g.soft));
+    s += put(120 + side * 36, 20, side === 1 ? 24 : -24, 1, `<path d="M0 0C6 -6 12 -6 16 0C12 5 6 5 0 0Z" fill="${g.leafLight}" stroke="${g.leafDark}" stroke-opacity=".5" stroke-width=".5"/>`);
+  }
+  s += put(120, 20, 0, 1, rose(16, g.hero));
+  s += put(100, 12, 0, 1, blossom(5, blushTone, '#fff'));
+  s += put(140, 29, 0, 1, blossom(4.5, roseTone));
+  return s;
+}
+
+// Ranting bunga kecil, kotak 0 0 130 70 (sama dengan smallSprig).
+export function romanticSprig(g: Garden = ROSE_GARDEN) {
+  let s = put(6, 60, -26, 1, sprig(120, 6, 22, g.leaf, g.leafDark));
+  s += put(20, 62, -10, 1, gypsophila(90, 5));
+  s += put(100, 20, 0, 1, rose(11, g.warm));
+  s += put(78, 34, 0, 1, peony(9, g.soft));
+  s += put(52, 46, 0, 1, blossom(6, paleTone, '#f6c3d0'));
+  s += put(112, 38, 0, 1, rose(13, g.hero));
+  return s;
+}
 
 // Karangan sudut kiri-atas, kotak 0 0 170 170: bunga bergerombol di sudut, daun & eukaliptus menjalar sepanjang dua tepi.
 export function cornerCluster(g: Garden = GARDEN) {

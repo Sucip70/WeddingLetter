@@ -7,7 +7,7 @@
 import { createContext, useContext } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { BLOOM, GARDEN, makeGarden } from './flora-art';
-import { archCrown, cornerCluster, dividerRow, garlandTile, miniBloom, smallSprig, wreath } from './flora-comp';
+import { archCrown, cornerCluster, dividerRow, garlandTile, miniBloom, romanticCorner, romanticDivider, romanticSprig, smallSprig, wreath } from './flora-comp';
 import type { Garden } from './flora-art';
 
 const CORNER = cornerCluster();
@@ -15,13 +15,17 @@ const DIVIDER = dividerRow();
 const SPRIG = smallSprig();
 const WREATH = wreath();
 const MINI = miniBloom();
+// "Taman mawar" (Floral Romantis): komposisi serupa, hanya mawar & peony merah muda (warna utama ikut --p).
+const ROSE_CORNER = romanticCorner();
+const ROSE_DIVIDER = romanticDivider();
+const ROSE_SPRIG = romanticSprig();
 
 // Sprite: di halaman yang memuat banyak salinan sekaligus (katalog: tiap kartu punya 4 sudut + monogram, masing-masing
 // ±80-110 KB SVG yang persis sama) gambar besar didefinisikan SEKALI lewat <BloomSpriteScope> lalu dirujuk dengan <use>.
 // Warna tema tetap ikut: isi <use> mewarisi variabel CSS (--s) dari elemen <use>, yaitu dari kartu induknya.
 // Di luar scope ini (halaman undangan, editor) komponen menyisipkan SVG langsung seperti biasa.
 const SpriteContext = createContext(false);
-const SPRITE_ID = { corner: 'wl-bloom-corner', wreath: 'wl-bloom-wreath' } as const;
+const SPRITE_ID = { corner: 'wl-bloom-corner', wreath: 'wl-bloom-wreath', roseCorner: 'wl-rose-corner' } as const;
 
 export function BloomSpriteScope({ children }: { children: ReactNode }) {
   return (
@@ -30,6 +34,7 @@ export function BloomSpriteScope({ children }: { children: ReactNode }) {
         <defs>
           <g id={SPRITE_ID.corner} dangerouslySetInnerHTML={{ __html: CORNER }} />
           <g id={SPRITE_ID.wreath} dangerouslySetInnerHTML={{ __html: WREATH }} />
+          <g id={SPRITE_ID.roseCorner} dangerouslySetInnerHTML={{ __html: ROSE_CORNER }} />
         </defs>
       </svg>
       {children}
@@ -49,6 +54,25 @@ export function BloomCorner({ className = 'w-40', rotate = 0 }: { className?: st
   ) : (
     <svg {...props} dangerouslySetInnerHTML={{ __html: CORNER }} />
   );
+}
+// Sudut karangan mawar (Floral Romantis); pola sprite sama dengan BloomCorner.
+export function RoseCorner({ className = 'w-40', rotate = 0 }: { className?: string; rotate?: 0 | 90 | 180 | 270 }) {
+  const mirror: Record<number, string> = { 0: '1 1', 90: '-1 1', 180: '-1 -1', 270: '1 -1' };
+  const sprite = useContext(SpriteContext);
+  const props = { viewBox: '0 0 170 170', className: `overflow-visible ${className}`, style: { scale: mirror[rotate] ?? '1 1' }, 'aria-hidden': true } as const;
+  return sprite ? (
+    <svg {...props}>
+      <use href={`#${SPRITE_ID.roseCorner}`} />
+    </svg>
+  ) : (
+    <svg {...props} dangerouslySetInnerHTML={{ __html: ROSE_CORNER }} />
+  );
+}
+export function RoseDivider({ className = 'w-56' }: { className?: string }) {
+  return <svg viewBox="0 0 240 40" className={`overflow-visible ${className}`} dangerouslySetInnerHTML={{ __html: ROSE_DIVIDER }} aria-hidden />;
+}
+export function RoseSprig({ className = 'w-28', flip }: { className?: string; flip?: boolean }) {
+  return <svg viewBox="0 0 130 70" className={`overflow-visible ${className}`} style={flip ? { scale: '-1 1' } : undefined} dangerouslySetInnerHTML={{ __html: ROSE_SPRIG }} aria-hidden />;
 }
 export function BloomDivider({ className = 'w-56' }: { className?: string }) {
   return <svg viewBox="0 0 240 40" className={`overflow-visible ${className}`} dangerouslySetInnerHTML={{ __html: DIVIDER }} aria-hidden />;

@@ -250,9 +250,16 @@ export function CoverLayout(p: CoverProps) {
             <img src={photoOf.cover} alt="" className="h-full w-full object-cover" style={{ maskImage: mask, WebkitMaskImage: mask }} />
           </div>
           <Fragment key="decor">{p.decor}</Fragment>
+          {/* Set ornamen bergambar besar (mawar): karangan di dua sudut atas, menimpa tepi foto; kartu tulisan (z-[4]) tetap di atasnya. */}
+          {p.orn.cardCorner && (
+            <>
+              <div className="pointer-events-none absolute left-0 top-0 z-[3] w-36" style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className="w-36" rotate={0} /></div>
+              <div className="pointer-events-none absolute right-0 top-0 z-[3] w-36" style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className="w-36" rotate={90} /></div>
+            </>
+          )}
           <div className="absolute inset-x-[7%] bottom-[5%] top-[49%] z-[4] flex flex-col items-center justify-center overflow-hidden border px-6 text-center" style={{ borderColor: 'color-mix(in srgb, var(--s) 75%, transparent)', background: 'color-mix(in srgb, var(--bg) 93%, transparent)', borderRadius: 'var(--r)', color: 'var(--tx)' }}>
-            <div className="pointer-events-none absolute left-0 top-0 w-16" style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className="w-16" rotate={0} /></div>
-            <div className="pointer-events-none absolute bottom-0 right-0 w-16" style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className="w-16" rotate={180} /></div>
+            <div className={`pointer-events-none absolute left-0 top-0 ${p.orn.cardCorner ?? 'w-16'}`} style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className={p.orn.cardCorner ?? 'w-16'} rotate={0} /></div>
+            <div className={`pointer-events-none absolute bottom-0 right-0 ${p.orn.cardCorner ?? 'w-16'}`} style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className={p.orn.cardCorner ?? 'w-16'} rotate={180} /></div>
             {kickerEl(false)}
             {namesEl(0.9, false)}
             {dateEl(false)}
