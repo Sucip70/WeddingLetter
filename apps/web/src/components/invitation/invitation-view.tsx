@@ -15,7 +15,7 @@ import { CoverLayout, isLightCover } from './cover';
 import { CoverFx, Particles, PatternLayer, PhotoFrame, Reveal, useReveal } from './effects';
 import { BODY, HEADING, RADIUS, motifFor } from './motifs';
 import { BLOOM_BG, DOVE_BG, GARDEN_BG, GARDEN_FLOURISH, GILDED_BG, KRAFT_TEXTURE, coverBackgroundFor } from './skin-bg';
-import { GardenPageFrame } from './garden-parts';
+import { FloralPageFrame, GardenPageFrame } from './garden-parts';
 import type { CountdownKind, Motif } from './motifs';
 import { Dove, DovePair } from './dove-art';
 import { Monogram, ORNAMENTS, PauseIcon, PlayIcon } from './ornaments';
@@ -468,6 +468,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               {!coverPhoto && cornersNode}
             </>
           )}
+          {motif.ornament === 'romantic' && <div key={`ff-${coverKey}`} className="pointer-events-none absolute inset-0 z-[3]" style={{ color: 'var(--p)' }}><FloralPageFrame /></div>}
 
           {view.features.english && (
             <button

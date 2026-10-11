@@ -1,7 +1,7 @@
 // Bingkai berukir untuk desain "Taman Botani": garis rangkap tipis dengan hiasan filigran di keempat sudut (botani-art.ts).
 // Dipakai untuk bingkai foto (PhotoFrame 'garden') dan bingkai di tepi sampul. Warna = warna utama tema (--p).
 import type { ReactNode } from 'react';
-import { FiligreeCorner } from './bloom-parts';
+import { FiligreeCorner, RoseDivider } from './bloom-parts';
 
 // Bingkai foto: foto di tengah, garis rangkap mengelilingi, hiasan sudut menjorok sedikit keluar.
 export function GardenFrame({ children }: { children: ReactNode }) {
@@ -28,6 +28,19 @@ export function GardenPageFrame() {
       <FiligreeCorner lines={false} rotate={90} className="absolute -right-1 -top-1 w-14" />
       <FiligreeCorner lines={false} rotate={180} className="absolute -bottom-1 -right-1 w-14" />
       <FiligreeCorner lines={false} rotate={270} className="absolute -bottom-1 -left-1 w-14" />
+    </div>
+  );
+}
+
+// Floral Romantis: bingkai garis emas tipis (rangkap) di seluruh halaman, karangan sudut menutupi garisnya,
+// ditambah untaian bunga di tengah tepi atas & bawah (seperti undangan bunga cetak).
+export function FloralPageFrame() {
+  return (
+    <div className="pointer-events-none absolute inset-[16px]" aria-hidden>
+      <div className="absolute inset-0" style={{ border: '1.4px solid #c9a24d', opacity: 0.95, boxShadow: '0 0 0 .5px rgba(255,255,255,.5)' }} />
+      <div className="absolute inset-[5px]" style={{ border: '0.7px solid #c9a24d', opacity: 0.7 }} />
+      <RoseDivider className="absolute -top-3 left-1/2 w-44 -translate-x-1/2 opacity-95" />
+      <RoseDivider className="absolute -bottom-3 left-1/2 w-44 -translate-x-1/2 rotate-180 opacity-95" />
     </div>
   );
 }

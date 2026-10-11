@@ -17,7 +17,7 @@ import { DovePair } from './invitation/dove-art';
 import { Monogram, ORNAMENTS } from './invitation/ornaments';
 import { STRINGS } from './invitation/i18n';
 import { BLOOM_BG, DOVE_BG, GARDEN_BG, GARDEN_FLOURISH, GILDED_BG, KRAFT_COVER, KRAFT_TEXTURE, coverBackgroundFor } from './invitation/skin-bg';
-import { GardenPageFrame } from './invitation/garden-parts';
+import { FloralPageFrame, GardenPageFrame } from './invitation/garden-parts';
 
 // Miniatur sampul template (statis, ringan) untuk kartu katalog. Memakai motif desain: ornamen sudut,
 // pola latar, dan font judul yang sama dengan undangan sungguhan.
@@ -131,6 +131,7 @@ export function TemplateThumb({
     <>
       {kraft && <div className="wl-cover-stitch" />}
       {phone && garden && <GardenPageFrame />}
+      {phone && motif.ornament === 'romantic' && <FloralPageFrame />}
       {phone && gilded && ['t h', 'b h', 'l v', 'r v', 't h i', 'b h i', 'l v i', 'r v i'].map((c) => <span key={c} className={`wl-gf ${c}`} />)}
       <div className={phone && gilded ? 'wl-corner-in' : undefined}>
         <orn.Corner className={`absolute ${POS.tl} ${cornerTop}`} rotate={0} />

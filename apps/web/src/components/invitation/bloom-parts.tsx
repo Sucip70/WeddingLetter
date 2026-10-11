@@ -7,7 +7,8 @@
 import { createContext, useContext } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { BLOOM, GARDEN, makeGarden } from './flora-art';
-import { archCrown, cornerCluster, dividerRow, garlandTile, miniBloom, romanticCorner, romanticDivider, romanticSprig, smallSprig, wreath } from './flora-comp';
+import { archCrown, cornerCluster, dividerRow, garlandTile, miniBloom, smallSprig, wreath } from './flora-comp';
+import { romanticCorner, romanticDivider, romanticSprig } from './romantic-art';
 import type { Garden } from './flora-art';
 import { botaniCorner, botaniDivider, botaniSprig, filigreeCorner } from './botani-art';
 
