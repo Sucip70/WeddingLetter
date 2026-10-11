@@ -80,6 +80,20 @@ export const GARDEN: Garden = {
 };
 export const GARDEN_FIXED: Garden = { ...GARDEN, hero: tone(BLOOM.rose) };
 
+// Palet "taman mawar" untuk Floral Romantis: semua bunga dalam keluarga merah muda (bunga utama mengikuti warna primer tema,
+// --p) dengan daun hijau lembut; tanpa lavender/biru/kuning supaya berbeda dari Buket Pengantin yang multiwarna.
+const ROSE_HERO = 'color-mix(in srgb, var(--p, #c4587a) 82%, #fff)';
+export const ROSE_GARDEN: Garden = {
+  hero: tone(ROSE_HERO, '#6e1f3d'),
+  soft: tone(BLOOM.blush, '#8a3350'),
+  warm: tone(BLOOM.rose, '#7a2a48'),
+  cool: tone('#f7c3d1', '#8a3350'),
+  sun: tone('#fde6ec', '#9a5a70'),
+  leaf: BLOOM.leaf,
+  leafDark: BLOOM.leafDark,
+  leafLight: BLOOM.leafLight,
+};
+
 // ----- bentuk dasar -----
 // Kelopak membulat menunjuk ke atas (-y) dari titik pangkal (0,0).
 const petalD = (w: number, h: number) => `M0 0C${f(-w)} ${f(-h * 0.2)} ${f(-w * 1.05)} ${f(-h * 0.82)} 0 ${f(-h)}C${f(w * 1.05)} ${f(-h * 0.82)} ${f(w)} ${f(-h * 0.2)} 0 0Z`;

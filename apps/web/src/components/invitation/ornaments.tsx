@@ -1,10 +1,12 @@
 // Ornamen SVG untuk undangan (warna mengikuti currentColor sehingga ikut tema). Tiap "jenis" ornamen punya
 // tiga bagian: Corner (sudut sampul), Divider (pemisah judul), Sprig (hiasan kecil di bawah foto/footer).
-import { BloomCorner, BloomDivider, BloomSprig } from './bloom-parts';
+import { MeadowCorner, MeadowDivider, MeadowSprig } from './meadow-parts';
+import type { Meadow } from './meadow-art';
+import { BloomCorner, BloomDivider, BloomSprig, BotaniCorner, BotaniDivider, BotaniSprig, RoseCorner, RoseDivider, RoseSprig } from './bloom-parts';
 
 import { DOVE_SILHOUETTE, LilyShapes } from './dove-art';
 
-export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily' | 'flora' | 'keraton';
+export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily' | 'flora' | 'romantic' | 'botani' | 'keraton' | 'sakura' | 'autumn' | 'winter' | 'lavender' | 'hortensia' | 'marigold';
 
 interface CornerProps {
   className?: string;
@@ -22,6 +24,8 @@ export interface OrnamentSet {
   Corner: (p: CornerProps) => React.JSX.Element;
   Divider: (p: DividerProps) => React.JSX.Element;
   Sprig: (p: SprigProps) => React.JSX.Element;
+  // Lebar sudut pada kartu tulisan (tata letak 'terbagi'); bawaan w-16. Set bergambar besar (mawar) memakai lebih lebar.
+  cardCorner?: string;
 }
 
 // ----- bentuk dasar -----
@@ -458,6 +462,22 @@ const Flora: OrnamentSet = {
 };
 
 
+// ----- romantic (Floral Romantis): karangan mawar & peony merah muda (flora-comp.ts: romanticCorner/Divider/Sprig) -----
+const Romantic: OrnamentSet = {
+  cardCorner: 'w-24',
+  Corner: ({ className = 'w-36', rotate = 0 }) => <RoseCorner className={className} rotate={rotate} />,
+  Divider: ({ className = 'w-56' }) => <RoseDivider className={className} />,
+  Sprig: ({ className = 'w-28', flip }) => <RoseSprig className={className} flip={flip} />,
+};
+
+// ----- botani (Taman Botani): ranting daun teh & bunga liar hijau (botani-art.ts) -----
+const Botani: OrnamentSet = {
+  cardCorner: 'w-24',
+  Corner: ({ className = 'w-36', rotate = 0 }) => <BotaniCorner className={className} rotate={rotate} />,
+  Divider: ({ className = 'w-56' }) => <BotaniDivider className={className} />,
+  Sprig: ({ className = 'w-28', flip }) => <BotaniSprig className={className} flip={flip} />,
+};
+
 // ----- keraton (Batik Jawa): kawung emas, ukel (gulungan), dan belah ketupat; emas = --s, aksen maroon = currentColor -----
 const KR_GOLD = 'color-mix(in srgb, var(--s) 80%, #3d2a00)';
 function KawungFlower({ cx, cy, r }: { cx: number; cy: number; r: number }) {
@@ -508,7 +528,23 @@ const Keraton: OrnamentSet = {
   ),
 };
 
-export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco, lily: Lily, flora: Flora, keraton: Keraton };
+
+// ----- lavender (ungu), hortensia (biru tosca), marigold (oranye): ranting bunga sejajar bingkai; digambar di meadow-art.ts -----
+const meadowSet = (meadow: Meadow): OrnamentSet => ({
+  cardCorner: 'w-24',
+  Corner: ({ className = 'w-36', rotate = 0 }) => <MeadowCorner meadow={meadow} className={className} rotate={rotate} />,
+  Divider: ({ className = 'w-56' }) => <MeadowDivider meadow={meadow} className={className} />,
+  Sprig: ({ className = 'w-28', flip }) => <MeadowSprig meadow={meadow} className={className} flip={flip} />,
+});
+const Lavender = meadowSet('lavender');
+const Hortensia = meadowSet('hortensia');
+const Marigold = meadowSet('marigold');
+// Musim (Semi, Gugur, Dingin): sakura, krisan & maple, hellebore & salju; digambar di meadow-art.ts dengan teknik yang sama.
+const Sakura = meadowSet('sakura');
+const Autumn = meadowSet('autumn');
+const Winter = meadowSet('winter');
+
+export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco, lily: Lily, flora: Flora, romantic: Romantic, botani: Botani, keraton: Keraton, sakura: Sakura, autumn: Autumn, winter: Winter, lavender: Lavender, hortensia: Hortensia, marigold: Marigold };
 
 // Ekspor lama (kartu katalog, halaman lain) = jenis vine.
 export const Corner = Vine.Corner;

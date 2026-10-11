@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sketsa Motif Minang - Fase 0</title>
+<style>
+:root{--m:#7A1620;--md:#4E0D14;--g:#D4A017;--gl:#F0CF6A;--k:#F5E6C8;--ink:#2a1a14}
+body{margin:0;font-family:Georgia,serif;background:#efe7d8;color:var(--ink);padding:24px}
+h1{font-size:22px;margin:0 0 4px}p.s{margin:0 0 20px;color:#6b5a4a;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.card{background:#fff;border-radius:10px;padding:14px;box-shadow:0 1px 4px #0002}
+.card h2{font-size:15px;margin:0 0 2px}.card small{display:block;color:#7a6a5a;margin-bottom:8px;font-size:12px}
+.box{height:200px;border-radius:6px;overflow:hidden;background:var(--m)}
+.box svg{width:100%;height:100%;display:block}
+.wide{grid-column:1/-1}
+.phones{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+.phone{width:300px;height:560px;border-radius:24px;overflow:hidden;position:relative;box-shadow:0 2px 10px #0004;background:var(--m)}
+.phone .t{position:absolute;left:0;right:0;text-align:center}
+</style></head><body>
+<h1>Sketsa motif Minang — Fase 0</h1>
+<p class="s">Semua dibuat sebagai SVG prosedural (tanpa gambar). Warna: marun, emas, krem — mengikuti palet songket Minang.</p>
+
+<svg width="0" height="0" style="position:absolute"><defs>
+  <!-- 1. Pucuk rebung -->
+  <pattern id="rebung" width="40" height="44" patternUnits="userSpaceOnUse">
+    <rect width="40" height="44" fill="#7A1620"/>
+    <polygon points="2,42 20,6 38,42" fill="#D4A017"/>
+    <polygon points="8,42 20,16 32,42" fill="#7A1620"/>
+    <polygon points="13,42 20,26 27,42" fill="#F0CF6A"/>
+    <line x1="20" y1="6" x2="20" y2="1" stroke="#D4A017" stroke-width="2"/>
+  </pattern>
+  <!-- 2. Saluak laka (anyaman berlapis) -->
+  <pattern id="saluak" width="32" height="32" patternUnits="userSpaceOnUse">
+    <rect width="32" height="32" fill="#4E0D14"/>
+    <g stroke="#D4A017" stroke-width="3" stroke-linecap="butt" fill="none">
+      <line x1="-8" y1="-8" x2="40" y2="40"/><line x1="40" y1="-8" x2="-8" y2="40"/>
+    </g>
+    <g fill="none" stroke-linecap="butt">
+      <!-- tengah: "/" di atas -->
+      <line x1="9" y1="23" x2="23" y2="9" stroke="#4E0D14" stroke-width="7"/>
+      <line x1="9" y1="23" x2="23" y2="9" stroke="#F0CF6A" stroke-width="3"/>
+      <!-- sudut: "\" di atas -->
+      <g id="c"><line x1="-7" y1="-7" x2="7" y2="7" stroke="#4E0D14" stroke-width="7"/><line x1="-7" y1="-7" x2="7" y2="7" stroke="#D4A017" stroke-width="3"/></g>
+      <use href="#c" x="32"/><use href="#c" y="32"/><use href="#c" x="32" y="32"/>
+    </g>
+    <circle cx="16" cy="16" r="1.6" fill="#4E0D14"/>
+    <circle cx="16" cy="0" r="2.2" fill="#F0CF6A"/><circle cx="16" cy="32" r="2.2" fill="#F0CF6A"/>
+    <circle cx="0" cy="16" r="2.2" fill="#F0CF6A"/><circle cx="32" cy="16" r="2.2" fill="#F0CF6A"/>
+  </pattern>
+  <!-- 3. Kaluak paku (sulur pakis) -->
+  <pattern id="paku" width="40" height="30" patternUnits="userSpaceOnUse">
+    <rect width="40" height="30" fill="#7A1620"/>
+    <g fill="none" stroke="#D4A017" stroke-width="2.6" stroke-linecap="round">
+      <path d="M0 23 C10 23 10 8 20 8 S30 23 40 23"/>
+      <path d="M20 8 C27 8 29 16 23.5 17 C19.5 17.6 19 13 22 13"/>
+    </g>
+    <circle cx="22" cy="13" r="1.6" fill="#F0CF6A"/>
+    <circle cx="10" cy="26" r="1.5" fill="#F0CF6A"/><circle cx="30" cy="26" r="1.5" fill="#F0CF6A"/>
+  </pattern>
+  <!-- 4. Itik pulang patang (bebek pulang sore): barisan chevron + titik -->
+  <pattern id="itik" width="36" height="36" patternUnits="userSpaceOnUse">
+    <rect width="36" height="36" fill="#4E0D14"/>
+    <g fill="none" stroke="#D4A017" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M4 12 L12 6 L20 12"/><path d="M20 30 L28 24 L36 30"/><path d="M-12 30 L-4 24 L4 30"/>
+    </g>
+    <g fill="#F0CF6A"><circle cx="12" cy="20" r="2"/><circle cx="28" cy="12" r="2"/><circle cx="28" cy="2" r="0"/><circle cx="4" cy="32" r="0"/></g>
+  </pattern>
+</defs></svg>
+
+<div class="grid">
+  <div class="card"><h2>1. Pucuk rebung</h2><small>Tunas bambu — motif paling ikonik; dipakai sebagai tumpal/pinggiran</small>
+    <div class="box"><svg><rect width="100%" height="100%" fill="url(#rebung)"/></svg></div></div>
+  <div class="card"><h2>2. Saluak laka</h2><small>Anyaman berlapis (atas-bawah), ritme belah ketupat</small>
+    <div class="box"><svg><rect width="100%" height="100%" fill="url(#saluak)"/></svg></div></div>
+  <div class="card"><h2>3. Kaluak paku</h2><small>Sulur pakis menggulung — untuk pita pembatas</small>
+    <div class="box"><svg><rect width="100%" height="100%" fill="url(#paku)"/></svg></div></div>
+  <div class="card"><h2>4. Itik pulang patang (versi geometris)</h2><small>Iring-iringan bebek disederhanakan jadi chevron + titik</small>
+    <div class="box"><svg><rect width="100%" height="100%" fill="url(#itik)"/></svg></div></div>
+
+  <div class="card wide"><h2>5. Rumah Gadang (siluet atap gonjong)</h2><small>4 gonjong, dinding miring keluar, tiang panggung, tangga tengah</small>
+    <div class="box" style="height:300px;background:#F5E6C8">
+    <svg viewBox="0 0 400 270" preserveAspectRatio="xMidYMid meet">
+      <rect x="0" y="252" width="400" height="18" fill="#D9C79F"/>
+      <!-- tiang -->
+      <g fill="#4E0D14"><rect x="92" y="190" width="9" height="62"/><rect x="146" y="190" width="9" height="62"/><rect x="246" y="190" width="9" height="62"/><rect x="300" y="190" width="9" height="62"/></g>
+      <!-- tangga -->
+      <polygon points="178,190 222,190 232,252 168,252" fill="#7A1620"/>
+      <g stroke="#D4A017" stroke-width="2"><line x1="174" y1="204" x2="226" y2="204"/><line x1="171" y1="220" x2="229" y2="220"/><line x1="169" y1="236" x2="231" y2="236"/></g>
+      <!-- badan -->
+      <polygon points="82,190 318,190 340,134 60,134" fill="#7A1620"/>
+      <rect x="60" y="184" width="258" height="0"/>
+      <polygon points="82,190 318,190 322,180 78,180" fill="#4E0D14"/>
+      <!-- pintu & jendela -->
+      <rect x="186" y="146" width="28" height="34" rx="2" fill="#4E0D14" stroke="#D4A017" stroke-width="2"/>
+      <g fill="#4E0D14" stroke="#D4A017" stroke-width="2"><rect x="106" y="148" width="26" height="22" rx="2"/><rect x="146" y="148" width="26" height="22" rx="2"/><rect x="228" y="148" width="26" height="22" rx="2"/><rect x="268" y="148" width="26" height="22" rx="2"/></g>
+      <!-- ukiran tumpal di dinding -->
+      <g fill="#D4A017"><polygon points="70,140 78,140 74,132"/></g>
+      <g fill="#D4A017" id="tp"></g>
+      <!-- atap -->
+      <path d="M36 134 C44 102 58 64 72 26 C82 56 98 80 118 86 C128 70 140 50 152 32 C160 56 180 78 200 82 C220 78 240 56 248 32 C260 50 272 70 282 86 C302 80 318 56 328 26 C342 64 356 102 364 134 C300 142 100 142 36 134 Z" fill="#4E0D14" stroke="#D4A017" stroke-width="2.5" stroke-linejoin="round"/>
+      <!-- garis ijuk -->
+      <g stroke="#D4A017" stroke-width="1.4" opacity=".55" fill="none">
+        <path d="M60 130 C90 134 310 134 340 130"/><path d="M66 120 C100 124 300 124 334 120"/><path d="M74 108 C110 112 290 112 326 108"/>
+      </g>
+      <!-- ornamen puncak -->
+      <g fill="#D4A017"><circle cx="72" cy="24" r="3"/><circle cx="152" cy="30" r="3"/><circle cx="248" cy="30" r="3"/><circle cx="328" cy="24" r="3"/></g>
+    </svg></div></div>
+
+  <div class="card wide"><h2>6. Gabungan dalam sampul (bayangan arah desain)</h2><small>Dua gaya sampul: kiri pita songket + rumah gadang di atas; kanan pinggiran pucuk rebung berlapis</small>
+    <div class="phones">
+      <div class="phone">
+        <svg width="300" height="560" style="position:absolute;inset:0">
+          <rect width="300" height="560" fill="#7A1620"/>
+          <rect x="0" y="0" width="300" height="34" fill="url(#rebung)"/>
+          <rect x="0" y="34" width="300" height="3" fill="#D4A017"/>
+          <rect x="0" y="526" width="300" height="3" fill="#D4A017"/>
+          <rect x="0" y="529" width="300" height="31" fill="url(#rebung)" transform="translate(0,0)"/>
+          <rect x="0" y="40" width="300" height="30" fill="url(#paku)"/>
+          <rect x="0" y="72" width="300" height="2" fill="#D4A017"/>
+          <g transform="translate(55,90) scale(.48)"><path d="M36 134 C44 102 58 64 72 26 C82 56 98 80 118 86 C128 70 140 50 152 32 C160 56 180 78 200 82 C220 78 240 56 248 32 C260 50 272 70 282 86 C302 80 318 56 328 26 C342 64 356 102 364 134 C300 142 100 142 36 134 Z" fill="#4E0D14" stroke="#D4A017" stroke-width="5"/>
+          <polygon points="82,190 318,190 340,134 60,134" fill="#4E0D14" stroke="#D4A017" stroke-width="4"/><rect x="186" y="146" width="28" height="44" fill="#D4A017"/></g>
+        </svg>
+        <div class="t" style="top:200px;color:#F5E6C8;font-size:11px;letter-spacing:3px">THE WEDDING OF</div>
+        <div class="t" style="top:222px;color:#F0CF6A;font-size:36px;font-style:italic">Rizky &amp; Annisa</div>
+        <div class="t" style="top:278px;color:#F5E6C8;font-size:13px">Sabtu, 12 Desember 2026</div>
+        <div class="t" style="top:470px"><span style="display:inline-block;border:2px solid #D4A017;color:#F5E6C8;font-size:12px;letter-spacing:2px;padding:8px 18px">BUKA UNDANGAN</span></div>
+      </div>
+      <div class="phone" style="background:#F5E6C8">
+        <svg width="300" height="560" style="position:absolute;inset:0">
+          <rect width="300" height="560" fill="#F5E6C8"/>
+          <rect x="0" y="0" width="22" height="560" fill="url(#saluak)"/><rect x="278" y="0" width="22" height="560" fill="url(#saluak)"/>
+          <rect x="22" y="0" width="3" height="560" fill="#D4A017"/><rect x="275" y="0" width="3" height="560" fill="#D4A017"/>
+          <rect x="25" y="0" width="250" height="40" fill="url(#rebung)"/>
+          <rect x="25" y="40" width="250" height="3" fill="#D4A017"/>
+          <rect x="25" y="517" width="250" height="3" fill="#D4A017"/>
+          <rect x="25" y="520" width="250" height="40" fill="url(#rebung)"/>
+        </svg>
+        <div class="t" style="top:130px;color:#7A1620;font-size:11px;letter-spacing:3px">THE WEDDING OF</div>
+        <div class="t" style="top:152px;color:#7A1620;font-size:34px;font-style:italic">Rizky<br>&amp;<br>Annisa</div>
+        <div class="t" style="top:330px;color:#5a2a20;font-size:13px">Sabtu, 12 Desember 2026</div>
+        <div class="t" style="top:440px"><span style="display:inline-block;background:#7A1620;color:#F5E6C8;border:2px solid #D4A017;font-size:12px;letter-spacing:2px;padding:8px 18px">BUKA UNDANGAN</span></div>
+      </div>
+    </div></div>
+</div>
+</body></html>

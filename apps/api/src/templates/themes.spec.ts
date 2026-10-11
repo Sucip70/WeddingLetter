@@ -23,9 +23,87 @@ describe('registry desain', () => {
 });
 
 describe('paket Basic', () => {
-  it('desain Basic ada di registry: rustic, floral, elegant, buket', () => {
-    expect([...BASIC_DESIGN_IDS]).toEqual(['rustic', 'floral', 'elegant', 'buket']);
+  it('desain Basic ada di registry: rustic, floral, elegant, buket, garden', () => {
+    expect([...BASIC_DESIGN_IDS]).toEqual(['rustic', 'floral', 'elegant', 'buket', 'garden']);
     for (const id of BASIC_DESIGN_IDS) expect(designById(id)).toBeDefined();
+  });
+});
+
+describe('Taman Botani', () => {
+  const lum = (hex: string) => {
+    const n = parseInt(hex.slice(1), 16);
+    const c = [16, 8, 0].map((s) => {
+      const v = ((n >> s) & 255) / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * c[0]! + 0.7152 * c[1]! + 0.0722 * c[2]!;
+  };
+  const contrast = (a: string, b: string) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+
+  it('desain klasik bergerbang "taman" (surat daun hijau), tersedia di semua paket, dan Basic memakai palet desain', () => {
+    const d = designById('garden')!;
+    expect(d.name).toBe('Taman Botani');
+    expect(d.group).toBe('klasik');
+    expect(d.gate).toBe('taman');
+    expect(GATE_KINDS).toContain('taman');
+    expect(BASIC_DESIGN_IDS).toContain('garden');
+    expect(basicPalettes('garden')).toEqual(autoPalettes(d));
+    expect(autoPalettes(d).length).toBeGreaterThanOrEqual(5);
+  });
+
+  it('warna utama & teks cukup kontras di atas latar tiap palet (judul, tombol, dan garis bingkai terbaca)', () => {
+    for (const p of autoPalettes(designById('garden')!)) {
+      expect(contrast(p.primary, p.background)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(p.text, p.background)).toBeGreaterThanOrEqual(7);
+    }
+  });
+});
+
+describe('Lavender, Hortensia, Marigold (warna dominan)', () => {
+  const lum = (hex: string) => {
+    const n = parseInt(hex.slice(1), 16);
+    const c = [16, 8, 0].map((s) => {
+      const v = ((n >> s) & 255) / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * c[0]! + 0.7152 * c[1]! + 0.0722 * c[2]!;
+  };
+  const contrast = (a: string, b: string) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+  const hue = (hex: string) => {
+    const n = parseInt(hex.slice(1), 16);
+    const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((x) => x / 255) as [number, number, number];
+    const max = Math.max(r, g, b);
+    const d = max - Math.min(r, g, b);
+    const h = d === 0 ? 0 : max === r ? ((g - b) / d + 6) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return h * 60;
+  };
+
+  it('desain klasik Standard & Premium (bukan Basic) dengan gerbang yang valid', () => {
+    for (const id of ['lavender', 'hortensia', 'marigold']) {
+      const d = designById(id)!;
+      expect(d.group).toBe('klasik');
+      expect(GATE_KINDS).toContain(d.gate);
+      expect(BASIC_DESIGN_IDS).not.toContain(id);
+      expect(autoPalettes(d).length).toBeGreaterThanOrEqual(5);
+    }
+  });
+
+  it.each([['lavender', 250, 330], ['hortensia', 175, 235], ['marigold', 10, 50]])('%s: rona warna utama tiap palet sesuai warna dominan (%i-%i derajat)', (id, lo, hi) => {
+    for (const p of autoPalettes(designById(id)!)) {
+      const h = hue(p.primary);
+      expect(h).toBeGreaterThanOrEqual(lo);
+      expect(h).toBeLessThanOrEqual(hi);
+    }
+  });
+
+  it.each(['lavender', 'hortensia', 'marigold'])('%s: id palet unik, warna utama & teks cukup kontras di atas latar', (id) => {
+    const palettes = autoPalettes(designById(id)!);
+    expect(new Set(palettes.map((p) => p.id)).size).toBe(palettes.length);
+    for (const p of palettes) {
+      for (const c of [p.primary, p.secondary, p.background, p.text]) expect(c).toMatch(HEX);
+      expect(contrast(p.primary, p.background)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(p.text, p.background)).toBeGreaterThanOrEqual(7);
+    }
   });
 });
 
@@ -107,7 +185,7 @@ describe('palet warna', () => {
     expect(autoPalettes(designById('natal')!)).toEqual([]);
   });
 
-  it.each(['elegant', 'kristiani', 'buket', 'jawa'])('%s memakai palet pilihan tangan (bukan geseran rona): id unik, warna valid, latar terang & teks gelap', (id) => {
+  it.each(['elegant', 'kristiani', 'buket', 'garden', 'jawa', 'lavender', 'hortensia', 'marigold'])('%s memakai palet pilihan tangan (bukan geseran rona): id unik, warna valid, latar terang & teks gelap', (id) => {
     const palettes = autoPalettes(designById(id)!);
     expect(palettes.length).toBeGreaterThan(0);
     expect(new Set(palettes.map((p) => p.id)).size).toBe(palettes.length);

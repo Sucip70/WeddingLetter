@@ -87,6 +87,27 @@ const ICONS: Record<CoverKind, ReactNode> = {
       {button(47)}
     </>
   ),
+  orbit: (
+    <>
+      <rect x={4} y={4} width={32} height={52} rx={2} {...SOLID} opacity={0.85} />
+      <circle cx={20} cy={24} r={9} fill="#fff" opacity={0.4} />
+      <ellipse cx={20} cy={24} rx={15} ry={4.5} fill="none" stroke="#fff" strokeWidth={1.3} transform="rotate(-18 20 24)" />
+      <circle cx={32} cy={19} r={1.6} fill="#fff" />
+      <rect x={11} y={41} width={18} height={2.4} rx={1.2} fill="#fff" />
+      <rect x={13} y={47} width={14} height={4.5} rx={2.2} fill="#fff" />
+    </>
+  ),
+  menara: (
+    <>
+      <rect x={4} y={4} width={32} height={52} rx={2} {...SOLID} opacity={0.85} />
+      <path d="M13 36V22a7 7 0 0 1 14 0v14Z" fill="#fff" opacity={0.4} />
+      <path d="M13 36V22a7 7 0 0 1 14 0v14Z" fill="none" stroke="#fff" strokeWidth={1.3} />
+      <path d="M31 9a4 4 0 1 0 3 6 3.200 3.200 0 0 1-3-6Z" fill="#fff" />
+      <path d="M8 30v4M32 30v4" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" />
+      <rect x={11} y={41} width={18} height={2.4} rx={1.2} fill="#fff" />
+      <rect x={13} y={47} width={14} height={4.5} rx={2.2} fill="#fff" />
+    </>
+  ),
   portal: (
     <>
       <rect x={4} y={4} width={32} height={52} rx={2} {...SOLID} opacity={0.85} />

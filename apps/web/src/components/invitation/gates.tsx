@@ -3,16 +3,21 @@
 // Gerbang pembuka undangan Premium: adegan animasi tematik (pintu, amplop, tirai, ...) yang menutupi sampul
 // sampai diketuk. Semua gerak memakai CSS transform/opacity (ringan di ponsel); warna mengikuti tema lewat
 // variabel --p/--s/--bg/--tx. Fase dikendalikan InvitationView: 'closed' -> 'opening' -> (dilepas).
+import dynamic from 'next/dynamic';
 import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 import type { GateKind } from '@/lib/types';
 import { PatternLayer } from './effects';
 import type { PatternKind } from './motifs';
-import { LetterGust } from './letter-gust';
-import { BouquetGate } from './bouquet-gate';
-import { DovesGate } from './doves-gate';
-import { MagicPortal } from './magic-portal';
-import { RingBox } from './ring-box';
-import { WayangKayon } from './wayang-kayon';
+
+// Gerbang berat (Motion / CSS 3D / seni SVG) dimuat per jenis: undangan hanya mengunduh kode gerbangnya sendiri,
+// bukan keenam-enamnya. Tetap di-render di server (ssr bawaan), jadi tidak ada kedipan saat halaman dibuka.
+// Gerbang baru yang besar sebaiknya mengikuti pola ini; gerbang CSS kecil boleh tetap di berkas ini.
+const LetterGust = dynamic(() => import('./letter-gust').then((m) => m.LetterGust));
+const BouquetGate = dynamic(() => import('./bouquet-gate').then((m) => m.BouquetGate));
+const DovesGate = dynamic(() => import('./doves-gate').then((m) => m.DovesGate));
+const MagicPortal = dynamic(() => import('./magic-portal').then((m) => m.MagicPortal));
+const RingBox = dynamic(() => import('./ring-box').then((m) => m.RingBox));
+const WayangKayon = dynamic(() => import('./wayang-kayon').then((m) => m.WayangKayon));
 
 export type GatePhase = 'closed' | 'opening';
 
@@ -21,7 +26,7 @@ export const GATE_MS: Record<GateKind, number> = {
   door: 2300, glass: 2300, curtain: 2200, cloth: 2400, envelope: 2900, portal: 2500, ring: 3550, bloom: 2800,
   balloons: 2800, waves: 2700, gift: 2500, lantern: 2700, fireworks: 2900, book: 2900, pressstart: 1400, loading: 2700, neon: 2600,
   // surat + embusan (letter-gust.tsx): waktu sama untuk semua variannya
-  sakura: 2700, frost: 2700, leaves: 2700,
+  sakura: 2700, frost: 2700, leaves: 2700, taman: 2700,
   kayon: 2400,
   twine: 2700,
   doves: 3100,
@@ -30,25 +35,25 @@ export const GATE_MS: Record<GateKind, number> = {
 
 // Gerbang yang menyingkap sampul sedikit demi sedikit selama fase 'opening' (latarnya menghilang di bawah
 // animasi, bukan sekaligus di akhir). InvitationView memutar animasi masuk sampul saat gerbang diketuk.
-export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, portal: true, kayon: true, twine: true, ring: true, doves: true, bouquet: true };
+export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, taman: true, portal: true, kayon: true, twine: true, ring: true, doves: true, bouquet: true };
 
 // Gerbang yang baru menyingkap sampul setelah jeda (ms sejak ketukan): animasi masuk sampul ditunda sebesar itu.
 export const REVEAL_DELAY_MS: Partial<Record<GateKind, number>> = { ring: 1750, doves: 1000, bouquet: 1200, kayon: 800 };
 
 const CTA: Record<GateKind, string> = {
   door: 'Ketuk untuk membuka pintu', glass: 'Ketuk untuk membuka jendela', curtain: 'Ketuk untuk membuka tirai', cloth: 'Ketuk untuk membuka kain',
-  envelope: 'Ketuk untuk membuka amplop', portal: 'Ketuk untuk mengaktifkan portal', ring: 'Ketuk untuk membuka kotak cincin', bloom: 'Ketuk agar bunga mekar',
+  envelope: 'Ketuk untuk membuka amplop', portal: 'Ketuk untuk mengaktifkan portal', ring: 'Ketuk untuk membuka', bloom: 'Ketuk agar bunga mekar',
   balloons: 'Ketuk untuk melepas balon', waves: 'Ketuk untuk memanggil ombak', gift: 'Ketuk untuk membuka kado',
   lantern: 'Ketuk untuk menyalakan lentera', fireworks: 'Ketuk untuk menyalakan kembang api', book: 'Ketuk untuk membuka buku',
   pressstart: 'Ketuk untuk mulai', loading: 'Ketuk untuk mulai', neon: 'Ketuk untuk menyalakan',
-  sakura: 'Ketuk untuk membuka surat', frost: 'Ketuk untuk membuka surat', leaves: 'Ketuk untuk membuka surat',
+  sakura: 'Ketuk untuk membuka surat', frost: 'Ketuk untuk membuka surat', leaves: 'Ketuk untuk membuka surat', taman: 'Ketuk untuk membuka surat',
   kayon: 'Ketuk untuk memulai lakon', twine: 'Ketuk untuk membuka surat', doves: 'Ketuk agar merpati terbang', bouquet: 'Ketuk untuk melempar buket',
 };
 
 // Adegan gelap memakai teks putih; adegan terang memakai warna teks tema.
 const DARK: Partial<Record<GateKind, true>> = { door: true, glass: true, curtain: true, cloth: true, portal: true, lantern: true, fireworks: true, pressstart: true, loading: true, neon: true, ring: true, kayon: true };
 // Adegan yang punya teks sendiri (tanpa judul umum di atas).
-const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true, leaves: true, portal: true, kayon: true, twine: true, ring: true, doves: true, bouquet: true };
+const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true, leaves: true, taman: true, portal: true, kayon: true, twine: true, ring: true, doves: true, bouquet: true };
 
 const rand = (i: number, salt: number) => {
   const x = Math.sin((i + 1) * 12.9898 + salt * 78.233) * 43758.5453;
@@ -401,6 +406,7 @@ function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
     case 'ring': return <RingBox phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'bloom': return <Bloom />;
     case 'leaves': return <LetterGust kind="leaves" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
+    case 'taman': return <LetterGust kind="taman" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'balloons': return <Balloons />;
     case 'waves': return <Waves />;
     case 'gift': return <Gift />;

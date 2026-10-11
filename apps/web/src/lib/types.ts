@@ -29,6 +29,7 @@ export const GATE_LABEL = {
   ring: 'Kotak cincin',
   bloom: 'Bunga bermekaran',
   leaves: 'Surat daun gugur',
+  taman: 'Surat daun hijau',
   balloons: 'Balon',
   waves: 'Ombak',
   gift: 'Kado',

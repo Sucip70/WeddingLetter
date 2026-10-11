@@ -1,7 +1,7 @@
 // Rangkaian bunga untuk desain "Buket Pengantin" (lihat flora-art.ts untuk bunga tunggalnya). Setiap fungsi mengembalikan potongan
 // SVG (teks) dalam kotak yang disebutkan di komentarnya. `g` = palet bunga: GARDEN (hero mengikuti tema, untuk JSX) atau
 // GARDEN_FIXED (semua hex, untuk data URI).
-import { BLOOM, GARDEN, anemone, blossom, cosmos, daisy, filler, gypsophila, leafD, peony, put, rng, rose, sprig, tone } from './flora-art';
+import { BLOOM, GARDEN, ROSE_GARDEN, anemone, blossom, cosmos, daisy, filler, gypsophila, leafD, peony, put, rng, rose, sprig, tone } from './flora-art';
 import type { Garden } from './flora-art';
 
 const skyTone = tone(BLOOM.sky, '#3a5f8a');
@@ -10,6 +10,78 @@ const lilacTone = tone(BLOOM.lilac, '#4f3a7a');
 
 const leaf = (g: Garden, L: number, w: number, rot: number, x: number, y: number) =>
   put(x, y, rot, 1, `<path d="${leafD(L, w)}" fill="${g.leaf}" stroke="${g.leafDark}" stroke-opacity=".6" stroke-width=".6"/><path d="M0 0L${(L * 0.85).toFixed(1)} 0" stroke="${g.leafDark}" stroke-opacity=".4" stroke-width=".6"/>`);
+
+// ----- "taman mawar" (Floral Romantis): hanya mawar, peony, dan kuncup merah muda. Susunannya SENGAJA dibuat berbeda dari
+// karangan Buket (cornerCluster/dividerRow/smallSprig) — satu tangkai rambat yang jatuh menjalar diagonal/melengkung,
+// bukan karangan padat simetris di dua tepi — supaya terasa seperti ranting mawar, bukan buket, walau sekeluarga bunga.
+const blushTone = tone(BLOOM.blush, '#8a3350');
+const roseTone = tone(BLOOM.rose, '#7a2a48');
+const paleTone = tone('#fde6ec', '#9a5a70');
+
+// Karangan sudut kiri-atas, kotak 0 0 170 170: satu tangkai mawar rambat menjalar dari pojok, melengkung ke dalam,
+// dengan bunga membesar mengikuti arah jatuhnya (bukan karangan dua-cabang-menyusuri-tepi seperti Buket).
+export function romanticCorner(g: Garden = ROSE_GARDEN) {
+  let s = '';
+  const vine = 'M4 4Q34 2 46 22T58 56Q66 86 88 104T124 138';
+  s += `<path d="${vine}" fill="none" stroke="${g.leafDark}" stroke-opacity=".65" stroke-width="1.3" stroke-linecap="round"/>`;
+  // ranting kedua yang lebih pendek menyilang dekat pangkal, kesan rambat bercabang (bukan simetris)
+  s += `<path d="M10 30Q24 36 28 52" fill="none" stroke="${g.leafDark}" stroke-opacity=".5" stroke-width="1" stroke-linecap="round"/>`;
+  // daun berpasangan di sepanjang tangkai utama, mengecil mendekati ujung
+  s += leaf(g, 24, 7, -42, 20, 8);
+  s += leaf(g, 22, 6.5, 148, 36, 14);
+  s += leaf(g, 30, 8.5, -26, 50, 32);
+  s += leaf(g, 28, 8, 142, 58, 50);
+  s += leaf(g, 22, 6.5, -22, 72, 78);
+  s += leaf(g, 20, 6, 150, 88, 96);
+  s += leaf(g, 26, 7.5, -28, 104, 116);
+  // sulur baby's breath untuk kesan lapang (bukan filler padat seperti Buket)
+  s += put(14, 48, 0, 1, gypsophila(66, 3));
+  s += put(76, 46, 0, 1, gypsophila(58, 6));
+  s += put(96, 118, 0, 1, gypsophila(50, 13));
+  // kuncup kecil menyeling di sepanjang tangkai
+  s += put(26, 54, 0, 1, blossom(5.5, paleTone, '#f6c3d0'));
+  s += put(94, 62, 0, 1, blossom(5, roseTone));
+  s += put(44, 98, 0, 1, blossom(5.5, blushTone, '#fff'));
+  // bunga utama menyusuri tangkai: kecil di ujung atas, membesar ke arah jatuh
+  s += put(20, 10, 12, 1, rose(13, g.cool));
+  s += put(46, 20, -12, 1, peony(16, g.soft));
+  s += put(60, 56, 10, 1, rose(23, g.hero));
+  s += put(90, 100, -8, 1, peony(19, g.warm));
+  s += put(122, 136, 12, 1, rose(15, g.warm));
+  return s;
+}
+
+// Pemisah horizontal, kotak 0 0 240 40: SATU tangkai melengkung lembut menyeberangi lebar, bunga mengelompok condong
+// ke satu sisi dengan ranting pendek menjuntai di sisi lain — asimetris, bukan cermin kiri-kanan seperti dividerRow.
+export function romanticDivider(g: Garden = ROSE_GARDEN) {
+  let s = `<path d="M6 24Q60 10 122 20T234 16" fill="none" stroke="${g.leafDark}" stroke-opacity=".5" stroke-width="1" stroke-linecap="round"/>`;
+  s += put(36, 20, -18, 1, `<path d="M0 0C6 -6 12 -6 16 0C12 5 6 5 0 0Z" fill="${g.leafLight}" stroke="${g.leafDark}" stroke-opacity=".5" stroke-width=".5"/>`);
+  s += put(148, 15, 12, 1, `<path d="M0 0C6 -6 12 -6 16 0C12 5 6 5 0 0Z" fill="${g.leaf}" stroke="${g.leafDark}" stroke-opacity=".6" stroke-width=".6"/>`);
+  s += put(202, 17, -10, 1, `<path d="M0 0C6 -6 12 -6 16 0C12 5 6 5 0 0Z" fill="${g.leafLight}" stroke="${g.leafDark}" stroke-opacity=".5" stroke-width=".5"/>`);
+  s += put(18, 22, 0, 1, blossom(4.2, paleTone, '#f6c3d0'));
+  s += put(218, 15, 0, 1, blossom(4.5, roseTone));
+  // bunga tidak simetris: peony kecil menjauh di kiri, mawar utama & kuncup mengelompok di kanan
+  s += put(70, 19, -6, 1, peony(10, g.soft));
+  s += put(150, 16, 8, 1, rose(18, g.hero));
+  s += put(186, 22, -6, 1, blossom(6, blushTone, '#fff'));
+  s += put(168, 10, 10, 1, rose(9, g.cool));
+  return s;
+}
+
+// Ranting bunga kecil, kotak 0 0 130 70: tangkai menjuntai (S-curve) dengan mawar & peony berjatuhan vertikal di satu
+// sisi, bukan cabang diagonal yang menebar ke kanan seperti smallSprig — kesan setangkai mawar jatuh, bukan ranting buket.
+export function romanticSprig(g: Garden = ROSE_GARDEN) {
+  let s = `<path d="M22 2Q12 26 24 46T18 68" fill="none" stroke="${g.leafDark}" stroke-opacity=".55" stroke-width="1" stroke-linecap="round"/>`;
+  s += leaf(g, 20, 6, -58, 16, 16);
+  s += leaf(g, 18, 5.5, 136, 26, 38);
+  s += leaf(g, 16, 5, -60, 16, 58);
+  s += put(22, 2, 6, 1, blossom(5, paleTone, '#f6c3d0'));
+  s += put(28, 46, 12, 1, rose(13, g.warm));
+  s += put(18, 68, -14, 1, peony(11, g.soft));
+  s += put(46, 26, 0, 1, gypsophila(40, 9));
+  s += put(42, 54, 0, 1, blossom(4.5, roseTone));
+  return s;
+}
 
 // Karangan sudut kiri-atas, kotak 0 0 170 170: bunga bergerombol di sudut, daun & eukaliptus menjalar sepanjang dua tepi.
 export function cornerCluster(g: Garden = GARDEN) {

@@ -6,7 +6,7 @@ import type { TemplateTier } from '../generated/prisma/client.js';
 // Tersedia untuk Standard dan Premium.
 export const GENERIC_COVERS = ['ornamen', 'penuh', 'penuh-atas', 'bingkai', 'medali', 'terbagi', 'berdua', 'bingkai-penuh'] as const;
 // Khusus tema, hanya Premium.
-export const THEME_COVERS = ['gapura', 'portal', 'karakter', 'poster', 'emas', 'merpati', 'bunga'] as const;
+export const THEME_COVERS = ['gapura', 'portal', 'karakter', 'poster', 'emas', 'merpati', 'bunga', 'orbit', 'menara'] as const;
 
 export const COVER_KINDS: string[] = [...GENERIC_COVERS, ...THEME_COVERS];
 export type ThemeCover = (typeof THEME_COVERS)[number];
@@ -16,7 +16,9 @@ export const THEME_COVER_BY_DESIGN: Record<string, ThemeCover> = {
   // gapura / gerbang berukir
   jawa: 'gapura', minang: 'gapura', batak: 'gapura', bali: 'gapura', islami: 'gapura', lebaran: 'gapura', buddha: 'gapura', imlek: 'gapura',
   // portal bercincin
-  sihir: 'portal', galaksi: 'portal', halloween: 'portal',
+  halloween: 'portal',
+  // planet bercincin (Galaksi Cinta) dan jendela menara bertabur lilin (Akademi Sihir)
+  galaksi: 'orbit', sihir: 'menara',
   // pemilihan karakter (game)
   pixel: 'karakter', 'player-one': 'karakter', rpg: 'karakter', neon: 'karakter',
   // poster film

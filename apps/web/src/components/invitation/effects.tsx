@@ -4,6 +4,9 @@
 import { useLayoutEffect } from 'react';
 import type { CSSProperties, ReactNode, RefObject } from 'react';
 import { FloralArch } from './bloom-parts';
+import { GardenFrame } from './garden-parts';
+import { SeasonFrame } from './season-parts';
+import { MeadowFrame } from './meadow-parts';
 import { Dove, LilyBloom } from './dove-art';
 import type { CoverFxKind, FrameKind, ParticleKind, ParticleMode, PatternKind } from './motifs';
 
@@ -430,6 +433,16 @@ export function PhotoFrame({ frame, src, label, placeholders, letterFont, tilt =
       return <FloralArch w={188} h={236}>{filler('h-56 w-44')}</FloralArch>;
     case 'dove':
       return <DoveArch>{filler('h-56 w-44')}</DoveArch>;
+    case 'garden':
+      return <GardenFrame>{filler('h-56 w-44')}</GardenFrame>;
+    case 'sakura':
+    case 'autumn':
+    case 'winter':
+      return <SeasonFrame season={frame}>{filler('h-56 w-44')}</SeasonFrame>;
+    case 'lavender':
+    case 'hortensia':
+    case 'marigold':
+      return <MeadowFrame meadow={frame}>{(cls) => filler(cls)}</MeadowFrame>;
     case 'arch':
       return <div className="rounded-t-[999px] rounded-b-3xl p-1.5" style={ring}>{filler('h-56 w-44 rounded-t-[999px] rounded-b-2xl')}</div>;
     case 'oval':

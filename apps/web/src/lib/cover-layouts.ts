@@ -4,7 +4,7 @@ import type { Tier } from './types';
 
 export type CoverKind =
   | 'ornamen' | 'penuh' | 'penuh-atas' | 'bingkai' | 'medali' | 'terbagi' | 'berdua' | 'bingkai-penuh'
-  | 'gapura' | 'portal' | 'karakter' | 'poster' | 'emas' | 'merpati' | 'bunga';
+  | 'gapura' | 'portal' | 'karakter' | 'poster' | 'emas' | 'merpati' | 'bunga' | 'orbit' | 'menara';
 
 // Foto yang dibutuhkan: none = tanpa foto; cover = foto sampul; couple = foto mempelai (atau foto sampul).
 export type CoverNeeds = 'none' | 'cover' | 'couple';
@@ -27,13 +27,15 @@ export const COVER_LAYOUTS: Record<CoverKind, { label: string; hint: string; nee
   poster: { label: 'Poster film', hint: 'Poster dengan judul dan kredit.', needs: 'cover', themed: true },
   emas: { label: 'Bingkai emas', hint: 'Foto di dalam lengkungan berukir emas.', needs: 'cover', themed: true },
   bunga: { label: 'Lengkung bunga', hint: 'Foto di lengkungan putih bermahkota bunga warna-warni.', needs: 'cover', themed: true },
+  orbit: { label: 'Planet bercincin', hint: 'Foto di planet dengan cincin orbit, bulan, dan bintang.', needs: 'cover', themed: true },
+  menara: { label: 'Jendela menara', hint: 'Foto di jendela lengkung dengan bulan sabit dan lilin melayang.', needs: 'cover', themed: true },
   merpati: { label: 'Sepasang merpati', hint: 'Foto oval dengan dua merpati dan lily.', needs: 'cover', themed: true },
 };
 
 const GENERIC: CoverKind[] = ['ornamen', 'penuh', 'penuh-atas', 'bingkai', 'medali', 'terbagi', 'berdua', 'bingkai-penuh'];
 const THEME_BY_DESIGN: Record<string, CoverKind> = {
   jawa: 'gapura', minang: 'gapura', batak: 'gapura', bali: 'gapura', islami: 'gapura', lebaran: 'gapura', buddha: 'gapura', imlek: 'gapura',
-  sihir: 'portal', galaksi: 'portal', halloween: 'portal',
+  halloween: 'portal', galaksi: 'orbit', sihir: 'menara',
   pixel: 'karakter', 'player-one': 'karakter', rpg: 'karakter', neon: 'karakter',
   hollywood: 'poster', paris: 'poster',
   elegant: 'emas', kristiani: 'merpati', buket: 'bunga',
