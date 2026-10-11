@@ -7,7 +7,8 @@
 // Gambar dibuat sendiri dari bentuk botani umum, bukan salinan ilustrasi pihak lain.
 import { gypsophila, leafD, put, rng } from './flora-art';
 
-export type Meadow = 'lavender' | 'hortensia' | 'marigold';
+// Tiga desain berwarna dominan + tiga desain musim (sakura = Musim Semi, autumn = Musim Gugur, winter = Musim Dingin).
+export type Meadow = 'lavender' | 'hortensia' | 'marigold' | 'sakura' | 'autumn' | 'winter';
 
 const f = (n: number) => (Math.round(n * 10) / 10).toString();
 type P = [number, number];
@@ -34,7 +35,7 @@ const tnVars = (k: string, c: string, shadow: string): Record<string, string> =>
 });
 const mix = (v: string, d: string, pct: number, other = '#fff') => `color-mix(in srgb, var(${v}, ${d}) ${pct}%, ${other})`;
 
-type Kind = 'dahlia' | 'anemone' | 'hydra' | 'marigold' | 'poppy' | 'forget' | 'lav' | 'berry' | 'bud' | 'gyp' | 'blossom';
+type Kind = 'dahlia' | 'anemone' | 'hydra' | 'marigold' | 'poppy' | 'forget' | 'lav' | 'berry' | 'bud' | 'gyp' | 'blossom' | 'sakura' | 'mum' | 'maple' | 'hellebore' | 'flake' | 'pine';
 interface Cfg {
   vars: Record<string, string>;
   hero: T;
@@ -106,6 +107,57 @@ const CFG: Record<Meadow, Cfg> = {
     seed: 41,
     comp: 'garland',
   },
+  sakura: {
+    vars: { ...tnVars('h', mix('--p', '#e88fb0', 72), '#6a1f3a'), ...tnVars('s', mix('--p', '#e88fb0', 38), '#6a1f3a'), ...tnVars('p', '#fff5f8', '#8a5a70'), ...tnVars('r', '#c2527a', '#4a1030') },
+    hero: tv('h'),
+    soft: tv('s'),
+    pale: tv('p'),
+    red: tv('r'),
+    centre: '#8a3a5a',
+    leaf: '#8fbf8a',
+    leafDark: '#6fa56f',
+    leafLight: '#b5d8ae',
+    stem: '#6a4b3d',
+    berry: '#c2527a',
+    focal: ['sakura', 'sakura', 'blossom', 'sakura'],
+    fill: ['bud', 'sakura', 'bud', 'forget'],
+    seed: 53,
+    comp: 'edge',
+  },
+  autumn: {
+    vars: { ...tnVars('h', mix('--p', '#b45309', 92, '#f0b429'), '#3a1604'), ...tnVars('s', mix('--s', '#7c2d12', 55, '#e9a825'), '#3a1604'), ...tnVars('p', '#fff1d6', '#8a5a20'), ...tnVars('r', '#a8321a', '#3a0e04') },
+    hero: tv('h'),
+    soft: tv('s'),
+    pale: tv('p'),
+    red: tv('r'),
+    centre: '#3a1d12',
+    leaf: '#c2692a',
+    leafDark: '#a8481f',
+    leafLight: '#d9a03a',
+    stem: '#5a3a22',
+    berry: '#c0392b',
+    focal: ['mum', 'maple', 'dahlia', 'mum'],
+    fill: ['berry', 'maple', 'bud', 'maple'],
+    seed: 67,
+    comp: 'edge',
+  },
+  winter: {
+    vars: { ...tnVars('h', mix('--p', '#4b7bb5', 75), '#0e2036'), ...tnVars('s', mix('--s', '#8fb4de', 75), '#0e2036'), ...tnVars('p', '#ffffff', '#5a7a9a'), ...tnVars('r', '#c0392b', '#4a0e08') },
+    hero: tv('h'),
+    soft: tv('s'),
+    pale: tv('p'),
+    red: tv('r'),
+    centre: '#c9a227',
+    leaf: '#4f8a72',
+    leafDark: '#3f6b5a',
+    leafLight: '#6f9a86',
+    stem: '#4b5d52',
+    berry: '#c0392b',
+    focal: ['hellebore', 'flake', 'hellebore', 'flake'],
+    fill: ['berry', 'pine', 'flake', 'pine', 'bud'],
+    seed: 79,
+    comp: 'edge',
+  },
 };
 
 // Variabel CSS nada warna untuk elemen <svg> yang memuat potongan gambar jenis `v`.
@@ -115,7 +167,7 @@ export const meadowVars = (v: Meadow): Record<string, string> => CFG[v].vars;
 
 // n kelopak sebagai SATU path (hemat simpul). Kelopak menunjuk ke atas dari (cx,cy), dirotasi ke sekelilingnya.
 // pointed = kelopak runcing (dahlia, hortensia); selain itu membulat dengan lekukan kecil di ujung.
-function layer(n: number, L: number, W: number, off: number, pointed = false, cx = 0, cy = 0) {
+function layer(n: number, L: number, W: number, off: number, pointed: boolean | 'notch' = false, cx = 0, cy = 0) {
   // Kelopak kecil cukup berkoordinat bulat (jauh lebih pendek tanpa beda terlihat).
   const q = L < 13 ? 1 : 10;
   const f = (v: number) => (Math.round(v * q) / q).toString();
@@ -126,9 +178,9 @@ function layer(n: number, L: number, W: number, off: number, pointed = false, cx
       const r = rot([x, y], a);
       return `${f(r[0] + cx)} ${f(r[1] + cy)}`;
     };
-    d += pointed
+    d += pointed === true
       ? `M${f(cx)} ${f(cy)}C${p(-W, -L * 0.3)} ${p(-W * 0.7, -L * 0.8)} ${p(0, -L)}C${p(W * 0.7, -L * 0.8)} ${p(W, -L * 0.3)} ${f(cx)} ${f(cy)}Z`
-      : `M${f(cx)} ${f(cy)}C${p(-W, -L * 0.25)} ${p(-W * 1.05, -L * 0.85)} ${p(-W * 0.25, -L * 0.98)}Q${p(0, -L * 1.05)} ${p(W * 0.25, -L * 0.98)}C${p(W * 1.05, -L * 0.85)} ${p(W, -L * 0.25)} ${f(cx)} ${f(cy)}Z`;
+      : `M${f(cx)} ${f(cy)}C${p(-W, -L * 0.25)} ${p(-W * 1.05, -L * 0.85)} ${p(-W * 0.25, -L * 0.98)}${pointed === 'notch' ? `L${p(0, -L * 0.86)}L${p(W * 0.25, -L * 0.98)}` : `Q${p(0, -L * 1.05)} ${p(W * 0.25, -L * 0.98)}`}C${p(W * 1.05, -L * 0.85)} ${p(W, -L * 0.25)} ${f(cx)} ${f(cy)}Z`;
   }
   return d;
 }
@@ -225,6 +277,59 @@ function bud(r: number, t: T, green: string) {
 }
 const leaf = (L: number, w: number, fill: string, vein: string) => `<path d="${leafD(L, L * w)}" fill="${fill}" stroke="${vein}" stroke-opacity=".5" stroke-width=".4"/><path d="M0 0L${f(L * 0.86)} 0" stroke="${vein}" stroke-opacity=".5" stroke-width=".4"/>`;
 
+// ----- bunga musim: sakura (Semi), krisan & maple (Gugur), hellebore, kristal salju & pinus (Dingin) -----
+function sakura(r: number, t: T) {
+  return (
+    `<circle r="${f(r * 1.02)}" fill="${t.deep}" opacity=".1"/>` +
+    path(layer(5, r, r * 0.62, 0, 'notch'), t.light, t.deep, 0.5, 0.6) +
+    path(layer(5, r * 0.5, r * 0.36, 36, 'notch'), t.base, t.deep, 0.4) +
+    `<path d="${rays(10, r * 0.08, r * 0.34, 10)}" stroke="${t.deep}" stroke-width=".6" stroke-linecap="round"/><circle r="${f(r * 0.09)}" fill="#e9a825"/>`
+  );
+}
+// Krisan: empat lingkar kelopak sempit runcing.
+function mum(r: number, t: T) {
+  const rows: [number, number, number, string][] = [[22, 1, 0, t.light], [18, 0.78, 8, t.base], [14, 0.56, 4, t.dark], [10, 0.34, 10, t.base]];
+  let s = `<circle r="${f(r * 1.02)}" fill="${t.deep}" opacity=".12"/>`;
+  for (const [n, h, off, fill] of rows) s += path(layer(n, r * h, r * 0.11, off, true), fill, t.deep, 0.4, 0.4);
+  return s + `<circle r="${f(r * 0.07)}" fill="${t.deep}"/>`;
+}
+const MAPLE = 'M0-12L2.6-6.6 7-8.4 5.8-3 11.4-4.2 7.8.6 10.8 3.6 5 3.8 5.4 7.8.8 6 0 12-.8 6-5.4 7.8-5 3.8-10.8 3.6-7.8.6-11.4-4.2-5.8-3-7-8.4-2.6-6.6Z';
+function maple(r: number, fill: string, vein: string) {
+  return `<g transform="scale(${f(r / 12)})"><path d="${MAPLE}" fill="${fill}" stroke="${vein}" stroke-opacity=".6" stroke-width=".7" stroke-linejoin="round"/><path d="M0-9V16M0 2L-6-3M0 2L6-3M0-3L-3-7M0-3L3-7" fill="none" stroke="${vein}" stroke-opacity=".55" stroke-width=".6" stroke-linecap="round"/></g>`;
+}
+// Hellebore (mawar Natal): lima kelopak bulat putih, benang sari emas.
+function hellebore(r: number, petal: T, edge: T) {
+  return (
+    `<circle r="${f(r * 1.02)}" fill="${edge.deep}" opacity=".1"/>` +
+    path(layer(5, r, r * 0.85, 0), '#fff', edge.deep, 0.5, 0.7) +
+    path(layer(5, r * 0.58, r * 0.5, 36), petal.light, edge.base, 0.4) +
+    `<path d="${rays(14, r * 0.12, r * 0.34, 5)}" stroke="#c9a227" stroke-width=".8" stroke-linecap="round"/><circle r="${f(r * 0.1)}" fill="#c9a227"/>`
+  );
+}
+function flake(r: number, t: T) {
+  let d = rays(6, 0, r);
+  for (let k = 0; k < 6; k++) {
+    for (const tt of [0.46, 0.72]) {
+      for (const side of [-1, 1]) {
+        const b = rot([0, -r * tt], k * 60);
+        const e = rot([side * r * 0.2 * (1.1 - tt * 0.35), -r * tt - r * 0.16], k * 60);
+        d += `M${f(b[0])} ${f(b[1])}L${f(e[0])} ${f(e[1])}`;
+      }
+    }
+  }
+  return `<path d="${d}" stroke="${t.base}" stroke-opacity=".7" stroke-width="2.6" stroke-linecap="round" fill="none"/><path d="${d}" stroke="#fff" stroke-width="1.1" stroke-linecap="round" fill="none"/><circle r="${f(r * 0.1)}" fill="#fff"/>`;
+}
+// Ranting pinus: menunjuk ke +x, jarum berpasangan.
+function pine(len: number, c: string) {
+  let d = '';
+  for (let i = 1; i <= 9; i++) {
+    const x = (len * i) / 10;
+    const L = (len / 12) * (1 - i / 16);
+    d += `M${f(x)} 0L${f(x + L * 0.5)} ${f(-L)}M${f(x)} 0L${f(x + L * 0.5)} ${f(L)}`;
+  }
+  return `<path d="M0 0H${f(len)}" stroke="${c}" stroke-width="1.3" stroke-linecap="round"/><path d="${d}" stroke="${c}" stroke-width="1.4" stroke-linecap="round" fill="none"/>`;
+}
+
 // Satu bunga menurut jenisnya (r = jari-jari kira-kira).
 function flower(kind: Kind, r: number, V: Cfg, i: number, seed: number) {
   const two = i % 2 ? V.soft : V.hero;
@@ -240,9 +345,15 @@ function flower(kind: Kind, r: number, V: Cfg, i: number, seed: number) {
     case 'bud': return bud(r * 0.7, V.soft, V.leaf);
     case 'gyp': return gypsophila(r * 2.2, seed, '#fff', V.leafLight);
     case 'blossom': return forget(r * 1.1, V.soft);
+    case 'sakura': return sakura(r, i % 3 === 2 ? V.soft : V.hero);
+    case 'mum': return mum(r, i % 2 ? V.soft : V.hero);
+    case 'maple': return maple(r * 1.1, [V.hero.base, V.red.base, V.soft.base][i % 3]!, V.stem);
+    case 'hellebore': return hellebore(r, V.pale, V.soft);
+    case 'flake': return flake(r, V.hero);
+    case 'pine': return pine(r * 3.2, V.leaf);
   }
 }
-const isDirectional = (k: Kind) => k === 'lav' || k === 'berry' || k === 'gyp';
+const isDirectional = (k: Kind) => k === 'lav' || k === 'berry' || k === 'gyp' || k === 'pine';
 const isUp = (k: Kind) => k === 'bud';
 
 // ----- ranting sejajar bingkai -----
@@ -474,6 +585,23 @@ function twigCrown(v: Meadow, w: number, h: number) {
   return render(o);
 }
 
+// ----- ubin bingkai penuh (kotak 0 0 60 24): batang horizontal pendek dengan satu bunga di tengah -----
+// Diulang di sepanjang tepi halaman oleh MeadowPageFrame (meadow-parts.tsx); k = variasi (0-2).
+export function meadowEdgeTile(v: Meadow, k: number) {
+  const V = CFG[v];
+  const rnd = rng(V.seed + 11 + k * 7);
+  const o = out();
+  const ph = rnd() * 6;
+  let d = 'M0 12';
+  for (let x = 4; x <= 60; x += 4) d += `L${x} ${f(12 + 1.4 * Math.sin(x * 0.16 + ph))}`;
+  o.st.push(`<path d="${d}" fill="none" stroke="${V.stem}" stroke-width="1.4" stroke-linecap="round"/>`);
+  const tones = tonesOf(V);
+  [8, 19, 41, 52].forEach((x, i) => o.lf.push(put(x, 12, (i % 2 ? -1 : 1) * (48 + rnd() * 22), 1, leaf(9 + rnd() * 3, 0.34, tones[i % 3]!, V.leafDark))));
+  o.fo.push(put(30, 12, rnd() * 360, 1, flower(V.focal[k % V.focal.length]!, 8.5 + rnd() * 1.5, V, k, 90 + k)));
+  [[12, -6], [48, 6]].forEach(([x, dy], i) => o.fi.push(put(x!, 12 + dy!, 0, 1, flower(V.fill[(k + i) % V.fill.length]!, 4.8, V, k + i, 5 + i))));
+  return render(o);
+}
+
 // ----- ekspor: susunan menurut desain; pemisah & ranting kecil sengaja kosong (tidak ada ranting horizontal di tengah halaman) -----
 export function meadowCorner(v: Meadow) {
   const comp = CFG[v].comp;
@@ -491,9 +619,21 @@ export function meadowCrown(v: Meadow, w: number, h: number) {
   const comp = CFG[v].comp;
   return comp === 'twig' ? twigCrown(v, w, h) : comp === 'garland' ? ringCrown(v, w) : archCrown(v, w, h);
 }
+// Bayangan bunga untuk latar blok isi (dipasang kabur & sangat transparan lewat CSS, lihat .wl-ghost): beberapa kepala hortensia
+// dengan ukuran berbeda di tepi kiri; sisi kanan = cerminan. Hanya untuk desain bertipe 'twig' (hortensia).
+export const GHOST_BOX = { w: 200, h: 420 };
+export function meadowGhost(v: Meadow) {
+  const V = CFG[v];
+  const heads: [number, number, number][] = [[34, 70, 66], [108, 178, 42], [22, 282, 58], [96, 376, 34]];
+  return heads.map(([x, y, r], i) => put(x, y, i * 47, 1, flower('hydra', r, V, i, 71 + i * 5))).join('');
+}
 // Bentuk & ukuran bingkai foto per desain: lavender = lengkung, hortensia = oval, marigold = bulat.
 export const MEADOW_FRAME: Record<Meadow, { w: number; h: number; shape: string; photo: string }> = {
   lavender: { w: 188, h: 236, shape: 'rounded-t-[999px] rounded-b-[22px]', photo: 'h-56 w-44' },
   hortensia: { w: 188, h: 236, shape: 'rounded-[50%]', photo: 'h-56 w-44' },
   marigold: { w: 196, h: 196, shape: 'rounded-full', photo: 'h-[11.5rem] w-[11.5rem]' },
+  // Desain musim memakai SeasonFrame (season-parts.tsx) untuk bingkai foto; entri ini hanya melengkapi tipe.
+  sakura: { w: 188, h: 236, shape: 'rounded-t-[999px] rounded-b-[22px]', photo: 'h-56 w-44' },
+  autumn: { w: 188, h: 236, shape: 'rounded-t-[999px] rounded-b-[22px]', photo: 'h-56 w-44' },
+  winter: { w: 188, h: 236, shape: 'rounded-t-[999px] rounded-b-[22px]', photo: 'h-56 w-44' },
 };

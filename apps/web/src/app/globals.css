@@ -803,6 +803,18 @@ body {
 .wl-garden .wl-card h3 { font-style: italic; font-weight: 600 !important; }
 .wl-garden .wl-ev-date { font-size: 1.25rem; font-weight: 600; }
 .wl-garden .wl-ev-time { letter-spacing: 0.14em; opacity: 0.8; }
+/* Hortensia: bayangan bunga kabur di latar blok isi, kiri-kanan bergantian. Hanya transform/opacity/filter statis. */
+.wl-ghost {
+  position: absolute;
+  top: 50%;
+  left: -64px;
+  width: 200px;
+  translate: 0 -50%;
+  opacity: 0.16;
+  filter: blur(2.5px);
+  pointer-events: none;
+}
+.wl-block:nth-of-type(even) > .wl-ghost { left: auto; right: -64px; scale: -1 1; }
 .wl-garden .wl-block.wl-tint {
   border-top: 1px solid color-mix(in srgb, var(--p) 16%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--p) 16%, transparent);

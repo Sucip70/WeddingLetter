@@ -16,6 +16,7 @@ import { CoverFx, Particles, PatternLayer, PhotoFrame, Reveal, useReveal } from 
 import { BODY, HEADING, RADIUS, motifFor } from './motifs';
 import { BLOOM_BG, DOVE_BG, GARDEN_BG, GARDEN_FLOURISH, GILDED_BG, KRAFT_TEXTURE, coverBackgroundFor } from './skin-bg';
 import { FloralPageFrame, GardenPageFrame } from './garden-parts';
+import { MeadowPageFrame } from './meadow-parts';
 import type { CountdownKind, Motif } from './motifs';
 import { Dove, DovePair } from './dove-art';
 import { Monogram, ORNAMENTS, PauseIcon, PlayIcon } from './ornaments';
@@ -23,6 +24,7 @@ import type { OrnamentSet } from './ornaments';
 import { BloomMini, FloralMonogram, garlandCss, miniBloomCss } from './bloom-parts';
 import { KERATON_BG, keratonVars } from './batik-art';
 import { Gunungan } from './gunungan-art';
+import { MeadowGhost } from './meadow-parts';
 
 export interface InvitationViewProps {
   view: InvitationViewData;
@@ -345,6 +347,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     <div key={coverKey} className="pointer-events-none absolute inset-0" style={{ color: 'var(--p)' }} aria-hidden>
       {kraft && <div className="wl-cover-stitch" />}
       {garden && <GardenPageFrame />}
+      {motif.pageFrame && <MeadowPageFrame meadow={motif.pageFrame} />}
       {gilded && ['t h', 'b h', 'l v', 'r v', 't h i', 'b h i', 'l v i', 'r v i'].map((c) => <span key={c} className={`wl-gf ${c}`} />)}
       <div className={gilded ? 'wl-corner-in' : undefined}>
         <orn.Corner className={`${cornerTop} ${keraton ? 'left-[30px] top-[30px]' : 'left-2 top-2'}`} rotate={0} />
@@ -825,8 +828,10 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 
 function Block({ title, children, headingStyle, tint }: { title: string; children: ReactNode; headingStyle: CSSProperties; tint?: string }) {
   const { orn, motif, fx, sectionFont } = useTheme();
+  const ghost = motif.ornament === 'hortensia';
   return (
-    <section className={`wl-block relative px-6 py-16 ${tint ? 'wl-tint' : ''}`} style={{ background: tint }}>
+    <section className={`wl-block relative px-6 py-16 ${tint ? 'wl-tint' : ''} ${ghost ? 'overflow-hidden' : ''}`} style={{ background: tint }}>
+      {ghost && <MeadowGhost meadow="hortensia" />}
       {tint && fx !== 'none' && <PatternLayer kind={motif.pattern} opacity={0.05} />}
       <div className="wl-reveal relative mb-10 text-center">
         <h2 className={motif.skin === 'gilded' ? 'wl-heading' : undefined} style={{ ...headingStyle, ...sectionFont }}>{title}</h2>

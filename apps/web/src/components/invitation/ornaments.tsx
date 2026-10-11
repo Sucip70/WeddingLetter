@@ -1,6 +1,5 @@
 // Ornamen SVG untuk undangan (warna mengikuti currentColor sehingga ikut tema). Tiap "jenis" ornamen punya
 // tiga bagian: Corner (sudut sampul), Divider (pemisah judul), Sprig (hiasan kecil di bawah foto/footer).
-import { SeasonCorner, SeasonDivider, SeasonSprig } from './season-parts';
 import { MeadowCorner, MeadowDivider, MeadowSprig } from './meadow-parts';
 import type { Meadow } from './meadow-art';
 import { BloomCorner, BloomDivider, BloomSprig, BotaniCorner, BotaniDivider, BotaniSprig, RoseCorner, RoseDivider, RoseSprig } from './bloom-parts';
@@ -529,15 +528,6 @@ const Keraton: OrnamentSet = {
   ),
 };
 
-// ----- musim: sakura (Semi), maple & krisan (Gugur), salju & hellebore (Dingin); digambar di season-art.ts -----
-const seasonSet = (season: 'sakura' | 'autumn' | 'winter'): OrnamentSet => ({
-  Corner: ({ className = 'w-36', rotate = 0 }) => <SeasonCorner season={season} className={className} rotate={rotate} />,
-  Divider: ({ className = 'w-56' }) => <SeasonDivider season={season} className={className} />,
-  Sprig: ({ className = 'w-28', flip }) => <SeasonSprig season={season} className={className} flip={flip} />,
-});
-const Sakura = seasonSet('sakura');
-const Autumn = seasonSet('autumn');
-const Winter = seasonSet('winter');
 
 // ----- lavender (ungu), hortensia (biru tosca), marigold (oranye): ranting bunga sejajar bingkai; digambar di meadow-art.ts -----
 const meadowSet = (meadow: Meadow): OrnamentSet => ({
@@ -549,6 +539,10 @@ const meadowSet = (meadow: Meadow): OrnamentSet => ({
 const Lavender = meadowSet('lavender');
 const Hortensia = meadowSet('hortensia');
 const Marigold = meadowSet('marigold');
+// Musim (Semi, Gugur, Dingin): sakura, krisan & maple, hellebore & salju; digambar di meadow-art.ts dengan teknik yang sama.
+const Sakura = meadowSet('sakura');
+const Autumn = meadowSet('autumn');
+const Winter = meadowSet('winter');
 
 export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco, lily: Lily, flora: Flora, romantic: Romantic, botani: Botani, keraton: Keraton, sakura: Sakura, autumn: Autumn, winter: Winter, lavender: Lavender, hortensia: Hortensia, marigold: Marigold };
 

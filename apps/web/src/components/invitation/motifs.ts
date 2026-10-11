@@ -2,6 +2,7 @@
 // Tema kartun / game / film hanya terinspirasi GAYA UMUM: tidak ada karakter, logo, atau nama berhak cipta.
 import type { BodyFont, HeadingFont } from '@/lib/types';
 import type { OrnamentKind } from './ornaments';
+import type { Meadow } from './meadow-art';
 
 export type ParticleKind = 'petal' | 'leaf' | 'maple' | 'snow' | 'heart' | 'star' | 'sparkle' | 'confetti' | 'bubble' | 'firefly' | 'pixel' | 'lantern' | 'bat' | 'coin' | 'dust' | 'feather' | 'blossom' | 'bloomflower';
 export type ParticleMode = 'fall' | 'rise' | 'twinkle' | 'drift';
@@ -35,6 +36,8 @@ export interface Motif {
   body?: BodyFont;
   // Ukuran ornamen sudut sampul (kelas lebar Tailwind): atas & bawah; bawaan w-24 untuk semua sudut.
   cornerSize?: { top: string; bottom: string };
+  // Bingkai penuh di tepi sampul (garis ganda + ubin bunga di sepanjang tepi; MeadowPageFrame); nilai = jenis bunga di meadow-art.ts.
+  pageFrame?: Meadow;
 }
 
 const m = (
@@ -103,14 +106,14 @@ export const MOTIFS: Record<string, Motif> = {
   paris: m('sparkle', 'stripes', 'oval', 'flip', 'rays', ['petal', 10, 'fall'], 'mid', 'rise', { kicker: 'Un Amour à Paris' }),
 
   // Musim
-  semi: { ...m('sakura', 'none', 'sakura', 'soft', 'clouds', ['petal', 18, 'fall']), cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
+  semi: { ...m('sakura', 'none', 'sakura', 'soft', 'clouds', ['petal', 18, 'fall']), pageFrame: 'sakura', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   panas: m('sparkle', 'dots', 'round', 'round', 'rays', ['bubble', 10, 'rise'], 'pill'),
-  gugur: { ...m('autumn', 'none', 'autumn', 'ticket', 'none', ['maple', 16, 'fall'], 'mid'), cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
+  gugur: { ...m('autumn', 'none', 'autumn', 'ticket', 'none', ['maple', 16, 'fall'], 'mid'), pageFrame: 'autumn', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   // Tiga desain berwarna dominan (ranting bunga sejajar bingkai, meadow-art.ts): ungu, biru, oranye.
   lavender: { ...m('lavender', 'none', 'lavender', 'soft', 'clouds', ['petal', 16, 'fall'], 'soft', 'blur'), heading: 'script', names: 'script', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   hortensia: { ...m('hortensia', 'none', 'hortensia', 'outline', 'aurora', ['blossom', 14, 'fall'], 'pill', 'blur'), heading: 'serif', names: 'serif', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   marigold: { ...m('marigold', 'none', 'marigold', 'ticket', 'rays', ['petal', 16, 'fall'], 'mid', 'rise'), heading: 'display', names: 'script', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
-  salju: { ...m('winter', 'none', 'winter', 'outline', 'aurora', ['snow', 28, 'fall'], 'mid', 'blur'), cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
+  salju: { ...m('winter', 'none', 'winter', 'outline', 'aurora', ['snow', 28, 'fall'], 'mid', 'blur'), pageFrame: 'winter', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
 };
 
 export const motifFor = (id: string | undefined): Motif => MOTIFS[id ?? ''] ?? MOTIFS.rustic!;
