@@ -96,7 +96,7 @@ export const MOTIFS: Record<string, Motif> = {
   rpg: m('geo', 'diamond', 'notch', 'ticket', 'spotlight', ['coin', 10, 'rise'], 'sharp', 'slide', { kicker: 'Quest Terakhir', open: 'Terima Quest' }),
   neon: m('sparkle', 'grid', 'notch', 'neon', 'scanlines', ['sparkle', 18, 'twinkle'], 'sharp', 'zoom', { kicker: 'Insert Coin', open: 'Masuk Arena' }),
 
-  // Film (gaya umum)
+  // Fantasi (gaya umum)
   hollywood: m('sparkle', 'diamond', 'square', 'flip', 'curtain', ['sparkle', 14, 'twinkle'], 'mid', 'zoom', { kicker: 'Now Showing', open: 'Tonton Sekarang' }),
   galaksi: m('sparkle', 'stars', 'round', 'neon', 'aurora', ['star', 30, 'twinkle'], 'soft', 'blur', { kicker: 'Misi Cinta di Antar Bintang', open: 'Luncurkan' }),
   sihir: m('sparkle', 'stars', 'arch', 'outline', 'spotlight', ['firefly', 18, 'drift'], 'soft', 'blur', { kicker: 'Surat dari Akademi Sihir', open: 'Buka Gulungan' }),

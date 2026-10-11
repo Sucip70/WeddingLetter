@@ -13,7 +13,7 @@ export const GROUP_LABEL: Record<ThemeGroup, string> = {
   perayaan: 'Perayaan',
   kartun: 'Kartun',
   game: 'Video Game',
-  film: 'Film',
+  film: 'Fantasi',
   musim: 'Musim',
 };
 export const FX_LABEL: Record<FxLevel, string> = { none: 'Tanpa animasi', standard: 'Animasi standar', premium: 'Animasi penuh' };

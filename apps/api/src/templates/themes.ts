@@ -14,7 +14,7 @@ export const GROUP_LABEL: Record<ThemeGroup, string> = {
   perayaan: 'Perayaan',
   kartun: 'Kartun',
   game: 'Video Game',
-  film: 'Film',
+  film: 'Fantasi',
   musim: 'Musim',
 };
 export const GROUP_ORDER: ThemeGroup[] = ['klasik', 'suku', 'agama', 'perayaan', 'kartun', 'game', 'film', 'musim'];
@@ -135,7 +135,7 @@ const BASE_DESIGNS: Omit<Design, 'gate'>[] = [
   d('rpg', 'Quest Kerajaan', 'game', 'Perkamen, rune, dan bara api dalam kisah RPG fantasi.', ['#8b5e34', '#c9a227', '#efe0c0', '#3a2a14'], ['cinzel', 'serif']),
   d('neon', 'Neon Arcade', 'game', 'Synthwave neon merah muda dan cyan dengan garis pemindai.', ['#ff2e97', '#2ee6ff', '#120a24', '#f5e9ff'], ['display', 'sans'], true),
 
-  // ---- Film ----
+  // ---- Fantasi ----
   d('hollywood', 'Hollywood Klasik', 'film', 'Art deco hitam-emas, gulungan film, dan lampu sorot.', ['#c9a227', '#f2e8cf', '#141414', '#f2e8cf'], ['cinzel', 'serif'], true),
   d('galaksi', 'Galaksi Cinta', 'film', 'Opera luar angkasa: bintang, nebula, dan cincin orbit.', ['#7c5cff', '#39c5ff', '#0a0e27', '#e6ecff'], ['cinzel', 'sans'], true),
   d('sihir', 'Akademi Sihir', 'film', 'Perkamen, lilin melayang, dan bintang keajaiban.', ['#d4a84b', '#9b5de5', '#2a1f3d', '#f0e6c8'], ['cinzel', 'serif'], true),
