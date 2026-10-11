@@ -7,7 +7,7 @@ import { BloomCorner, BloomDivider, BloomSprig, BotaniCorner, BotaniDivider, Bot
 
 import { DOVE_SILHOUETTE, LilyShapes } from './dove-art';
 
-export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily' | 'flora' | 'romantic' | 'botani' | 'keraton' | 'sakura' | 'autumn' | 'winter' | 'lavender' | 'wisteria' | 'marigold';
+export type OrnamentKind = 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily' | 'flora' | 'romantic' | 'botani' | 'keraton' | 'sakura' | 'autumn' | 'winter' | 'lavender' | 'hortensia' | 'marigold';
 
 interface CornerProps {
   className?: string;
@@ -539,7 +539,7 @@ const Sakura = seasonSet('sakura');
 const Autumn = seasonSet('autumn');
 const Winter = seasonSet('winter');
 
-// ----- lavender (ungu), wisteria (biru), marigold (oranye): ranting bunga sejajar bingkai; digambar di meadow-art.ts -----
+// ----- lavender (ungu), hortensia (biru tosca), marigold (oranye): ranting bunga sejajar bingkai; digambar di meadow-art.ts -----
 const meadowSet = (meadow: Meadow): OrnamentSet => ({
   cardCorner: 'w-24',
   Corner: ({ className = 'w-36', rotate = 0 }) => <MeadowCorner meadow={meadow} className={className} rotate={rotate} />,
@@ -547,10 +547,10 @@ const meadowSet = (meadow: Meadow): OrnamentSet => ({
   Sprig: ({ className = 'w-28', flip }) => <MeadowSprig meadow={meadow} className={className} flip={flip} />,
 });
 const Lavender = meadowSet('lavender');
-const Wisteria = meadowSet('wisteria');
+const Hortensia = meadowSet('hortensia');
 const Marigold = meadowSet('marigold');
 
-export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco, lily: Lily, flora: Flora, romantic: Romantic, botani: Botani, keraton: Keraton, sakura: Sakura, autumn: Autumn, winter: Winter, lavender: Lavender, wisteria: Wisteria, marigold: Marigold };
+export const ORNAMENTS: Record<OrnamentKind, OrnamentSet> = { vine: Vine, geo: Geo, star8: Star8, lotus: Lotus, sparkle: Sparkle, snow: Snow, twig: Twig, deco: Deco, lily: Lily, flora: Flora, romantic: Romantic, botani: Botani, keraton: Keraton, sakura: Sakura, autumn: Autumn, winter: Winter, lavender: Lavender, hortensia: Hortensia, marigold: Marigold };
 
 // Ekspor lama (kartu katalog, halaman lain) = jenis vine.
 export const Corner = Vine.Corner;

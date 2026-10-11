@@ -59,7 +59,7 @@ describe('Taman Botani', () => {
   });
 });
 
-describe('Lavender, Wisteria, Marigold (warna dominan)', () => {
+describe('Lavender, Hortensia, Marigold (warna dominan)', () => {
   const lum = (hex: string) => {
     const n = parseInt(hex.slice(1), 16);
     const c = [16, 8, 0].map((s) => {
@@ -79,7 +79,7 @@ describe('Lavender, Wisteria, Marigold (warna dominan)', () => {
   };
 
   it('desain klasik Standard & Premium (bukan Basic) dengan gerbang yang valid', () => {
-    for (const id of ['lavender', 'wisteria', 'marigold']) {
+    for (const id of ['lavender', 'hortensia', 'marigold']) {
       const d = designById(id)!;
       expect(d.group).toBe('klasik');
       expect(GATE_KINDS).toContain(d.gate);
@@ -88,7 +88,7 @@ describe('Lavender, Wisteria, Marigold (warna dominan)', () => {
     }
   });
 
-  it.each([['lavender', 250, 330], ['wisteria', 205, 250], ['marigold', 10, 50]])('%s: rona warna utama tiap palet sesuai warna dominan (%i-%i derajat)', (id, lo, hi) => {
+  it.each([['lavender', 250, 330], ['hortensia', 175, 235], ['marigold', 10, 50]])('%s: rona warna utama tiap palet sesuai warna dominan (%i-%i derajat)', (id, lo, hi) => {
     for (const p of autoPalettes(designById(id)!)) {
       const h = hue(p.primary);
       expect(h).toBeGreaterThanOrEqual(lo);
@@ -96,7 +96,7 @@ describe('Lavender, Wisteria, Marigold (warna dominan)', () => {
     }
   });
 
-  it.each(['lavender', 'wisteria', 'marigold'])('%s: id palet unik, warna utama & teks cukup kontras di atas latar', (id) => {
+  it.each(['lavender', 'hortensia', 'marigold'])('%s: id palet unik, warna utama & teks cukup kontras di atas latar', (id) => {
     const palettes = autoPalettes(designById(id)!);
     expect(new Set(palettes.map((p) => p.id)).size).toBe(palettes.length);
     for (const p of palettes) {
@@ -185,7 +185,7 @@ describe('palet warna', () => {
     expect(autoPalettes(designById('natal')!)).toEqual([]);
   });
 
-  it.each(['elegant', 'kristiani', 'buket', 'garden', 'jawa', 'lavender', 'wisteria', 'marigold'])('%s memakai palet pilihan tangan (bukan geseran rona): id unik, warna valid, latar terang & teks gelap', (id) => {
+  it.each(['elegant', 'kristiani', 'buket', 'garden', 'jawa', 'lavender', 'hortensia', 'marigold'])('%s memakai palet pilihan tangan (bukan geseran rona): id unik, warna valid, latar terang & teks gelap', (id) => {
     const palettes = autoPalettes(designById(id)!);
     expect(palettes.length).toBeGreaterThan(0);
     expect(new Set(palettes.map((p) => p.id)).size).toBe(palettes.length);

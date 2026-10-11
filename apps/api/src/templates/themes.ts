@@ -96,7 +96,7 @@ const BASE_DESIGNS: Omit<Design, 'gate'>[] = [
   d('garden', 'Taman Botani', 'klasik', 'Daun teh dan bunga liar di atas kertas gading, dengan bingkai berukir bersudut filigran.', ['#4a6b2f', '#b99a3a', '#f7f5ea', '#2a3722'], ['display', 'serif']),
   // Tiga desain berwarna dominan: ranting bunga sejajar bingkai (ornamen meadow-art.ts di web).
   d('lavender', 'Ladang Lavender', 'klasik', 'Dahlia, anemon, dan hortensia ungu dengan ranting lavender yang berjalan rapi di tepi bingkai.', ['#6b3fa0', '#c4aef0', '#faf7ff', '#2d2147'], ['script', 'serif']),
-  d('wisteria', 'Wisteria Biru', 'klasik', 'Tandan wisteria biru menjuntai dari dahan di tepi atas, ditemani anemon putih dan forget-me-not.', ['#3f5fb0', '#9fb4f0', '#f6f8ff', '#1a2547'], ['serif', 'serif']),
+  d('hortensia', 'Hortensia Turquoise', 'klasik', 'Hortensia biru tosca dan navy dengan ranting tipis berbunga mungil, di atas putih yang bersih.', ['#0f7a8c', '#6fd4e0', '#f4fbfc', '#0f2f3a'], ['serif', 'serif']),
   d('marigold', 'Marigold Senja', 'klasik', 'Marigold, dahlia, dan poppy oranye hangat dengan buah beri merah dan daun zaitun.', ['#b8500f', '#f6b83a', '#fffaf0', '#4a2410'], ['display', 'serif']),
   d('elegant', 'Elegan Emas', 'klasik', 'Mewah dan bersahaja dengan aksen emas.', ['#b08d3c', '#1f2a44', '#f7f5f0', '#1f2a44'], ['serif', 'serif']),
 
@@ -157,7 +157,7 @@ const DESIGN_GATES: Record<string, GateKind> = {
   'kerajaan-es': 'frost', ceria: 'balloons', 'sakura-anime': 'sakura', dongeng: 'book',
   pixel: 'pressstart', 'player-one': 'loading', rpg: 'door', neon: 'neon',
   hollywood: 'curtain', galaksi: 'portal', sihir: 'portal', paris: 'envelope',
-  buket: 'bouquet', garden: 'taman', lavender: 'sakura', wisteria: 'envelope', marigold: 'leaves', semi: 'bloom', panas: 'waves', gugur: 'leaves', salju: 'frost',
+  buket: 'bouquet', garden: 'taman', lavender: 'sakura', hortensia: 'envelope', marigold: 'leaves', semi: 'bloom', panas: 'waves', gugur: 'leaves', salju: 'frost',
 };
 
 export const DESIGNS: Design[] = BASE_DESIGNS.map((x) => ({ ...x, gate: DESIGN_GATES[x.id]! }));
@@ -257,12 +257,12 @@ const LAVENDER_PALETTES: Palette[] = [
   { id: 'plum-rose', name: 'Plum & Mawar', primary: '#7f3a8a', secondary: '#e8a0c0', background: '#fdf6f9', text: '#3a1a2c' },
   { id: 'indigo-ungu', name: 'Indigo Ungu', primary: '#5a3f9a', secondary: '#9a8fe0', background: '#f6f5fd', text: '#221d4a' },
 ];
-const WISTERIA_PALETTES: Palette[] = [
-  { id: 'wisteria-biru', name: 'Wisteria Biru', primary: '#3f5fb0', secondary: '#9fb4f0', background: '#f6f8ff', text: '#1a2547' },
-  { id: 'periwinkle', name: 'Periwinkle', primary: '#4a55a8', secondary: '#a9b0ee', background: '#f6f6fd', text: '#1f2347' },
-  { id: 'biru-safir', name: 'Biru Safir', primary: '#2a4f9a', secondary: '#8fb0e8', background: '#f4f8fd', text: '#10234a' },
-  { id: 'biru-langit', name: 'Biru Langit', primary: '#34689e', secondary: '#9cc8ec', background: '#f5faff', text: '#162c44' },
-  { id: 'biru-lilac', name: 'Biru Lilac', primary: '#4f4fb0', secondary: '#c0b4f0', background: '#f8f6ff', text: '#25214d' },
+const HORTENSIA_PALETTES: Palette[] = [
+  { id: 'turquoise', name: 'Turquoise', primary: '#0f7a8c', secondary: '#6fd4e0', background: '#f4fbfc', text: '#0f2f3a' },
+  { id: 'tosca-navy', name: 'Tosca & Navy', primary: '#1f5f8f', secondary: '#55c8d6', background: '#f3f9fc', text: '#10283d' },
+  { id: 'biru-laut', name: 'Biru Laut', primary: '#14608a', secondary: '#7ad0e8', background: '#f2f9fd', text: '#0f2c40' },
+  { id: 'teal-mint', name: 'Teal & Mint', primary: '#0f6f78', secondary: '#8fe0d6', background: '#f2fbf9', text: '#0f3036' },
+  { id: 'navy-tosca', name: 'Navy & Tosca', primary: '#1f3f7a', secondary: '#3ec3cf', background: '#f5f8fc', text: '#14203d' },
 ];
 const MARIGOLD_PALETTES: Palette[] = [
   { id: 'jingga', name: 'Jingga Hangat', primary: '#b8500f', secondary: '#f6b83a', background: '#fffaf0', text: '#4a2410' },
@@ -276,7 +276,7 @@ const CURATED_PALETTES: Record<string, Palette[]> = {
   buket: BUKET_PALETTES,
   garden: GARDEN_PALETTES,
   lavender: LAVENDER_PALETTES,
-  wisteria: WISTERIA_PALETTES,
+  hortensia: HORTENSIA_PALETTES,
   marigold: MARIGOLD_PALETTES,
   jawa: JAWA_PALETTES,
   kristiani: [

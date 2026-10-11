@@ -6,7 +6,7 @@ import type { OrnamentKind } from './ornaments';
 export type ParticleKind = 'petal' | 'leaf' | 'maple' | 'snow' | 'heart' | 'star' | 'sparkle' | 'confetti' | 'bubble' | 'firefly' | 'pixel' | 'lantern' | 'bat' | 'coin' | 'dust' | 'feather' | 'blossom' | 'bloomflower';
 export type ParticleMode = 'fall' | 'rise' | 'twinkle' | 'drift';
 export type PatternKind = 'none' | 'dots' | 'kawung' | 'zigzag' | 'diamond' | 'scallop' | 'grid' | 'stars' | 'star8' | 'hearts' | 'leaves' | 'stripes' | 'cross';
-export type FrameKind = 'arch' | 'oval' | 'round' | 'square' | 'diamond' | 'pixel' | 'polaroid' | 'hex' | 'notch' | 'deco' | 'dove' | 'bloom' | 'kayon' | 'garden' | 'sakura' | 'autumn' | 'winter' | 'lavender' | 'wisteria' | 'marigold';
+export type FrameKind = 'arch' | 'oval' | 'round' | 'square' | 'diamond' | 'pixel' | 'polaroid' | 'hex' | 'notch' | 'deco' | 'dove' | 'bloom' | 'kayon' | 'garden' | 'sakura' | 'autumn' | 'winter' | 'lavender' | 'hortensia' | 'marigold';
 export type CountdownKind = 'soft' | 'outline' | 'pixel' | 'neon' | 'ticket' | 'round' | 'flip' | 'luxe' | 'sky' | 'bloom' | 'keraton';
 export type CoverFxKind = 'none' | 'aurora' | 'rays' | 'curtain' | 'scanlines' | 'spotlight' | 'clouds' | 'halo' | 'sky' | 'bloom';
 export type RevealKind = 'rise' | 'zoom' | 'blur' | 'slide';
@@ -108,7 +108,7 @@ export const MOTIFS: Record<string, Motif> = {
   gugur: { ...m('autumn', 'none', 'autumn', 'ticket', 'none', ['maple', 16, 'fall'], 'mid'), cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   // Tiga desain berwarna dominan (ranting bunga sejajar bingkai, meadow-art.ts): ungu, biru, oranye.
   lavender: { ...m('lavender', 'none', 'lavender', 'soft', 'clouds', ['petal', 16, 'fall'], 'soft', 'blur'), heading: 'script', names: 'script', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
-  wisteria: { ...m('wisteria', 'none', 'wisteria', 'outline', 'aurora', ['blossom', 14, 'fall'], 'pill', 'blur'), heading: 'serif', names: 'serif', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
+  hortensia: { ...m('hortensia', 'none', 'hortensia', 'outline', 'aurora', ['blossom', 14, 'fall'], 'pill', 'blur'), heading: 'serif', names: 'serif', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   marigold: { ...m('marigold', 'none', 'marigold', 'ticket', 'rays', ['petal', 16, 'fall'], 'mid', 'rise'), heading: 'display', names: 'script', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   salju: { ...m('winter', 'none', 'winter', 'outline', 'aurora', ['snow', 28, 'fall'], 'mid', 'blur'), cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
 };

@@ -1,4 +1,4 @@
-// Komponen React untuk ornamen tiga undangan berwarna dominan (Lavender, Wisteria, Marigold): sudut, pemisah, ranting, dan bingkai
+// Komponen React untuk ornamen tiga undangan berwarna dominan (Lavender, Hortensia, Marigold): sudut, pemisah, ranting, dan bingkai
 // foto lengkung berhias bunga. Gambarnya dibangkitkan di meadow-art.ts (potongan SVG berupa teks); tiap potongan dihitung sekali di
 // tingkat modul lalu dipasang lewat dangerouslySetInnerHTML (aman: isinya statis, dihasilkan kode ini sendiri, bukan input pengguna).
 // Nada warna bunga dipasang di elemen <svg> sebagai variabel CSS (meadowVars) dan mengikuti --p/--s tema.
@@ -6,7 +6,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { MEADOW_FRAME, meadowCorner, meadowCrown, meadowDivider, meadowSprig, meadowVars } from './meadow-art';
 import type { Meadow } from './meadow-art';
 
-const MEADOWS: Meadow[] = ['lavender', 'wisteria', 'marigold'];
+const MEADOWS: Meadow[] = ['lavender', 'hortensia', 'marigold'];
 const build = (fn: (v: Meadow) => string) => Object.fromEntries(MEADOWS.map((v) => [v, fn(v)])) as Record<Meadow, string>;
 const CORNER = build(meadowCorner);
 const DIVIDER = build(meadowDivider);

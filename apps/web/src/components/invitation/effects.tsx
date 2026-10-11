@@ -440,7 +440,7 @@ export function PhotoFrame({ frame, src, label, placeholders, letterFont, tilt =
     case 'winter':
       return <SeasonFrame season={frame}>{filler('h-56 w-44')}</SeasonFrame>;
     case 'lavender':
-    case 'wisteria':
+    case 'hortensia':
     case 'marigold':
       return <MeadowFrame meadow={frame}>{(cls) => filler(cls)}</MeadowFrame>;
     case 'arch':
