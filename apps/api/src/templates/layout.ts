@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { ADDON, LIMITS } from '../config/constants.js';
 import type { TemplateTier } from '../generated/prisma/client.js';
 import { COVER_KINDS, availableCoverLayouts } from './cover-layouts.js';
+import { artworkManifestSchema } from './artwork.js';
+import type { ArtworkManifest } from './artwork.js';
 import { DESIGNS, GATE_KINDS, baseColors } from './themes.js';
 import type { BodyFont, GateSetting, HeadingFont, Palette } from './themes.js';
 
@@ -72,6 +74,8 @@ export interface TemplateLayout {
   // Tata letak sampul bawaan pilihan admin (terpilih di editor, demo template, dan kartu katalog). Kosong =
   // otomatis (khusus tema untuk Premium, "Foto berbingkai" untuk lainnya). Dibuang bila tidak ada di coverLayouts.
   coverDefault?: string;
+  // Manifest artwork immutable yang ikut disalin ke snapshot saat order dibuat.
+  artwork?: ArtworkManifest;
 }
 
 const f = (
@@ -229,6 +233,7 @@ export const layoutInputSchema = z.object({
     .optional(),
   rsvp: z.object({ allowed: z.boolean().optional() }).optional(), // legacy: diabaikan
   coverDefault: z.string().max(40).optional(),
+  artwork: artworkManifestSchema.optional(),
 });
 
 function isSectionId(id: string): id is SectionId {
@@ -282,6 +287,7 @@ export function normalizeLayout(raw: unknown, category = 'rustic'): TemplateLayo
     palettes: buildPalettes(theme, input.palettes ?? []),
     coverLayouts: [],
     ...(input.coverDefault && COVER_KINDS.includes(input.coverDefault) ? { coverDefault: input.coverDefault } : {}),
+    ...(input.artwork ? { artwork: input.artwork } : {}),
   };
 }
 
@@ -545,5 +551,5 @@ export function toAuthoring(raw: unknown, category = 'rustic') {
     };
   });
   // Palet mentah (tanpa "bawaan" otomatis) supaya round-trip dengan builder tidak menyimpan entri turunan.
-  return { theme: norm.theme, sections, galeri: norm.galeri, musik: norm.musik, palettes: input.palettes ?? [], coverDefault: norm.coverDefault };
+  return { theme: norm.theme, sections, galeri: norm.galeri, musik: norm.musik, palettes: input.palettes ?? [], coverDefault: norm.coverDefault, artwork: norm.artwork };
 }

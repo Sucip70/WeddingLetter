@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { LIMITS } from '../config/constants.js';
 import { layoutInputSchema } from '../templates/layout.js';
+import { ARTWORK_SLOTS, ARTWORK_VARIANTS, DEFAULT_ARTWORK_PRESENTATION, artworkFallbackSchema, artworkPresentationSchema } from '../templates/artwork.js';
 
 export const templateBaseSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -54,4 +55,26 @@ export const assetPresignSchema = z.object({
   kind: z.enum(['image', 'audio']),
   contentType: z.string().min(1).max(100),
   sizeBytes: z.number().int().positive(),
+});
+
+export const artworkDraftSchema = z.object({
+  designId: z.string().regex(/^[a-z0-9-]{2,80}$/).optional(),
+});
+
+export const artworkUploadSchema = z.object({
+  slot: z.enum(ARTWORK_SLOTS),
+  variant: z.enum(ARTWORK_VARIANTS).default('default'),
+  contentType: z.enum(['image/webp', 'image/png', 'image/avif']),
+  sizeBytes: z.number().int().positive().max(12 * 1024 * 1024),
+});
+
+export const artworkConfirmSchema = z.object({
+  slot: z.enum(ARTWORK_SLOTS),
+  variant: z.enum(ARTWORK_VARIANTS).default('default'),
+  storageKey: z.string().max(300),
+});
+
+export const artworkPublishSchema = z.object({
+  presentation: artworkPresentationSchema.default(DEFAULT_ARTWORK_PRESENTATION),
+  fallback: artworkFallbackSchema,
 });

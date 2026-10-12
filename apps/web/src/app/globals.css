@@ -850,3 +850,28 @@ body {
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--p) 30%, transparent), 0 18px 24px -20px color-mix(in srgb, var(--p) 60%, transparent);
 }
 .wl-garden .wl-quote { font-style: italic; font-size: 1.3rem; line-height: 1.55; }
+/* Painterly seasonal foregrounds: a very small GPU-only drift adds depth without
+   animating the large background bitmap. Reduced-motion keeps them completely still. */
+.wl-art-breathe {
+  transform-origin: 50% 100%;
+  animation: wl-art-breathe 9s ease-in-out infinite alternate;
+  filter: drop-shadow(0 -8px 18px rgba(58, 42, 35, 0.08));
+}
+
+@keyframes wl-art-breathe {
+  from { transform: translate3d(0, 2px, 0) scale(1.015); }
+  to { transform: translate3d(0, -3px, 0) scale(1.025); }
+}
+
+.wl-art-float {
+  animation: wl-art-float 7s ease-in-out infinite alternate;
+}
+
+@keyframes wl-art-float {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(0, -8px, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wl-art-breathe, .wl-art-float { animation: none; transform: none; }
+}

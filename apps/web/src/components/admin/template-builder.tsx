@@ -8,11 +8,12 @@ import { Alert, Badge, Button, Card, Field, Input, Select, Toggle, cn } from '@/
 import { api, errorMessage, uploadWithProgress } from '@/lib/client-api';
 import { COVER_LAYOUTS, coverLayoutsFor, defaultCoverLayout } from '@/lib/cover-layouts';
 import { TierPanel } from './tier-panel';
+import { ArtworkManager } from './artwork-manager';
 import type { TierRow } from './tier-panel';
 import { sampleView } from '@/lib/sample';
 import type { DemoPhotos } from '@/lib/sample';
 import { FX_LABEL } from '@/lib/catalog';
-import type { FieldType, FxLevel, GateSetting, Palette, Theme, ThemeGroup } from '@/lib/types';
+import type { ArtworkManifest, FieldType, FxLevel, GateSetting, Palette, Theme, ThemeGroup } from '@/lib/types';
 
 export interface AuthField { key: string; type: FieldType; label: string; required: boolean; enabled: boolean }
 export interface AuthSection { id: string; title: string; enabled: boolean; fields: AuthField[] }
@@ -24,6 +25,7 @@ export interface Authoring {
   palettes: Palette[];
   // Tata letak sampul bawaan (kosong = otomatis). Lihat coverDefault di apps/api/src/templates/layout.ts.
   coverDefault?: string;
+  artwork?: ArtworkManifest;
 }
 export interface TemplateForm {
   id?: string;
@@ -99,6 +101,7 @@ function toPreviewLayout(l: Authoring) {
     theme: l.theme,
     sections: l.sections.filter((s) => s.enabled).map((s) => ({ id: s.id, title: s.title, fields: s.fields.filter((f) => f.enabled).map((f) => ({ key: f.key, label: f.label, type: f.type, required: f.required })) })),
     musik: l.musik,
+    artwork: l.artwork,
   };
 }
 
@@ -111,6 +114,7 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
   const [error, setError] = useState('');
   const [saved, setSaved] = useState('');
   const [uploading, setUploading] = useState('');
+  const [artworkPreview, setArtworkPreview] = useState<ArtworkManifest | undefined>();
   const thumbInput = useRef<HTMLInputElement>(null);
   const songInput = useRef<HTMLInputElement>(null);
 
@@ -133,8 +137,8 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
   // Bawaan yang tersimpan tapi tidak lagi tersedia (paket/desain diganti) diperlakukan sebagai "Otomatis".
   const coverDefault = layout.coverDefault && coverKinds.some((k) => k === layout.coverDefault) ? layout.coverDefault : undefined;
   const view = useMemo(
-    () => sampleView({ ...toPreviewLayout(layout), galeri: layout.galeri, coverLayouts: coverKinds, coverDefault }, { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }, photos),
-    [layout, photos, coverKinds, coverDefault],
+    () => sampleView({ ...toPreviewLayout(layout), artwork: artworkPreview ?? layout.artwork, galeri: layout.galeri, coverLayouts: coverKinds, coverDefault }, { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }, photos),
+    [layout, artworkPreview, photos, coverKinds, coverDefault],
   );
 
   const design = meta.designs.find((d) => d.id === layout.theme.motif) ?? meta.designs.find((d) => d.id === layout.theme.preset);
@@ -209,6 +213,7 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
         galeri: { maxPhotos: Number(layout.galeri.maxPhotos), maxVideos: Number(layout.galeri.maxVideos) },
         musik: layout.musik,
         palettes: layout.palettes,
+        artwork: layout.artwork,
         coverDefault,
       },
     };
@@ -408,6 +413,15 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
               <Field label="Video gratis (≤ 20 MB)" hint="Video di atas kuota dihitung sewa ukuran × minggu."><Input type="number" min={0} max={10} value={layout.galeri.maxVideos} onChange={(e) => setLayout({ galeri: { ...layout.galeri, maxVideos: Number(e.target.value) } })} /></Field>
             </div>
           </Card>
+
+          {form.id && (
+            <ArtworkManager
+              templateId={form.id}
+              current={layout.artwork}
+              onPreview={setArtworkPreview}
+              onPublished={(artwork) => setLayout({ artwork })}
+            />
+          )}
 
           <Card className="p-5">
             <div className="flex items-center justify-between gap-4">

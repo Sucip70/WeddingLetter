@@ -25,6 +25,7 @@ import { BloomMini, FloralMonogram, garlandCss, miniBloomCss } from './bloom-par
 import { KERATON_BG, keratonVars } from './batik-art';
 import { Gunungan } from './gunungan-art';
 import { MeadowGhost } from './meadow-parts';
+import { TemplateArtwork } from './template-artwork';
 
 export interface InvitationViewProps {
   view: InvitationViewData;
@@ -46,6 +47,7 @@ interface ThemeCtx {
   fx: 'none' | 'standard' | 'premium';
   radius: (typeof RADIUS)[keyof typeof RADIUS];
   sectionFont: CSSProperties;
+  artwork?: InvitationViewData['layout']['artwork'];
 }
 const ThemeContext = createContext<ThemeCtx | null>(null);
 const useTheme = () => {
@@ -98,8 +100,13 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const { data } = view;
   // Snapshot lama (sebelum ada motif/fx) tetap dirender: motif mengikuti preset, tanpa animasi.
   const motif = motifFor(theme.motif ?? theme.preset);
+  const artwork = view.layout.artwork;
+  const [artworkFailed, setArtworkFailed] = useState(false);
+  const hasCoverArtwork = !!artwork && !artworkFailed && !!(artwork.assets.coverBackground || artwork.assets.coverForeground);
   const fx = theme.fx ?? 'none';
-  const orn = ORNAMENTS[motif.ornament];
+  const orn = ORNAMENTS[artwork?.fallback.ornament ?? motif.ornament];
+  const coverEffect = artwork?.fallback.coverEffect ?? motif.cover;
+  const particleKind = artwork?.fallback.particle ?? motif.particles.kind;
   const radius = RADIUS[motif.radius];
   const hf = HEADING[motif.heading ?? theme.headingFont] ?? HEADING.serif;
   const bf = BODY[motif.body ?? theme.bodyFont] ?? BODY.serif;
@@ -330,7 +337,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 
   useReveal(rootRef, fx !== 'none', embedded, visible.map((s) => s.id).join(',') + galleryPhotos.length);
 
-  const themeCtx: ThemeCtx = { orn, motif, fx, radius, sectionFont };
+  const themeCtx: ThemeCtx = { orn, motif, fx, radius, sectionFont, artwork };
   const animated = fx !== 'none';
   // Animasi masuk sampul bertahap (var(--d)); tanpa efek: langsung tampil.
   const enter = (ms: number) => (animated ? { className: 'wl-enter', style: { '--d': `${ms}ms` } as CSSProperties } : { className: '', style: undefined });
@@ -347,14 +354,14 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     <div key={coverKey} className="pointer-events-none absolute inset-0" style={{ color: 'var(--p)' }} aria-hidden>
       {kraft && <div className="wl-cover-stitch" />}
       {garden && <GardenPageFrame />}
-      {motif.pageFrame && <MeadowPageFrame meadow={motif.pageFrame} />}
+      {motif.pageFrame && !hasCoverArtwork && <MeadowPageFrame meadow={motif.pageFrame} />}
       {gilded && ['t h', 'b h', 'l v', 'r v', 't h i', 'b h i', 'l v i', 'r v i'].map((c) => <span key={c} className={`wl-gf ${c}`} />)}
-      <div className={gilded ? 'wl-corner-in' : undefined}>
+      {!hasCoverArtwork && <div className={gilded ? 'wl-corner-in' : undefined}>
         <orn.Corner className={`${cornerTop} ${keraton ? 'left-[30px] top-[30px]' : 'left-2 top-2'}`} rotate={0} />
         <orn.Corner className={`${cornerTop} ${keraton ? 'right-[30px] top-[30px]' : 'right-2 top-2'}`} rotate={90} />
         <orn.Corner className={`${cornerBottom} ${keraton ? 'bottom-[30px] right-[30px]' : 'bottom-2 right-2'}`} rotate={180} />
         <orn.Corner className={`${cornerBottom} ${keraton ? 'bottom-[30px] left-[30px]' : 'bottom-2 left-2'}`} rotate={270} />
-      </div>
+      </div>}
     </div>
   );
   // Tulisan/tombol di sampul berwarna putih bila latarnya foto atau adegan gelap.
@@ -370,13 +377,14 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         data-gate={coverKey === 'gate' ? 'closed' : undefined}
         // Terpasang sejak render server: keadaan awal "tersembunyi" sudah aktif sebelum hidrasi, jadi tidak ada kedipan.
         data-armed={animated ? '' : undefined}
-        className={`wl-root ${skin ? `wl-${skin}` : ''} ${embedded ? 'phone-scroll relative h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}
+        className={`wl-root relative ${skin ? `wl-${skin}` : ''} ${embedded ? 'phone-scroll h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}
       >
         {animated && (
           <noscript>
             <style>{'.wl-root[data-armed] .wl-reveal{opacity:1!important;transform:none!important;filter:none!important}'}</style>
           </noscript>
         )}
+        {artwork?.assets.pageBackground && <TemplateArtwork artwork={artwork} context="page" />}
         {gateActive && gateKind && (
           <Gate
             kind={gateKind}
@@ -387,6 +395,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             guest={mode === 'live' ? guest : null}
             pattern={motif.pattern}
             motif={theme.motif ?? theme.preset}
+            artwork={artwork}
             headingFamily={nf.family}
             onOpen={openGate}
           />
@@ -405,7 +414,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         {fx === 'premium' && (!gateKind || coverKey === 'open') && (
           <div className="pointer-events-none sticky top-0 z-[5] h-0" style={keraton ? { color: 'var(--s)' } : undefined} aria-hidden>
             <div className="relative" style={{ height: layerHeight }}>
-              <Particles kind={motif.particles.kind} count={particleCount} mode={motif.particles.mode} height={layerHeight} enter={!!gateKind} />
+              <Particles kind={particleKind} count={particleCount} mode={motif.particles.mode} height={layerHeight} enter={!!gateKind} />
             </div>
           </div>
         )}
@@ -422,6 +431,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               style={{ background: coverBackground }}
             />
           )}
+          <TemplateArtwork artwork={artwork} context="cover" hasUserPhoto={!!(coverPhoto || photoCover)} onAssetError={() => setArtworkFailed(true)} />
           {photoCover ? (
             <CoverLayout
               key={coverKey}
@@ -444,8 +454,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               decor={
                 <>
                   {animated && <PatternLayer kind={motif.pattern} opacity={0.1} />}
-                  {animated && <CoverFx kind={motif.cover} animate />}
-                  {fx === 'standard' && <Particles kind={motif.particles.kind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />}
+                  {animated && <CoverFx kind={coverEffect} animate />}
+                  {fx === 'standard' && <Particles kind={particleKind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />}
                 </>
               }
               corners={cornersNode}
@@ -466,8 +476,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                 </>
               )}
               {animated && !coverPhoto && <PatternLayer kind={motif.pattern} opacity={0.1} />}
-              {animated && <CoverFx kind={motif.cover} animate />}
-              {fx === 'standard' && <Particles kind={motif.particles.kind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />}
+              {animated && <CoverFx kind={coverEffect} animate />}
+              {fx === 'standard' && <Particles kind={particleKind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />}
               {!coverPhoto && cornersNode}
             </>
           )}
@@ -600,6 +610,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                           )}
                           <div className={`relative ${fx === 'premium' ? 'wl-float' : ''}`} style={fx === 'premium' ? { animationDelay: `${i * -2}s` } : undefined}>
                             <PhotoFrame frame={motif.frame} src={photo} label={nick} placeholders={placeholders} letterFont="var(--font-script)" tilt={i ? 2.5 : -2.5} photoRadius={radius.photo} />
+                            <TemplateArtwork artwork={artwork} context="photo" />
                             {!bloom && (
                               <div className={`absolute -bottom-3 w-20 ${i ? '-right-6' : '-left-6'}`} style={{ color: 'var(--p)' }}>
                                 <orn.Sprig className="w-20" flip={!!i} />
@@ -827,19 +838,20 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 }
 
 function Block({ title, children, headingStyle, tint }: { title: string; children: ReactNode; headingStyle: CSSProperties; tint?: string }) {
-  const { orn, motif, fx, sectionFont } = useTheme();
+  const { orn, motif, fx, sectionFont, artwork } = useTheme();
   const ghost = motif.ornament === 'hortensia';
   return (
     <section className={`wl-block relative px-6 py-16 ${tint ? 'wl-tint' : ''} ${ghost ? 'overflow-hidden' : ''}`} style={{ background: tint }}>
+      <TemplateArtwork artwork={artwork} context="section" />
       {ghost && <MeadowGhost meadow="hortensia" />}
       {tint && fx !== 'none' && <PatternLayer kind={motif.pattern} opacity={0.05} />}
-      <div className="wl-reveal relative mb-10 text-center">
+      <div className="wl-reveal relative z-[1] mb-10 text-center">
         <h2 className={motif.skin === 'gilded' ? 'wl-heading' : undefined} style={{ ...headingStyle, ...sectionFont }}>{title}</h2>
         <div style={{ color: 'var(--p)' }}>
           <orn.Divider className={motif.skin === 'gilded' ? 'mx-auto mt-4 w-36' : motif.skin === 'keraton' ? 'mx-auto mt-4 w-48' : motif.skin === 'bloom' ? 'mx-auto mt-0 w-60' : 'mx-auto mt-3 w-28'} />
         </div>
       </div>
-      <div className="relative">{children}</div>
+      <div className="relative z-[1]">{children}</div>
     </section>
   );
 }

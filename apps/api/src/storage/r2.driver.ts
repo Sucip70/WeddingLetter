@@ -1,4 +1,4 @@
-import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import type { PresignedUpload, StorageDriver } from './storage.types.js';
 
@@ -34,8 +34,19 @@ export class R2Driver implements StorageDriver {
     return { uploadUrl, method: 'PUT', headers: { 'Content-Type': contentType }, expiresInSeconds: PRESIGN_TTL_SECONDS };
   }
 
-  async put(key: string, body: Buffer, contentType: string) {
-    await this.client.send(new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: body, ContentType: contentType }));
+  async put(key: string, body: Buffer, contentType: string, cacheControl?: string) {
+    await this.client.send(new PutObjectCommand({ Bucket: this.bucket, Key: key, Body: body, ContentType: contentType, CacheControl: cacheControl }));
+  }
+
+  async get(key: string) {
+    try {
+      const response = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }));
+      return response.Body ? Buffer.from(await response.Body.transformToByteArray()) : null;
+    } catch (error) {
+      const status = (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
+      if (status === 404 || (error as Error).name === 'NoSuchKey') return null;
+      throw error;
+    }
   }
 
   async head(key: string) {
