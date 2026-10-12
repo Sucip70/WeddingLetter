@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "designId": "semi",
+  "artworkVersion": 1,
+  "title": "Spring Botanical",
+  "assets": {
+    "coverBackground": "cover-background.webp",
+    "coverForeground": "cover-foreground.webp",
+    "gateBackground": "gate-background.webp",
+    "gateForeground": "gate-foreground.webp",
+    "pageBackground": "page-background.webp",
+    "sectionBackground": "section-background.webp",
+    "bottomDecoration": "bottom-decoration.webp",
+    "divider": "divider.webp",
+    "photoFrame": "photo-frame.webp",
+    "thumbnail": "thumbnail.webp",
+    "preview": "production-preview.webp"
+  },
+  "presentation": {
+    "backgroundFit": "cover",
+    "backgroundPosition": "center-top",
+    "gateBackgroundPosition": "center",
+    "foregroundPosition": "bottom-center",
+    "foregroundMotion": "breathe",
+    "contentDecorationDensity": "quiet",
+    "showOnPhotoCover": false
+  },
+  "fallback": {
+    "ornament": "sakura",
+    "coverEffect": "clouds",
+    "particle": "petal"
+  },
+  "palette": ["#e88fb0", "#9bc48f", "#fff8fa", "#4a3040"]
+}
+
