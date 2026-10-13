@@ -72,6 +72,12 @@ const FONT_LABEL: Record<string, string> = {
 const BODY_LABEL: Record<string, string> = { sans: 'Sans modern', serif: 'Serif klasik', round: 'Bulat ceria' };
 const FX_ORDER: FxLevel[] = ['none', 'standard', 'premium'];
 const HEX = /^#[0-9a-fA-F]{6}$/;
+const SEASONAL_PREMIUM_GATE_LABEL: Record<string, string> = {
+  semi: 'Vellum Blossom',
+  panas: 'Golden Tide',
+  gugur: 'Letter in the Wind',
+  salju: 'Frosted Monogram',
+};
 
 const themeOf = (d: DesignMeta, fx: FxLevel, gate: GateSetting): Theme => ({ preset: d.id, motif: d.id, fx, gate, primary: d.primary, secondary: d.secondary, background: d.background, text: d.text, headingFont: d.headingFont, bodyFont: d.bodyFont });
 
@@ -142,6 +148,10 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
   );
 
   const design = meta.designs.find((d) => d.id === layout.theme.motif) ?? meta.designs.find((d) => d.id === layout.theme.preset);
+  const seasonalGateLabel = form.tier === 'PREMIUM' && design?.group === 'musim' ? SEASONAL_PREMIUM_GATE_LABEL[design.id] : undefined;
+  const gateValue = seasonalGateLabel && design
+    ? (layout.theme.gate ?? 'none') === 'none' ? 'none' : design.gate
+    : layout.theme.gate ?? 'none';
   // Ganti desain: warna, font, motif, dan usulan palet ikut berganti.
   function applyDesign(id: string) {
     const d = meta.designs.find((x) => x.id === id);
@@ -307,10 +317,17 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
               <Field label="Level animasi" hint="Tanpa = tampilan statis (Basic). Standar = animasi masuk & partikel di sampul. Penuh = partikel di seluruh halaman, kilau, dan gerak tambahan.">
                 <Select value={layout.theme.fx} onChange={(e) => setTheme({ fx: e.target.value as FxLevel })}>{FX_ORDER.map((v) => <option key={v} value={v}>{FX_LABEL[v]}</option>)}</Select>
               </Field>
-              <Field label="Gerbang pembuka" hint="Halaman pertama undangan: adegan animasi yang harus diketuk sebelum sampul terlihat. Dirancang untuk Premium. Di pratinjau kanan, gunakan tombol Putar ulang gerbang.">
-                <Select value={layout.theme.gate ?? 'none'} onChange={(e) => setTheme({ gate: e.target.value as GateSetting })}>
+              <Field
+                label="Gerbang pembuka"
+                hint={seasonalGateLabel
+                  ? `${seasonalGateLabel} adalah gerbang khusus desain Seasonal Premium ini. Di pratinjau kanan, gunakan tombol Putar ulang gerbang.`
+                  : 'Halaman pertama undangan: adegan animasi yang harus diketuk sebelum sampul terlihat. Dirancang untuk Premium. Di pratinjau kanan, gunakan tombol Putar ulang gerbang.'}
+              >
+                <Select value={gateValue} onChange={(e) => setTheme({ gate: e.target.value as GateSetting })}>
                   <option value="none">Tanpa gerbang</option>
-                  {meta.gates.map((g) => <option key={g.id} value={g.id}>{g.label}{design?.gate === g.id ? ' (bawaan desain)' : ''}</option>)}
+                  {seasonalGateLabel && design
+                    ? <option value={design.gate}>{seasonalGateLabel} (bawaan Seasonal Premium)</option>
+                    : meta.gates.map((g) => <option key={g.id} value={g.id}>{g.label}{design?.gate === g.id ? ' (bawaan desain)' : ''}</option>)}
                 </Select>
               </Field>
               <Field

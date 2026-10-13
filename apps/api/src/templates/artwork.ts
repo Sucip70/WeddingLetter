@@ -4,7 +4,7 @@ export const ARTWORK_SLOTS = [
   'coverBackground', 'coverForeground', 'pageBackground', 'sectionBackground',
   'topDecoration', 'bottomDecoration', 'cornerTopLeft', 'cornerTopRight',
   'cornerBottomLeft', 'cornerBottomRight', 'divider', 'photoFrame', 'texture',
-  'thumbnail', 'gateBackground', 'gateForeground',
+  'thumbnail', 'gateBackground', 'gateForeground', 'gateTransition', 'gateInteractive',
 ] as const;
 export type ArtworkSlot = (typeof ARTWORK_SLOTS)[number];
 
@@ -16,8 +16,8 @@ export const ARTWORK_FALLBACK_PARTICLES = ['petal', 'leaf', 'maple', 'snow', 'he
 
 export const artworkSourceSchema = z.object({
   url: z.string().max(700),
-  storageKey: z.string().regex(/^templates\/[a-z0-9-]{2,80}\/v[1-9]\d*\/[a-z0-9-]+\.(webp|avif)$/).optional(),
-  contentType: z.enum(['image/webp', 'image/avif']),
+  storageKey: z.string().regex(/^templates\/[a-z0-9-]{2,80}\/v[1-9]\d*\/[a-z0-9-]+\.(webp|png|avif)$/).optional(),
+  contentType: z.enum(['image/webp', 'image/png', 'image/avif']),
   width: z.number().int().min(16).max(12000),
   height: z.number().int().min(16).max(12000),
   sizeBytes: z.number().int().positive().max(12 * 1024 * 1024),

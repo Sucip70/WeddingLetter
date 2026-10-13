@@ -77,7 +77,7 @@ async function publishTier(design: (typeof DESIGNS)[number], tierSpec: (typeof T
   });
   const version = alreadyPublished?.version ?? ((versions.at(-1)?.version ?? 0) + 1);
 
-  const inherited = artworkManifestSchema.safeParse(matching[0].artworkVersion?.manifest ?? (matching[0].layoutSchema as Record<string, unknown>).artwork);
+  const inherited = artworkManifestSchema.safeParse(alreadyPublished?.manifest ?? matching[0].artworkVersion?.manifest ?? (matching[0].layoutSchema as Record<string, unknown>).artwork);
   const retainedAssets = inherited.success
     ? Object.fromEntries(Object.entries(inherited.data.assets).filter(([slot]) => !REPLACED_SLOTS.has(slot as ArtworkSlot)))
     : {};

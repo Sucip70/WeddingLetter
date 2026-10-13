@@ -9,6 +9,7 @@ import type { InvitationViewData } from '@/lib/types';
 import { STRINGS } from './i18n';
 import type { Lang, Strings } from './i18n';
 import { GATE_MS, Gate, REVEALS_COVER, REVEAL_DELAY_MS } from './gates';
+import { hasSeasonalGate, SEASONAL_GATE_MS } from './seasonal-gate';
 import type { GatePhase } from './gates';
 import { isCoverKind, resolveCover } from '@/lib/cover-layouts';
 import { CoverLayout, isLightCover } from './cover';
@@ -26,6 +27,7 @@ import { KERATON_BG, keratonVars } from './batik-art';
 import { Gunungan } from './gunungan-art';
 import { MeadowGhost } from './meadow-parts';
 import { TemplateArtwork } from './template-artwork';
+import { SeasonalCoverLayout } from './seasonal-cover';
 
 export interface InvitationViewProps {
   view: InvitationViewData;
@@ -160,6 +162,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   // ----- Gerbang pembuka -----
   const gateKind = theme.gate && theme.gate !== 'none' ? theme.gate : null;
   const gateMode = gate ?? (mode === 'live' ? 'show' : 'skip');
+  const seasonalGate = hasSeasonalGate(artwork, theme.motif ?? theme.preset);
   const [gatePhase, setGatePhase] = useState<GatePhase | 'open'>(gateKind && gateMode === 'show' ? 'closed' : 'open');
   const gateTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // Jeda animasi masuk sampul (ms) untuk gerbang yang menyingkap sampul belakangan; dipertahankan sampai diputar ulang
@@ -212,11 +215,12 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     setGatePhase('opening');
     setRevealDelay(REVEAL_DELAY_MS[gateKind] ?? 0);
     const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const duration = seasonalGate ? SEASONAL_GATE_MS[artwork.designId as keyof typeof SEASONAL_GATE_MS] : GATE_MS[gateKind];
     gateTimer.current = setTimeout(() => {
       setGatePhase('open');
       if (live) startMusic();
-    }, reduced ? 350 : GATE_MS[gateKind]);
-  }, [gateKind, gatePhase, mode, unlockMusic, startMusic]);
+    }, reduced ? (seasonalGate ? 220 : 350) : duration);
+  }, [gateKind, gatePhase, mode, unlockMusic, startMusic, seasonalGate, artwork]);
 
   const replayGate = useCallback(() => {
     clearTimeout(gateTimer.current);
@@ -308,6 +312,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
       : null;
   const coverPhoto = coverKind === 'ornamen' ? undefined : uploadedCover;
   const photoCover = coverKind && coverKind !== 'ornamen' ? coverKind : null;
+  const seasonalPhotoCover = finalSeasonalCover && photoCover && artwork && ['semi', 'panas', 'gugur', 'salju'].includes(artwork.designId);
 
   const galleryPhotos = list(data, 'galeri', 'foto').map(url).filter((x): x is string => !!x);
   const galleryVideos = list(data, 'galeri', 'video').map(url).filter((x): x is string => !!x);
@@ -435,8 +440,29 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               style={{ background: coverBackground }}
             />
           )}
-          <TemplateArtwork artwork={artwork} context="cover" hasUserPhoto={!!(coverPhoto || photoCover)} onAssetError={() => setArtworkFailed(true)} />
-          {photoCover ? (
+          {!seasonalPhotoCover && <TemplateArtwork artwork={artwork} context="cover" hasUserPhoto={!!(coverPhoto || photoCover)} onAssetError={() => setArtworkFailed(true)} />}
+          {seasonalPhotoCover ? (
+            <SeasonalCoverLayout
+              key={coverKey}
+              kind={photoCover}
+              designId={artwork.designId as 'semi' | 'panas' | 'gugur' | 'salju'}
+              artwork={artwork}
+              photo={uploadedCover}
+              groom={url(str(data, 'mempelai', 'pria_foto'))}
+              bride={url(str(data, 'mempelai', 'wanita_foto'))}
+              kicker={kicker}
+              names={names}
+              dateText={shortDate}
+              guest={mode === 'live' || placeholders ? { dear: t.dear, name: guest ?? t.guestFallback } : null}
+              openLabel={openLabel}
+              onOpen={open}
+              heading={{ family: nf.family, weight: nf.weight, tracking: nf.tracking, upper: nf.upper }}
+              animated={animated}
+              premium={fx === 'premium'}
+              buttonRadius="var(--rb)"
+              onAssetError={() => setArtworkFailed(true)}
+            />
+          ) : photoCover ? (
             <CoverLayout
               key={coverKey}
               kind={photoCover}
