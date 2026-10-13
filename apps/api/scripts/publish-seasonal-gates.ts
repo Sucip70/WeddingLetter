@@ -18,6 +18,15 @@ const FILES = [
   { slot: 'gateTransition' as const, filename: 'transition-layer.png', contentType: 'image/png' as const },
   { slot: 'gateInteractive' as const, filename: 'interactive-object.png', contentType: 'image/png' as const },
 ];
+type UploadedAsset = {
+  slot: ArtworkSlot;
+  variant: 'default';
+  storageKey: string;
+  contentType: (typeof FILES)[number]['contentType'];
+  sizeBytes: number;
+  width: number;
+  height: number;
+};
 const REPLACED = new Set<ArtworkSlot>(['gateBackground', 'gateForeground', 'gateTransition', 'gateInteractive']);
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
@@ -72,7 +81,7 @@ async function publish(designId: (typeof DESIGNS)[number]) {
     return;
   }
 
-  const uploaded = [];
+  const uploaded: UploadedAsset[] = [];
   for (const asset of prepared) {
     const storageKey = `templates/${designId}/v${version}/${asset.filename}`;
     const head = await storage.head(storageKey);
