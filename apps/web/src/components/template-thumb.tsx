@@ -49,7 +49,7 @@ export function TemplateThumb({
 }) {
   if (imageUrl) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={imageUrl} alt="" className={`h-full w-full object-cover ${className}`} />;
+    return <img src={imageUrl} alt="" className={`h-full w-full object-contain ${className}`} />;
   }
   const motif = motifFor(theme.motif ?? theme.preset);
   const orn = ORNAMENTS[motif.ornament];

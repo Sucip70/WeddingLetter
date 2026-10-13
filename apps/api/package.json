@@ -24,6 +24,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
+    "artwork:seasonal": "tsx scripts/publish-seasonal-artwork.ts",
     "demo:photos": "tsx scripts/demo-photos.ts"
   },
   "dependencies": {

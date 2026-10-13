@@ -103,6 +103,9 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const artwork = view.layout.artwork;
   const [artworkFailed, setArtworkFailed] = useState(false);
   const hasCoverArtwork = !!artwork && !artworkFailed && !!(artwork.assets.coverBackground || artwork.assets.coverForeground);
+  const coverArtworkKey = artwork?.assets.coverBackground?.default?.storageKey ?? artwork?.assets.coverBackground?.mobile?.storageKey ?? '';
+  const finalSeasonalCover = hasCoverArtwork && ['semi', 'panas', 'gugur', 'salju'].includes(artwork?.designId ?? '')
+    && /\/cover-(standard|premium)\.webp$/.test(coverArtworkKey);
   const fx = theme.fx ?? 'none';
   const orn = ORNAMENTS[artwork?.fallback.ornament ?? motif.ornament];
   const coverEffect = artwork?.fallback.coverEffect ?? motif.cover;
@@ -344,6 +347,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const kicker = (lang === 'id' && motif.copy?.kicker) || t.weddingOf;
   const openLabel = (lang === 'id' && motif.copy?.open) || t.open;
   const particleCount = fx === 'premium' ? motif.particles.count : Math.round(motif.particles.count * 0.6);
+  const finalParticleCount = artwork?.designId === 'semi' ? 8 : artwork?.designId === 'gugur' ? 6 : artwork?.designId === 'salju' ? 8 : 0;
   const coverInk = coverPhoto ? '#fff' : 'var(--p)';
   const cornerBase = `absolute ${fx === 'premium' ? 'wl-breathe' : ''}`;
   const cornerTop = `${cornerBase} ${motif.cornerSize?.top ?? 'w-24'}`;
@@ -411,10 +415,10 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 
         {/* Premium: partikel melayang di seluruh halaman (lapisan lengket seukuran layar). Dengan gerbang, baru
             dipasang saat sampul mulai terlihat dan masuk bertahap dari tepi layar, bukan muncul di tengah. */}
-        {fx === 'premium' && (!gateKind || coverKey === 'open') && (
+        {fx === 'premium' && (!gateKind || coverKey === 'open') && (!finalSeasonalCover || finalParticleCount > 0) && (
           <div className="pointer-events-none sticky top-0 z-[5] h-0" style={keraton ? { color: 'var(--s)' } : undefined} aria-hidden>
             <div className="relative" style={{ height: layerHeight }}>
-              <Particles kind={particleKind} count={particleCount} mode={motif.particles.mode} height={layerHeight} enter={!!gateKind} />
+              <Particles kind={particleKind} count={finalSeasonalCover ? finalParticleCount : particleCount} mode={motif.particles.mode} height={layerHeight} enter={!!gateKind} />
             </div>
           </div>
         )}
@@ -422,7 +426,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         {/* ===== Sampul ===== */}
         <section
           ref={coverRef}
-          className="relative flex flex-col items-center justify-center overflow-hidden px-8 text-center"
+          className={`relative flex flex-col items-center justify-center overflow-hidden px-8 text-center ${finalSeasonalCover ? 'wl-final-seasonal-cover' : ''}`}
           style={{ ...(embedded ? { height: '100%' } : { minHeight: '100svh' }), ...(revealDelay ? { '--gd': `${revealDelay}ms` } : null) } as CSSProperties}
         >
           {coverPhoto || photoCover ? null : (
@@ -453,9 +457,9 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               base={<div className="absolute inset-0" style={{ background: coverBackground }} />}
               decor={
                 <>
-                  {animated && <PatternLayer kind={motif.pattern} opacity={0.1} />}
-                  {animated && <CoverFx kind={coverEffect} animate />}
-                  {fx === 'standard' && <Particles kind={particleKind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />}
+                  {animated && !finalSeasonalCover && <PatternLayer kind={motif.pattern} opacity={0.1} />}
+                  {animated && !finalSeasonalCover && <CoverFx kind={coverEffect} animate />}
+                  {fx === 'standard' && !finalSeasonalCover && <Particles kind={particleKind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />}
                 </>
               }
               corners={cornersNode}
@@ -475,13 +479,13 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                   <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15) 40%, rgba(0,0,0,.6))' }} />
                 </>
               )}
-              {animated && !coverPhoto && <PatternLayer kind={motif.pattern} opacity={0.1} />}
-              {animated && <CoverFx kind={coverEffect} animate />}
-              {fx === 'standard' && <Particles kind={particleKind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />}
+              {animated && !coverPhoto && !finalSeasonalCover && <PatternLayer kind={motif.pattern} opacity={0.1} />}
+              {animated && !finalSeasonalCover && <CoverFx kind={coverEffect} animate />}
+              {fx === 'standard' && !finalSeasonalCover && <Particles kind={particleKind} count={particleCount} mode={motif.particles.mode} height={layerHeight} />}
               {!coverPhoto && cornersNode}
             </>
           )}
-          {motif.ornament === 'romantic' && <div key={`ff-${coverKey}`} className="pointer-events-none absolute inset-0 z-[3]" style={{ color: 'var(--p)' }}><FloralPageFrame /></div>}
+          {motif.ornament === 'romantic' && !finalSeasonalCover && <div key={`ff-${coverKey}`} className="pointer-events-none absolute inset-0 z-[3]" style={{ color: 'var(--p)' }}><FloralPageFrame /></div>}
 
           {view.features.english && (
             <button
@@ -495,7 +499,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
           )}
 
           {!photoCover && (
-          <div key={coverKey} className="relative z-[4] flex flex-col items-center" style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
+          <div key={coverKey} className={`relative z-[4] flex flex-col items-center ${finalSeasonalCover ? 'wl-final-seasonal-content' : ''}`} style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
             {bloom && !coverPhoto && showMono && (
               <div className={`mb-1 ${enter(0).className}`} style={enter(0).style}>
                 <FloralMonogram a={monoA} b={monoB} size={128} />
@@ -514,14 +518,14 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             {keraton && !coverPhoto && (
               <p className={`wl-foil wl-aksara mb-1 ${enter(0).className}`} style={enter(0).style} lang="jv">{AKSARA}</p>
             )}
-            <p className={`text-xs uppercase tracking-[0.35em] opacity-80 ${enter(100).className}`} style={{ ...(gilded ? kickerStyle : bloom ? kickerBloom : keraton ? kickerKr : null), ...enter(100).style }}>{kicker}</p>
+            <p className={`wl-cover-kicker text-xs uppercase tracking-[0.35em] opacity-80 ${enter(100).className}`} style={{ ...(gilded ? kickerStyle : bloom ? kickerBloom : keraton ? kickerKr : null), ...enter(100).style }}>{kicker}</p>
             {keraton && !coverPhoto && (
               <div className={`mt-6 h-[13.5rem] [@media(max-height:700px)]:mt-3 [@media(max-height:700px)]:h-[9.5rem] ${enter(180).className}`} style={{ ...enter(180).style, aspectRatio: '200 / 272' }}>
                 <Gunungan />
               </div>
             )}
             <h1
-              className={`${keraton ? 'mt-7' : 'mt-4'} ${gilded ? 'leading-[1.2]' : 'leading-[1.1]'} ${enter(250).className} ${fx === 'premium' && !coverPhoto ? 'wl-shimmer' : gilded && !coverPhoto ? 'wl-foil' : ''}`}
+              className={`wl-cover-names ${keraton ? 'mt-7' : 'mt-4'} ${gilded ? 'leading-[1.2]' : 'leading-[1.1]'} ${enter(250).className} ${fx === 'premium' && !coverPhoto ? 'wl-shimmer' : gilded && !coverPhoto ? 'wl-foil' : ''}`}
               style={{ ...namesStyle, ...enter(250).style, color: coverInk, fontSize: scaled(gilded ? '4.3rem' : nf.size), fontWeight: nf.weight }}
             >
               {names}
@@ -546,21 +550,21 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                   <span className="h-px w-9" style={{ background: 'linear-gradient(270deg, transparent, var(--s))' }} />
                 </p>
               ) : (
-                <p className={`mt-5 text-sm tracking-[0.3em] ${enter(450).className}`} style={enter(450).style}>{shortDate}</p>
+                <p className={`wl-cover-date mt-5 text-sm tracking-[0.3em] ${enter(450).className}`} style={enter(450).style}>{shortDate}</p>
               )
             )}
-            <div className={enter(600).className} style={{ ...enter(600).style, color: coverInk }}>
+            <div className={`wl-cover-divider ${enter(600).className}`} style={{ ...enter(600).style, color: coverInk }}>
               <orn.Divider className={keraton ? 'mt-5 w-52' : bloom ? 'mt-2 w-60' : 'mt-6 w-32 opacity-80'} />
             </div>
             {(mode === 'live' || placeholders) && (
-              <div className={`mt-8 text-sm ${enter(750).className}`} style={enter(750).style}>
+              <div className={`wl-cover-guest mt-8 text-sm ${enter(750).className}`} style={enter(750).style}>
                 <p className="opacity-80" style={keraton ? { fontFamily: 'var(--font-montserrat), sans-serif', fontSize: 10.5, letterSpacing: '0.3em', textTransform: 'uppercase' } : gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 10.5, letterSpacing: '0.34em', textTransform: 'uppercase' } : bloom ? { fontFamily: 'var(--font-cormorant), serif', fontStyle: 'italic', fontSize: 14 } : undefined}>{t.dear}</p>
                 <p className={keraton ? 'mt-1 text-[1.35rem] font-semibold italic' : gilded ? 'mt-1 text-[1.35rem] font-semibold italic' : bloom ? 'mt-0.5 text-[1.45rem] font-semibold' : 'mt-1 text-lg font-semibold'} style={keraton ? { fontFamily: 'var(--font-playfair), serif' } : gilded || bloom ? { fontFamily: 'var(--font-cormorant), serif' } : undefined}>{guest ?? t.guestFallback}</p>
               </div>
             )}
             <button
               onClick={open}
-              className={`wl-btn mt-10 px-7 py-3 text-sm font-medium tracking-wide shadow-lg transition-transform hover:scale-[1.03] ${fx === 'premium' ? 'wl-pulse' : ''} ${enter(900).className}`}
+              className={`wl-cover-cta wl-btn mt-10 px-7 py-3 text-sm font-medium tracking-wide shadow-lg transition-transform hover:scale-[1.03] ${fx === 'premium' && !finalSeasonalCover ? 'wl-pulse' : ''} ${enter(900).className}`}
               style={{ ...enter(900).style, borderRadius: 'var(--rb)', background: coverPhoto ? '#fff' : 'var(--p)', color: coverPhoto ? '#222' : '#fff' }}
             >
               {openLabel}
@@ -574,7 +578,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
           switch (section.id) {
             case 'mempelai':
               return (
-                <Block key="mempelai" title={t.couple} headingStyle={headingStyle}>
+                <Block key="mempelai" title={t.couple} headingStyle={headingStyle} tint={soft}>
                   <div className={gilded || airy || bloom ? 'space-y-14' : 'space-y-12'}>
                     {(['pria', 'wanita'] as const).map((who, i) => {
                       const nick = str(data, 'mempelai', `${who}_nama`) || (placeholders ? (who === 'pria' ? 'Andi' : 'Sinta') : '');
@@ -609,9 +613,21 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                             </div>
                           )}
                           <div className={`relative ${fx === 'premium' ? 'wl-float' : ''}`} style={fx === 'premium' ? { animationDelay: `${i * -2}s` } : undefined}>
-                            <PhotoFrame frame={motif.frame} src={photo} label={nick} placeholders={placeholders} letterFont="var(--font-script)" tilt={i ? 2.5 : -2.5} photoRadius={radius.photo} />
-                            <TemplateArtwork artwork={artwork} context="photo" />
-                            {!bloom && (
+                            {artwork?.assets.photoFrame ? (
+                              <div className="relative aspect-[0.72] w-[15rem] max-w-[72vw]">
+                                {photo ? (
+                                  <img src={photo} alt={nick} className="absolute left-[8%] top-[5%] h-[85%] w-[80%] rounded-[48%] object-cover" />
+                                ) : (
+                                  <div className="absolute left-[17%] top-[12%] flex h-[76%] w-[66%] items-center justify-center rounded-[48%]" style={{ background: placeholders ? 'linear-gradient(160deg, color-mix(in srgb, var(--p) 25%, var(--bg)), color-mix(in srgb, var(--s) 45%, var(--bg)))' : 'color-mix(in srgb, var(--p) 10%, var(--bg))' }}>
+                                    <span className="text-5xl" style={{ fontFamily: 'var(--font-script)', color: 'var(--p)' }}>{nick.charAt(0)}</span>
+                                  </div>
+                                )}
+                                <TemplateArtwork artwork={artwork} context="photo" />
+                              </div>
+                            ) : (
+                              <PhotoFrame frame={motif.frame} src={photo} label={nick} placeholders={placeholders} letterFont="var(--font-script)" tilt={i ? 2.5 : -2.5} photoRadius={radius.photo} />
+                            )}
+                            {!artwork?.assets.photoFrame && !bloom && (
                               <div className={`absolute -bottom-3 w-20 ${i ? '-right-6' : '-left-6'}`} style={{ color: 'var(--p)' }}>
                                 <orn.Sprig className="w-20" flip={!!i} />
                               </div>
@@ -755,7 +771,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
           return null;
         })}
 
-        <footer className={`px-6 pb-24 pt-12 text-center text-xs ${gilded || airy || bloom || keraton ? '' : 'opacity-60'}`}>
+        <footer className={`wl-art-footer relative overflow-hidden px-6 pb-24 pt-12 text-center text-xs ${gilded || airy || bloom || keraton ? '' : 'opacity-60'}`}>
+          <TemplateArtwork artwork={artwork} context="closing" />
           {keraton ? (
             <>
               <div className="mx-auto h-[6rem]" style={{ aspectRatio: '200 / 272' }}>
@@ -842,14 +859,18 @@ function Block({ title, children, headingStyle, tint }: { title: string; childre
   const ghost = motif.ornament === 'hortensia';
   return (
     <section className={`wl-block relative px-6 py-16 ${tint ? 'wl-tint' : ''} ${ghost ? 'overflow-hidden' : ''}`} style={{ background: tint }}>
-      <TemplateArtwork artwork={artwork} context="section" />
+      {tint && <TemplateArtwork artwork={artwork} context="section" />}
       {ghost && <MeadowGhost meadow="hortensia" />}
       {tint && fx !== 'none' && <PatternLayer kind={motif.pattern} opacity={0.05} />}
       <div className="wl-reveal relative z-[1] mb-10 text-center">
         <h2 className={motif.skin === 'gilded' ? 'wl-heading' : undefined} style={{ ...headingStyle, ...sectionFont }}>{title}</h2>
-        <div style={{ color: 'var(--p)' }}>
-          <orn.Divider className={motif.skin === 'gilded' ? 'mx-auto mt-4 w-36' : motif.skin === 'keraton' ? 'mx-auto mt-4 w-48' : motif.skin === 'bloom' ? 'mx-auto mt-0 w-60' : 'mx-auto mt-3 w-28'} />
-        </div>
+        {artwork?.assets.divider ? (
+          <div className="relative mx-auto mt-3 h-10 w-56"><TemplateArtwork artwork={artwork} context="divider" /></div>
+        ) : (
+          <div style={{ color: 'var(--p)' }}>
+            <orn.Divider className={motif.skin === 'gilded' ? 'mx-auto mt-4 w-36' : motif.skin === 'keraton' ? 'mx-auto mt-4 w-48' : motif.skin === 'bloom' ? 'mx-auto mt-0 w-60' : 'mx-auto mt-3 w-28'} />
+          </div>
+        )}
       </div>
       <div className="relative z-[1]">{children}</div>
     </section>

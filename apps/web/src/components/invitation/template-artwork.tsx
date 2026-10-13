@@ -1,12 +1,14 @@
 import type { CSSProperties } from 'react';
 import type { ArtworkLayer, ArtworkManifest, ArtworkSlot } from '@/lib/types';
 
-type ArtworkContext = 'cover' | 'page' | 'section' | 'photo' | 'gate';
+type ArtworkContext = 'cover' | 'page' | 'section' | 'divider' | 'closing' | 'photo' | 'gate';
 
 const CONTEXT_SLOTS: Record<ArtworkContext, ArtworkSlot[]> = {
   cover: ['coverBackground', 'texture', 'topDecoration', 'bottomDecoration', 'cornerTopLeft', 'cornerTopRight', 'cornerBottomLeft', 'cornerBottomRight', 'coverForeground'],
   page: ['pageBackground', 'texture'],
-  section: ['sectionBackground', 'topDecoration', 'bottomDecoration', 'divider'],
+  section: ['sectionBackground', 'topDecoration'],
+  divider: ['divider'],
+  closing: ['bottomDecoration'],
   photo: ['photoFrame'],
   gate: ['gateBackground', 'gateForeground'],
 };
@@ -40,12 +42,13 @@ function ArtworkImage({ layer, slot, artwork, eager, reducedMotion, onAssetError
     slot === 'bottomDecoration' ? 'inset-x-0 bottom-0 h-auto w-full' : '',
     foreground ? `${foregroundPlacement} h-auto w-full` : '',
     slot === 'photoFrame' ? 'inset-0 h-full w-full object-contain' : '',
-    slot === 'divider' ? 'bottom-0 left-1/2 h-auto w-2/3 -translate-x-1/2' : '',
+    slot === 'divider' ? 'inset-0 h-full w-full object-contain' : '',
     slot === 'cornerTopLeft' ? 'left-0 top-0 h-auto w-1/3' : '',
     slot === 'cornerTopRight' ? 'right-0 top-0 h-auto w-1/3' : '',
     slot === 'cornerBottomLeft' ? 'bottom-0 left-0 h-auto w-1/3' : '',
     slot === 'cornerBottomRight' ? 'bottom-0 right-0 h-auto w-1/3' : '',
     !reducedMotion && foreground && p.foregroundMotion !== 'none' ? `wl-art-${p.foregroundMotion}` : '',
+    !reducedMotion && slot === 'coverBackground' && p.foregroundMotion === 'breathe' ? 'wl-art-cover-breathe' : '',
   ].filter(Boolean).join(' ');
   const style: CSSProperties = {
     zIndex: layerIndex,
@@ -54,6 +57,15 @@ function ArtworkImage({ layer, slot, artwork, eager, reducedMotion, onAssetError
     objectPosition: POSITIONS[position] ?? 'center',
     scale: !background && p.scale !== 1 ? String(p.scale) : undefined,
   };
+  if (slot === 'pageBackground') {
+    return (
+      <div
+        className="pointer-events-none absolute inset-0 select-none"
+        style={{ zIndex: layerIndex, opacity: p.opacity, backgroundImage: `url(${fallback.url})`, backgroundSize: '100% auto', backgroundPosition: POSITIONS[position] ?? 'center top', backgroundRepeat: 'repeat-y' }}
+        aria-hidden="true"
+      />
+    );
+  }
   return (
     <picture>
       {layer.desktop && <source media="(min-width: 768px)" srcSet={layer.desktop.url} />}

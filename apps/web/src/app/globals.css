@@ -867,6 +867,11 @@ body {
   animation: wl-art-float 7s ease-in-out infinite alternate;
 }
 
+.wl-art-footer > :not([aria-hidden="true"]) {
+  position: relative;
+  z-index: 2;
+}
+
 @keyframes wl-art-float {
   from { transform: translate3d(0, 0, 0); }
   to { transform: translate3d(0, -8px, 0); }
@@ -874,4 +879,43 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .wl-art-breathe, .wl-art-float { animation: none; transform: none; }
+}
+
+/* Final Seasonal covers use one complete painted background and a fixed mobile-safe text envelope. */
+.wl-final-seasonal-cover { container-type: size; }
+.wl-final-seasonal-content {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding: 20cqh 8cqw 12cqh;
+}
+.wl-final-seasonal-content .wl-cover-kicker { margin: 0 !important; }
+.wl-final-seasonal-content .wl-cover-names {
+  margin-top: 2cqh !important;
+  max-width: 86cqw;
+  font-size: clamp(2.15rem, 10cqw, 3.65rem) !important;
+  line-height: 1.04 !important;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.wl-final-seasonal-content .wl-cover-date { margin-top: 2.2cqh !important; }
+.wl-final-seasonal-content .wl-cover-divider { margin-top: 0 !important; }
+.wl-final-seasonal-content .wl-cover-divider > * { margin-top: 1.5cqh !important; }
+.wl-final-seasonal-content .wl-cover-guest { margin-top: 4.5cqh !important; }
+.wl-final-seasonal-content .wl-cover-cta {
+  margin-top: 3cqh !important;
+  max-width: 75cqw;
+  min-height: 46px;
+  white-space: normal;
+}
+.wl-art-cover-breathe { animation: wl-art-cover-breathe 12s ease-in-out infinite alternate; transform-origin: center; }
+@keyframes wl-art-cover-breathe { from { transform: scale(1); } to { transform: scale(1.02); } }
+@media (max-height: 720px) {
+  .wl-final-seasonal-content { padding-top: 17cqh; }
+  .wl-final-seasonal-content .wl-cover-guest { margin-top: 3cqh !important; }
+  .wl-final-seasonal-content .wl-cover-cta { margin-top: 2cqh !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-art-cover-breathe { animation: none !important; }
+  .wl-final-seasonal-cover .wl-particle { display: none !important; }
 }
