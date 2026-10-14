@@ -45,6 +45,12 @@ async function readAsset(designId: string, filename: string) {
   return { body, width: metadata.width, height: metadata.height };
 }
 
+async function ensureObject(storageKey: string, body: Buffer, contentType: string) {
+  const existing = await storage.head(storageKey);
+  if (existing && existing.sizeBytes !== body.length) throw new Error(`Konflik objek immutable: ${storageKey}`);
+  if (!existing) await storage.put(storageKey, body, contentType, CACHE_CONTROL);
+}
+
 async function validatePackage(designId: string) {
   const manifest = JSON.parse(await readFile(path.join(HANDOFF_DIR, designId, 'premium-gate-redesign', 'manifest.json'), 'utf8')) as Record<string, unknown>;
   if (manifest.designId !== designId || manifest.tier !== 'premium' || manifest.visualRevision !== 'premium-gate-redesign' || manifest.productionTextEmbedded !== false) {
@@ -74,6 +80,8 @@ async function publish(designId: (typeof DESIGNS)[number]) {
   const retained = Object.fromEntries(Object.entries(inherited.assets).filter(([slot]) => !REPLACED.has(slot as ArtworkSlot)));
   const manifest: ArtworkManifest = artworkManifestSchema.parse({ ...inherited, artworkVersion: version, assets: { ...retained, ...newAssets } });
 
+  await Promise.all(prepared.map(({ filename, contentType, body }) => ensureObject(`templates/${designId}/v${version}/${filename}`, body, contentType)));
+
   if (existing) {
     if (existing.status !== 'PUBLISHED' || !isDeepStrictEqual(artworkManifestSchema.parse(existing.manifest), manifest)) throw new Error(`Konflik gerbang immutable ${designId} v${version}`);
     await prisma.$transaction(matching.map((template) => prisma.template.update({ where: { id: template.id }, data: { artworkVersionId: existing.id, layoutSchema: { ...(template.layoutSchema as object), artwork: manifest } } })));
@@ -84,9 +92,6 @@ async function publish(designId: (typeof DESIGNS)[number]) {
   const uploaded: UploadedAsset[] = [];
   for (const asset of prepared) {
     const storageKey = `templates/${designId}/v${version}/${asset.filename}`;
-    const head = await storage.head(storageKey);
-    if (head && head.sizeBytes !== asset.body.length) throw new Error(`Konflik objek immutable: ${storageKey}`);
-    if (!head) await storage.put(storageKey, asset.body, asset.contentType, CACHE_CONTROL);
     uploaded.push({ slot: asset.slot, variant: 'default', storageKey, contentType: asset.contentType, sizeBytes: asset.body.length, width: asset.width, height: asset.height });
   }
   await prisma.$transaction(async (tx) => {

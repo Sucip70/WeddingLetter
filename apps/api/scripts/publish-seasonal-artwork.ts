@@ -42,12 +42,33 @@ async function readFinalAsset(designId: string, filename: string) {
   return { body, width: metadata.width, height: metadata.height };
 }
 
+async function ensureObject(storageKey: string, body: Buffer, contentType: string) {
+  const existing = await storage.head(storageKey);
+  if (existing && existing.sizeBytes !== body.length) throw new Error(`Konflik objek immutable: ${storageKey}`);
+  if (!existing) await storage.put(storageKey, body, contentType, CACHE_CONTROL);
+}
+
+async function ensureRetainedAssets(designId: string, assets: ArtworkManifest['assets']) {
+  for (const layer of Object.values(assets)) {
+    if (!layer) continue;
+    for (const source of Object.values(layer)) {
+      if (!source?.storageKey) throw new Error(`Aset turunan ${designId} tidak memiliki storageKey R2`);
+      const expectedUrl = storage.publicUrl(source.storageKey);
+      if (source.url !== expectedUrl || !expectedUrl.startsWith('https://') || /localhost|127\.0\.0\.1/i.test(expectedUrl)) {
+        throw new Error(`URL aset bukan URL publik R2: ${source.url}`);
+      }
+      const filename = path.basename(source.storageKey);
+      const body = await readFile(path.join(HANDOFF_DIR, designId, 'v1', filename));
+      if (source.sizeBytes !== body.length) throw new Error(`Ukuran aset lokal tidak cocok dengan manifest immutable: ${source.storageKey}`);
+      await ensureObject(source.storageKey, body, source.contentType);
+    }
+  }
+}
+
 async function uploadAsset(designId: string, version: number, slot: ArtworkSlot, filename: string) {
   const { body, width, height } = await readFinalAsset(designId, filename);
   const storageKey = `templates/${designId}/v${version}/${filename}`;
-  const existing = await storage.head(storageKey);
-  if (existing && existing.sizeBytes !== body.length) throw new Error(`Konflik objek immutable: ${storageKey}`);
-  if (!existing) await storage.put(storageKey, body, 'image/webp', CACHE_CONTROL);
+  await ensureObject(storageKey, body, 'image/webp');
   const source = { url: storage.publicUrl(storageKey), storageKey, contentType: 'image/webp' as const, width, height, sizeBytes: body.length };
   return { slot, variant: 'default', storageKey, contentType: 'image/webp' as const, sizeBytes: body.length, width, height, source };
 }
@@ -101,6 +122,9 @@ async function publishTier(design: (typeof DESIGNS)[number], tierSpec: (typeof T
     },
     fallback: design.fallback,
   });
+
+  await ensureRetainedAssets(design.designId, retainedAssets);
+  await Promise.all(prepared.map(({ filename, body }) => ensureObject(`templates/${design.designId}/v${version}/${filename}`, body, 'image/webp')));
 
   if (alreadyPublished) {
     if (alreadyPublished.status !== 'PUBLISHED' || !isDeepStrictEqual(artworkManifestSchema.parse(alreadyPublished.manifest), manifest)) {
