@@ -23,6 +23,7 @@ const TIERS = [
   { tier: 'STANDARD', suffix: 'standard', motion: 'none' },
   { tier: 'PREMIUM', suffix: 'premium', motion: 'breathe' },
 ] as const;
+const ASSET_PACKAGES = ['v1', 'v2', 'v2-final', 'premium-gate-redesign'] as const;
 const REPLACED_SLOTS = new Set<ArtworkSlot>(['coverBackground', 'coverForeground', 'thumbnail']);
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
@@ -48,6 +49,25 @@ async function ensureObject(storageKey: string, body: Buffer, contentType: strin
   if (!existing) await storage.put(storageKey, body, contentType, CACHE_CONTROL);
 }
 
+async function readRetainedAsset(designId: string, storageKey: string, expectedBytes: number) {
+  const filename = path.basename(storageKey);
+  const matches: { packageName: string; body: Buffer }[] = [];
+  for (const packageName of ASSET_PACKAGES) {
+    try {
+      const body = await readFile(path.join(HANDOFF_DIR, designId, packageName, filename));
+      if (body.length === expectedBytes) matches.push({ packageName, body });
+    } catch (error) {
+      if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error;
+    }
+  }
+  if (!matches.length) throw new Error(`Tidak ada aset lokal yang cocok dengan manifest immutable: ${storageKey} (${expectedBytes} byte)`);
+  const first = matches[0]!;
+  if (matches.some(({ body }) => !body.equals(first.body))) {
+    throw new Error(`Beberapa paket memiliki aset berbeda dengan nama dan ukuran yang sama: ${storageKey}`);
+  }
+  return first;
+}
+
 async function ensureRetainedAssets(designId: string, assets: ArtworkManifest['assets']) {
   for (const layer of Object.values(assets)) {
     if (!layer) continue;
@@ -57,9 +77,7 @@ async function ensureRetainedAssets(designId: string, assets: ArtworkManifest['a
       if (source.url !== expectedUrl || !expectedUrl.startsWith('https://') || /localhost|127\.0\.0\.1/i.test(expectedUrl)) {
         throw new Error(`URL aset bukan URL publik R2: ${source.url}`);
       }
-      const filename = path.basename(source.storageKey);
-      const body = await readFile(path.join(HANDOFF_DIR, designId, 'v1', filename));
-      if (source.sizeBytes !== body.length) throw new Error(`Ukuran aset lokal tidak cocok dengan manifest immutable: ${source.storageKey}`);
+      const { body } = await readRetainedAsset(designId, source.storageKey, source.sizeBytes);
       await ensureObject(source.storageKey, body, source.contentType);
     }
   }
