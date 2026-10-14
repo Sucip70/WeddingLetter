@@ -48,8 +48,11 @@ export class StorageService {
   presignUpload(input: { key: string; contentType: string; sizeBytes: number }): Promise<PresignedUpload> {
     return this.get().presignUpload(input);
   }
-  put(key: string, body: Buffer, contentType: string) {
-    return this.get().put(key, body, contentType);
+  put(key: string, body: Buffer, contentType: string, cacheControl?: string) {
+    return this.get().put(key, body, contentType, cacheControl);
+  }
+  read(key: string) {
+    return this.get().get(key);
   }
   head(key: string) {
     return this.get().head(key);

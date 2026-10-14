@@ -48,8 +48,10 @@ export function TemplateThumb({
   seed?: string;
 }) {
   if (imageUrl) {
+    const designId = theme.motif ?? theme.preset;
+    const imageFit = ['semi', 'panas', 'gugur', 'salju'].includes(designId) ? 'object-cover' : 'object-contain';
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={imageUrl} alt="" className={`h-full w-full object-cover ${className}`} />;
+    return <img src={imageUrl} alt="" className={`h-full w-full ${imageFit} ${className}`} />;
   }
   const motif = motifFor(theme.motif ?? theme.preset);
   const orn = ORNAMENTS[motif.ornament];

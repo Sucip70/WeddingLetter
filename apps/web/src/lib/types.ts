@@ -75,6 +75,29 @@ export interface Palette {
   text: string;
 }
 
+export type ArtworkSlot = 'coverBackground' | 'coverForeground' | 'pageBackground' | 'sectionBackground' | 'topDecoration' | 'bottomDecoration' | 'cornerTopLeft' | 'cornerTopRight' | 'cornerBottomLeft' | 'cornerBottomRight' | 'divider' | 'photoFrame' | 'texture' | 'thumbnail' | 'gateBackground' | 'gateForeground' | 'gateTransition' | 'gateInteractive';
+export interface ArtworkSource { url: string; storageKey?: string; contentType: 'image/webp' | 'image/png' | 'image/avif'; width: number; height: number; sizeBytes: number }
+export interface ArtworkLayer { default?: ArtworkSource; mobile?: ArtworkSource; desktop?: ArtworkSource }
+export interface ArtworkManifest {
+  schemaVersion: 1;
+  designId: string;
+  artworkVersion: number;
+  assets: Partial<Record<ArtworkSlot, ArtworkLayer>>;
+  presentation: {
+    backgroundFit: 'cover' | 'contain' | 'fill';
+    backgroundPosition: 'center' | 'center-top' | 'center-bottom' | 'left-top' | 'right-top' | 'left-bottom' | 'right-bottom';
+    foregroundPosition: 'top-center' | 'bottom-center' | 'center' | 'left-center' | 'right-center';
+    foregroundMotion: 'none' | 'breathe' | 'float';
+    opacity: number; scale: number; backgroundLayer: number; decorationLayer: number; foregroundLayer: number;
+    showOnOrnamentCover: boolean; showOnPhotoCover: boolean;
+  };
+  fallback: {
+    ornament?: 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily' | 'flora' | 'romantic' | 'botani' | 'keraton' | 'sakura' | 'autumn' | 'winter' | 'lavender' | 'hortensia' | 'marigold';
+    coverEffect?: 'none' | 'aurora' | 'rays' | 'curtain' | 'scanlines' | 'spotlight' | 'clouds' | 'halo' | 'sky' | 'bloom';
+    particle?: 'petal' | 'leaf' | 'maple' | 'snow' | 'heart' | 'star' | 'sparkle' | 'confetti' | 'bubble' | 'firefly' | 'pixel' | 'lantern' | 'bat' | 'coin' | 'dust' | 'feather' | 'blossom' | 'bloomflower';
+  };
+}
+
 export type ThemeGroup = 'klasik' | 'suku' | 'agama' | 'perayaan' | 'kartun' | 'game' | 'film' | 'musim';
 
 export interface DesignInfo {
@@ -103,6 +126,7 @@ export interface Layout {
   coverLayouts?: string[];
   // Tata letak sampul bawaan pilihan admin (kosong = otomatis: khusus tema / Foto berbingkai).
   coverDefault?: string;
+  artwork?: ArtworkManifest;
 }
 
 export type Tier = 'BASIC' | 'STANDARD' | 'PREMIUM';
@@ -153,7 +177,7 @@ export interface InvitationViewData {
   slug: string;
   status?: string;
   templateName?: string;
-  layout: { theme: Theme; sections: SectionDef[]; musik: { presets: MusicPreset[] }; coverLayouts?: string[] };
+  layout: { theme: Theme; sections: SectionDef[]; musik: { presets: MusicPreset[] }; coverLayouts?: string[]; artwork?: ArtworkManifest };
   features: InvitationFeatures;
   data: InvitationData;
   media: Record<string, MediaRef>;

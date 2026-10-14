@@ -78,6 +78,8 @@ Alur uji: `/templates` → pilih template → isi (harga live di kanan) → Chec
 
 ## Testing
 
+Artwork manifests, immutable R2/local object naming, upload validation, publishing, snapshot behavior, and artist handoff are documented in [docs/template-artwork.md](./docs/template-artwork.md).
+
 ```
 npm test --workspace apps/api          # 119 unit test (auth email+password & OTP, kalkulator harga, skema/validasi, webhook, storage, dst.)
 ```

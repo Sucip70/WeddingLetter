@@ -8,11 +8,12 @@ import { Alert, Badge, Button, Card, Field, Input, Select, Toggle, cn } from '@/
 import { api, errorMessage, uploadWithProgress } from '@/lib/client-api';
 import { COVER_LAYOUTS, coverLayoutsFor, defaultCoverLayout } from '@/lib/cover-layouts';
 import { TierPanel } from './tier-panel';
+import { ArtworkManager } from './artwork-manager';
 import type { TierRow } from './tier-panel';
 import { sampleView } from '@/lib/sample';
 import type { DemoPhotos } from '@/lib/sample';
 import { FX_LABEL } from '@/lib/catalog';
-import type { FieldType, FxLevel, GateSetting, Palette, Theme, ThemeGroup } from '@/lib/types';
+import type { ArtworkManifest, FieldType, FxLevel, GateSetting, Palette, Theme, ThemeGroup } from '@/lib/types';
 
 export interface AuthField { key: string; type: FieldType; label: string; required: boolean; enabled: boolean }
 export interface AuthSection { id: string; title: string; enabled: boolean; fields: AuthField[] }
@@ -24,6 +25,7 @@ export interface Authoring {
   palettes: Palette[];
   // Tata letak sampul bawaan (kosong = otomatis). Lihat coverDefault di apps/api/src/templates/layout.ts.
   coverDefault?: string;
+  artwork?: ArtworkManifest;
 }
 export interface TemplateForm {
   id?: string;
@@ -70,6 +72,12 @@ const FONT_LABEL: Record<string, string> = {
 const BODY_LABEL: Record<string, string> = { sans: 'Sans modern', serif: 'Serif klasik', round: 'Bulat ceria' };
 const FX_ORDER: FxLevel[] = ['none', 'standard', 'premium'];
 const HEX = /^#[0-9a-fA-F]{6}$/;
+const SEASONAL_PREMIUM_GATE_LABEL: Record<string, string> = {
+  semi: 'Vellum Blossom',
+  panas: 'Golden Tide',
+  gugur: 'Letter in the Wind',
+  salju: 'Frosted Monogram',
+};
 
 const themeOf = (d: DesignMeta, fx: FxLevel, gate: GateSetting): Theme => ({ preset: d.id, motif: d.id, fx, gate, primary: d.primary, secondary: d.secondary, background: d.background, text: d.text, headingFont: d.headingFont, bodyFont: d.bodyFont });
 
@@ -99,6 +107,7 @@ function toPreviewLayout(l: Authoring) {
     theme: l.theme,
     sections: l.sections.filter((s) => s.enabled).map((s) => ({ id: s.id, title: s.title, fields: s.fields.filter((f) => f.enabled).map((f) => ({ key: f.key, label: f.label, type: f.type, required: f.required })) })),
     musik: l.musik,
+    artwork: l.artwork,
   };
 }
 
@@ -111,6 +120,7 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
   const [error, setError] = useState('');
   const [saved, setSaved] = useState('');
   const [uploading, setUploading] = useState('');
+  const [artworkPreview, setArtworkPreview] = useState<ArtworkManifest | undefined>();
   const thumbInput = useRef<HTMLInputElement>(null);
   const songInput = useRef<HTMLInputElement>(null);
 
@@ -133,11 +143,15 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
   // Bawaan yang tersimpan tapi tidak lagi tersedia (paket/desain diganti) diperlakukan sebagai "Otomatis".
   const coverDefault = layout.coverDefault && coverKinds.some((k) => k === layout.coverDefault) ? layout.coverDefault : undefined;
   const view = useMemo(
-    () => sampleView({ ...toPreviewLayout(layout), galeri: layout.galeri, coverLayouts: coverKinds, coverDefault }, { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }, photos),
-    [layout, photos, coverKinds, coverDefault],
+    () => sampleView({ ...toPreviewLayout(layout), artwork: artworkPreview ?? layout.artwork, galeri: layout.galeri, coverLayouts: coverKinds, coverDefault }, { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }, photos),
+    [layout, artworkPreview, photos, coverKinds, coverDefault],
   );
 
   const design = meta.designs.find((d) => d.id === layout.theme.motif) ?? meta.designs.find((d) => d.id === layout.theme.preset);
+  const seasonalGateLabel = form.tier === 'PREMIUM' && design?.group === 'musim' ? SEASONAL_PREMIUM_GATE_LABEL[design.id] : undefined;
+  const gateValue = seasonalGateLabel && design
+    ? (layout.theme.gate ?? 'none') === 'none' ? 'none' : design.gate
+    : layout.theme.gate ?? 'none';
   // Ganti desain: warna, font, motif, dan usulan palet ikut berganti.
   function applyDesign(id: string) {
     const d = meta.designs.find((x) => x.id === id);
@@ -209,6 +223,7 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
         galeri: { maxPhotos: Number(layout.galeri.maxPhotos), maxVideos: Number(layout.galeri.maxVideos) },
         musik: layout.musik,
         palettes: layout.palettes,
+        artwork: layout.artwork,
         coverDefault,
       },
     };
@@ -302,10 +317,17 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
               <Field label="Level animasi" hint="Tanpa = tampilan statis (Basic). Standar = animasi masuk & partikel di sampul. Penuh = partikel di seluruh halaman, kilau, dan gerak tambahan.">
                 <Select value={layout.theme.fx} onChange={(e) => setTheme({ fx: e.target.value as FxLevel })}>{FX_ORDER.map((v) => <option key={v} value={v}>{FX_LABEL[v]}</option>)}</Select>
               </Field>
-              <Field label="Gerbang pembuka" hint="Halaman pertama undangan: adegan animasi yang harus diketuk sebelum sampul terlihat. Dirancang untuk Premium. Di pratinjau kanan, gunakan tombol Putar ulang gerbang.">
-                <Select value={layout.theme.gate ?? 'none'} onChange={(e) => setTheme({ gate: e.target.value as GateSetting })}>
+              <Field
+                label="Gerbang pembuka"
+                hint={seasonalGateLabel
+                  ? `${seasonalGateLabel} adalah gerbang khusus desain Seasonal Premium ini. Di pratinjau kanan, gunakan tombol Putar ulang gerbang.`
+                  : 'Halaman pertama undangan: adegan animasi yang harus diketuk sebelum sampul terlihat. Dirancang untuk Premium. Di pratinjau kanan, gunakan tombol Putar ulang gerbang.'}
+              >
+                <Select value={gateValue} onChange={(e) => setTheme({ gate: e.target.value as GateSetting })}>
                   <option value="none">Tanpa gerbang</option>
-                  {meta.gates.map((g) => <option key={g.id} value={g.id}>{g.label}{design?.gate === g.id ? ' (bawaan desain)' : ''}</option>)}
+                  {seasonalGateLabel && design
+                    ? <option value={design.gate}>{seasonalGateLabel} (bawaan Seasonal Premium)</option>
+                    : meta.gates.map((g) => <option key={g.id} value={g.id}>{g.label}{design?.gate === g.id ? ' (bawaan desain)' : ''}</option>)}
                 </Select>
               </Field>
               <Field
@@ -408,6 +430,15 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
               <Field label="Video gratis (≤ 20 MB)" hint="Video di atas kuota dihitung sewa ukuran × minggu."><Input type="number" min={0} max={10} value={layout.galeri.maxVideos} onChange={(e) => setLayout({ galeri: { ...layout.galeri, maxVideos: Number(e.target.value) } })} /></Field>
             </div>
           </Card>
+
+          {form.id && (
+            <ArtworkManager
+              templateId={form.id}
+              current={layout.artwork}
+              onPreview={setArtworkPreview}
+              onPublished={(artwork) => setLayout({ artwork })}
+            />
+          )}
 
           <Card className="p-5">
             <div className="flex items-center justify-between gap-4">

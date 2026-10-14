@@ -45,7 +45,7 @@ const GALLERY_SLOTS = ['gallery1', 'gallery2', 'gallery3', 'gallery4', 'gallery5
 // `coverLayout`: tata letak sampul yang diperagakan (bawaan: layout.coverDefault pilihan admin, lalu yang khusus
 // tema / Foto berbingkai). Hanya untuk template yang punya pilihan tata letak (Standard & Premium); Basic tetap
 // berornamen walau slot foto sampul terisi.
-export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'> & { galeri?: Layout['galeri']; coverLayouts?: string[]; coverDefault?: string }, extra: Partial<InvitationViewData> = {}, photos: DemoPhotos = {}, coverLayout?: string): InvitationViewData {
+export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'> & { galeri?: Layout['galeri']; coverLayouts?: string[]; coverDefault?: string; artwork?: Layout['artwork'] }, extra: Partial<InvitationViewData> = {}, photos: DemoPhotos = {}, coverLayout?: string): InvitationViewData {
   const dates = sampleDates();
   const data: InvitationViewData['data'] = {};
   for (const section of layout.sections) {
@@ -83,7 +83,7 @@ export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'> 
   return {
     slug: 'contoh',
     templateName: 'Contoh',
-    layout: { theme: layout.theme, sections: layout.sections, musik: { presets: layout.musik?.presets ?? [] }, coverLayouts },
+    layout: { theme: layout.theme, sections: layout.sections, musik: { presets: layout.musik?.presets ?? [] }, coverLayouts, artwork: layout.artwork },
     features: {},
     data,
     media,

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "designId": "gugur",
+  "artworkVersion": 2,
+  "recommendedDefault": "cover-standard.webp",
+  "assets": {
+    "coverStandard": "cover-standard.webp",
+    "coverPremium": "cover-premium.webp",
+    "coverFinal": "cover-final.webp",
+    "catalogThumbnail": "catalog-thumbnail.webp",
+    "standardPreview": "standard-preview.webp",
+    "premiumPreview": "premium-preview.webp",
+    "safeAreaGuide": "safe-area-guide.webp",
+    "reviewBoard": "review-board.webp"
+  },
+  "safeArea": { "left": 146, "right": 878, "top": 305, "bottom": 1170 },
+  "stacking": { "coverForeground": false, "proceduralCorners": false, "coverEffect": "none", "particlesWhileClosed": false }
+}
+

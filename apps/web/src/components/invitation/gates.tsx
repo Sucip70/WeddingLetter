@@ -5,9 +5,12 @@
 // variabel --p/--s/--bg/--tx. Fase dikendalikan InvitationView: 'closed' -> 'opening' -> (dilepas).
 import dynamic from 'next/dynamic';
 import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
-import type { GateKind } from '@/lib/types';
+import type { ArtworkManifest, GateKind } from '@/lib/types';
 import { PatternLayer } from './effects';
 import type { PatternKind } from './motifs';
+import { TemplateArtwork } from './template-artwork';
+import { hasSeasonalGate, SeasonalGate } from './seasonal-gate';
+import type { SeasonalGateDesign } from './seasonal-gate';
 
 // Gerbang berat (Motion / CSS 3D / seni SVG) dimuat per jenis: undangan hanya mengunduh kode gerbangnya sendiri,
 // bukan keenam-enamnya. Tetap di-render di server (ssr bawaan), jadi tidak ada kedipan saat halaman dibuka.
@@ -423,7 +426,7 @@ function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
   }
 }
 
-export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, motif, headingFamily, onOpen }: {
+export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, motif, headingFamily, artwork, onOpen }: {
   kind: GateKind;
   phase: GatePhase;
   embedded: boolean;
@@ -433,8 +436,10 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
   pattern: PatternKind;
   motif: string;
   headingFamily: string;
+  artwork?: ArtworkManifest;
   onOpen: () => void;
 }) {
+  const seasonal = hasSeasonalGate(artwork, motif);
   const onKey = (e: KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -444,16 +449,30 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
   return (
     <div className={`wl-gate-host ${embedded ? 'absolute inset-x-0 top-0 z-[60] h-[810px]' : 'fixed inset-y-0 left-1/2 z-[60] w-full max-w-[480px] -translate-x-1/2'}`}>
       <style>{GATE_CSS}</style>
-      <div className="wl-gate" data-kind={kind} data-phase={phase} data-tone={DARK[kind] ? 'dark' : 'light'} role="button" tabIndex={0} aria-label={`Buka undangan. ${CTA[kind]}`} onClick={onOpen} onKeyDown={onKey}>
-        <Scene kind={kind} names={names} kicker={kicker} guest={guest} pattern={pattern} motif={motif} headingFamily={headingFamily} phase={phase} />
-        {!OWN_TITLE[kind] && (
-          <div className="wl-gate-title">
-            <small>{kicker}</small>
-            <b style={{ fontFamily: headingFamily }}>{names}</b>
-            {guest && <em>Kepada Yth. {guest}</em>}
-          </div>
+      <div
+        className="wl-gate"
+        data-kind={kind}
+        data-phase={phase}
+        data-tone={DARK[kind] ? 'dark' : 'light'}
+        data-seasonal={seasonal ? 'true' : undefined}
+        {...(seasonal ? {} : { role: 'button', tabIndex: 0, 'aria-label': `Buka undangan. ${CTA[kind]}`, onClick: onOpen, onKeyDown: onKey })}
+      >
+        {seasonal ? (
+          <SeasonalGate designId={artwork.designId as SeasonalGateDesign} phase={phase} artwork={artwork} names={names} kicker={kicker} guest={guest} headingFamily={headingFamily} onOpen={onOpen} />
+        ) : (
+          <>
+            <TemplateArtwork artwork={artwork} context="gate" />
+            <Scene kind={kind} names={names} kicker={kicker} guest={guest} pattern={pattern} motif={motif} headingFamily={headingFamily} phase={phase} />
+            {!OWN_TITLE[kind] && (
+              <div className="wl-gate-title">
+                <small>{kicker}</small>
+                <b style={{ fontFamily: headingFamily }}>{names}</b>
+                {guest && <em>Kepada Yth. {guest}</em>}
+              </div>
+            )}
+            <div className="wl-gate-cta">{CTA[kind]}</div>
+          </>
         )}
-        <div className="wl-gate-cta">{CTA[kind]}</div>
       </div>
     </div>
   );

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "designId": "gugur",
+  "artworkVersion": 1,
+  "title": "Copper Autumn",
+  "assets": {
+    "coverBackground": "cover-background.webp",
+    "coverForeground": "cover-foreground.webp",
+    "gateBackground": "gate-background.webp",
+    "gateForeground": "gate-foreground.webp",
+    "pageBackground": "page-background.webp",
+    "sectionBackground": "section-background.webp",
+    "bottomDecoration": "bottom-decoration.webp",
+    "divider": "divider.webp",
+    "photoFrame": "photo-frame.webp",
+    "thumbnail": "thumbnail.webp",
+    "preview": "production-preview.webp"
+  },
+  "presentation": {
+    "backgroundFit": "cover",
+    "backgroundPosition": "center-top",
+    "gateBackgroundPosition": "center",
+    "foregroundPosition": "bottom-center",
+    "foregroundMotion": "drift",
+    "contentDecorationDensity": "quiet",
+    "showOnPhotoCover": false
+  },
+  "fallback": {
+    "ornament": "maple",
+    "coverEffect": "autumn",
+    "particle": "leaf"
+  },
+  "palette": ["#b45309", "#7c2d12", "#fdf3e4", "#3d2410"]
+}
+

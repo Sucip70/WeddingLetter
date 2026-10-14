@@ -8,6 +8,7 @@ import { DEMO_SLOTS, defaultKey } from "../src/demo-photos/demo-photos.slots.js"
 import { uploadDefaultFile } from "../src/demo-photos/demo-photos.service.js";
 import { StorageService } from "../src/storage/storage.service.js";
 import { autoPalettes, BASIC_DESIGN_IDS, BASIC_PALETTES, basicPalettes, DESIGNS } from "../src/templates/themes.js";
+import { seasonalArtworkFor } from "../src/templates/artwork.js";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -44,24 +45,27 @@ const TIERS = {
 const LEGACY_NAMES: Record<string, string> = { "BASIC:rustic": "Basic Rustic", "STANDARD:floral": "Standard Floral", "PREMIUM:elegant": "Premium Elegant" };
 
 function buildTemplates() {
-  const rows: { name: string; category: string; tier: "BASIC" | "STANDARD" | "PREMIUM"; price: number; includedWeeks: number; layoutSchema: object }[] = [];
+  const rows: { name: string; category: string; tier: "BASIC" | "STANDARD" | "PREMIUM"; price: number; includedWeeks: number; artworkVersionId?: string; layoutSchema: object }[] = [];
   for (const design of DESIGNS) {
     const palettes = design.id === "rustic" ? BASIC_PALETTES : autoPalettes(design);
     for (const tier of ["BASIC", "STANDARD", "PREMIUM"] as const) {
       if (tier === "BASIC" && !BASIC_DESIGN_IDS.includes(design.id)) continue;
       const cfg = TIERS[tier];
+      const artwork = seasonalArtworkFor(design.id);
       rows.push({
         name: LEGACY_NAMES[tier + ":" + design.id] ?? cfg.label + " " + design.name,
         category: design.group,
         tier,
         price: cfg.price,
         includedWeeks: 4,
+        ...(artwork ? { artworkVersionId: `seasonal-${design.id}-v1` } : {}),
         layoutSchema: {
           // Gerbang pembuka hanya untuk Premium (admin bisa mengubahnya per template di builder).
           theme: { preset: design.id, fx: cfg.fx, gate: tier === "PREMIUM" ? design.gate : "none" },
           // Basic memakai 8 warna siap pakai yang sama untuk semua desainnya; Standard/Premium memakai palet desain.
           palettes: tier === "BASIC" ? basicPalettes(design.id) : palettes,
           sections: cfg.sections,
+          ...(artwork ? { artwork } : {}),
           galeri: cfg.galeri,
           musik: { allowed: true },
         },

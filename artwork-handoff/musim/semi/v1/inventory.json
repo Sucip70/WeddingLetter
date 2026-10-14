@@ -1,0 +1,126 @@
+{
+  "designId": "semi",
+  "artworkVersion": 1,
+  "assets": [
+    {
+      "filename": "cover-background.webp",
+      "width": 1024,
+      "height": 1536,
+      "sizeBytes": 170122,
+      "contentType": "image/webp",
+      "transparency": false
+    },
+    {
+      "filename": "cover-foreground.webp",
+      "width": 960,
+      "height": 683,
+      "sizeBytes": 340584,
+      "contentType": "image/webp",
+      "transparency": true
+    },
+    {
+      "filename": "gate-background.webp",
+      "width": 1024,
+      "height": 1536,
+      "sizeBytes": 181208,
+      "contentType": "image/webp",
+      "transparency": false
+    },
+    {
+      "filename": "gate-foreground.webp",
+      "width": 993,
+      "height": 515,
+      "sizeBytes": 126732,
+      "contentType": "image/webp",
+      "transparency": true
+    },
+    {
+      "filename": "page-background.webp",
+      "width": 1024,
+      "height": 1536,
+      "sizeBytes": 73368,
+      "contentType": "image/webp",
+      "transparency": false
+    },
+    {
+      "filename": "section-background.webp",
+      "width": 1024,
+      "height": 1024,
+      "sizeBytes": 28728,
+      "contentType": "image/webp",
+      "transparency": false
+    },
+    {
+      "filename": "bottom-decoration.webp",
+      "width": 993,
+      "height": 515,
+      "sizeBytes": 126732,
+      "contentType": "image/webp",
+      "transparency": true
+    },
+    {
+      "filename": "bottom-decoration.png",
+      "width": 993,
+      "height": 515,
+      "sizeBytes": 1006684,
+      "contentType": "image/png",
+      "transparency": true
+    },
+    {
+      "filename": "divider.webp",
+      "width": 830,
+      "height": 145,
+      "sizeBytes": 25180,
+      "contentType": "image/webp",
+      "transparency": true
+    },
+    {
+      "filename": "divider.png",
+      "width": 830,
+      "height": 145,
+      "sizeBytes": 192096,
+      "contentType": "image/png",
+      "transparency": true
+    },
+    {
+      "filename": "photo-frame.webp",
+      "width": 960,
+      "height": 1339,
+      "sizeBytes": 399242,
+      "contentType": "image/webp",
+      "transparency": true
+    },
+    {
+      "filename": "photo-frame.png",
+      "width": 960,
+      "height": 1339,
+      "sizeBytes": 1366216,
+      "contentType": "image/png",
+      "transparency": true
+    },
+    {
+      "filename": "thumbnail.webp",
+      "width": 480,
+      "height": 720,
+      "sizeBytes": 39040,
+      "contentType": "image/webp",
+      "transparency": false
+    },
+    {
+      "filename": "production-preview.webp",
+      "width": 1180,
+      "height": 590,
+      "sizeBytes": 94142,
+      "contentType": "image/webp",
+      "transparency": false
+    },
+    {
+      "filename": "preview.webp",
+      "width": 1200,
+      "height": 514,
+      "sizeBytes": 115492,
+      "contentType": "image/webp",
+      "transparency": false
+    }
+  ]
+}

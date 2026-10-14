@@ -1,4 +1,6 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import sharp from 'sharp';
+import type { Metadata, Sharp } from 'sharp';
 import { ALLOWED_CONTENT_TYPES, DAY_MS, MB, REFUND_WINDOW_HOURS } from '../config/constants.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { LifecycleService } from '../invitations/lifecycle.service.js';
@@ -7,9 +9,11 @@ import { PaymentsService } from '../payments/payments.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { SECTION_REGISTRY, layoutIncludes, normalizeLayout, toAuthoring } from '../templates/layout.js';
+import { artworkManifestSchema } from '../templates/artwork.js';
+import type { ArtworkSlot, ArtworkVariant } from '../templates/artwork.js';
 import { BASIC_PALETTES, DESIGNS, GATE_LABEL, GROUP_LABEL, GROUP_ORDER, autoPalettes } from '../templates/themes.js';
 import type { z } from 'zod';
-import type { assetPresignSchema, couponCreateSchema, couponUpdateSchema, listQuerySchema, templateCreateSchema, templateUpdateSchema } from './admin.dto.js';
+import type { artworkConfirmSchema, artworkDraftSchema, artworkPublishSchema, artworkUploadSchema, assetPresignSchema, couponCreateSchema, couponUpdateSchema, listQuerySchema, templateCreateSchema, templateUpdateSchema } from './admin.dto.js';
 
 type ListQuery = z.infer<typeof listQuerySchema>;
 
@@ -90,7 +94,8 @@ export class AdminService {
 
   async createTemplate(input: z.infer<typeof templateCreateSchema>) {
     if (input.status === 'PUBLISHED') this.assertPublishable(input.layoutSchema, input.category);
-    const created = await this.prisma.template.create({ data: { ...input, layoutSchema: input.layoutSchema as object } });
+    const { artwork: _untrustedArtwork, ...layoutSchema } = input.layoutSchema;
+    const created = await this.prisma.template.create({ data: { ...input, layoutSchema } });
     return this.getTemplate(created.id);
   }
 
@@ -98,9 +103,14 @@ export class AdminService {
     const current = await this.prisma.template.findUnique({ where: { id } });
     if (!current) throw new NotFoundException('Template tidak ditemukan');
     const status = input.status ?? current.status;
-    const layout = input.layoutSchema ?? current.layoutSchema;
+    const currentRaw = (current.layoutSchema && typeof current.layoutSchema === 'object' ? current.layoutSchema : {}) as Record<string, unknown>;
+    const submitted = input.layoutSchema ? (() => {
+      const { artwork: _untrustedArtwork, ...rest } = input.layoutSchema;
+      return { ...rest, ...(currentRaw.artwork ? { artwork: currentRaw.artwork } : {}) };
+    })() : undefined;
+    const layout = submitted ?? current.layoutSchema;
     if (status === 'PUBLISHED') this.assertPublishable(layout, input.category ?? current.category);
-    await this.prisma.template.update({ where: { id }, data: { ...input, ...(input.layoutSchema ? { layoutSchema: input.layoutSchema as object } : {}) } });
+    await this.prisma.template.update({ where: { id }, data: { ...input, ...(submitted ? { layoutSchema: submitted as object } : {}) } });
     return this.getTemplate(id);
   }
 
@@ -121,6 +131,139 @@ export class AdminService {
     const key = `assets/${newId()}.${EXT_BY_TYPE[input.contentType] ?? 'bin'}`;
     const presigned = await this.storage.presignUpload({ key, contentType: input.contentType, sizeBytes: input.sizeBytes });
     return { ...presigned, key, publicUrl: this.storage.publicUrl(key) };
+  }
+
+  private async artworkContext(templateId: string, versionId?: string) {
+    const template = await this.prisma.template.findUnique({ where: { id: templateId } });
+    if (!template) throw new NotFoundException('Template tidak ditemukan');
+    const layout = normalizeLayout(template.layoutSchema, template.category);
+    const designId = layout.theme.motif || layout.theme.preset;
+    const version = versionId
+      ? await this.prisma.templateArtworkVersion.findUnique({ where: { id: versionId }, include: { assets: true } })
+      : null;
+    if (versionId && (!version || version.designId !== designId)) throw new NotFoundException('Versi artwork tidak ditemukan untuk desain template ini');
+    return { template, layout, designId, version };
+  }
+
+  async artworkVersions(templateId: string) {
+    const { template, designId } = await this.artworkContext(templateId);
+    const versions = await this.prisma.templateArtworkVersion.findMany({
+      where: { designId },
+      include: { assets: { orderBy: [{ slot: 'asc' }, { variant: 'asc' }] } },
+      orderBy: { version: 'desc' },
+    });
+    return {
+      activeVersionId: template.artworkVersionId,
+      designId,
+      versions: versions.map((version) => ({
+        ...version,
+        assets: version.assets.map((asset) => ({ ...asset, url: this.storage.publicUrl(asset.storageKey) })),
+      })),
+    };
+  }
+
+  async createArtworkDraft(templateId: string, input: z.infer<typeof artworkDraftSchema>) {
+    const { designId: currentDesign } = await this.artworkContext(templateId);
+    const designId = input.designId ?? currentDesign;
+    if (designId !== currentDesign) throw new BadRequestException('designId harus sama dengan desain template saat ini');
+    const latest = await this.prisma.templateArtworkVersion.findFirst({ where: { designId }, orderBy: { version: 'desc' }, select: { version: true } });
+    return this.prisma.templateArtworkVersion.create({ data: { designId, version: (latest?.version ?? 0) + 1 } });
+  }
+
+  async presignArtwork(templateId: string, versionId: string, input: z.infer<typeof artworkUploadSchema>) {
+    const { version } = await this.artworkContext(templateId, versionId);
+    if (version!.status !== 'DRAFT') throw new ConflictException('Artwork yang sudah dipublikasikan bersifat immutable');
+    if (input.contentType === 'image/avif' && !['coverBackground', 'pageBackground', 'sectionBackground'].includes(input.slot)) {
+      throw new BadRequestException('AVIF hanya diterima untuk latar opaque; dekorasi transparan gunakan WebP atau PNG');
+    }
+    const filename = `${input.slot.toLowerCase()}-${input.variant}-${newId()}.webp`;
+    const key = `templates/${version!.designId}/v${version!.version}/${filename}`;
+    const presigned = await this.storage.presignUpload({ key, contentType: input.contentType, sizeBytes: input.sizeBytes });
+    return { ...presigned, key };
+  }
+
+  async confirmArtwork(templateId: string, versionId: string, input: z.infer<typeof artworkConfirmSchema>) {
+    const { version } = await this.artworkContext(templateId, versionId);
+    if (version!.status !== 'DRAFT') throw new ConflictException('Artwork yang sudah dipublikasikan bersifat immutable');
+    const prefix = `templates/${version!.designId}/v${version!.version}/`;
+    if (!input.storageKey.startsWith(prefix) || !/^templates\/[a-z0-9-]+\/v[1-9]\d*\/[a-z0-9-]+\.webp$/.test(input.storageKey)) {
+      throw new BadRequestException('Storage key artwork tidak valid');
+    }
+    const uploaded = await this.storage.read(input.storageKey);
+    if (!uploaded) throw new BadRequestException('File upload tidak ditemukan');
+    if (uploaded.length > 12 * MB) throw new BadRequestException('Artwork terlalu besar (maks. 12 MB)');
+
+    let image: Sharp;
+    let metadata: Metadata;
+    try {
+      image = sharp(uploaded, { failOn: 'warning', limitInputPixels: 40_000_000 }).rotate();
+      metadata = await image.metadata();
+    } catch {
+      throw new BadRequestException('File bukan gambar yang valid atau isinya rusak');
+    }
+    if (!metadata.width || !metadata.height || metadata.width < 16 || metadata.height < 16 || metadata.width > 12_000 || metadata.height > 12_000) {
+      throw new BadRequestException('Dimensi artwork harus 16–12000 piksel dan maksimal 40 megapiksel');
+    }
+    if (!['webp', 'png', 'heif'].includes(metadata.format ?? '')) throw new BadRequestException('Format aktual harus WebP, PNG, atau AVIF');
+    if (metadata.format === 'heif' && (!['coverBackground', 'pageBackground', 'sectionBackground'].includes(input.slot) || metadata.hasAlpha)) {
+      throw new BadRequestException('AVIF aktual hanya diterima untuk latar opaque; dekorasi transparan gunakan WebP atau PNG');
+    }
+
+    // Decode + encode ulang membuktikan gambar valid, membuang metadata, dan menghasilkan format
+    // produksi tunggal sambil mempertahankan alpha untuk dekorasi transparan.
+    const optimized = await image.webp({ quality: 88, alphaQuality: 100, effort: 4 }).toBuffer();
+    await this.storage.put(input.storageKey, optimized, 'image/webp', 'public, max-age=31536000, immutable');
+    const data = {
+      storageKey: input.storageKey,
+      contentType: 'image/webp',
+      sizeBytes: optimized.length,
+      width: metadata.width,
+      height: metadata.height,
+    };
+    const asset = await this.prisma.templateArtworkAsset.upsert({
+      where: { versionId_slot_variant: { versionId, slot: input.slot, variant: input.variant } },
+      update: data,
+      create: { versionId, slot: input.slot, variant: input.variant, ...data },
+    });
+    return { ...asset, url: this.storage.publicUrl(asset.storageKey) };
+  }
+
+  async publishArtwork(templateId: string, versionId: string, input: z.infer<typeof artworkPublishSchema>) {
+    const { template, version } = await this.artworkContext(templateId, versionId);
+    if (version!.status !== 'DRAFT') throw new ConflictException('Artwork yang sudah dipublikasikan bersifat immutable');
+    if (version!.assets.length === 0) throw new BadRequestException('Unggah minimal satu layer artwork sebelum publikasi');
+
+    const assets: Record<string, Partial<Record<ArtworkVariant, object>>> = {};
+    for (const asset of version!.assets) {
+      const slot = asset.slot as ArtworkSlot;
+      const variant = asset.variant as ArtworkVariant;
+      assets[slot] ??= {};
+      assets[slot]![variant] = {
+        url: this.storage.publicUrl(asset.storageKey),
+        storageKey: asset.storageKey,
+        contentType: asset.contentType,
+        width: asset.width,
+        height: asset.height,
+        sizeBytes: asset.sizeBytes,
+      };
+    }
+    const manifest = artworkManifestSchema.parse({
+      schemaVersion: 1,
+      designId: version!.designId,
+      artworkVersion: version!.version,
+      assets,
+      presentation: input.presentation,
+      fallback: input.fallback,
+    });
+    const rawLayout = (template.layoutSchema && typeof template.layoutSchema === 'object' ? template.layoutSchema : {}) as Record<string, unknown>;
+    const layoutSchema = { ...rawLayout, artwork: manifest };
+    const thumbnail = manifest.assets.thumbnail?.default?.url ?? manifest.assets.thumbnail?.desktop?.url;
+
+    await this.prisma.$transaction([
+      this.prisma.templateArtworkVersion.update({ where: { id: versionId }, data: { status: 'PUBLISHED', manifest, publishedAt: new Date() } }),
+      this.prisma.template.update({ where: { id: templateId }, data: { artworkVersionId: versionId, layoutSchema, ...(thumbnail ? { thumbnailUrl: thumbnail } : {}) } }),
+    ]);
+    return this.getTemplate(templateId);
   }
 
   // ----- Harga per komponen -----

@@ -24,17 +24,16 @@ import { StorageService } from './storage.service.js';
 export class LocalMediaController {
   constructor(private readonly storage: StorageService) {}
 
-  @Put(':inv/:file')
+  @Put('*path')
   async upload(
-    @Param('inv') inv: string,
-    @Param('file') file: string,
+    @Param('path') rawPath: string | string[],
     @Query() query: Record<string, string>,
     @Req() req: Request,
     @Res() res: Response,
   ) {
     const local = this.storage.local;
     if (!local) throw new NotFoundException();
-    const key = `${inv}/${file}`;
+    const key = Array.isArray(rawPath) ? rawPath.join('/') : rawPath;
     if (!KEY_PATTERN.test(key)) throw new BadRequestException('Kunci tidak valid');
 
     const size = Number(query.size);
@@ -71,13 +70,13 @@ export class LocalMediaController {
     res.status(200).json({ ok: true });
   }
 
-  @Get(':inv/:file')
-  download(@Param('inv') inv: string, @Param('file') file: string, @Res() res: Response) {
+  @Get('*path')
+  download(@Param('path') rawPath: string | string[], @Res() res: Response) {
     const local = this.storage.local;
     if (!local) throw new NotFoundException();
-    const key = `${inv}/${file}`;
+    const key = Array.isArray(rawPath) ? rawPath.join('/') : rawPath;
     if (!KEY_PATTERN.test(key)) throw new NotFoundException();
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Cache-Control', key.startsWith('templates/') ? 'public, max-age=31536000, immutable' : 'public, max-age=3600');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     res.sendFile(local.filePath(key), (err) => {
       if (err && !res.headersSent) res.status(404).json({ statusCode: 404, message: 'File tidak ditemukan' });

@@ -26,6 +26,7 @@ describe('LocalDriver (dev)', () => {
     expect(() => driver.filePath('../../etc/passwd')).toThrow();
     expect(() => driver.filePath('a/../../b.jpg')).toThrow();
     expect(() => driver.filePath(key)).not.toThrow();
+    expect(() => driver.filePath('templates/spring-botanical-02/v1/coverbackground-default-abc.webp')).not.toThrow();
   });
 });
 

@@ -82,6 +82,11 @@ enum MediaStatus {
   DELETED
 }
 
+enum ArtworkStatus {
+  DRAFT
+  PUBLISHED
+}
+
 model User {
   id              String    @id @default(cuid())
   name            String
@@ -128,10 +133,52 @@ model Template {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
+  // Versi artwork aktif. Manifest teresolusi juga disalin ke layoutSchema.artwork agar transaksi
+  // order yang sudah ada otomatis menyimpannya di snapshot undangan.
+  artworkVersionId String?
+  artworkVersion   TemplateArtworkVersion? @relation(fields: [artworkVersionId], references: [id])
+
   invitations Invitation[]
   orders      Order[]
 
   @@map("templates")
+}
+
+// Paket artwork immutable per design. Objek yang sudah PUBLISHED tidak pernah ditimpa; perubahan
+// berikutnya selalu mendapat nomor version baru dan object key templates/<design>/v<version>/...
+model TemplateArtworkVersion {
+  id          String        @id @default(cuid())
+  designId    String
+  version     Int
+  status      ArtworkStatus @default(DRAFT)
+  manifest    Json          @default("{}")
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  templates Template[]
+  assets    TemplateArtworkAsset[]
+
+  @@unique([designId, version])
+  @@map("template_artwork_versions")
+}
+
+model TemplateArtworkAsset {
+  id          String   @id @default(cuid())
+  versionId   String
+  slot        String
+  variant     String   @default("default")
+  storageKey  String   @unique
+  contentType String
+  sizeBytes   Int
+  width       Int
+  height      Int
+  createdAt   DateTime @default(now())
+
+  version TemplateArtworkVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
+
+  @@unique([versionId, slot, variant])
+  @@map("template_artwork_assets")
 }
 
 model AddOn {

@@ -11,7 +11,8 @@ export interface StorageDriver {
   // Kunci objek berbentuk `<invitationId>/<mediaId>.<ext>`.
   presignUpload(input: { key: string; contentType: string; sizeBytes: number }): Promise<PresignedUpload>;
   // Unggah langsung dari server (mis. foto bawaan lewat seed); klien memakai presignUpload.
-  put(key: string, body: Buffer, contentType: string): Promise<void>;
+  put(key: string, body: Buffer, contentType: string, cacheControl?: string): Promise<void>;
+  get(key: string): Promise<Buffer | null>;
   head(key: string): Promise<{ sizeBytes: number } | null>;
   delete(key: string): Promise<void>;
   publicUrl(key: string): string;
