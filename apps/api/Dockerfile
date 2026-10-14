@@ -11,6 +11,7 @@ COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 RUN npm ci --workspace apps/api --no-audit --no-fund
 COPY apps/api apps/api
+COPY artwork-handoff artwork-handoff
 WORKDIR /repo/apps/api
 # Client Prisma digenerate ke src/generated (di-ignore git & .dockerignore), lalu dikompilasi ke dist/.
 RUN npm run prisma:generate && npm run build
