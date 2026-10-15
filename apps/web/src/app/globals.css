@@ -908,6 +908,15 @@ body {
   min-height: 46px;
   white-space: normal;
 }
+/* Tema musim: karangan bawah setinggi --fgh (±lebar sampul), jadi teks dipusatkan di ruang di atasnya (bukan menumpuk di atas dengan celah kosong di bawah). */
+.wl-season-semi { --fgh: 54cqw; --fgm: 48cqw; }
+.wl-season-panas { --fgh: 46cqw; --fgm: 40cqw; }
+.wl-season-gugur { --fgh: 38cqw; --fgm: 34cqw; }
+.wl-season-salju { --fgh: 50cqw; --fgm: 44cqw; }
+.wl-final-seasonal-content.wl-final-fit { justify-content: center; padding: 6cqh 8cqw var(--fgh, 50cqw); }
+.wl-final-fit .wl-cover-guest { margin-top: 5cqh !important; }
+.wl-final-fit .wl-cover-cta { margin-top: 3.4cqh !important; }
+@media (max-height: 720px) { .wl-final-seasonal-content.wl-final-fit { padding-top: 4cqh; } }
 .wl-art-cover-breathe { animation: wl-art-cover-breathe 12s ease-in-out infinite alternate; transform-origin: center; }
 @keyframes wl-art-cover-breathe { from { transform: scale(1); } to { transform: scale(1.02); } }
 @media (max-height: 720px) {
@@ -933,6 +942,7 @@ body {
   padding: 13cqh 8cqw 7cqh;
   text-align: center;
 }
+.wl-seasonal-fit .wl-seasonal-paper-copy { justify-content: center; padding: 6cqh 8cqw var(--fgm, 44cqw); }
 .wl-seasonal-kicker { font-size: 0.72rem; line-height: 1.25; letter-spacing: .34em; text-transform: uppercase; opacity: .84; }
 .wl-seasonal-names {
   margin-top: 1.5cqh;

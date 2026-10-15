@@ -97,6 +97,17 @@ const EMBED_HEIGHT = 810; // tinggi logis PhoneFrame
 const AKSARA = 'ꦲꦸꦤ꧀ꦝꦁꦔꦤ꧀'; // "undhangan" (undangan), aksara Jawa dekoratif
 const initialOf = (name: string, fallback = '') => (name.trim().charAt(0) || fallback).toUpperCase();
 
+// Lubang foto pada gambar bingkai (persen dari gambar; diukur dari alfa PNG-nya). Foto dibuat sedikit lebih besar dari lubang
+// supaya tepinya terselip di bawah bingkai. Desain tanpa ukuran khusus memakai nilai bawaan lama.
+const PHOTO_HOLE: Record<string, { aspect: string; box: CSSProperties }> = {
+  salju: { aspect: '960 / 1319', box: { left: '12%', top: '6.4%', width: '81.2%', height: '82.6%' } },
+  semi: { aspect: '960 / 1339', box: { left: '8.1%', top: '9.9%', width: '84.6%', height: '81.2%' } },
+  gugur: { aspect: '960 / 1326', box: { left: '7.8%', top: '5.6%', width: '84.2%', height: '85.8%' } },
+  panas: { aspect: '958 / 1376', box: { left: '8.3%', top: '11.5%', width: '81.1%', height: '76.5%' } },
+};
+const DEFAULT_PHOTO_HOLE = { aspect: '0.72', box: { left: '8%', top: '5%', width: '80%', height: '85%' } as CSSProperties };
+const photoHole = (designId: string) => PHOTO_HOLE[designId] ?? DEFAULT_PHOTO_HOLE;
+
 export function InvitationView({ view, mode = 'live', embedded = false, placeholders = false, gate }: InvitationViewProps) {
   const { theme } = view.layout;
   const { data } = view;
@@ -525,7 +536,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
           )}
 
           {!photoCover && (
-          <div key={coverKey} className={`relative z-[4] flex flex-col items-center ${finalSeasonalCover ? 'wl-final-seasonal-content' : ''}`} style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
+          <div key={coverKey} className={`relative z-[4] flex flex-col items-center ${finalSeasonalCover ? 'wl-final-seasonal-content' : ''} ${finalSeasonalCover ? `wl-final-fit wl-season-${artwork?.designId}` : ''}`} style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
             {bloom && !coverPhoto && showMono && (
               <div className={`mb-1 ${enter(0).className}`} style={enter(0).style}>
                 <FloralMonogram a={monoA} b={monoB} size={128} />
@@ -640,11 +651,11 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                           )}
                           <div className={`relative ${fx === 'premium' ? 'wl-float' : ''}`} style={fx === 'premium' ? { animationDelay: `${i * -2}s` } : undefined}>
                             {artwork?.assets.photoFrame ? (
-                              <div className="relative aspect-[0.72] w-[15rem] max-w-[72vw]">
+                              <div className="relative w-[15rem] max-w-[72vw]" style={{ aspectRatio: photoHole(artwork.designId).aspect }}>
                                 {photo ? (
-                                  <img src={photo} alt={nick} className="absolute left-[8%] top-[5%] h-[85%] w-[80%] rounded-[48%] object-cover" />
+                                  <img src={photo} alt={nick} className="absolute rounded-[50%] object-cover" style={photoHole(artwork.designId).box} />
                                 ) : (
-                                  <div className="absolute left-[17%] top-[12%] flex h-[76%] w-[66%] items-center justify-center rounded-[48%]" style={{ background: placeholders ? 'linear-gradient(160deg, color-mix(in srgb, var(--p) 25%, var(--bg)), color-mix(in srgb, var(--s) 45%, var(--bg)))' : 'color-mix(in srgb, var(--p) 10%, var(--bg))' }}>
+                                  <div className="absolute flex items-center justify-center rounded-[50%]" style={{ ...photoHole(artwork.designId).box, background: placeholders ? 'linear-gradient(160deg, color-mix(in srgb, var(--p) 25%, var(--bg)), color-mix(in srgb, var(--s) 45%, var(--bg)))' : 'color-mix(in srgb, var(--p) 10%, var(--bg))' }}>
                                     <span className="text-5xl" style={{ fontFamily: 'var(--font-script)', color: 'var(--p)' }}>{nick.charAt(0)}</span>
                                   </div>
                                 )}
