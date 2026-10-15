@@ -61,49 +61,11 @@ export const MOTIFS: Record<string, Motif> = {
   garden: { ...m('botani', 'none', 'garden', 'outline', 'none', ['leaf', 12, 'fall']), skin: 'garden', heading: 'display', names: 'display', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   elegant: { ...m('deco', 'diamond', 'deco', 'luxe', 'halo', ['dust', 22, 'rise'], 'mid', 'blur'), skin: 'gilded', heading: 'cinzel', names: 'script' },
 
-  // Suku & budaya
-  // Batik Jawa "Keraton Klasik": maroon, emas, krem; gunungan, parang di tepi, kawung sebagai pemisah, aksara Jawa dekoratif.
-  jawa: { ...m('keraton', 'none', 'kayon', 'keraton', 'none', ['dust', 16, 'rise'], 'mid', 'blur'), skin: 'keraton', heading: 'playfair', names: 'playfair', body: 'montserrat', cornerSize: { top: 'w-[4.4rem]', bottom: 'w-[4.4rem]' } },
-  sunda: m('vine', 'leaves', 'round', 'round', 'clouds', ['leaf', 12, 'fall']),
-  minang: m('geo', 'diamond', 'notch', 'ticket', 'rays', ['sparkle', 10, 'twinkle'], 'mid'),
-  batak: m('geo', 'zigzag', 'square', 'outline', 'none', ['star', 8, 'twinkle'], 'sharp'),
-  bali: m('lotus', 'leaves', 'arch', 'soft', 'rays', ['petal', 14, 'fall']),
-
-  // Religi
-  islami: m('star8', 'star8', 'arch', 'outline', 'spotlight', ['star', 14, 'twinkle'], 'mid'),
   // Buket Pengantin: putih bersih dihiasi bunga warna-warni (mawar, peony, aster, anemon, kosmos)
   buket: { ...m('flora', 'none', 'bloom', 'bloom', 'bloom', ['blossom', 14, 'fall'], 'pill', 'rise'), skin: 'bloom', heading: 'serif', names: 'script', cornerSize: { top: 'w-36 [@media(max-height:700px)]:w-28', bottom: 'w-28 [@media(max-height:700px)]:w-24' } },
 
-  // Sepasang Merpati (id lama 'kristiani' dipertahankan: dipakai snapshot template yang sudah tersimpan)
-  kristiani: { ...m('lily', 'none', 'dove', 'sky', 'sky', ['feather', 12, 'fall'], 'pill', 'rise'), skin: 'dove', heading: 'script', names: 'script' },
-  buddha: m('lotus', 'scallop', 'round', 'round', 'aurora', ['lantern', 8, 'rise']),
-
-  // Perayaan
-  natal: m('snow', 'dots', 'round', 'soft', 'aurora', ['snow', 30, 'fall'], 'mid'),
-  imlek: m('sparkle', 'diamond', 'notch', 'ticket', 'spotlight', ['lantern', 10, 'rise'], 'mid'),
-  valentine: m('sparkle', 'hearts', 'round', 'round', 'aurora', ['heart', 16, 'rise'], 'pill'),
-  kemerdekaan: m('geo', 'stripes', 'square', 'ticket', 'none', ['confetti', 22, 'fall'], 'sharp'),
-  lebaran: m('star8', 'star8', 'arch', 'outline', 'spotlight', ['lantern', 8, 'rise'], 'mid'),
-  tahunbaru: m('sparkle', 'stars', 'diamond', 'neon', 'spotlight', ['confetti', 26, 'fall'], 'mid', 'zoom'),
-  halloween: m('sparkle', 'stars', 'notch', 'outline', 'aurora', ['bat', 10, 'drift'], 'mid', 'blur', { kicker: 'Malam Penuh Kejutan', open: 'Buka Peti Undangan' }),
-
-  // Kartun (gaya umum)
-  'kerajaan-es': m('snow', 'dots', 'diamond', 'outline', 'aurora', ['snow', 26, 'fall'], 'pill', 'blur'),
-  ceria: m('sparkle', 'dots', 'round', 'round', 'clouds', ['bubble', 14, 'rise'], 'pill', 'zoom', { kicker: 'Petualangan Baru Dimulai', open: 'Ayo Mulai!' }),
-  'sakura-anime': m('vine', 'dots', 'oval', 'soft', 'clouds', ['petal', 24, 'fall'], 'pill', 'blur', { kicker: 'Musim Bunga Kami' }),
-  dongeng: m('sparkle', 'stars', 'arch', 'soft', 'curtain', ['sparkle', 16, 'twinkle'], 'pill', 'blur', { kicker: 'Alkisah, Sebuah Kisah Cinta', open: 'Buka Buku Dongeng' }),
-
-  // Video game (gaya umum)
-  pixel: m('geo', 'grid', 'pixel', 'pixel', 'scanlines', ['pixel', 14, 'rise'], 'sharp', 'zoom', { kicker: 'Press Start', open: 'Mulai Petualangan' }),
-  'player-one': m('geo', 'grid', 'notch', 'pixel', 'scanlines', ['star', 14, 'twinkle'], 'sharp', 'zoom', { kicker: 'Player 1 & Player 2', open: 'Mulai Permainan' }),
-  rpg: m('geo', 'diamond', 'notch', 'ticket', 'spotlight', ['coin', 10, 'rise'], 'sharp', 'slide', { kicker: 'Quest Terakhir', open: 'Terima Quest' }),
-  neon: m('sparkle', 'grid', 'notch', 'neon', 'scanlines', ['sparkle', 18, 'twinkle'], 'sharp', 'zoom', { kicker: 'Insert Coin', open: 'Masuk Arena' }),
-
-  // Fantasi (gaya umum)
-  hollywood: m('sparkle', 'diamond', 'square', 'flip', 'curtain', ['sparkle', 14, 'twinkle'], 'mid', 'zoom', { kicker: 'Now Showing', open: 'Tonton Sekarang' }),
   galaksi: m('sparkle', 'stars', 'round', 'neon', 'aurora', ['star', 30, 'twinkle'], 'soft', 'blur', { kicker: 'Misi Cinta di Antar Bintang', open: 'Luncurkan' }),
   sihir: m('sparkle', 'stars', 'arch', 'outline', 'spotlight', ['firefly', 18, 'drift'], 'soft', 'blur', { kicker: 'Surat dari Akademi Sihir', open: 'Buka Gulungan' }),
-  paris: m('sparkle', 'stripes', 'oval', 'flip', 'rays', ['petal', 10, 'fall'], 'mid', 'rise', { kicker: 'Un Amour à Paris' }),
 
   // Musim
   semi: { ...m('sakura', 'none', 'sakura', 'soft', 'clouds', ['petal', 18, 'fall']), pageFrame: 'sakura', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
@@ -113,6 +75,7 @@ export const MOTIFS: Record<string, Motif> = {
   lavender: { ...m('lavender', 'none', 'lavender', 'soft', 'clouds', ['petal', 16, 'fall'], 'soft', 'blur'), heading: 'script', names: 'script', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   hortensia: { ...m('hortensia', 'none', 'hortensia', 'outline', 'aurora', ['blossom', 14, 'fall'], 'pill', 'blur'), heading: 'serif', names: 'serif', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   marigold: { ...m('marigold', 'none', 'marigold', 'ticket', 'rays', ['petal', 16, 'fall'], 'mid', 'rise'), heading: 'display', names: 'script', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
+  wisteria: { ...m('hortensia', 'none', 'hortensia', 'outline', 'aurora', ['petal', 14, 'fall'], 'pill', 'blur'), heading: 'serif', names: 'serif', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   salju: { ...m('winter', 'none', 'winter', 'outline', 'aurora', ['snow', 28, 'fall'], 'mid', 'blur'), pageFrame: 'winter', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
 };
 

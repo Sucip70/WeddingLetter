@@ -13,6 +13,7 @@ export const metadata: Metadata = { title: 'Admin — template' };
 
 interface Row {
   id: string;
+  designId: string;
   name: string;
   category: string;
   tier: Tier;
@@ -28,9 +29,6 @@ interface Row {
 const STATUS_LABEL: Record<Row['status'], string> = { PUBLISHED: 'Tersedia', DRAFT: 'Draf', ARCHIVED: 'Arsip' };
 const TIER_ORDER: Record<Tier, number> = { BASIC: 0, STANDARD: 1, PREMIUM: 2 };
 const NO_GATE = 'none';
-// Satu tema = satu desain (id desain = theme.motif, atau theme.preset untuk data lama).
-const designKey = (theme: Theme) => theme.motif ?? theme.preset;
-
 interface DesignCard {
   key: string;
   name: string;
@@ -55,7 +53,7 @@ export default async function AdminTemplates({ searchParams }: PageProps<'/admin
 
   const byDesign = new Map<string, Row[]>();
   for (const t of templates) {
-    const key = designKey(t.theme);
+    const key = t.designId;
     byDesign.set(key, [...(byDesign.get(key) ?? []), t]);
   }
   const designs: DesignCard[] = [...byDesign.entries()].map(([key, list]) => {

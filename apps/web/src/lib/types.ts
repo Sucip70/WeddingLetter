@@ -20,30 +20,13 @@ export interface SectionDef {
 export type FxLevel = 'none' | 'standard' | 'premium';
 // Gerbang pembuka undangan Premium (apps/web/.../gates.tsx). Sama dengan GATE_LABEL di API.
 export const GATE_LABEL = {
-  door: 'Pintu',
-  glass: 'Jendela kaca patri',
-  curtain: 'Tirai',
-  cloth: 'Kain ditarik',
-  envelope: 'Amplop',
   portal: 'Portal sihir',
   ring: 'Kotak cincin',
-  bloom: 'Bunga bermekaran',
   leaves: 'Surat daun gugur',
   taman: 'Surat daun hijau',
-  balloons: 'Balon',
-  waves: 'Ombak',
-  gift: 'Kado',
-  lantern: 'Lentera',
-  fireworks: 'Kembang api',
   frost: 'Surat kristal es',
-  book: 'Buku dongeng',
-  pressstart: 'Press Start',
-  loading: 'Loading',
-  neon: 'Papan neon',
   sakura: 'Surat kelopak sakura',
-  kayon: 'Kayon wayang',
   twine: 'Surat bertali goni',
-  doves: 'Sepasang merpati',
   bouquet: 'Lempar buket',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
@@ -98,7 +81,7 @@ export interface ArtworkManifest {
   };
 }
 
-export type ThemeGroup = 'klasik' | 'suku' | 'agama' | 'perayaan' | 'kartun' | 'game' | 'film' | 'musim';
+export type ThemeGroup = 'klasik' | 'film' | 'musim';
 
 export interface DesignInfo {
   id: string;

@@ -43,7 +43,6 @@ export interface DesignMeta {
   id: string;
   name: string;
   group: ThemeGroup;
-  blurb: string;
   primary: string;
   secondary: string;
   background: string;
@@ -152,14 +151,6 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
   const gateValue = seasonalGateLabel && design
     ? (layout.theme.gate ?? 'none') === 'none' ? 'none' : design.gate
     : layout.theme.gate ?? 'none';
-  // Ganti desain: warna, font, motif, dan usulan palet ikut berganti.
-  function applyDesign(id: string) {
-    const d = meta.designs.find((x) => x.id === id);
-    if (!d) return;
-    // Gerbang bawaan desain hanya dipasang untuk paket Premium.
-    setForm((f) => ({ ...f, category: d.group, layout: { ...f.layout, theme: themeOf(d, f.layout.theme.fx, f.tier === 'PREMIUM' ? d.gate : 'none'), palettes: d.palettes } }));
-  }
-
   // Pindah ke Premium: pasang gerbang bawaan desain bila belum ada gerbang.
   function changeTier(tier: TemplateForm['tier']) {
     setForm((f) => {
@@ -282,12 +273,12 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
             <h2 className="font-semibold text-ink">Informasi dasar</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Field label="Nama template" required><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={80} /></Field>
-              <Field label="Kelompok tema" hint="Dipakai untuk filter katalog. Otomatis mengikuti desain yang dipilih.">
+              <Field label="Kelompok tema" hint="Dipakai untuk filter katalog.">
                 <Select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                   {[...new Set([...meta.groups.map((g) => g.id as string), form.category])].map((c) => <option key={c} value={c}>{meta.groups.find((g) => g.id === c)?.label ?? c}</option>)}
                 </Select>
               </Field>
-              <Field label="Paket (tier)"><Select value={form.tier} onChange={(e) => changeTier(e.target.value as TemplateForm['tier'])}><option value="BASIC">Basic</option><option value="STANDARD">Standard</option><option value="PREMIUM">Premium</option></Select></Field>
+              {!form.id && <Field label="Paket (tier)"><Select value={form.tier} onChange={(e) => changeTier(e.target.value as TemplateForm['tier'])}><option value="BASIC">Basic</option><option value="STANDARD">Standard</option><option value="PREMIUM">Premium</option></Select></Field>}
               {!form.id && <Field label="Harga (Rp)" hint="Setelah dibuat, harga & ketersediaan diatur di panel Paket & ketersediaan."><Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} /></Field>}
               <Field label="Masa aktif termasuk (minggu)" hint="Lama tayang yang sudah termasuk di harga template."><Input type="number" min={1} max={52} value={form.includedWeeks} onChange={(e) => setForm({ ...form, includedWeeks: Number(e.target.value) })} /></Field>
               {!form.id && <Field label="Status"><Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TemplateForm['status'] })}><option value="DRAFT">Draf (tidak tampil)</option><option value="PUBLISHED">Dipublikasikan</option><option value="ARCHIVED">Diarsipkan</option></Select></Field>}
@@ -304,16 +295,6 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
           <Card className="p-5">
             <h2 className="font-semibold text-ink">Tema tampilan</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <Field label="Desain" hint={design?.blurb ?? 'Desain kustom: motif mengikuti desain terdekat.'}>
-                <Select value={design?.id ?? ''} onChange={(e) => applyDesign(e.target.value)}>
-                  {!design && <option value="">(kustom)</option>}
-                  {meta.groups.map((g) => (
-                    <optgroup key={g.id} label={g.label}>
-                      {meta.designs.filter((d) => d.group === g.id).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </optgroup>
-                  ))}
-                </Select>
-              </Field>
               <Field label="Level animasi" hint="Tanpa = tampilan statis (Basic). Standar = animasi masuk & partikel di sampul. Penuh = partikel di seluruh halaman, kilau, dan gerak tambahan.">
                 <Select value={layout.theme.fx} onChange={(e) => setTheme({ fx: e.target.value as FxLevel })}>{FX_ORDER.map((v) => <option key={v} value={v}>{FX_LABEL[v]}</option>)}</Select>
               </Field>

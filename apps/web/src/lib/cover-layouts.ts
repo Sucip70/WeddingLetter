@@ -34,11 +34,7 @@ export const COVER_LAYOUTS: Record<CoverKind, { label: string; hint: string; nee
 
 const GENERIC: CoverKind[] = ['ornamen', 'penuh', 'penuh-atas', 'bingkai', 'medali', 'terbagi', 'berdua', 'bingkai-penuh'];
 const THEME_BY_DESIGN: Record<string, CoverKind> = {
-  jawa: 'gapura', minang: 'gapura', batak: 'gapura', bali: 'gapura', islami: 'gapura', lebaran: 'gapura', buddha: 'gapura', imlek: 'gapura',
-  halloween: 'portal', galaksi: 'orbit', sihir: 'menara',
-  pixel: 'karakter', 'player-one': 'karakter', rpg: 'karakter', neon: 'karakter',
-  hollywood: 'poster', paris: 'poster',
-  elegant: 'emas', kristiani: 'merpati', buket: 'bunga',
+  galaksi: 'orbit', sihir: 'menara', elegant: 'emas', buket: 'bunga',
 };
 
 // Untuk pratinjau di builder (paket & tema belum tersimpan). Undangan sungguhan memakai daftar dari API.

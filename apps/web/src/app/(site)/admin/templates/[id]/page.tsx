@@ -13,6 +13,7 @@ export const metadata: Metadata = { title: 'Admin — template builder' };
 
 interface ListRow {
   id: string;
+  designId: string;
   name: string;
   tier: TierRow['tier'];
   price: number;
@@ -22,9 +23,6 @@ interface ListRow {
 }
 
 const TIER_ORDER: Record<TierRow['tier'], number> = { BASIC: 0, STANDARD: 1, PREMIUM: 2 };
-// Satu tema = satu desain (id desain = theme.motif, atau theme.preset untuk data lama); sama dengan pengelompokan daftar admin.
-const designKey = (theme: Theme) => theme.motif ?? theme.preset;
-
 export default async function AdminTemplateBuilder({ params }: PageProps<'/admin/templates/[id]'>) {
   const { id } = await params;
   const path = `/admin/templates/${id}`;
@@ -43,9 +41,8 @@ export default async function AdminTemplateBuilder({ params }: PageProps<'/admin
     const all = await authedFetch<ListRow[]>('/admin/templates', path);
     const mine = all.find((r) => r.id === id);
     if (mine) {
-      const key = designKey(mine.theme);
       siblings = all
-        .filter((r) => designKey(r.theme) === key)
+        .filter((r) => r.designId === mine.designId)
         .sort((a, b) => TIER_ORDER[a.tier] - TIER_ORDER[b.tier] || a.price - b.price)
         .map((r) => ({ id: r.id, name: r.name, tier: r.tier, price: r.price, status: r.status, orders: r.orders }));
     }
