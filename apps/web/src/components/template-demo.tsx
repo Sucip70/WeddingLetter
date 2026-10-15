@@ -12,6 +12,42 @@ import { PhoneFrame } from './invitation/phone-frame';
 import { PauseIcon, PlayIcon } from './invitation/ornaments';
 import { LinkButton } from './ui';
 
+const PREVIEW_WIDTH = 390;
+const PREVIEW_HEIGHT = 810;
+
+function FullscreenPreview({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+  const areaRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.5);
+
+  useEffect(() => {
+    const area = areaRef.current;
+    if (!area) return;
+    const resize = () => {
+      const { width, height } = area.getBoundingClientRect();
+      setScale(Math.max(0.35, Math.min(1, (width - 24) / PREVIEW_WIDTH, (height - 24) / PREVIEW_HEIGHT)));
+    };
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(area);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex flex-col bg-[#171210]" role="dialog" aria-modal="true" aria-labelledby="preview-title">
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-white/15 bg-[#211a17] px-4 text-white sm:px-6">
+        <div>
+          <p id="preview-title" className="text-sm font-semibold">Pratinjau template</p>
+          <p className="text-[11px] text-white/65">Geser di dalam undangan untuk menjelajah</p>
+        </div>
+        <button type="button" autoFocus onClick={onClose} className="flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl leading-none hover:bg-white/20" aria-label="Tutup pratinjau">×</button>
+      </div>
+      <div ref={areaRef} className="flex min-h-0 flex-1 items-center justify-center overflow-hidden p-2 sm:p-4">
+        <PhoneFrame scale={scale}>{children}</PhoneFrame>
+      </div>
+    </div>
+  );
+}
+
 // Demo interaktif di halaman detail template: ganti warna, dengarkan lagu bawaan, lalu "Pakai template ini".
 // Kolom kanan dirakit dari `header` (judul, harga) + tombol pakai + `children` (fitur, add-on) dari server.
 export function TemplateDemo({ template, header, children, photos }: { template: TemplateDetail; header: ReactNode; children: ReactNode; photos: DemoPhotos }) {
@@ -23,7 +59,25 @@ export function TemplateDemo({ template, header, children, photos }: { template:
   const [paletteId, setPaletteId] = useState(palettes[0]?.id ?? '');
   const [track, setTrack] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const previewButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!previewOpen) return;
+    const opener = previewButtonRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') setPreviewOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+      requestAnimationFrame(() => opener?.focus());
+    };
+  }, [previewOpen]);
 
   const palette = palettes.find((p) => p.id === paletteId);
   const view = useMemo(() => {
@@ -49,10 +103,23 @@ export function TemplateDemo({ template, header, children, photos }: { template:
   return (
     <div className="mt-6 grid gap-12 lg:grid-cols-[auto_1fr] lg:gap-16">
       <div className="lg:sticky lg:top-24 lg:self-start">
-        <PhoneFrame size="lg">
-          <InvitationView key={`${coverKind}:${picked}`} view={view} mode="preview" embedded placeholders gate={picked ? 'skip' : 'show'} />
-        </PhoneFrame>
-        <p className="mt-4 text-center text-xs text-ink-soft">Demo interaktif · gulir di dalam layar ponsel</p>
+        <div className="relative mx-auto w-fit">
+          <div className="pointer-events-none" aria-hidden="true" inert>
+            <PhoneFrame size="sm">
+              <InvitationView key={`${coverKind}:teaser`} view={view} mode="preview" embedded placeholders gate="skip" />
+            </PhoneFrame>
+          </div>
+          <button
+            ref={previewButtonRef}
+            type="button"
+            onClick={() => setPreviewOpen(true)}
+            className="absolute inset-0 flex items-end justify-center rounded-[2.4rem] bg-gradient-to-t from-black/70 via-transparent to-transparent p-5 text-white outline-none ring-rose transition hover:from-black/80 focus-visible:ring-4"
+            aria-haspopup="dialog"
+          >
+            <span className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-ink shadow-lg">Buka pratinjau penuh</span>
+          </button>
+        </div>
+        <p className="mt-4 text-center text-xs text-ink-soft">Pratinjau interaktif dibuka dalam layar penuh</p>
 
         {coverKinds.length > 0 && (
           <div className="mt-5 text-center">
@@ -137,6 +204,12 @@ export function TemplateDemo({ template, header, children, photos }: { template:
 
         {children}
       </div>
+
+      {previewOpen && (
+        <FullscreenPreview onClose={() => setPreviewOpen(false)}>
+          <InvitationView key={`${coverKind}:${picked}:fullscreen`} view={view} mode="preview" embedded placeholders gate={picked ? 'skip' : 'show'} />
+        </FullscreenPreview>
+      )}
     </div>
   );
 }
