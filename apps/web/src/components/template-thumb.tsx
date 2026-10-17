@@ -8,6 +8,7 @@ import { CoverLayout } from './invitation/cover';
 import { defaultCoverLayout, isCoverKind, resolveCover } from '@/lib/cover-layouts';
 import type { DemoPhotos } from '@/lib/sample';
 import type { Theme } from '@/lib/types';
+import type { Layout } from '@/lib/types';
 import { PatternLayer } from './invitation/effects';
 import { HEADING, RADIUS, motifFor } from './invitation/motifs';
 import { FloralMonogram } from './invitation/bloom-parts';
@@ -33,6 +34,7 @@ export function TemplateThumb({
   coverLayouts = [],
   coverDefault,
   photos,
+  samplePhotos,
   phone = false,
 }: {
   theme: Theme;
@@ -41,6 +43,7 @@ export function TemplateThumb({
   coverLayouts?: string[];
   coverDefault?: string;
   photos?: DemoPhotos;
+  samplePhotos?: Layout['samplePhotos'];
   // true = ukuran sampul ponsel sungguhan (font, sudut, tombol sama dengan undangan; wadah harus ±390px lebar lalu diskalakan,
   // lihat katalog). false = miniatur sangat kecil (daftar admin, beranda) dengan ukuran dikecilkan.
   phone?: boolean;
@@ -53,6 +56,7 @@ export function TemplateThumb({
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={imageUrl} alt="" className={`h-full w-full ${imageFit} ${className}`} />;
   }
+  const effectivePhotos: DemoPhotos = { ...(photos ?? {}), ...samplePhotos };
   const motif = motifFor(theme.motif ?? theme.preset);
   const orn = ORNAMENTS[motif.ornament];
   const hf = HEADING[theme.headingFont] ?? HEADING.serif;
@@ -111,7 +115,7 @@ export function TemplateThumb({
   const kinds = coverLayouts.filter(isCoverKind);
   // Aturan yang sama dengan demo template & editor (defaultCoverLayout): pilihan admin, lalu khusus tema, lalu Foto berbingkai.
   const chosen = kinds.length > 0 ? defaultCoverLayout(kinds, coverDefault) : undefined;
-  const resolved = chosen ? resolveCover(chosen, { cover: photos?.cover, groom: photos?.groom, bride: photos?.bride }) : undefined;
+  const resolved = chosen ? resolveCover(chosen, { cover: effectivePhotos.cover, groom: effectivePhotos.groom, bride: effectivePhotos.bride }) : undefined;
 
   // Gradasi/sorotan sampul di atas latar kulit (lapisan transparan, bukan bagian dari multiply): sama dengan undangan sungguhan.
   const coverOverlay = phone ? (
@@ -151,9 +155,9 @@ export function TemplateThumb({
       <div className={`${rootClass} relative flex h-full w-full flex-col items-center justify-center overflow-hidden text-center ${className}`} style={rootStyle}>
         <CoverLayout
           kind={resolved}
-          photo={photos?.cover}
-          groom={photos?.groom}
-          bride={photos?.bride}
+          photo={effectivePhotos.cover}
+          groom={effectivePhotos.groom}
+          bride={effectivePhotos.bride}
           kicker={motif.copy?.kicker ?? 'Undangan Pernikahan'}
           names="Andi & Sinta"
           groomName="Andi"

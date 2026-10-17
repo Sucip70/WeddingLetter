@@ -41,6 +41,13 @@ describe('normalizeLayout', () => {
     expect(normalizeLayout({}, 'floral').theme.primary).toBe('#c4587a');
     expect(normalizeLayout({ theme: { preset: 'elegant', primary: '#111111' } }).theme).toMatchObject({ preset: 'elegant', primary: '#111111' });
   });
+
+  it('menyimpan foto contoh khusus template dan membuang URL yang tidak aman', () => {
+    const photos = { groom: 'https://cdn.example.com/groom.webp', bride: 'http://localhost:4000/bride.png' };
+    expect(normalizeLayout({ samplePhotos: photos }).samplePhotos).toEqual(photos);
+    expect(normalizeLayout({ samplePhotos: { groom: 'javascript:alert(1)' } }).samplePhotos).toBeUndefined();
+    expect(toAuthoring({ samplePhotos: photos }).samplePhotos).toEqual(photos);
+  });
 });
 
 describe('effectiveSections (add-on membuka section)', () => {

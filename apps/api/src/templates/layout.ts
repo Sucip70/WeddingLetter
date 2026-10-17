@@ -76,6 +76,8 @@ export interface TemplateLayout {
   coverDefault?: string;
   // Manifest artwork immutable yang ikut disalin ke snapshot saat order dibuat.
   artwork?: ArtworkManifest;
+  // Foto contoh khusus template untuk katalog dan pratinjau. Slot yang kosong memakai foto demo global.
+  samplePhotos?: { groom?: string; bride?: string };
 }
 
 const f = (
@@ -184,6 +186,8 @@ const presetUrl = z
   .max(500)
   .refine((u) => /^https?:\/\/\S+$/.test(u) || /^\/audio\/[a-z0-9-]+\.mp3$/.test(u), 'URL lagu harus https atau /audio/<nama>.mp3');
 
+const samplePhotoUrl = z.string().trim().max(500).refine((u) => /^https?:\/\/\S+$/.test(u), 'URL foto contoh harus http(s)');
+
 const fieldOverride = z.object({
   key: z.string(),
   label: z.string().trim().min(1).max(80).optional(),
@@ -234,6 +238,7 @@ export const layoutInputSchema = z.object({
   rsvp: z.object({ allowed: z.boolean().optional() }).optional(), // legacy: diabaikan
   coverDefault: z.string().max(40).optional(),
   artwork: artworkManifestSchema.optional(),
+  samplePhotos: z.object({ groom: samplePhotoUrl.optional(), bride: samplePhotoUrl.optional() }).optional(),
 });
 
 function isSectionId(id: string): id is SectionId {
@@ -288,6 +293,7 @@ export function normalizeLayout(raw: unknown, category = 'rustic'): TemplateLayo
     coverLayouts: [],
     ...(input.coverDefault && COVER_KINDS.includes(input.coverDefault) ? { coverDefault: input.coverDefault } : {}),
     ...(input.artwork ? { artwork: input.artwork } : {}),
+    ...(input.samplePhotos?.groom || input.samplePhotos?.bride ? { samplePhotos: input.samplePhotos } : {}),
   };
 }
 
@@ -551,5 +557,5 @@ export function toAuthoring(raw: unknown, category = 'rustic') {
     };
   });
   // Palet mentah (tanpa "bawaan" otomatis) supaya round-trip dengan builder tidak menyimpan entri turunan.
-  return { theme: norm.theme, sections, galeri: norm.galeri, musik: norm.musik, palettes: input.palettes ?? [], coverDefault: norm.coverDefault, artwork: norm.artwork };
+  return { theme: norm.theme, sections, galeri: norm.galeri, musik: norm.musik, palettes: input.palettes ?? [], coverDefault: norm.coverDefault, artwork: norm.artwork, samplePhotos: norm.samplePhotos };
 }

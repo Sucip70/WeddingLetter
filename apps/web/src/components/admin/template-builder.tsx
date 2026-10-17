@@ -26,6 +26,7 @@ export interface Authoring {
   // Tata letak sampul bawaan (kosong = otomatis). Lihat coverDefault di apps/api/src/templates/layout.ts.
   coverDefault?: string;
   artwork?: ArtworkManifest;
+  samplePhotos?: { groom?: string; bride?: string };
 }
 export interface TemplateForm {
   id?: string;
@@ -77,6 +78,8 @@ const SEASONAL_PREMIUM_GATE_LABEL: Record<string, string> = {
   gugur: 'Letter in the Wind',
   salju: 'Frosted Monogram',
 };
+type SamplePhotoSlot = 'groom' | 'bride';
+const SAMPLE_PHOTO_LABEL: Record<SamplePhotoSlot, string> = { groom: 'Ilustrasi mempelai pria', bride: 'Ilustrasi mempelai wanita' };
 
 const themeOf = (d: DesignMeta, fx: FxLevel, gate: GateSetting): Theme => ({ preset: d.id, motif: d.id, fx, gate, primary: d.primary, secondary: d.secondary, background: d.background, text: d.text, headingFont: d.headingFont, bodyFont: d.bodyFont });
 
@@ -107,6 +110,7 @@ function toPreviewLayout(l: Authoring) {
     sections: l.sections.filter((s) => s.enabled).map((s) => ({ id: s.id, title: s.title, fields: s.fields.filter((f) => f.enabled).map((f) => ({ key: f.key, label: f.label, type: f.type, required: f.required })) })),
     musik: l.musik,
     artwork: l.artwork,
+    samplePhotos: l.samplePhotos,
   };
 }
 
@@ -122,6 +126,8 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
   const [artworkPreview, setArtworkPreview] = useState<ArtworkManifest | undefined>();
   const thumbInput = useRef<HTMLInputElement>(null);
   const songInput = useRef<HTMLInputElement>(null);
+  const sampleInput = useRef<HTMLInputElement>(null);
+  const sampleTarget = useRef<SamplePhotoSlot>('groom');
 
   const layout = form.layout;
   const setLayout = (patch: Partial<Authoring>) => setForm((f) => ({ ...f, layout: { ...f.layout, ...patch } }));
@@ -196,6 +202,26 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
     }
   }
 
+  async function onSamplePhoto(slot: SamplePhotoSlot, file?: File) {
+    if (!file) return;
+    setUploading(`sample:${slot}`);
+    setError('');
+    try {
+      const url = await uploadAsset(file, 'image');
+      setLayout({ samplePhotos: { ...layout.samplePhotos, [slot]: url } });
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setUploading('');
+    }
+  }
+
+  function clearSamplePhoto(slot: SamplePhotoSlot) {
+    const next = { ...layout.samplePhotos };
+    delete next[slot];
+    setLayout({ samplePhotos: next.groom || next.bride ? next : undefined });
+  }
+
   async function save(status?: TemplateForm['status']) {
     setBusy('save');
     setError('');
@@ -216,6 +242,7 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
         palettes: layout.palettes,
         artwork: layout.artwork,
         coverDefault,
+        samplePhotos: layout.samplePhotos,
       },
     };
     try {
@@ -289,6 +316,62 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
                   <Button type="button" variant="secondary" onClick={() => thumbInput.current?.click()} loading={uploading === 'thumb'}>Unggah</Button>
                 </div>
               </Field>
+            </div>
+          </Card>
+
+          <Card className="p-5">
+            <h2 className="font-semibold text-ink">Ilustrasi pasangan untuk demo</h2>
+            <p className="mt-1 text-sm text-ink-soft">Khusus untuk template ini di katalog dan pratinjau. Jika belum diunggah, template tetap memakai foto demo global. Foto pembeli pada undangan asli tidak terpengaruh.</p>
+            <input
+              ref={sampleInput}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              aria-label="Unggah ilustrasi pasangan"
+              onChange={(e) => {
+                void onSamplePhoto(sampleTarget.current, e.target.files?.[0]);
+                e.target.value = '';
+              }}
+            />
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {(['groom', 'bride'] as const).map((slot) => {
+                const custom = layout.samplePhotos?.[slot];
+                const preview = custom ?? photos[slot];
+                return (
+                  <div key={slot} className="overflow-hidden rounded-xl border border-line bg-ivory">
+                    <div className="aspect-[4/5] bg-ivory">
+                      {preview ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={preview} alt={SAMPLE_PHOTO_LABEL[slot]} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center p-5 text-center text-xs text-ink-soft">Belum ada foto demo global maupun khusus template.</div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-ink">{SAMPLE_PHOTO_LABEL[slot]}</p>
+                        <Badge tone={custom ? 'sage' : 'neutral'}>{custom ? 'Khusus' : 'Global'}</Badge>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          loading={uploading === `sample:${slot}`}
+                          disabled={!!uploading && uploading !== `sample:${slot}`}
+                          onClick={() => {
+                            sampleTarget.current = slot;
+                            sampleInput.current?.click();
+                          }}
+                        >
+                          {custom ? 'Ganti' : 'Unggah khusus'}
+                        </Button>
+                        {custom && <Button type="button" variant="ghost" size="sm" disabled={!!uploading} onClick={() => clearSamplePhoto(slot)}>Pakai global</Button>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </Card>
 

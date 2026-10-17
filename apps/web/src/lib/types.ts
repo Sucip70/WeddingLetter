@@ -110,6 +110,8 @@ export interface Layout {
   // Tata letak sampul bawaan pilihan admin (kosong = otomatis: khusus tema / Foto berbingkai).
   coverDefault?: string;
   artwork?: ArtworkManifest;
+  // Foto contoh khusus template; slot kosong jatuh ke foto demo global.
+  samplePhotos?: { groom?: string; bride?: string };
 }
 
 export type Tier = 'BASIC' | 'STANDARD' | 'PREMIUM';

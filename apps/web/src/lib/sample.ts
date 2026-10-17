@@ -45,8 +45,9 @@ const GALLERY_SLOTS = ['gallery1', 'gallery2', 'gallery3', 'gallery4', 'gallery5
 // `coverLayout`: tata letak sampul yang diperagakan (bawaan: layout.coverDefault pilihan admin, lalu yang khusus
 // tema / Foto berbingkai). Hanya untuk template yang punya pilihan tata letak (Standard & Premium); Basic tetap
 // berornamen walau slot foto sampul terisi.
-export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'> & { galeri?: Layout['galeri']; coverLayouts?: string[]; coverDefault?: string; artwork?: Layout['artwork'] }, extra: Partial<InvitationViewData> = {}, photos: DemoPhotos = {}, coverLayout?: string): InvitationViewData {
+export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'> & { galeri?: Layout['galeri']; coverLayouts?: string[]; coverDefault?: string; artwork?: Layout['artwork']; samplePhotos?: Layout['samplePhotos'] }, extra: Partial<InvitationViewData> = {}, globalPhotos: DemoPhotos = {}, coverLayout?: string): InvitationViewData {
   const dates = sampleDates();
+  const photos: DemoPhotos = { ...globalPhotos, ...layout.samplePhotos };
   const data: InvitationViewData['data'] = {};
   for (const section of layout.sections) {
     const values: Record<string, string> = {};
