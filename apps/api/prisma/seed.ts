@@ -46,7 +46,7 @@ const LEGACY_NAMES: Record<string, string> = { "BASIC:rustic": "Basic Rustic", "
 
 const SEKAR_KERATON_DESIGN_ID = "jawa-sekar-keraton";
 // Desain beraset raster yang belum disetujui tampil sebagai DRAFT di katalog baru (Sekar Keraton sudah disetujui).
-const RASTER_DRAFT_DESIGN_IDS: string[] = ["pusako-minang"];
+const RASTER_DRAFT_DESIGN_IDS: string[] = ["pusako-minang", "horas-nauli"];
 const SEKAR_KERATON_SAMPLE_PHOTOS = {
   cover: "/samples/sekar-keraton/cover.webp",
   groom: "/samples/sekar-keraton/groom-v2.webp",

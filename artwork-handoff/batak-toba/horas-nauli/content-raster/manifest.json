@@ -1,0 +1,54 @@
+{
+  "designId": "horas-nauli",
+  "visualRevision": "content-concept-01",
+  "cultureScope": "Batak Toba",
+  "formatPolicy": "raster-only-no-svg",
+  "assets": {
+    "pageBackground": "page-background.png",
+    "sectionRibbon": "section-ribbon-ragi-hotang.png",
+    "sectionMarker": "mini-woven-knot.png",
+    "divider": "divider-gorga-ipon-ipon.png",
+    "infoCard": "info-card.png",
+    "photoFrame": "photo-frame.png",
+    "reviewPreview": "content-system-preview.png"
+  },
+  "layerSets": {
+    "standardTextSection": [
+      "pageBackground",
+      "divider"
+    ],
+    "standardRibbonSection": [
+      "pageBackground",
+      "sectionRibbon"
+    ],
+    "premiumEventCard": [
+      "pageBackground",
+      "infoCard",
+      "sectionMarker",
+      "divider"
+    ],
+    "photoSection": [
+      "pageBackground",
+      "photoFrame"
+    ],
+    "quietClosingSection": [
+      "pageBackground",
+      "sectionMarker"
+    ]
+  },
+  "neverStack": [
+    ["sectionRibbon", "divider"],
+    ["sectionRibbon", "infoCard"],
+    ["photoFrame", "infoCard"],
+    ["photoFrame", "sectionRibbon"],
+    ["photoFrame", "sectionMarker"]
+  ],
+  "rules": {
+    "productionTextBakedIn": false,
+    "previewTextAllowed": true,
+    "transparentDecorationLayers": true,
+    "primaryStructure": "ulos-ragi-hotang",
+    "secondaryMotif": "gorga-ipon-ipon",
+    "maxAdditionalDecorationsPerSection": 2
+  }
+}

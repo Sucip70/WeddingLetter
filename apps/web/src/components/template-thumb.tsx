@@ -5,6 +5,8 @@
 // lewat props tidak aman melewati batas itu). Dipanggil dari Server Component (halaman katalog) seperti biasa.
 import type { CSSProperties } from 'react';
 import { CoverLayout } from './invitation/cover';
+import { RasterCoverThumb, type RasterCoverKind } from './invitation/raster-cover';
+import { isRasterDesign } from './invitation/raster-theme';
 import { defaultCoverLayout, isCoverKind, resolveCover } from '@/lib/cover-layouts';
 import type { DemoPhotos } from '@/lib/sample';
 import type { Theme } from '@/lib/types';
@@ -119,6 +121,26 @@ export function TemplateThumb({
   // Aturan yang sama dengan demo template & editor (defaultCoverLayout): pilihan admin, lalu khusus tema, lalu Foto berbingkai.
   const chosen = kinds.length > 0 ? defaultCoverLayout(kinds, coverDefault) : undefined;
   const resolved = chosen ? resolveCover(chosen, { cover: effectivePhotos.cover, groom: effectivePhotos.groom, bride: effectivePhotos.bride }) : undefined;
+
+  // Desain beraset raster (Sekar Keraton, Pusako Minang, Horas Nauli): miniatur = sampul aslinya (aset lukisan), bukan tiruan dari motif.
+  if (artwork && isRasterDesign(artwork.designId)) {
+    const rasterKinds = ['ornamen', 'bingkai', 'berdua', 'terbagi'] as const;
+    const kind: RasterCoverKind = rasterKinds.find((k) => k === resolved) ?? 'ornamen';
+    return (
+      <RasterCoverThumb
+        kind={kind}
+        artwork={artwork}
+        photo={effectivePhotos.cover}
+        groom={effectivePhotos.groom}
+        bride={effectivePhotos.bride}
+        kicker="Undangan Pernikahan"
+        names="Andi & Sinta"
+        dateText="12 . 12 . 2026"
+        guest={{ dear: 'Kepada Yth.', name: 'Bapak/Ibu/Saudara/i' }}
+        openLabel="Buka Undangan"
+      />
+    );
+  }
 
   // Gradasi/sorotan sampul di atas latar kulit (lapisan transparan, bukan bagian dari multiply): sama dengan undangan sungguhan.
   const coverOverlay = phone ? (

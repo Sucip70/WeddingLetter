@@ -1135,21 +1135,21 @@ body {
   border: 0 !important;
   border-radius: 2px !important;
   background: var(--sk-panel) center / 100% 100% no-repeat, var(--sk-card-bg, #f0dfbd) !important;
-  box-shadow: 0 0 0 1px rgba(138, 99, 38, 0.55), inset 0 0 0 5px rgba(240, 223, 189, 0.9), inset 0 0 0 6px rgba(170, 125, 56, 0.45), 0 16px 24px -20px rgba(58, 41, 30, 0.55);
+  box-shadow: 0 0 0 1px rgba(138, 99, 38, 0.55), inset 0 0 0 5px rgba(240, 223, 189, 0.9), inset 0 0 0 6px rgba(var(--sk-edge-rgb, 170, 125, 56), 0.45), 0 16px 24px -20px rgba(58, 41, 30, 0.55);
 }
 .wl-raster .wl-quote { font-family: var(--sk-display, var(--font-libre), Georgia, serif); font-size: 1.1rem; font-style: italic; line-height: 1.8; color: var(--sk-ink); }
 .wl-raster .wl-quote::before { content: ''; display: block; width: var(--sk-quote-w, 34px); height: var(--sk-quote-h, 60px); margin: 0 auto 14px; background: var(--sk-kayon) center / contain no-repeat; }
 .wl-raster .wl-btn {
   background: var(--sk-maroon) !important;
   color: #f5e6c6 !important;
-  border: 1px solid rgba(170, 125, 56, 0.85);
+  border: 1px solid rgba(var(--sk-edge-rgb, 170, 125, 56), 0.85);
   border-radius: 2px !important;
   font-family: var(--font-source), sans-serif;
   font-size: 0.7rem !important;
   font-weight: 600 !important;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  box-shadow: inset 0 0 0 2px var(--sk-maroon), inset 0 0 0 3px rgba(170, 125, 56, 0.55) !important;
+  box-shadow: inset 0 0 0 2px var(--sk-maroon), inset 0 0 0 3px rgba(var(--sk-edge-rgb, 170, 125, 56), 0.55) !important;
 }
 .wl-raster .wl-btn-o {
   background: transparent !important;
@@ -1166,12 +1166,12 @@ body {
 .wl-raster form button[aria-pressed='true'], .wl-raster form button[type='submit'] {
   background: var(--sk-maroon) !important;
   color: #f5e6c6 !important;
-  border: 1px solid rgba(170, 125, 56, 0.85) !important;
+  border: 1px solid rgba(var(--sk-edge-rgb, 170, 125, 56), 0.85) !important;
   font-family: var(--font-source), sans-serif;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
-.wl-raster .wl-fab { background: var(--sk-maroon) !important; border: 1px solid rgba(170, 125, 56, 0.85); color: #f5e6c6 !important; }
+.wl-raster .wl-fab { background: var(--sk-maroon) !important; border: 1px solid rgba(var(--sk-edge-rgb, 170, 125, 56), 0.85); color: #f5e6c6 !important; }
 .wl-raster .wl-gal { margin: 4px; border-radius: 2px !important; box-shadow: 0 0 0 3px #f0dfbd, 0 0 0 4px rgba(138, 99, 38, 0.7), 0 14px 22px -16px rgba(58, 41, 30, 0.55); }
 /* mempelai: pigura foto kertas (foto di belakang, pigura di depan) */
 .sk-person { position: relative; text-align: center; }
@@ -1193,7 +1193,7 @@ body {
 .sk-foot-sill { display: block; width: min(78%, 300px); height: auto; margin: 1.1rem auto 0; }
 /* kartu 'sliced' (Pusako Minang): satu bingkai diiris 9, sudut berproporsi di tinggi berapa pun; penanda jadi mahkota di tepi atas */
 .sk-card.sk-card-sliced {
-  --cw: min(92cqw, 360px);
+  --cw: min(calc(var(--sk-card-w, 92) * 1cqw), 360px);
   display: block;
   box-sizing: border-box;
   width: var(--cw);
@@ -1202,11 +1202,11 @@ body {
   aspect-ratio: auto;
   min-height: calc(var(--cw) * 0.95);
   border: solid transparent;
-  border-width: calc(var(--cw) * var(--sk-slice-r, 0.15));
-  border-image: var(--sk-card) var(--sk-slice, 135) fill / calc(var(--cw) * var(--sk-slice-r, 0.15)) stretch;
+  border-width: calc(var(--cw) * var(--sk-bt, 0.15)) calc(var(--cw) * var(--sk-br, 0.15)) calc(var(--cw) * var(--sk-bb, 0.15)) calc(var(--cw) * var(--sk-bl, 0.15));
+  border-image: var(--sk-card) var(--sk-slice, 135) fill / calc(var(--cw) * var(--sk-bt, 0.15)) calc(var(--cw) * var(--sk-br, 0.15)) calc(var(--cw) * var(--sk-bb, 0.15)) calc(var(--cw) * var(--sk-bl, 0.15)) stretch;
   filter: drop-shadow(0 14px 16px rgba(33, 23, 18, 0.28));
 }
-.sk-card-sliced .sk-card-body { padding: calc(var(--cw) * 0.025) 0 calc(var(--cw) * 0.02); }
-.sk-card-sliced .sk-card-crown { position: absolute; left: 50%; top: calc(var(--cw) * -0.105); z-index: 3; width: calc(var(--cw) * 0.4); height: auto; transform: translate(-50%, -50%); pointer-events: none; }
+.sk-card-sliced .sk-card-body { padding: calc(var(--cw) * var(--sk-card-pt, 0.025)) calc(var(--cw) * var(--sk-card-px, 0)) calc(var(--cw) * var(--sk-card-pb, 0.02)); }
+.sk-card-sliced .sk-card-crown { position: absolute; left: 50%; top: calc(var(--cw) * var(--sk-crown-top, -0.105)); z-index: 3; width: calc(var(--cw) * var(--sk-crown-w, 0.4)); height: auto; transform: translate(-50%, var(--sk-crown-y, -50%)); pointer-events: none; }
 .sk-card-sliced + .sk-card-sliced { margin-top: 4.6rem; }
 .skr-cover .sk-card.sk-card-sliced { --cw: 68cqw; margin: 0; }

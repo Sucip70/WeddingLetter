@@ -32,6 +32,7 @@ export const GATE_LABEL = {
   bouquet: 'Lempar buket',
   kayon: 'Kayon Sekar Keraton',
   gonjong: 'Gonjong Pusako Minang',
+  ulos: 'Simpul ulos Horas Nauli',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export type GateSetting = GateKind | 'none';

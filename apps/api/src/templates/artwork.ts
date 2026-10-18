@@ -225,8 +225,56 @@ export function pusakoMinangArtwork(): ArtworkManifest {
   });
 }
 
+// Horas Nauli (Batak Toba): aset raster dari artwork-handoff/batak-toba/horas-nauli, dipangkas ke bounding box-nya dan dipasang di
+// apps/web/public/themes/horas-nauli/. Struktur utama = ulos Ragi Hotang (tepi halaman, jilid kartu, pita, bingkai foto); gorga hanya aksen.
+//   coverBackground/pageBackground = page-tile (ubin cermin mulus)   divider = gorga ipon-ipon   topDecoration = simpul tenun mini
+//   bottomDecoration = pita ragi hotang (penutup)   cardFrame = info-card (jilid ulos atas-bawah)   photoFrame = bingkai potret
+//   gateBackground = gate-tile (kain arang + friezes)   gateTransition/gateForeground = panel ulos kiri/kanan   gateInteractive = simpul tenun
+export function horasNauliArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/horas-nauli/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'horas-nauli',
+    artworkVersion: 1,
+    assets: {
+      coverBackground: { default: source('page-tile', 1024, 3072, 463_000) },
+      pageBackground: { default: source('page-tile', 1024, 3072, 463_000) },
+      divider: { default: source('divider', 1934, 106, 82_000) },
+      topDecoration: { default: source('mini-knot', 795, 795, 184_000) },
+      bottomDecoration: { default: source('ribbon', 1981, 314, 305_000) },
+      cardFrame: { default: source('info-card', 917, 1393, 384_000) },
+      photoFrame: { default: source('photo-frame', 901, 1372, 197_000) },
+      gateBackground: { default: source('gate-tile', 1024, 3010, 261_000) },
+      gateTransition: { default: source('gate-panel-left', 675, 1512, 298_000) },
+      gateForeground: { default: source('gate-panel-right', 675, 1512, 296_000) },
+      gateInteractive: { default: source('gate-knot', 1123, 1121, 379_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+  });
+}
+
 /** Desain beraset raster: id desain -> pembuat manifest (dipakai seed dan skrip sinkronisasi). */
 export const RASTER_ARTWORK: Record<string, () => ArtworkManifest> = {
   'jawa-sekar-keraton': sekarKeratonArtwork,
   'pusako-minang': pusakoMinangArtwork,
+  'horas-nauli': horasNauliArtwork,
 };

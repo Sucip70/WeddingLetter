@@ -1,0 +1,51 @@
+{
+  "designId": "horas-nauli",
+  "visualRevision": "concept-gate-01",
+  "cultureScope": "Batak Toba",
+  "gateName": "Pangihot ni Holong",
+  "formatPolicy": "raster-only-no-svg",
+  "canvas": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": "2:3"
+  },
+  "assets": {
+    "gateBackground": "gate-background.png",
+    "leftPanel": "left-ulos-panel.png",
+    "rightPanel": "right-ulos-panel.png",
+    "interactiveObject": "interactive-woven-knot.png",
+    "closedPreview": "closed-preview.png",
+    "openingPreview": "opening-preview.png",
+    "motionSpec": "motion-spec.md"
+  },
+  "presentation": {
+    "backgroundFit": "cover",
+    "backgroundPosition": "center",
+    "panelMotion": "textile-release-outward",
+    "interactiveObjectMotion": "press-loosen-lift-fade",
+    "primaryDurationMs": 1650,
+    "reducedMotionDurationMs": 320
+  },
+  "palette": {
+    "ulosRed": "#8B211C",
+    "charcoalBlack": "#151313",
+    "boneIvory": "#E9DDC8",
+    "agedCopperThread": "#8C5A3D"
+  },
+  "rules": {
+    "productionTextBakedIn": false,
+    "movableAssetsTransparent": true,
+    "primaryStructure": "ulos-ragi-hotang",
+    "secondaryMotif": "gorga-ipon-ipon",
+    "neverStackWith": [
+      "ulos-sibolang-mourning-treatment",
+      "sigale-gale",
+      "buffalo-head",
+      "weapon",
+      "full-ruma-bolon-scenery",
+      "lake-toba-landscape",
+      "other-batak-regional-ornaments",
+      "particle-effects"
+    ]
+  }
+}
