@@ -2,16 +2,17 @@
 // bingkai foto, gaya hitung mundur, efek sampul) yang dirender di web (apps/web/.../motifs.ts, kunci = id).
 // Registry ini hanya memuat desain yang masih memiliki template published.
 
-export type ThemeGroup = 'klasik' | 'film' | 'musim';
+export type ThemeGroup = 'klasik' | 'suku' | 'film' | 'musim';
 export type HeadingFont = 'script' | 'serif' | 'sans' | 'display' | 'cinzel' | 'pixel' | 'round' | 'libre';
 export type BodyFont = 'serif' | 'sans' | 'round' | 'source';
 
 export const GROUP_LABEL: Record<ThemeGroup, string> = {
   klasik: 'Klasik',
+  suku: 'Suku & Budaya',
   film: 'Fantasi',
   musim: 'Musim',
 };
-export const GROUP_ORDER: ThemeGroup[] = ['klasik', 'film', 'musim'];
+export const GROUP_ORDER: ThemeGroup[] = ['klasik', 'suku', 'film', 'musim'];
 
 // Gerbang pembuka undangan Premium: adegan animasi (pintu, amplop, tirai, ...) yang harus diketuk sebelum
 // sampul terlihat. Dirender di web (apps/web/.../gates.tsx, kunci = id). 'none' = tanpa gerbang.
@@ -76,7 +77,7 @@ const BASE_DESIGNS: Omit<Design, 'gate'>[] = [
   d('marigold', 'Marigold Senja', 'klasik', 'Marigold, dahlia, dan poppy oranye hangat dengan buah beri merah dan daun zaitun.', ['#b8500f', '#f6b83a', '#fffaf0', '#4a2410'], ['display', 'serif']),
   d('elegant', 'Elegan Emas', 'klasik', 'Mewah dan bersahaja dengan aksen emas.', ['#b08d3c', '#1f2a44', '#f7f5f0', '#1f2a44'], ['serif', 'serif']),
   d('wisteria', 'Wisteria Biru', 'klasik', 'Wisteria biru dan periwinkle yang lembut.', ['#3f5fb0', '#9fb4f0', '#f6f8ff', '#1a2547'], ['serif', 'serif']),
-  d('jawa-sekar-keraton', 'Sekar Keraton', 'klasik', 'Keanggunan pendopo Jawa dalam sogan, marun, dan emas.', ['#74401f', '#aa7d38', '#ead6ad', '#3a291e'], ['libre', 'source'], true),
+  d('jawa-sekar-keraton', 'Sekar Keraton', 'suku', 'Keanggunan pendopo Jawa dalam sogan, marun, dan emas.', ['#74401f', '#aa7d38', '#ead6ad', '#3a291e'], ['libre', 'source'], true),
   d('galaksi', 'Galaksi Cinta', 'film', 'Opera luar angkasa: bintang, nebula, dan cincin orbit.', ['#7c5cff', '#39c5ff', '#0a0e27', '#e6ecff'], ['cinzel', 'sans'], true),
   d('sihir', 'Akademi Sihir', 'film', 'Perkamen, lilin melayang, dan bintang keajaiban.', ['#d4a84b', '#9b5de5', '#2a1f3d', '#f0e6c8'], ['cinzel', 'serif'], true),
   d('semi', 'Musim Semi', 'musim', 'Sakura mekar dan kelopak yang berguguran lembut.', ['#e88fb0', '#9bc48f', '#fff8fa', '#4a3040'], ['script', 'sans']),

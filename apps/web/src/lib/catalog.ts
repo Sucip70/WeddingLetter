@@ -5,9 +5,10 @@ import type { AddOn, DesignInfo, FxLevel, Palette, Template, TemplateDetail, The
 export const TIER_LABEL: Record<Tier, string> = { BASIC: 'Basic', STANDARD: 'Standard', PREMIUM: 'Premium' };
 
 // Urutan & nama grup tema (sama dengan apps/api/src/templates/themes.ts).
-export const GROUP_ORDER: ThemeGroup[] = ['klasik', 'film', 'musim'];
+export const GROUP_ORDER: ThemeGroup[] = ['klasik', 'suku', 'film', 'musim'];
 export const GROUP_LABEL: Record<ThemeGroup, string> = {
   klasik: 'Klasik',
+  suku: 'Suku & Budaya',
   film: 'Fantasi',
   musim: 'Musim',
 };

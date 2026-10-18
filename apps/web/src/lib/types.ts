@@ -84,7 +84,7 @@ export interface ArtworkManifest {
   };
 }
 
-export type ThemeGroup = 'klasik' | 'film' | 'musim';
+export type ThemeGroup = 'klasik' | 'suku' | 'film' | 'musim';
 
 export interface DesignInfo {
   id: string;
