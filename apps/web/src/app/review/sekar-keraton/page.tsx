@@ -1,39 +1,40 @@
 /* eslint-disable @next/next/no-img-element */
 import type { CSSProperties } from 'react';
-import { SekarKeratonCover } from '@/components/invitation/sekar-keraton-cover';
+import { RasterCover } from '@/components/invitation/raster-cover';
+import { PusakoGate } from '@/components/invitation/pusako-gate';
 import { SekarKeratonGate } from '@/components/invitation/sekar-keraton-gate';
-import { SekarKeratonCoupleSection } from '@/components/invitation/sekar-keraton-sections';
+import { RasterCoupleSection } from '@/components/invitation/raster-sections';
 import type { ArtworkManifest, ArtworkSource } from '@/lib/types';
 
 const ROOT = '/review/sekar-keraton';
-const THEME = '/themes/sekar-keraton';
-const src = (file: string, width: number, height: number): ArtworkSource => ({ url: `${THEME}/${file}.webp`, contentType: 'image/webp', width, height, sizeBytes: 1 });
-
-// Same slot map as sekarKeratonArtwork() in apps/api/src/templates/artwork.ts.
-const artwork: ArtworkManifest = {
+const mk = (design: string, folder: string, files: Record<string, [string, number, number]>): ArtworkManifest => ({
   schemaVersion: 1,
-  designId: 'jawa-sekar-keraton',
-  artworkVersion: 2,
-  assets: {
-    coverBackground: { default: src('page-background', 1024, 1536) },
-    pageBackground: { default: src('page-tile', 1024, 3072) },
-    cornerTopLeft: { default: src('corner-top-left', 1155, 1048) },
-    cornerBottomRight: { default: src('corner-bottom-right', 1155, 1048) },
-    divider: { default: src('divider-kawung', 2208, 364) },
-    topDecoration: { default: src('mini-kayon', 838, 1483) },
-    sectionBackground: { default: src('card-paper-panel', 1000, 1250) },
-    cardFrame: { default: src('card-frame', 1101, 1434) },
-    photoFrame: { default: src('photo-frame', 1014, 1496) },
-    bottomDecoration: { default: src('footer-ornament', 2234, 372) },
-    gateBackground: { default: src('gate-background', 1024, 1536) },
-    gateInteractive: { default: src('kayon-wayang', 1024, 1536) },
-  },
+  designId: design,
+  artworkVersion: 1,
+  assets: Object.fromEntries(Object.entries(files).map(([slot, [file, width, height]]) => [slot, { default: { url: `/themes/${folder}/${file}.webp`, contentType: 'image/webp', width, height, sizeBytes: 1 } as ArtworkSource }])) as ArtworkManifest['assets'],
   presentation: {
     backgroundFit: 'cover', backgroundPosition: 'center', foregroundPosition: 'center', foregroundMotion: 'none',
     opacity: 1, scale: 1, backgroundLayer: 0, decorationLayer: 2, foregroundLayer: 3,
     showOnOrnamentCover: true, showOnPhotoCover: true,
   },
   fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+});
+
+// Same slot maps as the manifests in apps/api/src/templates/artwork.ts.
+const ARTWORKS: Record<string, ArtworkManifest> = {
+  'jawa-sekar-keraton': mk('jawa-sekar-keraton', 'sekar-keraton', {
+    coverBackground: ['page-background', 1024, 1536], pageBackground: ['page-tile', 1024, 3072], cornerTopLeft: ['corner-top-left', 1155, 1048],
+    cornerBottomRight: ['corner-bottom-right', 1155, 1048], divider: ['divider-kawung', 2208, 364], topDecoration: ['mini-kayon', 838, 1483],
+    sectionBackground: ['card-paper-panel', 1000, 1250], cardFrame: ['card-frame', 1101, 1434], photoFrame: ['photo-frame', 1014, 1496],
+    bottomDecoration: ['footer-ornament', 2234, 372], gateBackground: ['gate-background', 1024, 1536], gateInteractive: ['kayon-wayang', 1024, 1536],
+  }),
+  'pusako-minang': mk('pusako-minang', 'pusako-minang', {
+    coverBackground: ['page-background', 1024, 1536], pageBackground: ['page-tile', 1024, 3072], cornerTopLeft: ['corner-top-left', 1100, 1105],
+    cornerBottomRight: ['corner-bottom-right', 1100, 1105], divider: ['divider', 1996, 274], topDecoration: ['mini-gonjong', 1183, 652],
+    cardFrame: ['info-card', 896, 1405], photoFrame: ['photo-frame', 892, 1413], bottomDecoration: ['footer', 2015, 297],
+    gateBackground: ['gate-tile', 1024, 3072], gateTransition: ['gate-post-left', 323, 1497], gateForeground: ['gate-post-right', 323, 1497],
+    gateInteractive: ['gate-gonjong', 1160, 868],
+  }),
 };
 
 const reviewKinds = ['ornamen', 'bingkai', 'berdua', 'terbagi'] as const;
@@ -56,9 +57,12 @@ const references: Record<ReviewKind, string> = {
 export const metadata = { title: 'Sekar Keraton — Review', robots: { index: false, follow: false } };
 
 export default async function SekarKeratonReview({ searchParams }: {
-  searchParams: Promise<{ layout?: string; compare?: string; view?: string; state?: string }>;
+  searchParams: Promise<{ layout?: string; compare?: string; view?: string; state?: string; design?: string }>;
 }) {
   const query = await searchParams;
+  const designId = query.design && ARTWORKS[query.design] ? query.design : 'jawa-sekar-keraton';
+  const artwork = ARTWORKS[designId]!;
+  const pusako = designId === 'pusako-minang';
   const kind: ReviewKind = reviewKinds.includes(query.layout as ReviewKind) ? query.layout as ReviewKind : 'ornamen';
   const variables = {
     '--p': '#74401f', '--s': '#aa7d38', '--bg': '#ead6ad', '--tx': '#3a291e',
@@ -68,8 +72,8 @@ export default async function SekarKeratonReview({ searchParams }: {
     photo: '/samples/sekar-keraton/cover.webp',
     groom: '/samples/sekar-keraton/groom-v2.webp',
     bride: '/samples/sekar-keraton/bride-v2.webp',
-    kicker: 'Pawiwahan Putra-Putri Kami',
-    names: 'Raden Andi & Raden Ayu Sinta',
+    kicker: pusako ? 'Undangan Pernikahan' : 'Pawiwahan Putra-Putri Kami',
+    names: pusako ? 'Rizky Pratama & Aisyah Putri' : 'Raden Andi & Raden Ayu Sinta',
     dateText: '17 . 08 . 2027',
     guest: { dear: 'Kepada Yth.', name: 'Bapak/Ibu/Saudara/i' },
     openLabel: 'Buka Undangan',
@@ -81,9 +85,13 @@ export default async function SekarKeratonReview({ searchParams }: {
     return (
       <main className="min-h-screen bg-[#201610]" style={variables}>
         <div className="relative mx-auto h-[100svh] w-full max-w-[480px] overflow-hidden bg-[#ead6ad]">
-          <SekarKeratonCover {...props} kind="ornamen" />
+          <RasterCover {...props} kind="ornamen" />
           <div className="absolute inset-0 z-10">
-            <SekarKeratonGate artwork={artwork} phase="closed" names={props.names} kicker={props.kicker} guest={props.guest.name} cta="Ketuk kayon untuk membuka" previewState={query.state === 'open' ? 'open' : 'closed'} />
+            {pusako ? (
+              <PusakoGate artwork={artwork} phase="closed" names={props.names} kicker={props.kicker} guest={props.guest.name} cta="Ketuk gonjong untuk membuka" previewState={query.state === 'open' ? 'open' : 'closed'} />
+            ) : (
+              <SekarKeratonGate artwork={artwork} phase="closed" names={props.names} kicker={props.kicker} guest={props.guest.name} cta="Ketuk kayon untuk membuka" previewState={query.state === 'open' ? 'open' : 'closed'} />
+            )}
           </div>
         </div>
       </main>
@@ -94,7 +102,7 @@ export default async function SekarKeratonReview({ searchParams }: {
     return (
       <main className="min-h-screen bg-[#201610]" style={variables}>
         <div className="mx-auto w-full max-w-[480px] bg-[#ead6ad]">
-          <SekarKeratonCoupleSection
+          <RasterCoupleSection
             artwork={artwork}
             title="Mempelai"
             animated={false}
@@ -125,7 +133,7 @@ export default async function SekarKeratonReview({ searchParams }: {
           <figure>
             <figcaption className="mb-3 text-center text-xs uppercase tracking-[.2em]">New independent implementation</figcaption>
             <div className="relative mx-auto aspect-[390/844] w-full max-w-[390px] overflow-hidden bg-[#ead6ad] shadow-2xl">
-              <section className="relative h-full px-8"><SekarKeratonCover {...props} kind={kind} /></section>
+              <section className="relative h-full px-8"><RasterCover {...props} kind={kind} /></section>
             </div>
           </figure>
         </div>
@@ -136,7 +144,7 @@ export default async function SekarKeratonReview({ searchParams }: {
   return (
     <main className="min-h-screen bg-[#201610]" style={variables}>
       <div className="relative mx-auto h-[100svh] w-full max-w-[480px] overflow-hidden bg-[#ead6ad]">
-        <section className="relative h-full px-8"><SekarKeratonCover {...props} kind={kind} /></section>
+        <section className="relative h-full px-8"><RasterCover {...props} kind={kind} /></section>
       </div>
     </main>
   );

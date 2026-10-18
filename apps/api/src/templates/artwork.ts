@@ -174,3 +174,59 @@ export function sekarKeratonArtwork(): ArtworkManifest {
     fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
   });
 }
+
+// Pusako Minang (Minangkabau, Padang/Pariaman): aset raster dari artwork-handoff/minangkabau/pusako-minang, dipangkas ke
+// bounding box-nya dan dipasang di apps/web/public/themes/pusako-minang/. Peta slot:
+//   coverBackground = page-background    pageBackground = page-tile (ubin cermin mulus)   gateBackground = gate-tile (ubin kain songket)
+//   cornerTopLeft/BottomRight = ukiran sudut   topDecoration = mini gonjong   divider = pucuak rabuang   bottomDecoration = ornamen penutup
+//   cardFrame = info-card (bingkai kayu, diiris 9 oleh CSS)   photoFrame = bingkai potret 2:3
+//   gateTransition/gateForeground = tiang kiri/kanan   gateInteractive = gonjong
+export function pusakoMinangArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/pusako-minang/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'pusako-minang',
+    artworkVersion: 1,
+    assets: {
+      coverBackground: { default: source('page-background', 1024, 1536, 253_000) },
+      pageBackground: { default: source('page-tile', 1024, 3072, 440_000) },
+      cornerTopLeft: { default: source('corner-top-left', 1100, 1105, 176_000) },
+      cornerBottomRight: { default: source('corner-bottom-right', 1100, 1105, 177_000) },
+      divider: { default: source('divider', 1996, 274, 112_000) },
+      topDecoration: { default: source('mini-gonjong', 1183, 652, 169_000) },
+      cardFrame: { default: source('info-card', 896, 1405, 263_000) },
+      photoFrame: { default: source('photo-frame', 892, 1413, 91_000) },
+      bottomDecoration: { default: source('footer', 2015, 297, 115_000) },
+      gateBackground: { default: source('gate-tile', 1024, 3072, 436_000) },
+      gateTransition: { default: source('gate-post-left', 323, 1497, 133_000) },
+      gateForeground: { default: source('gate-post-right', 323, 1497, 132_000) },
+      gateInteractive: { default: source('gate-gonjong', 1160, 868, 266_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+  });
+}
+
+/** Desain beraset raster: id desain -> pembuat manifest (dipakai seed dan skrip sinkronisasi). */
+export const RASTER_ARTWORK: Record<string, () => ArtworkManifest> = {
+  'jawa-sekar-keraton': sekarKeratonArtwork,
+  'pusako-minang': pusakoMinangArtwork,
+};

@@ -3,13 +3,13 @@
 /* eslint-disable @next/next/no-img-element */
 import type { CSSProperties, ReactNode } from 'react';
 import type { ArtworkManifest } from '@/lib/types';
-import { sekarAsset } from './sekar-keraton-cover';
+import { rasterAsset, rasterTheme, rasterThemeVars } from './raster-theme';
 
-/* Bagian isi Sekar Keraton. Seluruh gayanya ada di globals.css (.wl-sekar / .sk-*), karena ditulis bersama kulit halaman:
+/* Bagian isi desain raster (Sekar Keraton, Pusako Minang). Seluruh gayanya ada di globals.css (.wl-raster / .sk-*), karena ditulis bersama kulit halaman:
    kertas berukir sebagai ubin selebar layar, bingkai kayu sogan (card-frame + card-paper-panel), pigura foto kertas (photo-frame),
    pemisah kawung, dan kayon mini yang hanya muncul di dua-tiga tempat (README content-raster). */
 
-export interface SekarKeratonPerson {
+export interface RasterPerson {
   nick: string;
   full?: string;
   parents?: string;
@@ -18,30 +18,42 @@ export interface SekarKeratonPerson {
 }
 
 /** Variabel CSS gambar untuk akar undangan: ubin kertas, panel kertas, kayon mini, dan latar gerbang (dipakai countdown). */
-export function sekarRootVars(artwork: ArtworkManifest): CSSProperties {
-  const url = (slot: Parameters<typeof sekarAsset>[1]) => {
-    const u = sekarAsset(artwork, slot);
+export function rasterRootVars(artwork: ArtworkManifest): CSSProperties {
+  const url = (slot: Parameters<typeof rasterAsset>[1]) => {
+    const u = rasterAsset(artwork, slot);
     return u ? `url(${u})` : 'none';
   };
-  const tile = sekarAsset(artwork, 'pageBackground') ?? sekarAsset(artwork, 'coverBackground');
+  const tile = rasterAsset(artwork, 'pageBackground') ?? rasterAsset(artwork, 'coverBackground');
   return {
     ...(tile ? { backgroundImage: `url(${tile})`, backgroundSize: '100% auto', backgroundRepeat: 'repeat-y', backgroundPosition: 'center top' } : null),
     ['--sk-panel' as string]: url('sectionBackground'),
     ['--sk-kayon' as string]: url('topDecoration'),
     ['--sk-gate' as string]: url('gateBackground'),
+    ['--sk-card' as string]: url('cardFrame'),
+    ...rasterThemeVars(artwork.designId),
   } as CSSProperties;
 }
 
 /** Pembatas kawung (aset divider); lebar diatur kelas `.sk-divider`. */
-export function SekarDivider({ artwork, className = '' }: { artwork?: ArtworkManifest; className?: string }) {
-  const src = artwork && sekarAsset(artwork, 'divider');
+export function RasterDivider({ artwork, className = '' }: { artwork?: ArtworkManifest; className?: string }) {
+  const src = artwork && rasterAsset(artwork, 'divider');
   return src ? <img src={src} alt="" className={`sk-divider ${className}`} draggable={false} /> : null;
 }
 
 /** Kartu informasi: panel kertas + bingkai kayu sogan & emas. Tinggi mengikuti isi (rasio aset adalah tinggi minimum). */
-export function SekarCard({ artwork, children, className = '' }: { artwork?: ArtworkManifest; children: ReactNode; className?: string }) {
-  const panel = artwork && sekarAsset(artwork, 'sectionBackground');
-  const frame = artwork && sekarAsset(artwork, 'cardFrame');
+export function RasterCard({ artwork, children, className = '' }: { artwork?: ArtworkManifest; children: ReactNode; className?: string }) {
+  if (rasterTheme(artwork?.designId)?.card.kind === 'sliced' && artwork) {
+    const crown = rasterAsset(artwork, 'topDecoration');
+    const card = rasterAsset(artwork, 'cardFrame');
+    return (
+      <div className={`sk-card sk-card-sliced ${className}`} style={card ? ({ '--sk-card': `url(${card})` } as CSSProperties) : undefined}>
+        {crown && <img src={crown} alt="" className="sk-card-crown" draggable={false} />}
+        <div className="sk-card-body">{children}</div>
+      </div>
+    );
+  }
+  const panel = artwork && rasterAsset(artwork, 'sectionBackground');
+  const frame = artwork && rasterAsset(artwork, 'cardFrame');
   return (
     <div className={`sk-card ${className}`}>
       {panel && <img src={panel} alt="" className="sk-card-panel" draggable={false} />}
@@ -52,9 +64,9 @@ export function SekarCard({ artwork, children, className = '' }: { artwork?: Art
 }
 
 /** Penutup: kayon mini, nama, lalu ambang keraton (footer-ornament). */
-export function SekarFooter({ artwork, names, children }: { artwork?: ArtworkManifest; names: string; children?: ReactNode }) {
-  const kayon = artwork && sekarAsset(artwork, 'topDecoration');
-  const sill = artwork && sekarAsset(artwork, 'bottomDecoration');
+export function RasterFooter({ artwork, names, children }: { artwork?: ArtworkManifest; names: string; children?: ReactNode }) {
+  const kayon = artwork && rasterAsset(artwork, 'topDecoration');
+  const sill = artwork && rasterAsset(artwork, 'bottomDecoration');
   return (
     <>
       {kayon && <img src={kayon} alt="" className="sk-foot-kayon" draggable={false} />}
@@ -65,19 +77,19 @@ export function SekarFooter({ artwork, names, children }: { artwork?: ArtworkMan
   );
 }
 
-export function SekarKeratonCoupleSection({ artwork, title, people, onAssetError }: {
+export function RasterCoupleSection({ artwork, title, people, onAssetError }: {
   artwork: ArtworkManifest;
   title: string;
-  people: [SekarKeratonPerson, SekarKeratonPerson];
+  people: [RasterPerson, RasterPerson];
   animated?: boolean;
   onAssetError?: () => void;
 }) {
-  const frame = sekarAsset(artwork, 'photoFrame');
+  const frame = rasterAsset(artwork, 'photoFrame');
   return (
     <section className="wl-block sk-couple relative">
       <div className="wl-reveal relative z-[1] mb-9 text-center">
         <h2 className="sk-h2">{title}</h2>
-        <SekarDivider artwork={artwork} />
+        <RasterDivider artwork={artwork} />
       </div>
       <div className="relative z-[1]">
         {people.map((person, index) => (

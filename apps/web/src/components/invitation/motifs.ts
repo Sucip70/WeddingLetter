@@ -8,7 +8,7 @@ export type ParticleKind = 'petal' | 'leaf' | 'maple' | 'snow' | 'heart' | 'star
 export type ParticleMode = 'fall' | 'rise' | 'twinkle' | 'drift';
 export type PatternKind = 'none' | 'dots' | 'kawung' | 'zigzag' | 'diamond' | 'scallop' | 'grid' | 'stars' | 'star8' | 'hearts' | 'leaves' | 'stripes' | 'cross';
 export type FrameKind = 'arch' | 'oval' | 'round' | 'square' | 'diamond' | 'pixel' | 'polaroid' | 'hex' | 'notch' | 'deco' | 'dove' | 'bloom' | 'kayon' | 'garden' | 'sakura' | 'autumn' | 'winter' | 'lavender' | 'hortensia' | 'marigold';
-export type CountdownKind = 'soft' | 'outline' | 'pixel' | 'neon' | 'ticket' | 'round' | 'flip' | 'luxe' | 'sky' | 'bloom' | 'keraton' | 'sekar';
+export type CountdownKind = 'soft' | 'outline' | 'pixel' | 'neon' | 'ticket' | 'round' | 'flip' | 'luxe' | 'sky' | 'bloom' | 'keraton' | 'raster';
 export type CoverFxKind = 'none' | 'aurora' | 'rays' | 'curtain' | 'scanlines' | 'spotlight' | 'clouds' | 'halo' | 'sky' | 'bloom';
 export type RevealKind = 'rise' | 'zoom' | 'blur' | 'slide';
 export type Radius = 'soft' | 'mid' | 'sharp' | 'pill';
@@ -27,7 +27,7 @@ export interface Motif {
   // Tampilan khusus: 'kraft' = kertas kraft, kartu berjahitan berpita perekat, tali goni (lihat .wl-kraft di globals.css).
   // 'gilded' = Elegan: kertas gading bermarmer, garis & huruf berlapis emas, bingkai berukir (lihat .wl-gilded).
   // 'keraton' = Batik Jawa: krem & maroon, emas berlapis, parang di tepi halaman, kawung pemisah, gunungan (lihat .wl-keraton).
-  skin?: 'kraft' | 'gilded' | 'dove' | 'bloom' | 'keraton' | 'garden' | 'sekar';
+  skin?: 'kraft' | 'gilded' | 'dove' | 'bloom' | 'keraton' | 'garden' | 'raster';
   // Menimpa font judul tema (mis. rustic memakai Fraunces yang hangat walau snapshot lama bertulis serif).
   heading?: HeadingFont;
   // Font khusus nama mempelai (sampul, gerbang, kartu mempelai); bawaan = `heading`.
@@ -76,8 +76,10 @@ export const MOTIFS: Record<string, Motif> = {
   hortensia: { ...m('hortensia', 'none', 'hortensia', 'outline', 'aurora', ['blossom', 14, 'fall'], 'pill', 'blur'), heading: 'serif', names: 'serif', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   marigold: { ...m('marigold', 'none', 'marigold', 'ticket', 'rays', ['petal', 16, 'fall'], 'mid', 'rise'), heading: 'display', names: 'script', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   wisteria: { ...m('hortensia', 'none', 'hortensia', 'outline', 'aurora', ['petal', 14, 'fall'], 'pill', 'blur'), heading: 'serif', names: 'serif', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
-  // Sekar Keraton: seluruh seninya raster (kertas berukir, bingkai kayu, pigura, kayon); lihat .wl-sekar di globals.css & sekar-keraton-*.tsx.
-  'jawa-sekar-keraton': { ...m('keraton', 'none', 'kayon', 'sekar', 'none', ['dust', 10, 'rise'], 'sharp', 'rise'), skin: 'sekar', heading: 'libre', names: 'libre', body: 'source' },
+  // Desain raster: seluruh seninya raster (kertas berukir, bingkai kayu, pigura, kayon); lihat .wl-sekar di globals.css & sekar-keraton-*.tsx.
+  'jawa-sekar-keraton': { ...m('keraton', 'none', 'kayon', 'raster', 'none', ['dust', 10, 'rise'], 'sharp', 'rise'), skin: 'raster', heading: 'libre', names: 'libre', body: 'source' },
+  // Pusako Minang: gonjong, ukiran kayu, songket; sistem tampilan raster yang sama dengan Sekar Keraton (lihat raster-theme.ts).
+  'pusako-minang': { ...m('keraton', 'none', 'kayon', 'raster', 'none', ['dust', 10, 'rise'], 'sharp', 'rise'), skin: 'raster', heading: 'playfair', names: 'playfair', body: 'source' },
   salju: { ...m('winter', 'none', 'winter', 'outline', 'aurora', ['snow', 28, 'fall'], 'mid', 'blur'), pageFrame: 'winter', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
 };
 

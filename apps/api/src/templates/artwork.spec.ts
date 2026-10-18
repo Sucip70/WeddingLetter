@@ -1,4 +1,4 @@
-import { artworkManifestSchema, seasonalArtworkFor, sekarKeratonArtwork } from './artwork.js';
+import { artworkManifestSchema, pusakoMinangArtwork, RASTER_ARTWORK, seasonalArtworkFor, sekarKeratonArtwork } from './artwork.js';
 import { normalizeLayout } from './layout.js';
 
 describe('template artwork schema', () => {
@@ -38,5 +38,14 @@ describe('template artwork schema', () => {
     expect(artwork.assets.cardFrame?.default?.url).toBe('/themes/sekar-keraton/card-frame.webp');
     expect(artwork.assets.gateInteractive?.default?.url).toBe('/themes/sekar-keraton/kayon-wayang.webp');
     expect(artwork.assets.gateForeground).toBeUndefined();
+  });
+
+  it('provides the Pusako Minang raster manifest and registers both raster designs', () => {
+    const artwork = pusakoMinangArtwork();
+    expect(artwork.designId).toBe('pusako-minang');
+    expect(artwork.assets.cardFrame?.default?.url).toBe('/themes/pusako-minang/info-card.webp');
+    expect(artwork.assets.gateInteractive?.default?.url).toBe('/themes/pusako-minang/gate-gonjong.webp');
+    expect(Object.keys(RASTER_ARTWORK).sort()).toEqual(['jawa-sekar-keraton', 'pusako-minang']);
+    for (const make of Object.values(RASTER_ARTWORK)) expect(make().designId).toBeTruthy();
   });
 });

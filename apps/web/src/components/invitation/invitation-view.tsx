@@ -28,8 +28,9 @@ import { Gunungan } from './gunungan-art';
 import { MeadowGhost } from './meadow-parts';
 import { TemplateArtwork } from './template-artwork';
 import { SeasonalCoverLayout } from './seasonal-cover';
-import { SekarKeratonCover } from './sekar-keraton-cover';
-import { SekarCard, SekarDivider, SekarFooter, SekarKeratonCoupleSection, sekarRootVars } from './sekar-keraton-sections';
+import { RasterCover } from './raster-cover';
+import { isRasterDesign } from './raster-theme';
+import { RasterCard, RasterDivider, RasterFooter, RasterCoupleSection, rasterRootVars } from './raster-sections';
 
 export interface InvitationViewProps {
   view: InvitationViewData;
@@ -136,7 +137,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const bloom = skin === 'bloom';
   const keraton = skin === 'keraton';
   const garden = skin === 'garden';
-  const sekar = skin === 'sekar';
+  const raster = skin === 'raster';
   // Untaian bunga & ikon bunga mini sebagai gambar CSS (data URI): bunga utamanya berwarna sekunder tema, jadi dihitung per tema.
   const bloomCss = useMemo(() => (bloom ? { garland: garlandCss(theme.secondary), mini: miniBloomCss(theme.secondary) } : null), [bloom, theme.secondary]);
   // Batik Jawa: parang, kawung, dan ikon gunungan sebagai gambar CSS (data URI) yang warnanya ikut tema; lihat batik-art.ts.
@@ -287,7 +288,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     backgroundColor: theme.background,
     color: theme.text,
     fontFamily: bf.family,
-    ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : garden ? { ...GARDEN_BG, ['--garden-flourish' as string]: GARDEN_FLOURISH } : gilded ? GILDED_BG : airy ? DOVE_BG : bloom && bloomCss ? { ...BLOOM_BG, ['--bloom-garland' as string]: bloomCss.garland, ['--bloom-mini' as string]: bloomCss.mini } : keraton && keratonCss ? { ...KERATON_BG, ...keratonCss } : sekar && artwork ? sekarRootVars(artwork) : null),
+    ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : garden ? { ...GARDEN_BG, ['--garden-flourish' as string]: GARDEN_FLOURISH } : gilded ? GILDED_BG : airy ? DOVE_BG : bloom && bloomCss ? { ...BLOOM_BG, ['--bloom-garland' as string]: bloomCss.garland, ['--bloom-mini' as string]: bloomCss.mini } : keraton && keratonCss ? { ...KERATON_BG, ...keratonCss } : raster && artwork ? rasterRootVars(artwork) : null),
   } as CSSProperties;
   const headingStyle: CSSProperties = {
     fontFamily: hf.family,
@@ -327,8 +328,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const coverPhoto = coverKind === 'ornamen' ? undefined : uploadedCover;
   const photoCover = coverKind && coverKind !== 'ornamen' ? coverKind : null;
   const seasonalPhotoCover = finalSeasonalCover && photoCover && artwork && ['semi', 'panas', 'gugur', 'salju'].includes(artwork.designId);
-  const sekarKeratonCover = artwork?.designId === 'jawa-sekar-keraton';
-  const sekarCoverKind = coverKind === 'bingkai' || coverKind === 'berdua' || coverKind === 'terbagi' ? coverKind : 'ornamen';
+  const rasterCover = isRasterDesign(artwork?.designId);
+  const rasterCoverKind = coverKind === 'bingkai' || coverKind === 'berdua' || coverKind === 'terbagi' ? coverKind : 'ornamen';
 
   const galleryPhotos = list(data, 'galeri', 'foto').map(url).filter((x): x is string => !!x);
   const galleryVideos = list(data, 'galeri', 'video').map(url).filter((x): x is string => !!x);
@@ -453,17 +454,17 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
           className={`relative flex flex-col items-center justify-center overflow-hidden px-8 text-center ${finalSeasonalCover ? 'wl-final-seasonal-cover' : ''}`}
           style={{ ...(embedded ? { height: '100%' } : { minHeight: '100svh' }), ...(revealDelay ? { '--gd': `${revealDelay}ms` } : null) } as CSSProperties}
         >
-          {sekarKeratonCover || coverPhoto || photoCover ? null : (
+          {rasterCover || coverPhoto || photoCover ? null : (
             <div
               className="absolute inset-0"
               style={{ background: coverBackground }}
             />
           )}
-          {!seasonalPhotoCover && !sekarKeratonCover && <TemplateArtwork artwork={artwork} context="cover" hasUserPhoto={!!(coverPhoto || photoCover)} onAssetError={() => setArtworkFailed(true)} />}
-          {sekarKeratonCover && artwork ? (
-            <SekarKeratonCover
+          {!seasonalPhotoCover && !rasterCover && <TemplateArtwork artwork={artwork} context="cover" hasUserPhoto={!!(coverPhoto || photoCover)} onAssetError={() => setArtworkFailed(true)} />}
+          {rasterCover && artwork ? (
+            <RasterCover
               key={coverKey}
-              kind={sekarCoverKind}
+              kind={rasterCoverKind}
               artwork={artwork}
               photo={uploadedCover}
               groom={url(str(data, 'mempelai', 'pria_foto'))}
@@ -547,7 +548,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               {!coverPhoto && cornersNode}
             </>
           )}
-          {motif.ornament === 'romantic' && !finalSeasonalCover && !sekarKeratonCover && <div key={`ff-${coverKey}`} className="pointer-events-none absolute inset-0 z-[3]" style={{ color: 'var(--p)' }}><FloralPageFrame /></div>}
+          {motif.ornament === 'romantic' && !finalSeasonalCover && !rasterCover && <div key={`ff-${coverKey}`} className="pointer-events-none absolute inset-0 z-[3]" style={{ color: 'var(--p)' }}><FloralPageFrame /></div>}
 
           {view.features.english && (
             <button
@@ -560,7 +561,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             </button>
           )}
 
-          {!photoCover && !sekarKeratonCover && (
+          {!photoCover && !rasterCover && (
           <div key={coverKey} className={`relative z-[4] flex flex-col items-center ${finalSeasonalCover ? 'wl-final-seasonal-content' : ''} ${finalSeasonalCover ? `wl-final-fit wl-season-${artwork?.designId}` : ''}`} style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
             {bloom && !coverPhoto && showMono && (
               <div className={`mb-1 ${enter(0).className}`} style={enter(0).style}>
@@ -639,9 +640,9 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         {visible.map((section) => {
           switch (section.id) {
             case 'mempelai':
-              if (artwork?.designId === 'jawa-sekar-keraton') {
+              if (artwork && isRasterDesign(artwork.designId)) {
                 return (
-                  <SekarKeratonCoupleSection
+                  <RasterCoupleSection
                     key="mempelai"
                     artwork={artwork}
                     title={t.couple}
@@ -739,7 +740,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               const story = str(data, 'cerita', 'cerita');
               return (
                 <Block key="cerita" title={t.story} headingStyle={headingStyle} tint={soft}>
-                  {quote && <blockquote className={gilded || airy || bloom || keraton || sekar ? 'wl-quote text-center' : 'text-center text-xl italic leading-relaxed'} style={{ fontFamily: 'var(--font-cormorant)' }}>{gilded || airy || bloom || keraton || sekar ? quote : `“${quote}”`}</blockquote>}
+                  {quote && <blockquote className={gilded || airy || bloom || keraton || raster ? 'wl-quote text-center' : 'text-center text-xl italic leading-relaxed'} style={{ fontFamily: 'var(--font-cormorant)' }}>{gilded || airy || bloom || keraton || raster ? quote : `“${quote}”`}</blockquote>}
                   {story && <p className={`mt-6 whitespace-pre-line text-center ${bodyText}`}>{story}</p>}
                 </Block>
               );
@@ -764,7 +765,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                                 <h3 style={{ ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 600 }}>{ev === 'akad' ? t.akad : t.reception}</h3>
                                 <p className="wl-ev-date mt-4 text-lg font-semibold">{formatLocalDate(when, lang)}</p>
                                 <p className="wl-ev-time opacity-80">{formatLocalTime(when)}</p>
-                                {sekar ? <SekarDivider artwork={artwork} className="sk-divider-sm" /> : (
+                                {raster ? <RasterDivider artwork={artwork} className="sk-divider-sm" /> : (
                                   <div style={{ color: 'var(--p)' }}>
                                     <orn.Divider className={bloom ? 'mx-auto my-3 w-48' : 'mx-auto my-4 w-24 opacity-70'} />
                                   </div>
@@ -785,8 +786,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                                 </div>
                               </>
                             );
-                            return sekar ? (
-                              <SekarCard artwork={artwork}>{body}</SekarCard>
+                            return raster ? (
+                              <RasterCard artwork={artwork}>{body}</RasterCard>
                             ) : (
                               <div className="wl-card border p-7 text-center" style={{ borderRadius: 'var(--r)', borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)', background: 'var(--bg)' }}>{body}</div>
                             );
@@ -837,8 +838,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               return (
                 <Block key="rsvp" title={t.rsvp} headingStyle={headingStyle} tint={soft}>
                   <p className={`mb-6 text-center opacity-85 ${bodyText}`}>{str(data, 'rsvp', 'pengantar') || t.rsvpIntro}</p>
-                  {sekar ? (
-                    <SekarCard artwork={artwork}><RsvpForm slug={view.slug} preview={mode === 'preview'} t={t} accent="var(--p)" /></SekarCard>
+                  {raster ? (
+                    <RasterCard artwork={artwork}><RsvpForm slug={view.slug} preview={mode === 'preview'} t={t} accent="var(--p)" /></RasterCard>
                   ) : (
                     <RsvpForm slug={view.slug} preview={mode === 'preview'} t={t} accent="var(--p)" />
                   )}
@@ -876,12 +877,12 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         })}
 
         <footer className={`wl-art-footer relative overflow-hidden px-6 pb-24 pt-12 text-center text-xs ${gilded || airy || bloom || keraton ? '' : 'opacity-60'}`}>
-          {!sekar && <TemplateArtwork artwork={artwork} context="closing" />}
-          {sekar ? (
-            <SekarFooter artwork={artwork} names={names}>
+          {!raster && <TemplateArtwork artwork={artwork} context="closing" />}
+          {raster ? (
+            <RasterFooter artwork={artwork} names={names}>
               <p className="mt-3 opacity-60">{t.madeWith}</p>
               {preset?.credit && <p className="mt-2 opacity-50">{preset.credit}</p>}
-            </SekarFooter>
+            </RasterFooter>
           ) : keraton ? (
             <>
               <div className="mx-auto h-[6rem]" style={{ aspectRatio: '200 / 272' }}>
@@ -966,13 +967,13 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 function Block({ title, children, headingStyle, tint, wide }: { title: string; children: ReactNode; headingStyle: CSSProperties; tint?: string; wide?: boolean }) {
   const { orn, motif, fx, sectionFont, artwork } = useTheme();
   const ghost = motif.ornament === 'hortensia';
-  if (motif.skin === 'sekar') {
-    // Sekar Keraton: kertas berukir dari akar halaman terlihat penuh; tiap bagian hanya judul + pemisah kawung + isi.
+  if (motif.skin === 'raster') {
+    // Desain raster (Sekar Keraton, Pusako Minang): kertas berukir dari akar halaman terlihat penuh; tiap bagian hanya judul + pemisah kawung + isi.
     return (
       <section className="wl-block relative">
         <div className="wl-reveal relative z-[1] mb-9 text-center">
           <h2 className="sk-h2">{title}</h2>
-          <SekarDivider artwork={artwork} />
+          <RasterDivider artwork={artwork} />
         </div>
         <div className={`sk-body relative z-[1] ${wide ? 'sk-wide' : ''}`}>{children}</div>
       </section>
@@ -1048,7 +1049,7 @@ const COUNTDOWN_LOOK: Record<CountdownKind, { section: CSSProperties; cell: CSSP
     },
     num: { fontWeight: 500, backgroundImage: 'var(--foil-lit)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', WebkitTextFillColor: 'transparent' },
   },
-  sekar: {
+  raster: {
     section: { background: 'var(--sk-gate) center / cover no-repeat, #5c1c21', paddingInline: '15%', borderTop: '1px solid var(--s)', borderBottom: '1px solid var(--s)' },
     cell: {
       border: '1px solid color-mix(in srgb, var(--s) 75%, transparent)',

@@ -8,7 +8,7 @@ import { DEMO_SLOTS, defaultKey } from "../src/demo-photos/demo-photos.slots.js"
 import { uploadDefaultFile } from "../src/demo-photos/demo-photos.service.js";
 import { StorageService } from "../src/storage/storage.service.js";
 import { autoPalettes, BASIC_DESIGN_IDS, BASIC_PALETTES, basicPalettes, DESIGNS } from "../src/templates/themes.js";
-import { seasonalArtworkFor, sekarKeratonArtwork } from "../src/templates/artwork.js";
+import { RASTER_ARTWORK, seasonalArtworkFor } from "../src/templates/artwork.js";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -45,6 +45,8 @@ const TIERS = {
 const LEGACY_NAMES: Record<string, string> = { "BASIC:rustic": "Basic Rustic", "STANDARD:floral": "Standard Floral", "PREMIUM:elegant": "Premium Elegant" };
 
 const SEKAR_KERATON_DESIGN_ID = "jawa-sekar-keraton";
+// Desain beraset raster yang belum disetujui tampil sebagai DRAFT di katalog baru (Sekar Keraton sudah disetujui).
+const RASTER_DRAFT_DESIGN_IDS: string[] = ["pusako-minang"];
 const SEKAR_KERATON_SAMPLE_PHOTOS = {
   cover: "/samples/sekar-keraton/cover.webp",
   groom: "/samples/sekar-keraton/groom-v2.webp",
@@ -61,16 +63,15 @@ function buildTemplates() {
       if (tier === "BASIC" && !BASIC_DESIGN_IDS.includes(design.id)) continue;
       const cfg = TIERS[tier];
       const seasonalArtwork = seasonalArtworkFor(design.id);
-      const artwork = seasonalArtwork ?? (design.id === SEKAR_KERATON_DESIGN_ID ? sekarKeratonArtwork() : undefined);
+      const artwork = seasonalArtwork ?? RASTER_ARTWORK[design.id]?.();
       rows.push({
         name: LEGACY_NAMES[tier + ":" + design.id] ?? cfg.label + " " + design.name,
         category: design.group,
         tier,
         price: cfg.price,
         includedWeeks: 4,
-        // Keep the independent Sekar Keraton rebuild out of every fresh catalog
-        // until the first four review layouts have explicit design approval.
-        ...(design.id === SEKAR_KERATON_DESIGN_ID ? { status: "DRAFT" as const } : {}),
+        // Desain raster baru tidak masuk katalog publik sebelum disetujui.
+        ...(RASTER_DRAFT_DESIGN_IDS.includes(design.id) ? { status: "DRAFT" as const } : {}),
         ...(seasonalArtwork ? { artworkVersionId: `seasonal-${design.id}-v1` } : {}),
         layoutSchema: {
           // Gerbang pembuka hanya untuk Premium (admin bisa mengubahnya per template di builder).

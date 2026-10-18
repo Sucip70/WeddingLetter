@@ -26,6 +26,7 @@ export const GATE_LABEL = {
   twine: 'Surat bertali goni',
   bouquet: 'Lempar buket',
   kayon: 'Kayon Sekar Keraton',
+  gonjong: 'Gonjong Pusako Minang',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export const GATE_KINDS = Object.keys(GATE_LABEL) as GateKind[];
@@ -78,6 +79,7 @@ const BASE_DESIGNS: Omit<Design, 'gate'>[] = [
   d('elegant', 'Elegan Emas', 'klasik', 'Mewah dan bersahaja dengan aksen emas.', ['#b08d3c', '#1f2a44', '#f7f5f0', '#1f2a44'], ['serif', 'serif']),
   d('wisteria', 'Wisteria Biru', 'klasik', 'Wisteria biru dan periwinkle yang lembut.', ['#3f5fb0', '#9fb4f0', '#f6f8ff', '#1a2547'], ['serif', 'serif']),
   d('jawa-sekar-keraton', 'Sekar Keraton', 'suku', 'Keanggunan pendopo Jawa dalam sogan, marun, dan emas.', ['#74401f', '#aa7d38', '#ead6ad', '#3a291e'], ['libre', 'source'], true),
+  d('pusako-minang', 'Pusako Minang', 'suku', 'Gonjong, ukiran kayu, dan songket dalam marun, sogan, dan emas.', ['#681813', '#b9853f', '#efe1c4', '#211712'], ['libre', 'source'], true),
   d('galaksi', 'Galaksi Cinta', 'film', 'Opera luar angkasa: bintang, nebula, dan cincin orbit.', ['#7c5cff', '#39c5ff', '#0a0e27', '#e6ecff'], ['cinzel', 'sans'], true),
   d('sihir', 'Akademi Sihir', 'film', 'Perkamen, lilin melayang, dan bintang keajaiban.', ['#d4a84b', '#9b5de5', '#2a1f3d', '#f0e6c8'], ['cinzel', 'serif'], true),
   d('semi', 'Musim Semi', 'musim', 'Sakura mekar dan kelopak yang berguguran lembut.', ['#e88fb0', '#9bc48f', '#fff8fa', '#4a3040'], ['script', 'sans']),
@@ -91,7 +93,7 @@ const DESIGN_GATES: Record<string, GateKind> = {
   rustic: 'twine', floral: 'sakura', elegant: 'ring',
   buket: 'bouquet', garden: 'taman', lavender: 'sakura', hortensia: 'sakura', marigold: 'leaves', wisteria: 'sakura',
   galaksi: 'portal', sihir: 'portal', semi: 'sakura', panas: 'sakura', gugur: 'leaves', salju: 'frost',
-  'jawa-sekar-keraton': 'kayon',
+  'jawa-sekar-keraton': 'kayon', 'pusako-minang': 'gonjong',
 };
 
 export const DESIGNS: Design[] = BASE_DESIGNS.map((x) => ({ ...x, gate: DESIGN_GATES[x.id]! }));

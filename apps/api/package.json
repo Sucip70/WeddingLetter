@@ -27,7 +27,7 @@
     "artwork:seasonal": "tsx scripts/publish-seasonal-artwork.ts",
     "artwork:seasonal-gates": "tsx scripts/publish-seasonal-gates.ts",
     "demo:photos": "tsx scripts/demo-photos.ts",
-    "artwork:sekar": "tsx scripts/sync-sekar-artwork.ts"
+    "artwork:raster": "tsx scripts/sync-raster-artwork.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1136.0",
