@@ -20,10 +20,14 @@ export const THEME_COVER_BY_DESIGN: Record<string, ThemeCover> = {
 
 // Layout khusus tema yang juga tersedia di Standard (sisanya hanya Premium).
 export const STANDARD_THEME_COVERS: readonly string[] = ['emas', 'bunga'];
+// Sekar Keraton is being reviewed as an independent system. Do not expose the
+// remaining generic layouts until these four compositions have been approved.
+export const SEKAR_KERATON_REVIEW_COVERS = ['ornamen', 'bingkai', 'berdua', 'terbagi'] as const;
 
 // Daftar layout yang boleh dipilih untuk paket dan tema ini (kosong = tanpa pilihan, khusus Basic).
 export function availableCoverLayouts(tier: TemplateTier, motif: string): string[] {
   if (tier === 'BASIC') return [];
+  if (motif === 'jawa-sekar-keraton') return [...SEKAR_KERATON_REVIEW_COVERS];
   const themed = THEME_COVER_BY_DESIGN[motif];
   const special = tier === 'PREMIUM' || (tier === 'STANDARD' && themed && STANDARD_THEME_COVERS.includes(themed)) ? themed : undefined;
   return special ? [...GENERIC_COVERS, special] : [...GENERIC_COVERS];

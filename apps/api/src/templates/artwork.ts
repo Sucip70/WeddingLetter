@@ -4,7 +4,7 @@ export const ARTWORK_SLOTS = [
   'coverBackground', 'coverForeground', 'pageBackground', 'sectionBackground',
   'topDecoration', 'bottomDecoration', 'cornerTopLeft', 'cornerTopRight',
   'cornerBottomLeft', 'cornerBottomRight', 'divider', 'photoFrame', 'texture',
-  'thumbnail', 'gateBackground', 'gateForeground', 'gateTransition', 'gateInteractive',
+  'thumbnail', 'gateBackground', 'gateForeground', 'gateTransition', 'gateInteractive', 'cardFrame',
 ] as const;
 export type ArtworkSlot = (typeof ARTWORK_SLOTS)[number];
 
@@ -123,5 +123,54 @@ export function seasonalArtworkFor(designId: string): ArtworkManifest | undefine
       showOnPhotoCover: false,
     },
     fallback: {},
+  });
+}
+
+// Sekar Keraton: raster artwork painted by The Artist (artwork-handoff/jawa/sekar-keraton/{content,kayon}-raster), served from
+// apps/web/public/themes/sekar-keraton/. Slot usage is specific to this design (sekar-keraton-cover/-sections/-gate.tsx):
+//   coverBackground = page-background (cover paper)     pageBackground = page-tile (mirrored, seamless vertical tile for the body)
+//   cornerTopLeft/BottomRight = carved corners          topDecoration = mini-kayon         divider = kawung divider
+//   sectionBackground = card-paper-panel                cardFrame = card-frame             photoFrame = photo mount (2:3)
+//   bottomDecoration = footer ornament                  gateBackground = gate-background   gateInteractive = kayon-wayang
+export function sekarKeratonArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/sekar-keraton/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'jawa-sekar-keraton',
+    artworkVersion: 2,
+    assets: {
+      coverBackground: { default: source('page-background', 1024, 1536, 236_000) },
+      pageBackground: { default: source('page-tile', 1024, 3072, 439_000) },
+      cornerTopLeft: { default: source('corner-top-left', 1155, 1048, 149_000) },
+      cornerBottomRight: { default: source('corner-bottom-right', 1155, 1048, 149_000) },
+      divider: { default: source('divider-kawung', 2208, 364, 108_000) },
+      topDecoration: { default: source('mini-kayon', 838, 1483, 232_000) },
+      sectionBackground: { default: source('card-paper-panel', 1000, 1250, 215_000) },
+      cardFrame: { default: source('card-frame', 1101, 1434, 135_000) },
+      photoFrame: { default: source('photo-frame', 1014, 1496, 126_000) },
+      bottomDecoration: { default: source('footer-ornament', 2234, 372, 109_000) },
+      gateBackground: { default: source('gate-background', 1024, 1536, 332_000) },
+      gateInteractive: { default: source('kayon-wayang', 1024, 1536, 454_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
   });
 }

@@ -8,7 +8,7 @@ export type ParticleKind = 'petal' | 'leaf' | 'maple' | 'snow' | 'heart' | 'star
 export type ParticleMode = 'fall' | 'rise' | 'twinkle' | 'drift';
 export type PatternKind = 'none' | 'dots' | 'kawung' | 'zigzag' | 'diamond' | 'scallop' | 'grid' | 'stars' | 'star8' | 'hearts' | 'leaves' | 'stripes' | 'cross';
 export type FrameKind = 'arch' | 'oval' | 'round' | 'square' | 'diamond' | 'pixel' | 'polaroid' | 'hex' | 'notch' | 'deco' | 'dove' | 'bloom' | 'kayon' | 'garden' | 'sakura' | 'autumn' | 'winter' | 'lavender' | 'hortensia' | 'marigold';
-export type CountdownKind = 'soft' | 'outline' | 'pixel' | 'neon' | 'ticket' | 'round' | 'flip' | 'luxe' | 'sky' | 'bloom' | 'keraton';
+export type CountdownKind = 'soft' | 'outline' | 'pixel' | 'neon' | 'ticket' | 'round' | 'flip' | 'luxe' | 'sky' | 'bloom' | 'keraton' | 'sekar';
 export type CoverFxKind = 'none' | 'aurora' | 'rays' | 'curtain' | 'scanlines' | 'spotlight' | 'clouds' | 'halo' | 'sky' | 'bloom';
 export type RevealKind = 'rise' | 'zoom' | 'blur' | 'slide';
 export type Radius = 'soft' | 'mid' | 'sharp' | 'pill';
@@ -27,7 +27,7 @@ export interface Motif {
   // Tampilan khusus: 'kraft' = kertas kraft, kartu berjahitan berpita perekat, tali goni (lihat .wl-kraft di globals.css).
   // 'gilded' = Elegan: kertas gading bermarmer, garis & huruf berlapis emas, bingkai berukir (lihat .wl-gilded).
   // 'keraton' = Batik Jawa: krem & maroon, emas berlapis, parang di tepi halaman, kawung pemisah, gunungan (lihat .wl-keraton).
-  skin?: 'kraft' | 'gilded' | 'dove' | 'bloom' | 'keraton' | 'garden';
+  skin?: 'kraft' | 'gilded' | 'dove' | 'bloom' | 'keraton' | 'garden' | 'sekar';
   // Menimpa font judul tema (mis. rustic memakai Fraunces yang hangat walau snapshot lama bertulis serif).
   heading?: HeadingFont;
   // Font khusus nama mempelai (sampul, gerbang, kartu mempelai); bawaan = `heading`.
@@ -76,6 +76,8 @@ export const MOTIFS: Record<string, Motif> = {
   hortensia: { ...m('hortensia', 'none', 'hortensia', 'outline', 'aurora', ['blossom', 14, 'fall'], 'pill', 'blur'), heading: 'serif', names: 'serif', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   marigold: { ...m('marigold', 'none', 'marigold', 'ticket', 'rays', ['petal', 16, 'fall'], 'mid', 'rise'), heading: 'display', names: 'script', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
   wisteria: { ...m('hortensia', 'none', 'hortensia', 'outline', 'aurora', ['petal', 14, 'fall'], 'pill', 'blur'), heading: 'serif', names: 'serif', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
+  // Sekar Keraton: seluruh seninya raster (kertas berukir, bingkai kayu, pigura, kayon); lihat .wl-sekar di globals.css & sekar-keraton-*.tsx.
+  'jawa-sekar-keraton': { ...m('keraton', 'none', 'kayon', 'sekar', 'none', ['dust', 10, 'rise'], 'sharp', 'rise'), skin: 'sekar', heading: 'libre', names: 'libre', body: 'source' },
   salju: { ...m('winter', 'none', 'winter', 'outline', 'aurora', ['snow', 28, 'fall'], 'mid', 'blur'), pageFrame: 'winter', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
 };
 
@@ -98,6 +100,7 @@ export const HEADING: Record<HeadingFont, { family: string; size: string; sectio
   pixel: { family: 'var(--font-pixel)', size: '1.45rem', section: '1.15rem', weight: 400, tracking: '0.02em', upper: true },
   round: { family: 'var(--font-fredoka)', size: '3.1rem', section: '2.3rem', weight: 600 },
   playfair: { family: 'var(--font-playfair)', size: '2.9rem', section: '1.9rem', weight: 500 },
+  libre: { family: 'var(--font-libre)', size: '2.9rem', section: '1.9rem', weight: 400 },
 };
 
 export const BODY: Record<BodyFont, { family: string; className: string }> = {
@@ -105,4 +108,5 @@ export const BODY: Record<BodyFont, { family: string; className: string }> = {
   sans: { family: 'var(--font-jakarta)', className: 'text-sm leading-relaxed' },
   round: { family: 'var(--font-fredoka)', className: 'text-[15px] leading-relaxed' },
   montserrat: { family: 'var(--font-montserrat)', className: 'text-[14px] leading-[1.85] tracking-[0.01em]' },
+  source: { family: 'var(--font-source)', className: 'text-[15px] leading-[1.75] tracking-[0.01em]' },
 };

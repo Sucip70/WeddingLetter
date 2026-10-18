@@ -1,0 +1,53 @@
+{
+  "designId": "jawa-sekar-keraton",
+  "purpose": "Opaque sample pre-wedding photography for template previews; customers replace these with their own photographs.",
+  "style": "Photorealistic editorial pre-wedding photography in a Javanese pendopo",
+  "format": {
+    "production": "WebP, RGB, opaque, quality 92",
+    "sources": "Original PNG files under sources/"
+  },
+  "assets": {
+    "cover": {
+      "file": "cover.webp",
+      "source": "sources/cover.png",
+      "width": 1024,
+      "height": 1536,
+      "slot": "cover"
+    },
+    "groom": {
+      "file": "groom.webp",
+      "source": "sources/groom.png",
+      "width": 1024,
+      "height": 1280,
+      "slot": "groom",
+      "framing": "half-body, looking at camera"
+    },
+    "bride": {
+      "file": "bride.webp",
+      "source": "sources/bride.png",
+      "width": 1024,
+      "height": 1280,
+      "slot": "bride",
+      "framing": "half-body, looking at camera"
+    },
+    "galleryRomantic": {
+      "file": "gallery-romantic.webp",
+      "source": "sources/gallery-romantic.png",
+      "width": 1024,
+      "height": 1280,
+      "slot": "gallery2"
+    },
+    "galleryWalking": {
+      "file": "gallery-walking.webp",
+      "source": "sources/gallery-walking.png",
+      "width": 1536,
+      "height": 960,
+      "slot": "gallery1"
+    }
+  },
+  "notes": [
+    "These are complete photographs with normal backgrounds, not transparent character cutouts.",
+    "The groom wears a restrained maroon Surakarta-style beskap with an asymmetric front and no chest chain.",
+    "The bride, couple identities, clothing, setting, and color grade remain consistent across the set."
+  ]
+}

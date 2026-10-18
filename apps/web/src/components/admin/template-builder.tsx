@@ -13,7 +13,7 @@ import type { TierRow } from './tier-panel';
 import { sampleView } from '@/lib/sample';
 import type { DemoPhotos } from '@/lib/sample';
 import { FX_LABEL } from '@/lib/catalog';
-import type { ArtworkManifest, FieldType, FxLevel, GateSetting, Palette, Theme, ThemeGroup } from '@/lib/types';
+import type { ArtworkManifest, FieldType, FxLevel, GateSetting, Layout, Palette, Theme, ThemeGroup } from '@/lib/types';
 
 export interface AuthField { key: string; type: FieldType; label: string; required: boolean; enabled: boolean }
 export interface AuthSection { id: string; title: string; enabled: boolean; fields: AuthField[] }
@@ -26,7 +26,7 @@ export interface Authoring {
   // Tata letak sampul bawaan (kosong = otomatis). Lihat coverDefault di apps/api/src/templates/layout.ts.
   coverDefault?: string;
   artwork?: ArtworkManifest;
-  samplePhotos?: { groom?: string; bride?: string };
+  samplePhotos?: Layout['samplePhotos'];
 }
 export interface TemplateForm {
   id?: string;
@@ -68,8 +68,9 @@ const FONT_LABEL: Record<string, string> = {
   cinzel: 'Kapital klasik (Cinzel)',
   pixel: 'Pixel retro',
   round: 'Bulat ceria',
+  libre: 'Editorial klasik (Libre Baskerville)',
 };
-const BODY_LABEL: Record<string, string> = { sans: 'Sans modern', serif: 'Serif klasik', round: 'Bulat ceria' };
+const BODY_LABEL: Record<string, string> = { sans: 'Sans modern', serif: 'Serif klasik', round: 'Bulat ceria', source: 'Editorial bersih (Source Sans 3)' };
 const FX_ORDER: FxLevel[] = ['none', 'standard', 'premium'];
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const SEASONAL_PREMIUM_GATE_LABEL: Record<string, string> = {
@@ -219,7 +220,7 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
   function clearSamplePhoto(slot: SamplePhotoSlot) {
     const next = { ...layout.samplePhotos };
     delete next[slot];
-    setLayout({ samplePhotos: next.groom || next.bride ? next : undefined });
+    setLayout({ samplePhotos: Object.values(next).some(Boolean) ? next : undefined });
   }
 
   async function save(status?: TemplateForm['status']) {

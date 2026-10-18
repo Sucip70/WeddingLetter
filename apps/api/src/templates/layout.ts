@@ -77,7 +77,7 @@ export interface TemplateLayout {
   // Manifest artwork immutable yang ikut disalin ke snapshot saat order dibuat.
   artwork?: ArtworkManifest;
   // Foto contoh khusus template untuk katalog dan pratinjau. Slot yang kosong memakai foto demo global.
-  samplePhotos?: { groom?: string; bride?: string };
+  samplePhotos?: Partial<Record<'cover' | 'groom' | 'bride' | 'gallery1' | 'gallery2', string>>;
 }
 
 const f = (
@@ -186,7 +186,10 @@ const presetUrl = z
   .max(500)
   .refine((u) => /^https?:\/\/\S+$/.test(u) || /^\/audio\/[a-z0-9-]+\.mp3$/.test(u), 'URL lagu harus https atau /audio/<nama>.mp3');
 
-const samplePhotoUrl = z.string().trim().max(500).refine((u) => /^https?:\/\/\S+$/.test(u), 'URL foto contoh harus http(s)');
+const samplePhotoUrl = z.string().trim().max(500).refine(
+  (u) => /^https?:\/\/\S+$/.test(u) || /^\/samples\/[a-z0-9/-]+\.(webp|png|avif)$/.test(u),
+  'URL foto contoh harus http(s) atau aset /samples milik aplikasi',
+);
 
 const fieldOverride = z.object({
   key: z.string(),
@@ -217,8 +220,8 @@ export const layoutInputSchema = z.object({
       secondary: hex.optional(),
       background: hex.optional(),
       text: hex.optional(),
-      headingFont: z.enum(['script', 'serif', 'sans', 'display', 'cinzel', 'pixel', 'round']).optional(),
-      bodyFont: z.enum(['serif', 'sans', 'round']).optional(),
+      headingFont: z.enum(['script', 'serif', 'sans', 'display', 'cinzel', 'pixel', 'round', 'libre']).optional(),
+      bodyFont: z.enum(['serif', 'sans', 'round', 'source']).optional(),
     })
     .optional(),
   palettes: z.array(paletteSchema).max(16).optional(),
@@ -238,7 +241,13 @@ export const layoutInputSchema = z.object({
   rsvp: z.object({ allowed: z.boolean().optional() }).optional(), // legacy: diabaikan
   coverDefault: z.string().max(40).optional(),
   artwork: artworkManifestSchema.optional(),
-  samplePhotos: z.object({ groom: samplePhotoUrl.optional(), bride: samplePhotoUrl.optional() }).optional(),
+  samplePhotos: z.object({
+    cover: samplePhotoUrl.optional(),
+    groom: samplePhotoUrl.optional(),
+    bride: samplePhotoUrl.optional(),
+    gallery1: samplePhotoUrl.optional(),
+    gallery2: samplePhotoUrl.optional(),
+  }).optional(),
 });
 
 function isSectionId(id: string): id is SectionId {
@@ -293,7 +302,7 @@ export function normalizeLayout(raw: unknown, category = 'rustic'): TemplateLayo
     coverLayouts: [],
     ...(input.coverDefault && COVER_KINDS.includes(input.coverDefault) ? { coverDefault: input.coverDefault } : {}),
     ...(input.artwork ? { artwork: input.artwork } : {}),
-    ...(input.samplePhotos?.groom || input.samplePhotos?.bride ? { samplePhotos: input.samplePhotos } : {}),
+    ...(input.samplePhotos && Object.values(input.samplePhotos).some(Boolean) ? { samplePhotos: input.samplePhotos } : {}),
   };
 }
 

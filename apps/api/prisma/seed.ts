@@ -8,7 +8,7 @@ import { DEMO_SLOTS, defaultKey } from "../src/demo-photos/demo-photos.slots.js"
 import { uploadDefaultFile } from "../src/demo-photos/demo-photos.service.js";
 import { StorageService } from "../src/storage/storage.service.js";
 import { autoPalettes, BASIC_DESIGN_IDS, BASIC_PALETTES, basicPalettes, DESIGNS } from "../src/templates/themes.js";
-import { seasonalArtworkFor } from "../src/templates/artwork.js";
+import { seasonalArtworkFor, sekarKeratonArtwork } from "../src/templates/artwork.js";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -44,21 +44,34 @@ const TIERS = {
 // Nama baris yang sudah ada sejak seed awal dipertahankan supaya pesanan lama tetap menunjuk ke template yang sama.
 const LEGACY_NAMES: Record<string, string> = { "BASIC:rustic": "Basic Rustic", "STANDARD:floral": "Standard Floral", "PREMIUM:elegant": "Premium Elegant" };
 
+const SEKAR_KERATON_DESIGN_ID = "jawa-sekar-keraton";
+const SEKAR_KERATON_SAMPLE_PHOTOS = {
+  cover: "/samples/sekar-keraton/cover.webp",
+  groom: "/samples/sekar-keraton/groom-v2.webp",
+  bride: "/samples/sekar-keraton/bride-v2.webp",
+  gallery1: "/samples/sekar-keraton/gallery-walking.webp",
+  gallery2: "/samples/sekar-keraton/gallery-romantic.webp",
+};
+
 function buildTemplates() {
-  const rows: { name: string; category: string; tier: "BASIC" | "STANDARD" | "PREMIUM"; price: number; includedWeeks: number; artworkVersionId?: string; layoutSchema: object }[] = [];
+  const rows: { name: string; category: string; tier: "BASIC" | "STANDARD" | "PREMIUM"; price: number; includedWeeks: number; status?: "DRAFT"; artworkVersionId?: string; layoutSchema: object }[] = [];
   for (const design of DESIGNS) {
     const palettes = design.id === "rustic" ? BASIC_PALETTES : autoPalettes(design);
     for (const tier of ["BASIC", "STANDARD", "PREMIUM"] as const) {
       if (tier === "BASIC" && !BASIC_DESIGN_IDS.includes(design.id)) continue;
       const cfg = TIERS[tier];
-      const artwork = seasonalArtworkFor(design.id);
+      const seasonalArtwork = seasonalArtworkFor(design.id);
+      const artwork = seasonalArtwork ?? (design.id === SEKAR_KERATON_DESIGN_ID ? sekarKeratonArtwork() : undefined);
       rows.push({
         name: LEGACY_NAMES[tier + ":" + design.id] ?? cfg.label + " " + design.name,
         category: design.group,
         tier,
         price: cfg.price,
         includedWeeks: 4,
-        ...(artwork ? { artworkVersionId: `seasonal-${design.id}-v1` } : {}),
+        // Keep the independent Sekar Keraton rebuild out of every fresh catalog
+        // until the first four review layouts have explicit design approval.
+        ...(design.id === SEKAR_KERATON_DESIGN_ID ? { status: "DRAFT" as const } : {}),
+        ...(seasonalArtwork ? { artworkVersionId: `seasonal-${design.id}-v1` } : {}),
         layoutSchema: {
           // Gerbang pembuka hanya untuk Premium (admin bisa mengubahnya per template di builder).
           theme: { preset: design.id, fx: cfg.fx, gate: tier === "PREMIUM" ? design.gate : "none" },
@@ -66,6 +79,7 @@ function buildTemplates() {
           palettes: tier === "BASIC" ? basicPalettes(design.id) : palettes,
           sections: cfg.sections,
           ...(artwork ? { artwork } : {}),
+          ...(design.id === SEKAR_KERATON_DESIGN_ID ? { samplePhotos: SEKAR_KERATON_SAMPLE_PHOTOS } : {}),
           galeri: cfg.galeri,
           musik: { allowed: true },
         },
@@ -117,12 +131,13 @@ async function main() {
     if (existing) {
       // Template yang sudah ada TIDAK ditimpa (perubahan admin di builder: tema, palet, gerbang, bagian, harga, status tetap
       // aman). Untuk sengaja memutakhirkan skema dari seed, jalankan dengan SEED_OVERWRITE_TEMPLATES=1.
-      if (process.env.SEED_OVERWRITE_TEMPLATES === "1") {
+      const overwriteSekarKeraton = process.env.SEED_OVERWRITE_SEKAR_KERATON === "1" && t.name.endsWith(" Sekar Keraton");
+      if (process.env.SEED_OVERWRITE_TEMPLATES === "1" || overwriteSekarKeraton) {
         await prisma.template.update({ where: { id: existing.id }, data: { layoutSchema: t.layoutSchema, includedWeeks: t.includedWeeks, category: t.category } });
         console.log(`Skema dimutakhirkan: ${t.name}`);
       }
     } else {
-      await prisma.template.create({ data: { ...t, status: "PUBLISHED" } });
+      await prisma.template.create({ data: { ...t, status: t.status ?? "PUBLISHED" } });
     }
   }
 

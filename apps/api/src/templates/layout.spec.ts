@@ -43,7 +43,13 @@ describe('normalizeLayout', () => {
   });
 
   it('menyimpan foto contoh khusus template dan membuang URL yang tidak aman', () => {
-    const photos = { groom: 'https://cdn.example.com/groom.webp', bride: 'http://localhost:4000/bride.png' };
+    const photos = {
+      cover: 'https://cdn.example.com/cover.webp',
+      groom: 'https://cdn.example.com/groom.webp',
+      bride: 'http://localhost:4000/bride.png',
+      gallery1: 'https://cdn.example.com/walking.webp',
+      gallery2: 'https://cdn.example.com/romantic.webp',
+    };
     expect(normalizeLayout({ samplePhotos: photos }).samplePhotos).toEqual(photos);
     expect(normalizeLayout({ samplePhotos: { groom: 'javascript:alert(1)' } }).samplePhotos).toBeUndefined();
     expect(toAuthoring({ samplePhotos: photos }).samplePhotos).toEqual(photos);

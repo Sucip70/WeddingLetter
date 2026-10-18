@@ -1,5 +1,7 @@
 // Bentuk data dari API (lihat apps/api). Hanya field yang dipakai UI.
 
+import type { TemplateSamplePhotos } from './template-sample-photos';
+
 export type FieldType = 'text' | 'textarea' | 'datetime' | 'url' | 'image' | 'gallery' | 'videos' | 'song' | 'coverlayout';
 
 export interface FieldDef {
@@ -28,11 +30,12 @@ export const GATE_LABEL = {
   sakura: 'Surat kelopak sakura',
   twine: 'Surat bertali goni',
   bouquet: 'Lempar buket',
+  kayon: 'Kayon Sekar Keraton',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export type GateSetting = GateKind | 'none';
-export type HeadingFont = 'script' | 'serif' | 'sans' | 'display' | 'cinzel' | 'pixel' | 'round' | 'playfair';
-export type BodyFont = 'serif' | 'sans' | 'round' | 'montserrat';
+export type HeadingFont = 'script' | 'serif' | 'sans' | 'display' | 'cinzel' | 'pixel' | 'round' | 'playfair' | 'libre';
+export type BodyFont = 'serif' | 'sans' | 'round' | 'montserrat' | 'source';
 
 export interface Theme {
   preset: string;
@@ -58,7 +61,7 @@ export interface Palette {
   text: string;
 }
 
-export type ArtworkSlot = 'coverBackground' | 'coverForeground' | 'pageBackground' | 'sectionBackground' | 'topDecoration' | 'bottomDecoration' | 'cornerTopLeft' | 'cornerTopRight' | 'cornerBottomLeft' | 'cornerBottomRight' | 'divider' | 'photoFrame' | 'texture' | 'thumbnail' | 'gateBackground' | 'gateForeground' | 'gateTransition' | 'gateInteractive';
+export type ArtworkSlot = 'coverBackground' | 'coverForeground' | 'pageBackground' | 'sectionBackground' | 'topDecoration' | 'bottomDecoration' | 'cornerTopLeft' | 'cornerTopRight' | 'cornerBottomLeft' | 'cornerBottomRight' | 'divider' | 'photoFrame' | 'texture' | 'thumbnail' | 'gateBackground' | 'gateForeground' | 'gateTransition' | 'gateInteractive' | 'cardFrame';
 export interface ArtworkSource { url: string; storageKey?: string; contentType: 'image/webp' | 'image/png' | 'image/avif'; width: number; height: number; sizeBytes: number }
 export interface ArtworkLayer { default?: ArtworkSource; mobile?: ArtworkSource; desktop?: ArtworkSource }
 export interface ArtworkManifest {
@@ -111,7 +114,7 @@ export interface Layout {
   coverDefault?: string;
   artwork?: ArtworkManifest;
   // Foto contoh khusus template; slot kosong jatuh ke foto demo global.
-  samplePhotos?: { groom?: string; bride?: string };
+  samplePhotos?: TemplateSamplePhotos;
 }
 
 export type Tier = 'BASIC' | 'STANDARD' | 'PREMIUM';

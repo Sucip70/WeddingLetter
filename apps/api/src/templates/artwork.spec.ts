@@ -1,4 +1,4 @@
-import { artworkManifestSchema, seasonalArtworkFor } from './artwork.js';
+import { artworkManifestSchema, seasonalArtworkFor, sekarKeratonArtwork } from './artwork.js';
 import { normalizeLayout } from './layout.js';
 
 describe('template artwork schema', () => {
@@ -29,5 +29,14 @@ describe('template artwork schema', () => {
     const layout = normalizeLayout({ theme: { preset: 'semi' }, artwork }, 'musim');
     expect(layout.artwork).toEqual(artwork);
     expect(layout.artwork?.artworkVersion).toBe(1);
+  });
+
+  it('provides the complete app-owned Sekar Keraton raster manifest', () => {
+    const artwork = sekarKeratonArtwork();
+    expect(artwork.designId).toBe('jawa-sekar-keraton');
+    expect(artwork.assets.coverBackground?.default?.url).toBe('/themes/sekar-keraton/page-background.webp');
+    expect(artwork.assets.cardFrame?.default?.url).toBe('/themes/sekar-keraton/card-frame.webp');
+    expect(artwork.assets.gateInteractive?.default?.url).toBe('/themes/sekar-keraton/kayon-wayang.webp');
+    expect(artwork.assets.gateForeground).toBeUndefined();
   });
 });

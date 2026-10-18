@@ -9,6 +9,7 @@ import { defaultCoverLayout, isCoverKind, resolveCover } from '@/lib/cover-layou
 import type { DemoPhotos } from '@/lib/sample';
 import type { Theme } from '@/lib/types';
 import type { Layout } from '@/lib/types';
+import { resolveTemplateSamplePhotos } from '@/lib/template-sample-photos';
 import { PatternLayer } from './invitation/effects';
 import { HEADING, RADIUS, motifFor } from './invitation/motifs';
 import { FloralMonogram } from './invitation/bloom-parts';
@@ -35,6 +36,7 @@ export function TemplateThumb({
   coverDefault,
   photos,
   samplePhotos,
+  artwork,
   phone = false,
 }: {
   theme: Theme;
@@ -44,6 +46,7 @@ export function TemplateThumb({
   coverDefault?: string;
   photos?: DemoPhotos;
   samplePhotos?: Layout['samplePhotos'];
+  artwork?: Layout['artwork'];
   // true = ukuran sampul ponsel sungguhan (font, sudut, tombol sama dengan undangan; wadah harus ±390px lebar lalu diskalakan,
   // lihat katalog). false = miniatur sangat kecil (daftar admin, beranda) dengan ukuran dikecilkan.
   phone?: boolean;
@@ -56,7 +59,7 @@ export function TemplateThumb({
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={imageUrl} alt="" className={`h-full w-full ${imageFit} ${className}`} />;
   }
-  const effectivePhotos: DemoPhotos = { ...(photos ?? {}), ...samplePhotos };
+  const effectivePhotos = resolveTemplateSamplePhotos({ artwork, samplePhotos }, photos);
   const motif = motifFor(theme.motif ?? theme.preset);
   const orn = ORNAMENTS[motif.ornament];
   const hf = HEADING[theme.headingFont] ?? HEADING.serif;

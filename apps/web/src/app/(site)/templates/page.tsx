@@ -155,6 +155,7 @@ export default async function TemplatesPage({ searchParams }: PageProps<'/templa
                         coverDefault={t.layout.coverDefault}
                         photos={photos}
                         samplePhotos={t.layout.samplePhotos}
+                        artwork={t.layout.artwork}
                         seed={t.id}
                         phone={!row}
                         className="transition-transform duration-500 group-hover:scale-[1.03]"
