@@ -82,6 +82,8 @@ export const MOTIFS: Record<string, Motif> = {
   'pusako-minang': { ...m('keraton', 'none', 'kayon', 'raster', 'none', ['dust', 10, 'rise'], 'sharp', 'rise'), skin: 'raster', heading: 'playfair', names: 'playfair', body: 'source' },
   // Horas Nauli (Batak Toba): ulos Ragi Hotang merah-hitam, simpul tenun, gorga halus; sistem raster yang sama (raster-theme.ts).
   'horas-nauli': { ...m('keraton', 'none', 'kayon', 'raster', 'none', ['dust', 10, 'rise'], 'sharp', 'rise'), skin: 'raster', heading: 'libre', names: 'libre', body: 'source' },
+  // Pawiwahan Agung (Bali): candi bentar batu paras, prada tua, merah bata; sistem raster yang sama (raster-theme.ts).
+  'pawiwahan-agung': { ...m('keraton', 'none', 'kayon', 'raster', 'none', ['dust', 10, 'rise'], 'sharp', 'rise'), skin: 'raster', heading: 'serif', names: 'serif', body: 'source' },
   salju: { ...m('winter', 'none', 'winter', 'outline', 'aurora', ['snow', 28, 'fall'], 'mid', 'blur'), pageFrame: 'winter', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
 };
 

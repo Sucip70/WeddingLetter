@@ -272,9 +272,59 @@ export function horasNauliArtwork(): ArtworkManifest {
   });
 }
 
+// Pawiwahan Agung (Bali): aset raster dari artwork-handoff/bali/pawiwahan-agung (candi bentar batu paras, prada tua, merah bata; tanpa
+// figur pengantin/objek sakral), dipangkas ke bounding box-nya dan dipasang di apps/web/public/themes/pawiwahan-agung/.
+//   coverBackground/pageBackground = page-tile (ubin cermin mulus)   divider & bottomDecoration = prada   topDecoration = aksen section kecil
+//   cardFrame = info-card (bingkai penuh, diiris 9)   photoFrame = bingkai potret   cornerTopLeft/BottomRight = sudut batu paras
+//   gateBackground = candi bentar (tab bawaan sudah dihapus dari gambar)   gateTransition/gateForeground = panel prada kiri/kanan   gateInteractive = tab prada
+export function pawiwahanAgungArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/pawiwahan-agung/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'pawiwahan-agung',
+    artworkVersion: 1,
+    assets: {
+      coverBackground: { default: source('page-tile', 1024, 3072, 286_000) },
+      pageBackground: { default: source('page-tile', 1024, 3072, 286_000) },
+      cornerTopLeft: { default: source('corner-top-left', 947, 942, 122_000) },
+      cornerBottomRight: { default: source('corner-bottom-right', 978, 931, 124_000) },
+      divider: { default: source('divider', 1973, 137, 47_000) },
+      topDecoration: { default: source('accent', 531, 531, 71_000) },
+      bottomDecoration: { default: source('divider', 1973, 137, 47_000) },
+      cardFrame: { default: source('info-card', 858, 1229, 156_000) },
+      photoFrame: { default: source('photo-frame', 872, 1263, 132_000) },
+      gateBackground: { default: source('gate-bg', 1024, 1536, 391_000) },
+      gateTransition: { default: source('gate-panel-left', 315, 1536, 112_000) },
+      gateForeground: { default: source('gate-panel-right', 329, 1536, 114_000) },
+      gateInteractive: { default: source('gate-tab', 727, 970, 416_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+  });
+}
+
 /** Desain beraset raster: id desain -> pembuat manifest (dipakai seed dan skrip sinkronisasi). */
 export const RASTER_ARTWORK: Record<string, () => ArtworkManifest> = {
   'jawa-sekar-keraton': sekarKeratonArtwork,
   'pusako-minang': pusakoMinangArtwork,
   'horas-nauli': horasNauliArtwork,
+  'pawiwahan-agung': pawiwahanAgungArtwork,
 };

@@ -13,6 +13,7 @@ import type { SeasonalGateDesign } from './seasonal-gate';
 import { hasSekarKeratonGate, SekarKeratonGate } from './sekar-keraton-gate';
 import { hasPusakoGate, PusakoGate } from './pusako-gate';
 import { hasUlosGate, UlosGate } from './ulos-gate';
+import { CandiGate, hasCandiGate } from './candi-gate';
 
 // Gerbang berat (Motion / CSS 3D / seni SVG) dimuat per jenis: undangan hanya mengunduh kode gerbangnya sendiri,
 // bukan keenam-enamnya. Tetap di-render di server (ssr bawaan), jadi tidak ada kedipan saat halaman dibuka.
@@ -33,11 +34,12 @@ export const GATE_MS: Record<GateKind, number> = {
   kayon: 1850,
   gonjong: 1650,
   ulos: 1700,
+  paras: 1650,
 };
 
 // Gerbang yang menyingkap sampul sedikit demi sedikit selama fase 'opening' (latarnya menghilang di bawah
 // animasi, bukan sekaligus di akhir). InvitationView memutar animasi masuk sampul saat gerbang diketuk.
-export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, taman: true, portal: true, twine: true, ring: true, bouquet: true, kayon: true, gonjong: true, ulos: true };
+export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, taman: true, portal: true, twine: true, ring: true, bouquet: true, kayon: true, gonjong: true, ulos: true, paras: true };
 
 // Gerbang yang baru menyingkap sampul setelah jeda (ms sejak ketukan): animasi masuk sampul ditunda sebesar itu.
 export const REVEAL_DELAY_MS: Partial<Record<GateKind, number>> = { ring: 1750, bouquet: 1200 };
@@ -49,12 +51,13 @@ const CTA: Record<GateKind, string> = {
   kayon: 'Ketuk kayon untuk membuka',
   gonjong: 'Ketuk gonjong untuk membuka',
   ulos: 'Ketuk simpul untuk membuka',
+  paras: 'Ketuk prada untuk membuka',
 };
 
 // Adegan gelap memakai teks putih; adegan terang memakai warna teks tema.
-const DARK: Partial<Record<GateKind, true>> = { portal: true, ring: true, kayon: true, gonjong: true, ulos: true };
+const DARK: Partial<Record<GateKind, true>> = { portal: true, ring: true, kayon: true, gonjong: true, ulos: true, paras: true };
 // Adegan yang punya teks sendiri (tanpa judul umum di atas).
-const OWN_TITLE: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, taman: true, portal: true, twine: true, ring: true, bouquet: true, kayon: true, gonjong: true, ulos: true };
+const OWN_TITLE: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, taman: true, portal: true, twine: true, ring: true, bouquet: true, kayon: true, gonjong: true, ulos: true, paras: true };
 
 interface SceneProps {
   names: string;
@@ -101,6 +104,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
   const sekarKeraton = hasSekarKeratonGate(artwork, motif);
   const pusako = hasPusakoGate(artwork, motif);
   const ulos = hasUlosGate(artwork, motif);
+  const candi = hasCandiGate(artwork, motif);
   const onKey = (e: KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -120,6 +124,8 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
       >
         {seasonal ? (
           <SeasonalGate designId={artwork.designId as SeasonalGateDesign} phase={phase} artwork={artwork} names={names} kicker={kicker} guest={guest} headingFamily={headingFamily} onOpen={onOpen} />
+        ) : candi && artwork ? (
+          <CandiGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
         ) : ulos && artwork ? (
           <UlosGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
         ) : pusako && artwork ? (

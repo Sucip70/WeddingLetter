@@ -33,6 +33,7 @@ export const GATE_LABEL = {
   kayon: 'Kayon Sekar Keraton',
   gonjong: 'Gonjong Pusako Minang',
   ulos: 'Simpul ulos Horas Nauli',
+  paras: 'Kembar Bentar Pawiwahan Agung',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export type GateSetting = GateKind | 'none';

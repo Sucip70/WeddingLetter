@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { RasterCover } from '@/components/invitation/raster-cover';
 import { PusakoGate } from '@/components/invitation/pusako-gate';
 import { UlosGate } from '@/components/invitation/ulos-gate';
+import { CandiGate } from '@/components/invitation/candi-gate';
 import { SekarKeratonGate } from '@/components/invitation/sekar-keraton-gate';
 import { RasterCoupleSection } from '@/components/invitation/raster-sections';
 import type { ArtworkManifest, ArtworkSource } from '@/lib/types';
@@ -33,6 +34,12 @@ const ARTWORKS: Record<string, ArtworkManifest> = {
     coverBackground: ['page-tile', 1024, 3072], pageBackground: ['page-tile', 1024, 3072], divider: ['divider', 1934, 106], topDecoration: ['mini-knot', 795, 795],
     bottomDecoration: ['ribbon', 1981, 314], cardFrame: ['info-card', 917, 1393], photoFrame: ['photo-frame', 901, 1372],
     gateBackground: ['gate-tile', 1024, 3010], gateTransition: ['gate-panel-left', 675, 1512], gateForeground: ['gate-panel-right', 675, 1512], gateInteractive: ['gate-knot', 1123, 1121],
+  }),
+  'pawiwahan-agung': mk('pawiwahan-agung', 'pawiwahan-agung', {
+    coverBackground: ['page-tile', 1024, 3072], pageBackground: ['page-tile', 1024, 3072], cornerTopLeft: ['corner-top-left', 947, 942],
+    cornerBottomRight: ['corner-bottom-right', 978, 931], divider: ['divider', 1973, 137], topDecoration: ['accent', 531, 531], bottomDecoration: ['divider', 1973, 137],
+    cardFrame: ['info-card', 858, 1229], photoFrame: ['photo-frame', 872, 1263],
+    gateBackground: ['gate-bg', 1024, 1536], gateTransition: ['gate-panel-left', 315, 1536], gateForeground: ['gate-panel-right', 329, 1536], gateInteractive: ['gate-tab', 727, 970],
   }),
   'pusako-minang': mk('pusako-minang', 'pusako-minang', {
     coverBackground: ['page-background', 1024, 1536], pageBackground: ['page-tile', 1024, 3072], cornerTopLeft: ['corner-top-left', 1100, 1105],
@@ -70,6 +77,7 @@ export default async function SekarKeratonReview({ searchParams }: {
   const artwork = ARTWORKS[designId]!;
   const pusako = designId === 'pusako-minang';
   const horas = designId === 'horas-nauli';
+  const bali = designId === 'pawiwahan-agung';
   const kind: ReviewKind = reviewKinds.includes(query.layout as ReviewKind) ? query.layout as ReviewKind : 'ornamen';
   const variables = {
     '--p': '#74401f', '--s': '#aa7d38', '--bg': '#ead6ad', '--tx': '#3a291e',
@@ -79,8 +87,8 @@ export default async function SekarKeratonReview({ searchParams }: {
     photo: '/samples/sekar-keraton/cover.webp',
     groom: '/samples/sekar-keraton/groom-v2.webp',
     bride: '/samples/sekar-keraton/bride-v2.webp',
-    kicker: horas ? 'Pemberkatan & Adat' : pusako ? 'Undangan Pernikahan' : 'Pawiwahan Putra-Putri Kami',
-    names: horas ? 'Marolop Simatupang & Sari Sitorus' : pusako ? 'Rizky Pratama & Aisyah Putri' : 'Raden Andi & Raden Ayu Sinta',
+    kicker: bali ? 'Pawiwahan' : horas ? 'Pemberkatan & Adat' : pusako ? 'Undangan Pernikahan' : 'Pawiwahan Putra-Putri Kami',
+    names: bali ? 'Wayan Putra & Ayu Sari' : horas ? 'Marolop Simatupang & Sari Sitorus' : pusako ? 'Rizky Pratama & Aisyah Putri' : 'Raden Andi & Raden Ayu Sinta',
     dateText: '17 . 08 . 2027',
     guest: { dear: 'Kepada Yth.', name: 'Bapak/Ibu/Saudara/i' },
     openLabel: 'Buka Undangan',
@@ -94,7 +102,9 @@ export default async function SekarKeratonReview({ searchParams }: {
         <div className="relative mx-auto h-[100svh] w-full max-w-[480px] overflow-hidden bg-[#ead6ad]">
           <RasterCover {...props} kind="ornamen" />
           <div className="absolute inset-0 z-10">
-            {horas ? (
+            {bali ? (
+              <CandiGate artwork={artwork} phase="closed" names={props.names} kicker={props.kicker} guest={props.guest.name} cta="Ketuk prada untuk membuka" previewState={query.state === 'open' ? 'open' : 'closed'} />
+            ) : horas ? (
               <UlosGate artwork={artwork} phase="closed" names={props.names} kicker={props.kicker} guest={props.guest.name} cta="Ketuk simpul untuk membuka" previewState={query.state === 'open' ? 'open' : 'closed'} />
             ) : pusako ? (
               <PusakoGate artwork={artwork} phase="closed" names={props.names} kicker={props.kicker} guest={props.guest.name} cta="Ketuk gonjong untuk membuka" previewState={query.state === 'open' ? 'open' : 'closed'} />

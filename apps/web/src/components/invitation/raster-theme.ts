@@ -72,6 +72,16 @@ export const RASTER_THEMES: Record<string, RasterTheme> = {
     card: { kind: 'sliced', imgW: 896, slice: [135, 135, 135, 135], crown: { w: 0.4, top: -0.105, y: '-50%' }, pad: { t: 0.025, x: 0, b: 0.02 }, w: 92 },
     edgeRgb: '170, 125, 56',
   },
+  'pawiwahan-agung': {
+    id: 'pawiwahan-agung',
+    maroon: '#873e32', gold: '#8a6326', ink: '#332923', sogan: '#5a3a2b', cardBg: '#f2e7d0',
+    display: 'var(--font-cormorant), Georgia, serif',
+    hole: { l: 6.9, t: 4.2, w: 86.1, h: 91.5 },
+    mountAspect: '872 / 1263',
+    markerCover: '12cqw', markerQuote: { w: '30px', h: '30px' }, markerFoot: '2.6rem',
+    card: { kind: 'sliced', imgW: 858, slice: [120, 120, 120, 120], crown: { w: 0.1, top: 0.085, y: '-50%' }, pad: { t: 0.17, x: 0.03, b: 0.06 }, w: 90 },
+    edgeRgb: '167, 122, 56',
+  },
   'horas-nauli': {
     id: 'horas-nauli',
     maroon: '#8b211c', gold: '#8c5a3d', ink: '#151313', sogan: '#3a2a22', cardBg: '#efe6d2',
