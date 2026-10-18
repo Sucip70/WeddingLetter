@@ -14,3 +14,16 @@ generated/
 deploy/**/api.env
 deploy/**/certs/
 deploy/**/htpasswd
+
+# Keluaran review & file kerja sementara
+artifacts/
+tmp/
+output/
+
+# Aset mentah The Artist (besar; simpan di storage terpisah). Dokumen aturan (*.md) tetap dilacak.
+artwork-handoff/**/*.png
+artwork-handoff/**/*.webp
+artwork-handoff/**/*.jpg
+artwork-handoff/**/*.zip
+artwork-handoff/**/*.psd
+artwork-handoff/**/*.kra
