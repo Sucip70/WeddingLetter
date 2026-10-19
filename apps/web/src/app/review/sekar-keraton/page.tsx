@@ -6,6 +6,7 @@ import { UlosGate } from '@/components/invitation/ulos-gate';
 import { CandiGate } from '@/components/invitation/candi-gate';
 import { LenteraGate } from '@/components/invitation/lentera-gate';
 import { JaliGate } from '@/components/invitation/jali-gate';
+import { ToranGate } from '@/components/invitation/toran-gate';
 import { SekarKeratonGate } from '@/components/invitation/sekar-keraton-gate';
 import { RasterCoupleSection } from '@/components/invitation/raster-sections';
 import type { ArtworkManifest, ArtworkSource } from '@/lib/types';
@@ -47,6 +48,11 @@ const ARTWORKS: Record<string, ArtworkManifest> = {
     coverBackground: ['page-bg', 1024, 1536], pageBackground: ['page-tile', 1024, 1400], gateBackground: ['page-bg', 1024, 1536],
     cornerTopLeft: ['lanterns', 1024, 816], cornerBottomRight: ['koi', 1024, 536], topDecoration: ['xi', 1094, 1049], divider: ['divider', 2010, 372],
     bottomDecoration: ['koi', 1024, 536], cardFrame: ['info-card', 897, 1264], photoFrame: ['photo-frame', 926, 1243], gateInteractive: ['xi', 1094, 1049],
+  }),
+  'vivaha-rani': mk('vivaha-rani', 'vivaha-rani', {
+    coverBackground: ['page-bg', 1024, 1536], pageBackground: ['page-tile', 1024, 780], gateBackground: ['gate-bg', 1024, 1536], cornerBottomRight: ['zardozi', 1400, 239],
+    bottomDecoration: ['zardozi', 1400, 239], topDecoration: ['marker', 360, 343], divider: ['divider', 2106, 352], cardFrame: ['info-card', 860, 1208], photoFrame: ['photo-frame', 760, 985],
+    gateTransition: ['gate-panel-left', 516, 1536], gateForeground: ['gate-panel-right', 516, 1536], gateInteractive: ['gate-rosette', 640, 607],
   }),
   'noor-e-nikah': mk('noor-e-nikah', 'noor-e-nikah', {
     coverBackground: ['page-bg', 1024, 1536], pageBackground: ['page-tile', 1024, 1400], cornerBottomRight: ['inlay', 2123, 462], topDecoration: ['marker', 373, 367],
@@ -92,6 +98,7 @@ export default async function SekarKeratonReview({ searchParams }: {
   const bali = designId === 'pawiwahan-agung';
   const hongxi = designId === 'hong-xi';
   const noor = designId === 'noor-e-nikah';
+  const vivaha = designId === 'vivaha-rani';
   const kind: ReviewKind = reviewKinds.includes(query.layout as ReviewKind) ? query.layout as ReviewKind : 'ornamen';
   const variables = {
     '--p': '#74401f', '--s': '#aa7d38', '--bg': '#ead6ad', '--tx': '#3a291e',
@@ -101,8 +108,8 @@ export default async function SekarKeratonReview({ searchParams }: {
     photo: '/samples/sekar-keraton/cover.webp',
     groom: '/samples/sekar-keraton/groom-v2.webp',
     bride: '/samples/sekar-keraton/bride-v2.webp',
-    kicker: noor ? 'Undangan Nikah' : hongxi ? 'The Wedding of' : bali ? 'Pawiwahan' : horas ? 'Pemberkatan & Adat' : pusako ? 'Undangan Pernikahan' : 'Pawiwahan Putra-Putri Kami',
-    names: noor ? 'Ayesha & Hamza' : hongxi ? 'Andi & Sinta' : bali ? 'Wayan Putra & Ayu Sari' : horas ? 'Marolop Simatupang & Sari Sitorus' : pusako ? 'Rizky Pratama & Aisyah Putri' : 'Raden Andi & Raden Ayu Sinta',
+    kicker: vivaha ? 'Undangan Vivaha' : noor ? 'Undangan Nikah' : hongxi ? 'The Wedding of' : bali ? 'Pawiwahan' : horas ? 'Pemberkatan & Adat' : pusako ? 'Undangan Pernikahan' : 'Pawiwahan Putra-Putri Kami',
+    names: vivaha ? 'Aarav & Meera' : noor ? 'Ayesha & Hamza' : hongxi ? 'Andi & Sinta' : bali ? 'Wayan Putra & Ayu Sari' : horas ? 'Marolop Simatupang & Sari Sitorus' : pusako ? 'Rizky Pratama & Aisyah Putri' : 'Raden Andi & Raden Ayu Sinta',
     dateText: '17 . 08 . 2027',
     guest: { dear: 'Kepada Yth.', name: 'Bapak/Ibu/Saudara/i' },
     openLabel: 'Buka Undangan',
@@ -116,7 +123,9 @@ export default async function SekarKeratonReview({ searchParams }: {
         <div className="relative mx-auto h-[100svh] w-full max-w-[480px] overflow-hidden bg-[#ead6ad]">
           <RasterCover {...props} kind="ornamen" />
           <div className="absolute inset-0 z-10">
-            {noor ? (
+            {vivaha ? (
+              <ToranGate artwork={artwork} phase="closed" names={props.names} kicker={props.kicker} guest={props.guest.name} cta="Buka Undangan" previewState={query.state === 'open' ? 'open' : 'closed'} />
+            ) : noor ? (
               <JaliGate artwork={artwork} phase="closed" names={props.names} kicker={props.kicker} guest={props.guest.name} cta="Buka Undangan" previewState={query.state === 'open' ? 'open' : 'closed'} />
             ) : hongxi ? (
               <LenteraGate artwork={artwork} phase="closed" names={props.names} kicker={props.kicker} guest={props.guest.name} cta="Ketuk medali untuk membuka" previewState={query.state === 'open' ? 'open' : 'closed'} />

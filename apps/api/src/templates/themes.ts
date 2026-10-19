@@ -31,6 +31,7 @@ export const GATE_LABEL = {
   paras: 'Kembar Bentar Pawiwahan Agung',
   lentera: 'Lentera Hong Xi',
   jali: 'Jali Noor-e-Nikah',
+  toran: 'Toran Vivaha Rani',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export const GATE_KINDS = Object.keys(GATE_LABEL) as GateKind[];
@@ -88,6 +89,7 @@ const BASE_DESIGNS: Omit<Design, 'gate'>[] = [
   d('pawiwahan-agung', 'Pawiwahan Agung', 'suku', 'Candi bentar batu paras, prada tua, dan merah bata dalam upacara yang khidmat.', ['#873e32', '#a77a38', '#eee0c7', '#332923'], ['serif', 'source'], true),
   d('hong-xi', 'Hong Xi', 'suku', 'Merah dan emas yang meriah namun modern: lentera, awan emas, koi, dan medali kebahagiaan ganda.', ['#a3151f', '#d9a94c', '#9d1420', '#f7ebd0'], ['serif', 'source'], true),
   d('noor-e-nikah', 'Noor-e-Nikah', 'suku', 'Marmer gading, zamrud, dan jali emas dengan inlay bunga ala Lahore.', ['#063f32', '#b98a38', '#f4e7cb', '#28231f'], ['serif', 'source'], true),
+  d('vivaha-rani', 'Vivaha Rani', 'suku', 'Sutra rani dan sindoor bersulam zardozi, toran marigold, dan kertas chikan gading.', ['#c2185b', '#b58a36', '#f5e9d5', '#332722'], ['serif', 'source'], true),
   d('galaksi', 'Galaksi Cinta', 'film', 'Opera luar angkasa: bintang, nebula, dan cincin orbit.', ['#7c5cff', '#39c5ff', '#0a0e27', '#e6ecff'], ['cinzel', 'sans'], true),
   d('sihir', 'Akademi Sihir', 'film', 'Perkamen, lilin melayang, dan bintang keajaiban.', ['#d4a84b', '#9b5de5', '#2a1f3d', '#f0e6c8'], ['cinzel', 'serif'], true),
   d('semi', 'Musim Semi', 'musim', 'Sakura mekar dan kelopak yang berguguran lembut.', ['#e88fb0', '#9bc48f', '#fff8fa', '#4a3040'], ['script', 'sans']),
@@ -101,7 +103,7 @@ const DESIGN_GATES: Record<string, GateKind> = {
   rustic: 'twine', floral: 'sakura', elegant: 'ring',
   buket: 'bouquet', garden: 'taman', lavender: 'sakura', hortensia: 'sakura', marigold: 'leaves', wisteria: 'sakura',
   galaksi: 'portal', sihir: 'portal', semi: 'sakura', panas: 'sakura', gugur: 'leaves', salju: 'frost',
-  'jawa-sekar-keraton': 'kayon', 'pusako-minang': 'gonjong', 'horas-nauli': 'ulos', 'pawiwahan-agung': 'paras', 'hong-xi': 'lentera', 'noor-e-nikah': 'jali',
+  'jawa-sekar-keraton': 'kayon', 'pusako-minang': 'gonjong', 'horas-nauli': 'ulos', 'pawiwahan-agung': 'paras', 'hong-xi': 'lentera', 'noor-e-nikah': 'jali', 'vivaha-rani': 'toran',
 };
 
 export const DESIGNS: Design[] = BASE_DESIGNS.map((x) => ({ ...x, gate: DESIGN_GATES[x.id]! }));

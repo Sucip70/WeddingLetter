@@ -415,6 +415,54 @@ export function noorENikahArtwork(): ArtworkManifest {
   });
 }
 
+// Vivaha Rani (India Utara, pernikahan Hindu kontemporer): aset raster dari artwork-handoff/india/vivaha-rani (sutra rani/sindoor bersulam zardozi, paisley,
+// marigold, kertas chikan; tanpa dewa/mantra/simbol sakral), dipangkas dan dipasang di apps/web/public/themes/vivaha-rani/.
+//   coverBackground = page-bg   pageBackground = page-tile (pita tengah, cermin)   gateBackground = kertas toran   cornerBottomRight/bottomDecoration = border zardozi
+//   topDecoration = penanda genda   divider = pemisah paisley   cardFrame = kartu gading (diiris 9)   photoFrame = bingkai paisley-zardozi
+//   gateTransition/gateForeground = panel sutra kiri/kanan (jendela lengkung transparan)   gateInteractive = genda
+export function vivahaRaniArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/vivaha-rani/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'vivaha-rani',
+    artworkVersion: 1,
+    assets: {
+      coverBackground: { default: source('page-bg', 1024, 1536, 150_000) },
+      pageBackground: { default: source('page-tile', 1024, 780, 35_000) },
+      gateBackground: { default: source('gate-bg', 1024, 1536, 150_000) },
+      cornerBottomRight: { default: source('zardozi', 1400, 239, 316_000) },
+      bottomDecoration: { default: source('zardozi', 1400, 239, 316_000) },
+      topDecoration: { default: source('marker', 360, 343, 90_000) },
+      divider: { default: source('divider', 2106, 352, 146_000) },
+      cardFrame: { default: source('info-card', 860, 1208, 92_000) },
+      photoFrame: { default: source('photo-frame', 760, 985, 236_000) },
+      gateTransition: { default: source('gate-panel-left', 516, 1536, 289_000) },
+      gateForeground: { default: source('gate-panel-right', 516, 1536, 287_000) },
+      gateInteractive: { default: source('gate-rosette', 640, 607, 260_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+  });
+}
+
 /** Desain beraset raster: id desain -> pembuat manifest (dipakai seed dan skrip sinkronisasi). */
 export const RASTER_ARTWORK: Record<string, () => ArtworkManifest> = {
   'jawa-sekar-keraton': sekarKeratonArtwork,
@@ -423,4 +471,5 @@ export const RASTER_ARTWORK: Record<string, () => ArtworkManifest> = {
   'pawiwahan-agung': pawiwahanAgungArtwork,
   'hong-xi': hongXiArtwork,
   'noor-e-nikah': noorENikahArtwork,
+  'vivaha-rani': vivahaRaniArtwork,
 };

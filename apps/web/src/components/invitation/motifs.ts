@@ -88,6 +88,8 @@ export const MOTIFS: Record<string, Motif> = {
   'hong-xi': { ...m('keraton', 'none', 'kayon', 'raster', 'none', ['dust', 10, 'rise'], 'sharp', 'rise'), skin: 'raster', heading: 'playfair', names: 'playfair', body: 'source' },
   // Noor-e-Nikah (Pakistan): marmer gading, zamrud, jali, inlay bunga; sistem raster yang sama (raster-theme.ts).
   'noor-e-nikah': { ...m('keraton', 'none', 'kayon', 'raster', 'none', ['dust', 10, 'rise'], 'sharp', 'rise'), skin: 'raster', heading: 'serif', names: 'serif', body: 'source' },
+  // Vivaha Rani (India Utara): sutra rani/sindoor, zardozi, marigold, chikan; sistem raster yang sama (raster-theme.ts).
+  'vivaha-rani': { ...m('keraton', 'none', 'kayon', 'raster', 'none', ['dust', 10, 'rise'], 'sharp', 'rise'), skin: 'raster', heading: 'serif', names: 'serif', body: 'source' },
   salju: { ...m('winter', 'none', 'winter', 'outline', 'aurora', ['snow', 28, 'fall'], 'mid', 'blur'), pageFrame: 'winter', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
 };
 

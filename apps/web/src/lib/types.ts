@@ -36,6 +36,7 @@ export const GATE_LABEL = {
   paras: 'Kembar Bentar Pawiwahan Agung',
   lentera: 'Lentera Hong Xi',
   jali: 'Jali Noor-e-Nikah',
+  toran: 'Toran Vivaha Rani',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export type GateSetting = GateKind | 'none';
