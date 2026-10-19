@@ -34,6 +34,7 @@ export const GATE_LABEL = {
   gonjong: 'Gonjong Pusako Minang',
   ulos: 'Simpul ulos Horas Nauli',
   paras: 'Kembar Bentar Pawiwahan Agung',
+  lentera: 'Lentera Hong Xi',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export type GateSetting = GateKind | 'none';

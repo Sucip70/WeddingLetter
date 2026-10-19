@@ -1050,7 +1050,7 @@ const COUNTDOWN_LOOK: Record<CountdownKind, { section: CSSProperties; cell: CSSP
     num: { fontWeight: 500, backgroundImage: 'var(--foil-lit)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', WebkitTextFillColor: 'transparent' },
   },
   raster: {
-    section: { background: 'var(--sk-gate) center / cover no-repeat, #5c1c21', paddingInline: '15%', borderTop: '1px solid var(--s)', borderBottom: '1px solid var(--s)' },
+    section: { background: 'var(--sk-gate) center / cover no-repeat, var(--sk-countdown-bg, #5c1c21)', paddingInline: '15%', borderTop: '1px solid var(--s)', borderBottom: '1px solid var(--s)' },
     cell: {
       border: '1px solid color-mix(in srgb, var(--s) 75%, transparent)',
       background: 'rgba(20,4,6,.34)',

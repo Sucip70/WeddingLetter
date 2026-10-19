@@ -120,7 +120,11 @@ async function installDemoPhotos() {
 const RENAMED_TEMPLATES: Record<string, string> = {
   "Standard Kristiani Lily": "Standard Sepasang Merpati",
   "Premium Kristiani Lily": "Premium Sepasang Merpati",
+  // Peranakan Seruni diganti total oleh Hong Xi (desain & aset baru): barisnya diganti nama lalu skemanya ditimpa (lihat RESET_AFTER_RENAME).
+  "Standard Peranakan Seruni": "Standard Hong Xi",
+  "Premium Peranakan Seruni": "Premium Hong Xi",
 };
+const RESET_AFTER_RENAME = new Set(["Standard Hong Xi", "Premium Hong Xi"]);
 
 async function main() {
   for (const [from, to] of Object.entries(RENAMED_TEMPLATES)) {
@@ -128,12 +132,12 @@ async function main() {
     await prisma.template.updateMany({ where: { name: from }, data: { name: to } });
   }
   for (const t of templates) {
-    const existing = await prisma.template.findFirst({ where: { name: t.name }, select: { id: true } });
+    const existing = await prisma.template.findFirst({ where: { name: t.name }, select: { id: true, layoutSchema: true } });
     if (existing) {
       // Template yang sudah ada TIDAK ditimpa (perubahan admin di builder: tema, palet, gerbang, bagian, harga, status tetap
       // aman). Untuk sengaja memutakhirkan skema dari seed, jalankan dengan SEED_OVERWRITE_TEMPLATES=1.
       const overwriteSekarKeraton = process.env.SEED_OVERWRITE_SEKAR_KERATON === "1" && t.name.endsWith(" Sekar Keraton");
-      if (process.env.SEED_OVERWRITE_TEMPLATES === "1" || overwriteSekarKeraton) {
+      if (process.env.SEED_OVERWRITE_TEMPLATES === "1" || overwriteSekarKeraton || (RESET_AFTER_RENAME.has(t.name) && JSON.stringify(existing.layoutSchema ?? "").includes("peranakan-seruni"))) {
         await prisma.template.update({ where: { id: existing.id }, data: { layoutSchema: t.layoutSchema, includedWeeks: t.includedWeeks, category: t.category } });
         console.log(`Skema dimutakhirkan: ${t.name}`);
       }

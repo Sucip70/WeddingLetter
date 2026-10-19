@@ -43,7 +43,8 @@ export function RasterDivider({ artwork, className = '' }: { artwork?: ArtworkMa
 /** Kartu informasi: panel kertas + bingkai kayu sogan & emas. Tinggi mengikuti isi (rasio aset adalah tinggi minimum). */
 export function RasterCard({ artwork, children, className = '' }: { artwork?: ArtworkManifest; children: ReactNode; className?: string }) {
   if (rasterTheme(artwork?.designId)?.card.kind === 'sliced' && artwork) {
-    const crown = rasterAsset(artwork, 'topDecoration');
+    const cardCfg = rasterTheme(artwork.designId)?.card;
+    const crown = cardCfg?.kind === 'sliced' && cardCfg.crown ? rasterAsset(artwork, 'topDecoration') : undefined;
     const card = rasterAsset(artwork, 'cardFrame');
     return (
       <div className={`sk-card sk-card-sliced ${className}`} style={card ? ({ '--sk-card': `url(${card})` } as CSSProperties) : undefined}>

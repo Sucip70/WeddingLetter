@@ -7,7 +7,7 @@ const HEX = /^#[0-9a-f]{6}$/i;
 describe('registry desain', () => {
   it('hanya memuat desain yang masih memiliki template published', () => {
     expect(DESIGNS.map((x) => x.id)).toEqual([
-      'rustic', 'floral', 'buket', 'garden', 'lavender', 'hortensia', 'marigold', 'elegant', 'wisteria', 'jawa-sekar-keraton', 'pusako-minang', 'horas-nauli', 'pawiwahan-agung',
+      'rustic', 'floral', 'buket', 'garden', 'lavender', 'hortensia', 'marigold', 'elegant', 'wisteria', 'jawa-sekar-keraton', 'pusako-minang', 'horas-nauli', 'pawiwahan-agung', 'hong-xi',
       'galaksi', 'sihir', 'semi', 'panas', 'gugur', 'salju',
     ]);
   });

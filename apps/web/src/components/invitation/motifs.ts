@@ -84,6 +84,8 @@ export const MOTIFS: Record<string, Motif> = {
   'horas-nauli': { ...m('keraton', 'none', 'kayon', 'raster', 'none', ['dust', 10, 'rise'], 'sharp', 'rise'), skin: 'raster', heading: 'libre', names: 'libre', body: 'source' },
   // Pawiwahan Agung (Bali): candi bentar batu paras, prada tua, merah bata; sistem raster yang sama (raster-theme.ts).
   'pawiwahan-agung': { ...m('keraton', 'none', 'kayon', 'raster', 'none', ['dust', 10, 'rise'], 'sharp', 'rise'), skin: 'raster', heading: 'serif', names: 'serif', body: 'source' },
+  // Hong Xi (Tionghoa Indonesia, modern): kertas merah berawan emas, lentera, koi, 囍; sistem raster yang sama (raster-theme.ts), halaman gelap.
+  'hong-xi': { ...m('keraton', 'none', 'kayon', 'raster', 'none', ['dust', 10, 'rise'], 'sharp', 'rise'), skin: 'raster', heading: 'playfair', names: 'playfair', body: 'source' },
   salju: { ...m('winter', 'none', 'winter', 'outline', 'aurora', ['snow', 28, 'fall'], 'mid', 'blur'), pageFrame: 'winter', cornerSize: { top: 'w-40 [@media(max-height:700px)]:w-28', bottom: 'w-36 [@media(max-height:700px)]:w-24' } },
 };
 

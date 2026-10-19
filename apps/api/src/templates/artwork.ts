@@ -321,10 +321,58 @@ export function pawiwahanAgungArtwork(): ArtworkManifest {
   });
 }
 
+// Hong Xi (Tionghoa Indonesia, tampilan modern): aset raster dari artwork-handoff/chinese-indonesian/.../source-renders-v2
+// (kertas merah berawan emas, lentera, koi, 囍, kipas), dipangkas dan dipasang di apps/web/public/themes/hong-xi/. Peta slot:
+//   coverBackground/gateBackground = page-bg (kertas merah berbingkai emas, ukuran cover)   pageBackground = page-tile (pita tengah, ubin cermin)   cornerTopLeft = sepasang lentera (selebar layar)
+//   cornerBottomRight = koi (selebar layar)   topDecoration = 囍 (medali)   divider = kipas + garis emas   bottomDecoration = koi
+//   cardFrame = kartu gading berbingkai emas (diiris 9)   photoFrame = bingkai emas   gateInteractive = 囍 (medali ketuk)
+export function hongXiArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/hong-xi/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'hong-xi',
+    artworkVersion: 1,
+    assets: {
+      coverBackground: { default: source('page-bg', 1024, 1536, 218_000) },
+      pageBackground: { default: source('page-tile', 1024, 1400, 130_000) },
+      gateBackground: { default: source('page-bg', 1024, 1536, 218_000) },
+      cornerTopLeft: { default: source('lanterns', 1024, 816, 131_000) },
+      cornerBottomRight: { default: source('koi', 1024, 536, 198_000) },
+      topDecoration: { default: source('xi', 1094, 1049, 389_000) },
+      divider: { default: source('divider', 2010, 372, 91_000) },
+      bottomDecoration: { default: source('koi', 1024, 536, 198_000) },
+      cardFrame: { default: source('info-card', 897, 1264, 165_000) },
+      photoFrame: { default: source('photo-frame', 926, 1243, 93_000) },
+      gateInteractive: { default: source('xi', 1094, 1049, 389_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+  });
+}
+
 /** Desain beraset raster: id desain -> pembuat manifest (dipakai seed dan skrip sinkronisasi). */
 export const RASTER_ARTWORK: Record<string, () => ArtworkManifest> = {
   'jawa-sekar-keraton': sekarKeratonArtwork,
   'pusako-minang': pusakoMinangArtwork,
   'horas-nauli': horasNauliArtwork,
   'pawiwahan-agung': pawiwahanAgungArtwork,
+  'hong-xi': hongXiArtwork,
 };

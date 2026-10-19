@@ -23,7 +23,7 @@ export const STANDARD_THEME_COVERS: readonly string[] = ['emas', 'bunga'];
 // Desain beraset raster (Sekar Keraton, Pusako Minang) hanya menawarkan empat tata letak sampul rancangan sendiri;
 // tata letak generik lain tidak dipasang karena tidak selaras dengan aset hasil lukisan.
 export const RASTER_DESIGN_COVERS = ['ornamen', 'bingkai', 'berdua', 'terbagi'] as const;
-export const RASTER_DESIGN_IDS: readonly string[] = ['jawa-sekar-keraton', 'pusako-minang', 'horas-nauli', 'pawiwahan-agung'];
+export const RASTER_DESIGN_IDS: readonly string[] = ['jawa-sekar-keraton', 'pusako-minang', 'horas-nauli', 'pawiwahan-agung', 'hong-xi'];
 
 // Daftar layout yang boleh dipilih untuk paket dan tema ini (kosong = tanpa pilihan, khusus Basic).
 export function availableCoverLayouts(tier: TemplateTier, motif: string): string[] {

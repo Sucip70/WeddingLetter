@@ -1,4 +1,4 @@
-import { artworkManifestSchema, horasNauliArtwork, pawiwahanAgungArtwork, pusakoMinangArtwork, RASTER_ARTWORK, seasonalArtworkFor, sekarKeratonArtwork } from './artwork.js';
+import { artworkManifestSchema, horasNauliArtwork, pawiwahanAgungArtwork, hongXiArtwork, pusakoMinangArtwork, RASTER_ARTWORK, seasonalArtworkFor, sekarKeratonArtwork } from './artwork.js';
 import { normalizeLayout } from './layout.js';
 
 describe('template artwork schema', () => {
@@ -45,7 +45,8 @@ describe('template artwork schema', () => {
     expect(artwork.designId).toBe('pusako-minang');
     expect(artwork.assets.cardFrame?.default?.url).toBe('/themes/pusako-minang/info-card.webp');
     expect(artwork.assets.gateInteractive?.default?.url).toBe('/themes/pusako-minang/gate-gonjong.webp');
-    expect(Object.keys(RASTER_ARTWORK).sort()).toEqual(['horas-nauli', 'jawa-sekar-keraton', 'pawiwahan-agung', 'pusako-minang']);
+    expect(Object.keys(RASTER_ARTWORK).sort()).toEqual(['hong-xi', 'horas-nauli', 'jawa-sekar-keraton', 'pawiwahan-agung', 'pusako-minang']);
+    expect(hongXiArtwork().assets.gateInteractive?.default?.url).toBe('/themes/hong-xi/xi.webp');
     expect(pawiwahanAgungArtwork().assets.gateInteractive?.default?.url).toBe('/themes/pawiwahan-agung/gate-tab.webp');
     expect(horasNauliArtwork().assets.gateInteractive?.default?.url).toBe('/themes/horas-nauli/gate-knot.webp');
     for (const make of Object.values(RASTER_ARTWORK)) expect(make().designId).toBeTruthy();
