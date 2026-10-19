@@ -368,6 +368,53 @@ export function hongXiArtwork(): ArtworkManifest {
   });
 }
 
+// Noor-e-Nikah (Pakistan, pernikahan Muslim kontemporer berpengaruh Lahore): aset raster dari artwork-handoff/pakistan/noor-e-nikah (marmer gading,
+// zamrud, jali, inlay bunga; tanpa kaligrafi/bulan sabit), dipangkas dan dipasang di apps/web/public/themes/noor-e-nikah/.
+//   coverBackground/pageBackground = page-tile   cornerBottomRight = inlay bawah (selebar layar)   topDecoration = penanda jali   divider = pemisah jali
+//   cardFrame = kartu lengkung cusped (diiris 9; irisan atas memuat lengkung)   photoFrame = bingkai zamrud-emas   gateTransition/gateForeground = panel kiri/kanan
+//   gateInteractive = roset jali
+export function noorENikahArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/noor-e-nikah/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'noor-e-nikah',
+    artworkVersion: 1,
+    assets: {
+      coverBackground: { default: source('page-bg', 1024, 1536, 160_000) },
+      pageBackground: { default: source('page-tile', 1024, 1400, 60_000) },
+      cornerBottomRight: { default: source('inlay', 2123, 462, 614_000) },
+      topDecoration: { default: source('marker', 373, 367, 101_000) },
+      divider: { default: source('divider', 2089, 252, 82_000) },
+      bottomDecoration: { default: source('inlay', 2123, 462, 614_000) },
+      cardFrame: { default: source('info-card', 946, 1442, 106_000) },
+      photoFrame: { default: source('photo-frame', 1024, 1462, 294_000) },
+      gateTransition: { default: source('gate-panel-left', 529, 1536, 202_000) },
+      gateForeground: { default: source('gate-panel-right', 529, 1536, 200_000) },
+      gateInteractive: { default: source('gate-rosette', 912, 897, 475_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+  });
+}
+
 /** Desain beraset raster: id desain -> pembuat manifest (dipakai seed dan skrip sinkronisasi). */
 export const RASTER_ARTWORK: Record<string, () => ArtworkManifest> = {
   'jawa-sekar-keraton': sekarKeratonArtwork,
@@ -375,4 +422,5 @@ export const RASTER_ARTWORK: Record<string, () => ArtworkManifest> = {
   'horas-nauli': horasNauliArtwork,
   'pawiwahan-agung': pawiwahanAgungArtwork,
   'hong-xi': hongXiArtwork,
+  'noor-e-nikah': noorENikahArtwork,
 };
