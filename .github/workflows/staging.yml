@@ -115,6 +115,7 @@ jobs:
             && docker compose pull api web \
             && docker compose run --rm --no-deps nginx nginx -t \
             && docker compose up -d --remove-orphans \
+            && docker compose up -d --no-deps --force-recreate nginx \
             && docker image prune -f"
       - name: Cek kesehatan
         run: |
@@ -126,7 +127,15 @@ jobs:
           STAGING_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
         run: |
           base="${STAGING_URL%/}"
-          manifest_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$base/manifest.webmanifest")"
-          root_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$base/")"
-          test "$manifest_status" = 200 || { echo "Manifest harus publik (200), mendapat $manifest_status"; exit 1; }
-          test "$root_status" = 401 || { echo "Root staging harus tetap terkunci (401), mendapat $root_status"; exit 1; }
+          for attempt in $(seq 1 20); do
+            manifest_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$base/manifest.webmanifest")"
+            root_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$base/")"
+            if [ "$manifest_status" = 200 ] && [ "$root_status" = 401 ]; then
+              echo "Batas akses staging benar: manifest=200, root=401"
+              exit 0
+            fi
+            echo "Percobaan $attempt/20: manifest=$manifest_status, root=$root_status; menunggu Nginx/Cloudflare..."
+            sleep 3
+          done
+          echo "Batas akses staging salah setelah 20 percobaan: manifest=$manifest_status, root=$root_status"
+          exit 1
