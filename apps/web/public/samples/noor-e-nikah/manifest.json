@@ -1,0 +1,48 @@
+{
+  "designId": "noor-e-nikah",
+  "assetType": "opaque-sample-prewedding-photography",
+  "cultureScope": "contemporary Pakistani Muslim wedding with restrained Lahore influence",
+  "palette": [
+    "#063f32",
+    "#b98a38",
+    "#f4e7cb",
+    "#28231f"
+  ],
+  "assets": {
+    "cover": {
+      "file": "cover.webp",
+      "source": "sources/cover.png",
+      "dimensions": "1024x1536",
+      "ratio": "2:3"
+    },
+    "groom": {
+      "file": "groom.webp",
+      "source": "sources/groom.png",
+      "dimensions": "1024x1280",
+      "ratio": "4:5"
+    },
+    "bride": {
+      "file": "bride.webp",
+      "source": "sources/bride.png",
+      "dimensions": "1024x1280",
+      "ratio": "4:5"
+    },
+    "galleryRomantic": {
+      "file": "gallery-romantic.webp",
+      "source": "sources/gallery-romantic.png",
+      "dimensions": "1024x1280",
+      "ratio": "4:5"
+    },
+    "galleryWalking": {
+      "file": "gallery-walking.webp",
+      "source": "sources/gallery-walking.png",
+      "dimensions": "1536x960",
+      "ratio": "8:5"
+    }
+  },
+  "generation": {
+    "mode": "imagegen-new-image-with-reference-derived-variants",
+    "background": "opaque realistic Lahore heritage courtyard",
+    "style": "natural photorealistic editorial pre-wedding photography"
+  }
+}

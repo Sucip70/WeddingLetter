@@ -1,0 +1,50 @@
+{
+  "designId": "vivaha-rani",
+  "visualRevision": "gate-content-01",
+  "cultureScope": "Contemporary North Indian Hindu wedding stationery",
+  "formatPolicy": "raster-only-no-svg",
+  "canvas": { "width": 1024, "height": 1536, "aspectRatio": "2:3" },
+  "assets": {
+    "pageBackground": "page-background.png",
+    "infoCard": "info-card.png",
+    "photoFrame": "photo-frame.png",
+    "divider": "divider-paisley.png",
+    "sectionMarker": "section-marker-genda.png",
+    "bottomDecoration": "bottom-zardozi.png",
+    "reviewPreview": "content-system-preview.png",
+    "editableRasterSources": "source-renders/"
+  },
+  "layerSets": {
+    "quietTextSection": ["pageBackground", "divider"],
+    "eventCard": ["pageBackground", "infoCard", "divider"],
+    "photoSection": ["pageBackground", "photoFrame"],
+    "closingSection": ["pageBackground", "bottomDecoration"],
+    "minimalSection": ["pageBackground", "sectionMarker"]
+  },
+  "neverStack": [
+    ["infoCard", "photoFrame"],
+    ["photoFrame", "bottomDecoration"],
+    ["infoCard", "bottomDecoration"],
+    ["divider", "sectionMarker"],
+    ["sectionMarker", "bottomDecoration"]
+  ],
+  "palette": {
+    "raniPink": "#C2185B",
+    "sindoorRed": "#A41425",
+    "marigoldSaffron": "#F39A16",
+    "warmIvory": "#F5E9D5",
+    "antiqueGold": "#B58A36",
+    "deepLeafGreen": "#244D2C",
+    "charcoal": "#332722"
+  },
+  "rules": {
+    "productionTextBakedIn": false,
+    "previewTextAllowed": true,
+    "transparentDecorationLayers": true,
+    "maxProminentOrnamentFamiliesPerViewport": 2,
+    "centralTextCorridorMustRemainClear": true,
+    "contentQuieterThanGate": true,
+    "sacredSymbolsUsed": false,
+    "databaseArtworkVersionAssignedByEngineering": true
+  }
+}
