@@ -4,6 +4,9 @@
   "workspaces": [
     "apps/*"
   ],
+  "overrides": {
+    "source-map-js": "1.2.2"
+  },
   "scripts": {
     "dev:web": "npm run dev --workspace apps/web",
     "dev:api": "npm run start:dev --workspace apps/api",
@@ -11,5 +14,8 @@
     "build:api": "npm run build --workspace apps/api",
     "prisma:generate": "npm run prisma:generate --workspace apps/api",
     "prisma:migrate": "npm run prisma:migrate --workspace apps/api"
+  },
+  "devDependencies": {
+    "source-map-js": "1.2.2"
   }
 }

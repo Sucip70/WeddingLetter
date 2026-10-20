@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   // Memungkinkan menjalankan server dev kedua (mis. untuk verifikasi) tanpa bentrok lock dengan .next
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // Image Docker (apps/web/Dockerfile) hanya menyalin .next/standalone + aset statis, tanpa node_modules penuh.

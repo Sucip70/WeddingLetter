@@ -113,6 +113,7 @@ jobs:
         run: |
           ssh "$SSH_TARGET" "cd $REMOTE_DIR && export TAG=staging-${{ github.sha }} \
             && docker compose pull api web \
+            && docker compose run --rm --no-deps nginx nginx -t \
             && docker compose up -d --remove-orphans \
             && docker image prune -f"
       - name: Cek kesehatan
@@ -120,3 +121,12 @@ jobs:
           ssh "$SSH_TARGET" "cd $REMOTE_DIR && for i in \$(seq 1 30); do \
             [ \"\$(docker inspect -f '{{.State.Health.Status}}' \$(docker compose ps -q api))\" = healthy ] && exit 0; sleep 5; done; \
             docker compose logs --tail=80 api; exit 1"
+      - name: Cek batas akses staging
+        env:
+          STAGING_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
+        run: |
+          base="${STAGING_URL%/}"
+          manifest_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$base/manifest.webmanifest")"
+          root_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$base/")"
+          test "$manifest_status" = 200 || { echo "Manifest harus publik (200), mendapat $manifest_status"; exit 1; }
+          test "$root_status" = 401 || { echo "Root staging harus tetap terkunci (401), mendapat $root_status"; exit 1; }
