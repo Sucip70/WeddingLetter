@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { MusicService } from '../music/music.service.js';
 import { ADDON_SECTIONS, SECTION_REGISTRY, normalizeLayout, withCoverLayouts, withLibrary } from './layout.js';
 import type { MusicPreset, SectionDef, TemplateLayout } from './layout.js';
+import { RASTER_ARTWORK } from './artwork.js';
 import { designById } from './themes.js';
 
 function designInfo(layout: TemplateLayout) {
@@ -33,6 +34,9 @@ export function toListTemplate(t: Template, library: MusicPreset[]) {
       palettes: layout.palettes,
       coverLayouts: layout.coverLayouts,
       coverDefault: layout.coverDefault,
+      samplePhotos: layout.samplePhotos,
+      // Desain beraset raster: miniatur katalog adalah sampul aslinya, jadi manifest artwork (kecil, ±2 KB) ikut terkirim.
+      ...(layout.artwork && layout.artwork.designId in RASTER_ARTWORK ? { artwork: layout.artwork } : {}),
     },
   };
 }

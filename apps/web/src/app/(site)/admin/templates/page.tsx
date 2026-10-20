@@ -7,12 +7,13 @@ import { Badge, EmptyState, LinkButton, PageHeader } from '@/components/ui';
 import { GROUP_LABEL, GROUP_ORDER, TIER_LABEL } from '@/lib/catalog';
 import { authedFetch } from '@/lib/session';
 import { GATE_LABEL } from '@/lib/types';
-import type { GateKind, Theme, ThemeGroup, Tier } from '@/lib/types';
+import type { GateKind, Layout, Theme, ThemeGroup, Tier } from '@/lib/types';
 
 export const metadata: Metadata = { title: 'Admin — template' };
 
 interface Row {
   id: string;
+  designId: string;
   name: string;
   category: string;
   tier: Tier;
@@ -23,14 +24,12 @@ interface Row {
   orders: number;
   sections: string[];
   theme: Theme;
+  artwork?: Layout['artwork'];
 }
 
 const STATUS_LABEL: Record<Row['status'], string> = { PUBLISHED: 'Tersedia', DRAFT: 'Draf', ARCHIVED: 'Arsip' };
 const TIER_ORDER: Record<Tier, number> = { BASIC: 0, STANDARD: 1, PREMIUM: 2 };
 const NO_GATE = 'none';
-// Satu tema = satu desain (id desain = theme.motif, atau theme.preset untuk data lama).
-const designKey = (theme: Theme) => theme.motif ?? theme.preset;
-
 interface DesignCard {
   key: string;
   name: string;
@@ -55,7 +54,7 @@ export default async function AdminTemplates({ searchParams }: PageProps<'/admin
 
   const byDesign = new Map<string, Row[]>();
   for (const t of templates) {
-    const key = designKey(t.theme);
+    const key = t.designId;
     byDesign.set(key, [...(byDesign.get(key) ?? []), t]);
   }
   const designs: DesignCard[] = [...byDesign.entries()].map(([key, list]) => {
@@ -112,7 +111,7 @@ export default async function AdminTemplates({ searchParams }: PageProps<'/admin
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {cards.map((d) => (
             <Link key={d.key} href={`/admin/templates/${d.main.id}`} className="group flex overflow-hidden rounded-2xl border border-line bg-paper transition-shadow hover:shadow-lg hover:shadow-ink/5">
-              <div className="w-28 shrink-0"><TemplateThumb theme={d.main.theme} imageUrl={d.main.thumbnailUrl} /></div>
+              <div className="w-28 shrink-0"><TemplateThumb theme={d.main.theme} imageUrl={d.main.thumbnailUrl} artwork={d.main.artwork} /></div>
               <div className="min-w-0 flex-1 p-4">
                 <p className="truncate font-semibold text-ink">{d.name}</p>
                 <p className="mt-1 text-sm text-ink-soft">{GROUP_LABEL[d.main.category as ThemeGroup] ?? d.main.category}</p>

@@ -1,5 +1,7 @@
 // Bentuk data dari API (lihat apps/api). Hanya field yang dipakai UI.
 
+import type { TemplateSamplePhotos } from './template-sample-photos';
+
 export type FieldType = 'text' | 'textarea' | 'datetime' | 'url' | 'image' | 'gallery' | 'videos' | 'song' | 'coverlayout';
 
 export interface FieldDef {
@@ -20,36 +22,26 @@ export interface SectionDef {
 export type FxLevel = 'none' | 'standard' | 'premium';
 // Gerbang pembuka undangan Premium (apps/web/.../gates.tsx). Sama dengan GATE_LABEL di API.
 export const GATE_LABEL = {
-  door: 'Pintu',
-  glass: 'Jendela kaca patri',
-  curtain: 'Tirai',
-  cloth: 'Kain ditarik',
-  envelope: 'Amplop',
   portal: 'Portal sihir',
   ring: 'Kotak cincin',
-  bloom: 'Bunga bermekaran',
   leaves: 'Surat daun gugur',
   taman: 'Surat daun hijau',
-  balloons: 'Balon',
-  waves: 'Ombak',
-  gift: 'Kado',
-  lantern: 'Lentera',
-  fireworks: 'Kembang api',
   frost: 'Surat kristal es',
-  book: 'Buku dongeng',
-  pressstart: 'Press Start',
-  loading: 'Loading',
-  neon: 'Papan neon',
   sakura: 'Surat kelopak sakura',
-  kayon: 'Kayon wayang',
   twine: 'Surat bertali goni',
-  doves: 'Sepasang merpati',
   bouquet: 'Lempar buket',
+  kayon: 'Kayon Sekar Keraton',
+  gonjong: 'Gonjong Pusako Minang',
+  ulos: 'Simpul ulos Horas Nauli',
+  paras: 'Kembar Bentar Pawiwahan Agung',
+  lentera: 'Lentera Hong Xi',
+  jali: 'Jali Noor-e-Nikah',
+  toran: 'Toran Vivaha Rani',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export type GateSetting = GateKind | 'none';
-export type HeadingFont = 'script' | 'serif' | 'sans' | 'display' | 'cinzel' | 'pixel' | 'round' | 'playfair';
-export type BodyFont = 'serif' | 'sans' | 'round' | 'montserrat';
+export type HeadingFont = 'script' | 'serif' | 'sans' | 'display' | 'cinzel' | 'pixel' | 'round' | 'playfair' | 'libre';
+export type BodyFont = 'serif' | 'sans' | 'round' | 'montserrat' | 'source';
 
 export interface Theme {
   preset: string;
@@ -75,7 +67,7 @@ export interface Palette {
   text: string;
 }
 
-export type ArtworkSlot = 'coverBackground' | 'coverForeground' | 'pageBackground' | 'sectionBackground' | 'topDecoration' | 'bottomDecoration' | 'cornerTopLeft' | 'cornerTopRight' | 'cornerBottomLeft' | 'cornerBottomRight' | 'divider' | 'photoFrame' | 'texture' | 'thumbnail' | 'gateBackground' | 'gateForeground' | 'gateTransition' | 'gateInteractive';
+export type ArtworkSlot = 'coverBackground' | 'coverForeground' | 'pageBackground' | 'sectionBackground' | 'topDecoration' | 'bottomDecoration' | 'cornerTopLeft' | 'cornerTopRight' | 'cornerBottomLeft' | 'cornerBottomRight' | 'divider' | 'photoFrame' | 'texture' | 'thumbnail' | 'gateBackground' | 'gateForeground' | 'gateTransition' | 'gateInteractive' | 'cardFrame';
 export interface ArtworkSource { url: string; storageKey?: string; contentType: 'image/webp' | 'image/png' | 'image/avif'; width: number; height: number; sizeBytes: number }
 export interface ArtworkLayer { default?: ArtworkSource; mobile?: ArtworkSource; desktop?: ArtworkSource }
 export interface ArtworkManifest {
@@ -98,7 +90,7 @@ export interface ArtworkManifest {
   };
 }
 
-export type ThemeGroup = 'klasik' | 'suku' | 'agama' | 'perayaan' | 'kartun' | 'game' | 'film' | 'musim';
+export type ThemeGroup = 'klasik' | 'suku' | 'film' | 'musim';
 
 export interface DesignInfo {
   id: string;
@@ -127,6 +119,8 @@ export interface Layout {
   // Tata letak sampul bawaan pilihan admin (kosong = otomatis: khusus tema / Foto berbingkai).
   coverDefault?: string;
   artwork?: ArtworkManifest;
+  // Foto contoh khusus template; slot kosong jatuh ke foto demo global.
+  samplePhotos?: TemplateSamplePhotos;
 }
 
 export type Tier = 'BASIC' | 'STANDARD' | 'PREMIUM';

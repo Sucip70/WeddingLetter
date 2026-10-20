@@ -136,7 +136,7 @@ export function SeasonalCoverLayout(p: SeasonalCoverProps) {
   }
 
   return (
-    <div className="wl-seasonal-paper-cover">
+    <div className={`wl-seasonal-paper-cover ${`wl-seasonal-fit wl-season-${p.designId}`}`}>
       {paper}
       <div className="wl-seasonal-paper-copy">
         {kicker()}

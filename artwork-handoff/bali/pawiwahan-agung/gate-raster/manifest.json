@@ -1,0 +1,62 @@
+{
+  "designId": "pawiwahan-agung",
+  "visualRevision": "concept-gate-01",
+  "cultureScope": "Bali",
+  "gateName": "Kembar Bentar Ceremony",
+  "formatPolicy": "raster-only-no-svg",
+  "canvas": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": "2:3"
+  },
+  "assets": {
+    "gateBackground": "gate-background.png",
+    "leftPanel": "left-prada-panel.png",
+    "rightPanel": "right-prada-panel.png",
+    "interactiveObject": "interactive-prada-tab.png",
+    "closedPreview": "closed-preview.png",
+    "openingPreview": "opening-preview.png",
+    "motionSpec": "motion-spec.md"
+  },
+  "presentation": {
+    "backgroundFit": "cover",
+    "backgroundPosition": "center",
+    "panelMotion": "prada-part-outward",
+    "interactiveObjectMotion": "press-lift-fade",
+    "primaryDurationMs": 1580,
+    "reducedMotionDurationMs": 300
+  },
+  "palette": {
+    "warmParas": "#C9AB82",
+    "antiquePrada": "#A77A38",
+    "brickRed": "#873E32",
+    "ceremonialIvory": "#EEE0C7",
+    "leafGreen": "#536149",
+    "softCharcoal": "#332923"
+  },
+  "safeArea": {
+    "normalizedLeft": 0.25,
+    "normalizedRight": 0.75,
+    "normalizedTop": 0.17,
+    "normalizedBottom": 0.72,
+    "notes": "Keep live names, guest text, and CTA inside the calm central corridor. Place the CTA above the interactive prada tab."
+  },
+  "rules": {
+    "productionTextBakedIn": false,
+    "movableAssetsTransparent": true,
+    "primaryStructure": "simplified-candi-bentar",
+    "secondaryMaterial": "aged-prada-textile",
+    "bridalFigureIncluded": false,
+    "neverStackWith": [
+      "full-temple-scenery",
+      "deity-or-guardian-statues",
+      "barong-or-rangda",
+      "tourism-landscape",
+      "beach-or-resort-imagery",
+      "large-floral-arrangements",
+      "bright-yellow-gold",
+      "other-indonesian-regional-ornaments",
+      "particle-effects"
+    ]
+  }
+}

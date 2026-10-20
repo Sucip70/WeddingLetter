@@ -100,6 +100,8 @@ export function TemplateArtwork({ artwork, context, hasUserPhoto = false, reduce
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
       {CONTEXT_SLOTS[context].map((slot) => {
+        // Sekar Keraton: kayon (topDecoration) hanya hiasan sampul, digambar oleh SekarKeratonCover; di section lain ia menimpa isi.
+        if (context === 'section' && slot === 'topDecoration' && artwork.designId === 'jawa-sekar-keraton') return null;
         const layer = artwork.assets[slot];
         return layer ? <ArtworkImage key={slot} layer={layer} slot={slot} artwork={artwork} eager={context === 'cover' && (slot === 'coverBackground' || slot === 'coverForeground')} reducedMotion={reducedMotion} onAssetError={onAssetError} /> : null;
       })}

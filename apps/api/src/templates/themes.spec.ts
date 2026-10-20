@@ -5,6 +5,13 @@ import { BASIC_DESIGN_IDS, BASIC_PALETTES, basicPalettes, DESIGNS, GATE_KINDS, G
 const HEX = /^#[0-9a-f]{6}$/i;
 
 describe('registry desain', () => {
+  it('hanya memuat desain yang masih memiliki template published', () => {
+    expect(DESIGNS.map((x) => x.id)).toEqual([
+      'rustic', 'floral', 'buket', 'garden', 'lavender', 'hortensia', 'marigold', 'elegant', 'wisteria', 'jawa-sekar-keraton', 'pusako-minang', 'horas-nauli', 'pawiwahan-agung', 'hong-xi', 'noor-e-nikah', 'vivaha-rani',
+      'galaksi', 'sihir', 'semi', 'panas', 'gugur', 'salju',
+    ]);
+  });
+
   it('id unik, format id aman, dan grup dikenal', () => {
     const ids = DESIGNS.map((x) => x.id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -141,25 +148,22 @@ describe('Buket Pengantin', () => {
 describe('gerbang pembuka', () => {
   it('setiap desain punya gerbang bawaan yang valid; semua jenis gerbang dipakai minimal satu desain', () => {
     for (const design of DESIGNS) expect(GATE_KINDS).toContain(design.gate);
-    // 'glass' (jendela kaca patri) tidak lagi jadi bawaan desain mana pun, tapi tetap bisa dipilih admin di builder dan
-    // dipakai template lama.
-    const builderOnly = ['glass'];
     const used = new Set(DESIGNS.map((x) => x.gate));
-    expect([...used, ...builderOnly].sort()).toEqual([...GATE_KINDS].sort());
+    expect([...used].sort()).toEqual([...GATE_KINDS].sort());
   });
 
   it('normalizeLayout: gerbang bawaan none; nilai sah dipakai; nilai asing dibuang tanpa melempar', () => {
-    expect(normalizeLayout({ theme: { preset: 'jawa' } }).theme.gate).toBe('none');
-    expect(normalizeLayout({ theme: { preset: 'jawa', gate: 'door' } }).theme.gate).toBe('door');
-    expect(normalizeLayout({ theme: { preset: 'jawa', gate: 'none' } }).theme.gate).toBe('none');
-    expect(() => normalizeLayout({ theme: { preset: 'jawa', gate: 'meriam' } })).not.toThrow();
-    expect(normalizeLayout({ theme: { preset: 'jawa', gate: 'meriam' } }).theme.gate).toBe('none');
+    expect(normalizeLayout({ theme: { preset: 'rustic' } }).theme.gate).toBe('none');
+    expect(normalizeLayout({ theme: { preset: 'rustic', gate: 'twine' } }).theme.gate).toBe('twine');
+    expect(normalizeLayout({ theme: { preset: 'rustic', gate: 'none' } }).theme.gate).toBe('none');
+    expect(() => normalizeLayout({ theme: { preset: 'rustic', gate: 'door' } })).not.toThrow();
+    expect(normalizeLayout({ theme: { preset: 'rustic', gate: 'door' } }).theme.gate).toBe('none');
   });
 
   it('pemilihan gerbang sesuai rekomendasi tema (contoh)', () => {
     expect(designById('sihir')!.gate).toBe('portal');
-    expect(designById('hollywood')!.gate).toBe('curtain');
-    expect(designById('dongeng')!.gate).toBe('book');
+    expect(designById('garden')!.gate).toBe('taman');
+    expect(designById('buket')!.gate).toBe('bouquet');
     expect(designById('gugur')!.gate).toBe('leaves');
   });
 });
@@ -178,14 +182,14 @@ describe('palet warna', () => {
   });
 
   it('desain lain mendapat varian otomatis + entri "bawaan"; desain warna tetap tidak', () => {
-    const sunda = designById('sunda')!;
-    const layout = normalizeLayout({ theme: { preset: 'sunda' }, palettes: autoPalettes(sunda) }, 'suku');
+    const semi = designById('semi')!;
+    const layout = normalizeLayout({ theme: { preset: 'semi' }, palettes: autoPalettes(semi) }, 'musim');
     expect(layout.palettes.map((p) => p.id)).toEqual(['bawaan', 'hangat', 'sejuk']);
     for (const p of layout.palettes) for (const c of [p.primary, p.secondary, p.background, p.text]) expect(c).toMatch(HEX);
-    expect(autoPalettes(designById('natal')!)).toEqual([]);
+    expect(autoPalettes(designById('galaksi')!)).toEqual([]);
   });
 
-  it.each(['elegant', 'kristiani', 'buket', 'garden', 'jawa', 'lavender', 'hortensia', 'marigold'])('%s memakai palet pilihan tangan (bukan geseran rona): id unik, warna valid, latar terang & teks gelap', (id) => {
+  it.each(['elegant', 'buket', 'garden', 'lavender', 'hortensia', 'marigold', 'wisteria'])('%s memakai palet pilihan tangan (bukan geseran rona): id unik, warna valid, latar terang & teks gelap', (id) => {
     const palettes = autoPalettes(designById(id)!);
     expect(palettes.length).toBeGreaterThan(0);
     expect(new Set(palettes.map((p) => p.id)).size).toBe(palettes.length);
@@ -215,15 +219,15 @@ describe('palet warna', () => {
 
 describe('normalizeLayout: motif & fx', () => {
   it('motif mengikuti preset bila tidak diisi, fx bawaan none', () => {
-    const layout = normalizeLayout({ theme: { preset: 'bali' } }, 'suku');
-    expect(layout.theme.motif).toBe('bali');
+    const layout = normalizeLayout({ theme: { preset: 'wisteria' } }, 'klasik');
+    expect(layout.theme.motif).toBe('wisteria');
     expect(layout.theme.fx).toBe('none');
-    expect(layout.theme.primary).toBe(designById('bali')!.primary);
+    expect(layout.theme.primary).toBe(designById('wisteria')!.primary);
   });
 
   it('fx dan motif eksplisit dipakai; nilai fx tidak valid dibuang tanpa melempar', () => {
-    expect(normalizeLayout({ theme: { preset: 'jawa', motif: 'bali', fx: 'premium' } }).theme).toMatchObject({ motif: 'bali', fx: 'premium' });
-    expect(() => normalizeLayout({ theme: { preset: 'jawa', fx: 'gila' } })).not.toThrow();
+    expect(normalizeLayout({ theme: { preset: 'floral', motif: 'hortensia', fx: 'premium' } }).theme).toMatchObject({ motif: 'hortensia', fx: 'premium' });
+    expect(() => normalizeLayout({ theme: { preset: 'floral', fx: 'gila' } })).not.toThrow();
   });
 
   it('URL preset lagu yang berbahaya ditolak (bukan https atau /audio/*.mp3)', () => {

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Cinzel, Cormorant_Garamond, Fraunces, Fredoka, Great_Vibes, Montserrat, Noto_Sans_Javanese, Plus_Jakarta_Sans, Playfair_Display, Press_Start_2P } from 'next/font/google';
+import { Cinzel, Cormorant_Garamond, Fraunces, Fredoka, Great_Vibes, Libre_Baskerville, Montserrat, Noto_Sans_Javanese, Plus_Jakarta_Sans, Playfair_Display, Press_Start_2P, Source_Sans_3 } from 'next/font/google';
 import './globals.css';
 
 const jakarta = Plus_Jakarta_Sans({ variable: '--font-jakarta', subsets: ['latin'], display: 'swap' });
@@ -14,6 +14,8 @@ const fredoka = Fredoka({ variable: '--font-fredoka', subsets: ['latin'], weight
 const playfair = Playfair_Display({ variable: '--font-playfair', subsets: ['latin'], weight: ['400', '500', '600', '700'], style: ['normal', 'italic'], display: 'swap', preload: false });
 const montserrat = Montserrat({ variable: '--font-montserrat', subsets: ['latin'], weight: ['400', '500', '600'], display: 'swap', preload: false });
 const javanese = Noto_Sans_Javanese({ variable: '--font-javanese', subsets: ['javanese'], weight: ['400', '700'], display: 'swap', preload: false });
+const libre = Libre_Baskerville({ variable: '--font-libre', subsets: ['latin'], weight: ['400', '700'], style: ['normal', 'italic'], display: 'swap', preload: false });
+const source = Source_Sans_3({ variable: '--font-source', subsets: ['latin'], weight: ['400', '500', '600'], display: 'swap', preload: false });
 
 export const metadata: Metadata = {
   title: { default: 'WeddingLetter — Undangan pernikahan digital', template: '%s · WeddingLetter' },
@@ -22,7 +24,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="id" className={`${jakarta.variable} ${fraunces.variable} ${script.variable} ${cormorant.variable} ${cinzel.variable} ${pixel.variable} ${fredoka.variable} ${playfair.variable} ${montserrat.variable} ${javanese.variable} h-full`} data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="id" className={`${jakarta.variable} ${fraunces.variable} ${script.variable} ${cormorant.variable} ${cinzel.variable} ${pixel.variable} ${fredoka.variable} ${playfair.variable} ${montserrat.variable} ${javanese.variable} ${libre.variable} ${source.variable} h-full`} data-scroll-behavior="smooth" suppressHydrationWarning>
       {/* Ekstensi browser (pengelola sandi, terjemahan, dsb.) sering menambah atribut ke <html>/<body> sebelum React aktif. */}
       <body className="flex min-h-full flex-col" suppressHydrationWarning>{children}</body>
     </html>

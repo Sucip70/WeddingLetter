@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { SECTION_REGISTRY, layoutIncludes, normalizeLayout, toAuthoring } from '../templates/layout.js';
 import { artworkManifestSchema } from '../templates/artwork.js';
+import { RASTER_ARTWORK } from '../templates/artwork.js';
 import type { ArtworkSlot, ArtworkVariant } from '../templates/artwork.js';
 import { BASIC_PALETTES, DESIGNS, GATE_LABEL, GROUP_LABEL, GROUP_ORDER, autoPalettes } from '../templates/themes.js';
 import type { z } from 'zod';
@@ -22,6 +23,20 @@ const INVITATION_STATUSES = ['DRAFT', 'ACTIVE', 'PAUSED', 'EXPIRED_GRACE', 'DELE
 
 function paged<T>(items: T[], total: number, q: ListQuery) {
   return { items, total, page: q.page, pageSize: q.pageSize };
+}
+
+// Keep the stored design identity separate from the normalized visual theme.
+// A legacy design that is no longer registered can legitimately render with a
+// fallback preset, but it must not be grouped with that fallback in the admin UI.
+function storedDesignId(layoutSchema: unknown, fallback: string) {
+  if (!layoutSchema || typeof layoutSchema !== 'object' || Array.isArray(layoutSchema)) return fallback;
+  const theme = (layoutSchema as Record<string, unknown>).theme;
+  if (!theme || typeof theme !== 'object' || Array.isArray(theme)) return fallback;
+  const raw = theme as Record<string, unknown>;
+  for (const candidate of [raw.motif, raw.preset]) {
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+  }
+  return fallback;
 }
 
 @Injectable()
@@ -74,7 +89,15 @@ export class AdminService {
     const rows = await this.prisma.template.findMany({ orderBy: [{ price: 'asc' }, { createdAt: 'asc' }], include: { _count: { select: { orders: true } } } });
     return rows.map(({ layoutSchema, _count, ...t }) => {
       const layout = normalizeLayout(layoutSchema, t.category);
-      return { ...t, orders: _count.orders, sections: layout.sections.map((s) => s.id), theme: layout.theme };
+      return {
+        ...t,
+        designId: storedDesignId(layoutSchema, layout.theme.motif || layout.theme.preset),
+        orders: _count.orders,
+        sections: layout.sections.map((s) => s.id),
+        theme: layout.theme,
+        // Desain beraset raster: miniatur daftar admin = sampul aslinya.
+        ...(layout.artwork && layout.artwork.designId in RASTER_ARTWORK ? { artwork: layout.artwork } : {}),
+      };
     });
   }
 

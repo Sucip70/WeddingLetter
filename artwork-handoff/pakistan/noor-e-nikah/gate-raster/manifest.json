@@ -1,0 +1,66 @@
+{
+  "designId": "noor-e-nikah",
+  "visualRevision": "gate-content-01",
+  "cultureScope": "Contemporary Pakistani Muslim wedding with restrained Lahore architectural craftsmanship",
+  "gateName": "Jali of Noor",
+  "formatPolicy": "raster-only-no-svg",
+  "canvas": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": "2:3"
+  },
+  "assets": {
+    "gateBackground": "gate-background.png",
+    "leftPanel": "left-panel.png",
+    "rightPanel": "right-panel.png",
+    "interactiveObject": "interactive-jali-rosette.png",
+    "closedPreview": "closed-preview.png",
+    "openingPreview": "opening-preview.png",
+    "reducedMotionPreview": "reduced-motion-preview.png",
+    "editableRasterSources": "source-renders/",
+    "motionSpec": "motion-spec.md"
+  },
+  "presentation": {
+    "backgroundFit": "cover",
+    "backgroundPosition": "center",
+    "panelMotion": "symmetrical-folio-part",
+    "interactiveObjectMotion": "press-lift-fade",
+    "primaryDurationMs": 1550,
+    "reducedMotionDurationMs": 240
+  },
+  "palette": {
+    "deepEmerald": "#063F32",
+    "warmIvory": "#F4E7CB",
+    "antiqueGold": "#B98A38",
+    "lahoreSandstone": "#9F513D",
+    "mutedLapis": "#174B83",
+    "mutedTurquoise": "#2E8B8A",
+    "pomegranate": "#8C2431",
+    "charcoal": "#28231F"
+  },
+  "safeArea": {
+    "normalizedLeft": 0.23,
+    "normalizedRight": 0.77,
+    "normalizedTop": 0.20,
+    "normalizedBottom": 0.66,
+    "notes": "Keep live names, guest text, and CTA in the calm ivory corridor. CTA stays above the jali rosette."
+  },
+  "rules": {
+    "productionTextBakedIn": false,
+    "movableAssetsTransparent": true,
+    "interactiveMotif": "non-religious-eight-point-jali-rosette",
+    "sacredCalligraphyUsed": false,
+    "databaseArtworkVersionAssignedByEngineering": true,
+    "neverStackWith": [
+      "literal-palace-or-mosque-scenery",
+      "domes-or-minarets",
+      "quranic-or-sacred-calligraphy",
+      "crescent-as-interactive-button",
+      "fantasy-throne-room",
+      "large-floral-bouquet",
+      "peacocks-or-elephants",
+      "heavy-particle-effects",
+      "other-regional-ornaments"
+    ]
+  }
+}

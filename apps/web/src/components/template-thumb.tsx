@@ -5,9 +5,13 @@
 // lewat props tidak aman melewati batas itu). Dipanggil dari Server Component (halaman katalog) seperti biasa.
 import type { CSSProperties } from 'react';
 import { CoverLayout } from './invitation/cover';
+import { RasterCoverThumb, type RasterCoverKind } from './invitation/raster-cover';
+import { isRasterDesign } from './invitation/raster-theme';
 import { defaultCoverLayout, isCoverKind, resolveCover } from '@/lib/cover-layouts';
 import type { DemoPhotos } from '@/lib/sample';
 import type { Theme } from '@/lib/types';
+import type { Layout } from '@/lib/types';
+import { resolveTemplateSamplePhotos } from '@/lib/template-sample-photos';
 import { PatternLayer } from './invitation/effects';
 import { HEADING, RADIUS, motifFor } from './invitation/motifs';
 import { FloralMonogram } from './invitation/bloom-parts';
@@ -33,6 +37,8 @@ export function TemplateThumb({
   coverLayouts = [],
   coverDefault,
   photos,
+  samplePhotos,
+  artwork,
   phone = false,
 }: {
   theme: Theme;
@@ -41,6 +47,8 @@ export function TemplateThumb({
   coverLayouts?: string[];
   coverDefault?: string;
   photos?: DemoPhotos;
+  samplePhotos?: Layout['samplePhotos'];
+  artwork?: Layout['artwork'];
   // true = ukuran sampul ponsel sungguhan (font, sudut, tombol sama dengan undangan; wadah harus ±390px lebar lalu diskalakan,
   // lihat katalog). false = miniatur sangat kecil (daftar admin, beranda) dengan ukuran dikecilkan.
   phone?: boolean;
@@ -53,6 +61,7 @@ export function TemplateThumb({
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={imageUrl} alt="" className={`h-full w-full ${imageFit} ${className}`} />;
   }
+  const effectivePhotos = resolveTemplateSamplePhotos({ artwork, samplePhotos }, photos);
   const motif = motifFor(theme.motif ?? theme.preset);
   const orn = ORNAMENTS[motif.ornament];
   const hf = HEADING[theme.headingFont] ?? HEADING.serif;
@@ -111,7 +120,27 @@ export function TemplateThumb({
   const kinds = coverLayouts.filter(isCoverKind);
   // Aturan yang sama dengan demo template & editor (defaultCoverLayout): pilihan admin, lalu khusus tema, lalu Foto berbingkai.
   const chosen = kinds.length > 0 ? defaultCoverLayout(kinds, coverDefault) : undefined;
-  const resolved = chosen ? resolveCover(chosen, { cover: photos?.cover, groom: photos?.groom, bride: photos?.bride }) : undefined;
+  const resolved = chosen ? resolveCover(chosen, { cover: effectivePhotos.cover, groom: effectivePhotos.groom, bride: effectivePhotos.bride }) : undefined;
+
+  // Desain beraset raster (Sekar Keraton, Pusako Minang, Horas Nauli): miniatur = sampul aslinya (aset lukisan), bukan tiruan dari motif.
+  if (artwork && isRasterDesign(artwork.designId)) {
+    const rasterKinds = ['ornamen', 'bingkai', 'berdua', 'terbagi'] as const;
+    const kind: RasterCoverKind = rasterKinds.find((k) => k === resolved) ?? 'ornamen';
+    return (
+      <RasterCoverThumb
+        kind={kind}
+        artwork={artwork}
+        photo={effectivePhotos.cover}
+        groom={effectivePhotos.groom}
+        bride={effectivePhotos.bride}
+        kicker="Undangan Pernikahan"
+        names="Andi & Sinta"
+        dateText="12 . 12 . 2026"
+        guest={{ dear: 'Kepada Yth.', name: 'Bapak/Ibu/Saudara/i' }}
+        openLabel="Buka Undangan"
+      />
+    );
+  }
 
   // Gradasi/sorotan sampul di atas latar kulit (lapisan transparan, bukan bagian dari multiply): sama dengan undangan sungguhan.
   const coverOverlay = phone ? (
@@ -151,9 +180,9 @@ export function TemplateThumb({
       <div className={`${rootClass} relative flex h-full w-full flex-col items-center justify-center overflow-hidden text-center ${className}`} style={rootStyle}>
         <CoverLayout
           kind={resolved}
-          photo={photos?.cover}
-          groom={photos?.groom}
-          bride={photos?.bride}
+          photo={effectivePhotos.cover}
+          groom={effectivePhotos.groom}
+          bride={effectivePhotos.bride}
           kicker={motif.copy?.kicker ?? 'Undangan Pernikahan'}
           names="Andi & Sinta"
           groomName="Andi"

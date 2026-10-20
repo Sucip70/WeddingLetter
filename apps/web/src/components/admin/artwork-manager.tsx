@@ -13,7 +13,7 @@ const SLOTS: { id: ArtworkSlot; label: string }[] = [
   { id: 'cornerBottomLeft', label: 'Sudut kiri bawah' }, { id: 'cornerBottomRight', label: 'Sudut kanan bawah' },
   { id: 'divider', label: 'Pemisah' }, { id: 'photoFrame', label: 'Bingkai foto' }, { id: 'texture', label: 'Tekstur' },
   { id: 'thumbnail', label: 'Thumbnail' }, { id: 'gateBackground', label: 'Latar gerbang' }, { id: 'gateForeground', label: 'Foreground gerbang' },
-  { id: 'gateTransition', label: 'Transisi gerbang' }, { id: 'gateInteractive', label: 'Objek interaktif gerbang' },
+  { id: 'gateTransition', label: 'Transisi gerbang' }, { id: 'gateInteractive', label: 'Objek interaktif gerbang' }, { id: 'cardFrame', label: 'Bingkai kartu' },
 ];
 const ORNAMENTS = ['vine', 'geo', 'star8', 'lotus', 'sparkle', 'snow', 'twig', 'deco', 'lily', 'flora', 'romantic', 'botani', 'keraton', 'sakura', 'autumn', 'winter', 'lavender', 'hortensia', 'marigold'] as const;
 const EFFECTS = ['none', 'aurora', 'rays', 'curtain', 'scanlines', 'spotlight', 'clouds', 'halo', 'sky', 'bloom'] as const;

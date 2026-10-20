@@ -13,7 +13,7 @@ import type { TierRow } from './tier-panel';
 import { sampleView } from '@/lib/sample';
 import type { DemoPhotos } from '@/lib/sample';
 import { FX_LABEL } from '@/lib/catalog';
-import type { ArtworkManifest, FieldType, FxLevel, GateSetting, Palette, Theme, ThemeGroup } from '@/lib/types';
+import type { ArtworkManifest, FieldType, FxLevel, GateSetting, Layout, Palette, Theme, ThemeGroup } from '@/lib/types';
 
 export interface AuthField { key: string; type: FieldType; label: string; required: boolean; enabled: boolean }
 export interface AuthSection { id: string; title: string; enabled: boolean; fields: AuthField[] }
@@ -26,6 +26,7 @@ export interface Authoring {
   // Tata letak sampul bawaan (kosong = otomatis). Lihat coverDefault di apps/api/src/templates/layout.ts.
   coverDefault?: string;
   artwork?: ArtworkManifest;
+  samplePhotos?: Layout['samplePhotos'];
 }
 export interface TemplateForm {
   id?: string;
@@ -43,7 +44,6 @@ export interface DesignMeta {
   id: string;
   name: string;
   group: ThemeGroup;
-  blurb: string;
   primary: string;
   secondary: string;
   background: string;
@@ -68,8 +68,9 @@ const FONT_LABEL: Record<string, string> = {
   cinzel: 'Kapital klasik (Cinzel)',
   pixel: 'Pixel retro',
   round: 'Bulat ceria',
+  libre: 'Editorial klasik (Libre Baskerville)',
 };
-const BODY_LABEL: Record<string, string> = { sans: 'Sans modern', serif: 'Serif klasik', round: 'Bulat ceria' };
+const BODY_LABEL: Record<string, string> = { sans: 'Sans modern', serif: 'Serif klasik', round: 'Bulat ceria', source: 'Editorial bersih (Source Sans 3)' };
 const FX_ORDER: FxLevel[] = ['none', 'standard', 'premium'];
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const SEASONAL_PREMIUM_GATE_LABEL: Record<string, string> = {
@@ -78,6 +79,8 @@ const SEASONAL_PREMIUM_GATE_LABEL: Record<string, string> = {
   gugur: 'Letter in the Wind',
   salju: 'Frosted Monogram',
 };
+type SamplePhotoSlot = 'groom' | 'bride';
+const SAMPLE_PHOTO_LABEL: Record<SamplePhotoSlot, string> = { groom: 'Ilustrasi mempelai pria', bride: 'Ilustrasi mempelai wanita' };
 
 const themeOf = (d: DesignMeta, fx: FxLevel, gate: GateSetting): Theme => ({ preset: d.id, motif: d.id, fx, gate, primary: d.primary, secondary: d.secondary, background: d.background, text: d.text, headingFont: d.headingFont, bodyFont: d.bodyFont });
 
@@ -108,6 +111,7 @@ function toPreviewLayout(l: Authoring) {
     sections: l.sections.filter((s) => s.enabled).map((s) => ({ id: s.id, title: s.title, fields: s.fields.filter((f) => f.enabled).map((f) => ({ key: f.key, label: f.label, type: f.type, required: f.required })) })),
     musik: l.musik,
     artwork: l.artwork,
+    samplePhotos: l.samplePhotos,
   };
 }
 
@@ -123,6 +127,8 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
   const [artworkPreview, setArtworkPreview] = useState<ArtworkManifest | undefined>();
   const thumbInput = useRef<HTMLInputElement>(null);
   const songInput = useRef<HTMLInputElement>(null);
+  const sampleInput = useRef<HTMLInputElement>(null);
+  const sampleTarget = useRef<SamplePhotoSlot>('groom');
 
   const layout = form.layout;
   const setLayout = (patch: Partial<Authoring>) => setForm((f) => ({ ...f, layout: { ...f.layout, ...patch } }));
@@ -152,14 +158,6 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
   const gateValue = seasonalGateLabel && design
     ? (layout.theme.gate ?? 'none') === 'none' ? 'none' : design.gate
     : layout.theme.gate ?? 'none';
-  // Ganti desain: warna, font, motif, dan usulan palet ikut berganti.
-  function applyDesign(id: string) {
-    const d = meta.designs.find((x) => x.id === id);
-    if (!d) return;
-    // Gerbang bawaan desain hanya dipasang untuk paket Premium.
-    setForm((f) => ({ ...f, category: d.group, layout: { ...f.layout, theme: themeOf(d, f.layout.theme.fx, f.tier === 'PREMIUM' ? d.gate : 'none'), palettes: d.palettes } }));
-  }
-
   // Pindah ke Premium: pasang gerbang bawaan desain bila belum ada gerbang.
   function changeTier(tier: TemplateForm['tier']) {
     setForm((f) => {
@@ -205,6 +203,26 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
     }
   }
 
+  async function onSamplePhoto(slot: SamplePhotoSlot, file?: File) {
+    if (!file) return;
+    setUploading(`sample:${slot}`);
+    setError('');
+    try {
+      const url = await uploadAsset(file, 'image');
+      setLayout({ samplePhotos: { ...layout.samplePhotos, [slot]: url } });
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setUploading('');
+    }
+  }
+
+  function clearSamplePhoto(slot: SamplePhotoSlot) {
+    const next = { ...layout.samplePhotos };
+    delete next[slot];
+    setLayout({ samplePhotos: Object.values(next).some(Boolean) ? next : undefined });
+  }
+
   async function save(status?: TemplateForm['status']) {
     setBusy('save');
     setError('');
@@ -225,6 +243,7 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
         palettes: layout.palettes,
         artwork: layout.artwork,
         coverDefault,
+        samplePhotos: layout.samplePhotos,
       },
     };
     try {
@@ -282,12 +301,12 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
             <h2 className="font-semibold text-ink">Informasi dasar</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Field label="Nama template" required><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={80} /></Field>
-              <Field label="Kelompok tema" hint="Dipakai untuk filter katalog. Otomatis mengikuti desain yang dipilih.">
+              <Field label="Kelompok tema" hint="Dipakai untuk filter katalog.">
                 <Select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                   {[...new Set([...meta.groups.map((g) => g.id as string), form.category])].map((c) => <option key={c} value={c}>{meta.groups.find((g) => g.id === c)?.label ?? c}</option>)}
                 </Select>
               </Field>
-              <Field label="Paket (tier)"><Select value={form.tier} onChange={(e) => changeTier(e.target.value as TemplateForm['tier'])}><option value="BASIC">Basic</option><option value="STANDARD">Standard</option><option value="PREMIUM">Premium</option></Select></Field>
+              {!form.id && <Field label="Paket (tier)"><Select value={form.tier} onChange={(e) => changeTier(e.target.value as TemplateForm['tier'])}><option value="BASIC">Basic</option><option value="STANDARD">Standard</option><option value="PREMIUM">Premium</option></Select></Field>}
               {!form.id && <Field label="Harga (Rp)" hint="Setelah dibuat, harga & ketersediaan diatur di panel Paket & ketersediaan."><Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} /></Field>}
               <Field label="Masa aktif termasuk (minggu)" hint="Lama tayang yang sudah termasuk di harga template."><Input type="number" min={1} max={52} value={form.includedWeeks} onChange={(e) => setForm({ ...form, includedWeeks: Number(e.target.value) })} /></Field>
               {!form.id && <Field label="Status"><Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TemplateForm['status'] })}><option value="DRAFT">Draf (tidak tampil)</option><option value="PUBLISHED">Dipublikasikan</option><option value="ARCHIVED">Diarsipkan</option></Select></Field>}
@@ -302,18 +321,64 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
           </Card>
 
           <Card className="p-5">
+            <h2 className="font-semibold text-ink">Ilustrasi pasangan untuk demo</h2>
+            <p className="mt-1 text-sm text-ink-soft">Khusus untuk template ini di katalog dan pratinjau. Jika belum diunggah, template tetap memakai foto demo global. Foto pembeli pada undangan asli tidak terpengaruh.</p>
+            <input
+              ref={sampleInput}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              aria-label="Unggah ilustrasi pasangan"
+              onChange={(e) => {
+                void onSamplePhoto(sampleTarget.current, e.target.files?.[0]);
+                e.target.value = '';
+              }}
+            />
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {(['groom', 'bride'] as const).map((slot) => {
+                const custom = layout.samplePhotos?.[slot];
+                const preview = custom ?? photos[slot];
+                return (
+                  <div key={slot} className="overflow-hidden rounded-xl border border-line bg-ivory">
+                    <div className="aspect-[4/5] bg-ivory">
+                      {preview ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={preview} alt={SAMPLE_PHOTO_LABEL[slot]} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center p-5 text-center text-xs text-ink-soft">Belum ada foto demo global maupun khusus template.</div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-ink">{SAMPLE_PHOTO_LABEL[slot]}</p>
+                        <Badge tone={custom ? 'sage' : 'neutral'}>{custom ? 'Khusus' : 'Global'}</Badge>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          loading={uploading === `sample:${slot}`}
+                          disabled={!!uploading && uploading !== `sample:${slot}`}
+                          onClick={() => {
+                            sampleTarget.current = slot;
+                            sampleInput.current?.click();
+                          }}
+                        >
+                          {custom ? 'Ganti' : 'Unggah khusus'}
+                        </Button>
+                        {custom && <Button type="button" variant="ghost" size="sm" disabled={!!uploading} onClick={() => clearSamplePhoto(slot)}>Pakai global</Button>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          <Card className="p-5">
             <h2 className="font-semibold text-ink">Tema tampilan</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <Field label="Desain" hint={design?.blurb ?? 'Desain kustom: motif mengikuti desain terdekat.'}>
-                <Select value={design?.id ?? ''} onChange={(e) => applyDesign(e.target.value)}>
-                  {!design && <option value="">(kustom)</option>}
-                  {meta.groups.map((g) => (
-                    <optgroup key={g.id} label={g.label}>
-                      {meta.designs.filter((d) => d.group === g.id).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </optgroup>
-                  ))}
-                </Select>
-              </Field>
               <Field label="Level animasi" hint="Tanpa = tampilan statis (Basic). Standar = animasi masuk & partikel di sampul. Penuh = partikel di seluruh halaman, kilau, dan gerak tambahan.">
                 <Select value={layout.theme.fx} onChange={(e) => setTheme({ fx: e.target.value as FxLevel })}>{FX_ORDER.map((v) => <option key={v} value={v}>{FX_LABEL[v]}</option>)}</Select>
               </Field>

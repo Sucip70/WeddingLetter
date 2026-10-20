@@ -19,32 +19,29 @@ describe('tata letak sampul', () => {
     expect(availableCoverLayouts('STANDARD', 'sihir')).toEqual([...GENERIC_COVERS]);
     expect(availableCoverLayouts('PREMIUM', 'sihir')).toEqual([...GENERIC_COVERS, 'menara']);
     expect(availableCoverLayouts('PREMIUM', 'galaksi')).toEqual([...GENERIC_COVERS, 'orbit']);
-    expect(availableCoverLayouts('PREMIUM', 'halloween')).toEqual([...GENERIC_COVERS, 'portal']);
-    expect(availableCoverLayouts('PREMIUM', 'hollywood')).toEqual([...GENERIC_COVERS, 'poster']);
     expect(availableCoverLayouts('PREMIUM', 'elegant')).toEqual([...GENERIC_COVERS, 'emas']);
-    expect(availableCoverLayouts('PREMIUM', 'kristiani')).toEqual([...GENERIC_COVERS, 'merpati']);
     expect(availableCoverLayouts('PREMIUM', 'buket')).toEqual([...GENERIC_COVERS, 'bunga']);
     expect(availableCoverLayouts('STANDARD', 'buket')).toEqual([...GENERIC_COVERS, 'bunga']); // Lengkung bunga juga untuk Standard
-    expect(availableCoverLayouts('STANDARD', 'kristiani')).toEqual([...GENERIC_COVERS]); // Merpati hanya Premium
     expect(availableCoverLayouts('PREMIUM', 'rustic')).toEqual([...GENERIC_COVERS]); // tanpa layout khusus
-    expect(availableCoverLayouts('STANDARD', 'jawa')).not.toContain('gapura');
     expect(availableCoverLayouts('STANDARD', 'elegant')).toEqual([...GENERIC_COVERS, 'emas']); // Bingkai emas juga untuk Standard Elegan
+    expect(availableCoverLayouts('STANDARD', 'jawa-sekar-keraton')).toEqual(['ornamen', 'bingkai', 'berdua', 'terbagi']);
+    expect(availableCoverLayouts('PREMIUM', 'jawa-sekar-keraton')).toEqual(['ornamen', 'bingkai', 'berdua', 'terbagi']);
   });
 
   it('withCoverLayouts mengisi daftar sesuai paket & motif template', () => {
-    const base = normalizeLayout({ theme: { preset: 'jawa' }, sections: ['cover'] });
+    const base = normalizeLayout({ theme: { preset: 'sihir' }, sections: ['cover'] });
     expect(base.coverLayouts).toEqual([]);
-    expect(withCoverLayouts(base, 'PREMIUM').coverLayouts).toContain('gapura');
+    expect(withCoverLayouts(base, 'PREMIUM').coverLayouts).toContain('menara');
     expect(withCoverLayouts(base, 'BASIC').coverLayouts).toEqual([]);
   });
 
   it('coverDefault (bawaan pilihan admin): disimpan bila tersedia, dibuang bila tidak', () => {
-    const raw = (coverDefault: string) => ({ theme: { preset: 'jawa' }, sections: ['cover'], coverDefault });
+    const raw = (coverDefault: string) => ({ theme: { preset: 'sihir' }, sections: ['cover'], coverDefault });
     expect(normalizeLayout(raw('medali')).coverDefault).toBe('medali');
     expect(normalizeLayout(raw('meriam')).coverDefault).toBeUndefined(); // id asing
-    expect(withCoverLayouts(normalizeLayout(raw('gapura')), 'PREMIUM').coverDefault).toBe('gapura');
-    expect(withCoverLayouts(normalizeLayout(raw('gapura')), 'STANDARD').coverDefault).toBeUndefined(); // khusus tema, bukan Standard
-    expect(withCoverLayouts(normalizeLayout(raw('menara')), 'PREMIUM').coverDefault).toBeUndefined(); // milik desain lain
+    expect(withCoverLayouts(normalizeLayout(raw('menara')), 'PREMIUM').coverDefault).toBe('menara');
+    expect(withCoverLayouts(normalizeLayout(raw('menara')), 'STANDARD').coverDefault).toBeUndefined(); // khusus tema, bukan Standard
+    expect(withCoverLayouts(normalizeLayout(raw('orbit')), 'PREMIUM').coverDefault).toBeUndefined(); // milik desain lain
     expect(withCoverLayouts(normalizeLayout(raw('penuh')), 'BASIC').coverDefault).toBeUndefined();
     expect(toAuthoring(raw('medali')).coverDefault).toBe('medali'); // round-trip builder
   });

@@ -64,26 +64,39 @@ async function publish(designId: (typeof DESIGNS)[number]) {
   const templates = await prisma.template.findMany({ where: { tier: 'PREMIUM' }, select: { id: true, layoutSchema: true, artworkVersion: { select: { manifest: true } } } });
   const matching = templates.filter(({ layoutSchema }) => designOf(layoutSchema) === designId);
   if (!matching.length) throw new Error(`Template Premium ${designId} tidak ditemukan`);
-  const inherited = artworkManifestSchema.parse(matching[0].artworkVersion?.manifest ?? (matching[0].layoutSchema as Record<string, unknown>).artwork);
   const versions = await prisma.templateArtworkVersion.findMany({ where: { designId }, orderBy: { version: 'asc' } });
-  const existing = versions.find(({ manifest }) => {
+  // Warisi paket cover Premium terbaru. Bila artwork dasar berubah, hasilnya harus menjadi versi gerbang baru
+  // dan tidak boleh mencoba mengubah versi gerbang immutable yang sudah ada.
+  const latestPremiumBase = [...versions].reverse().find(({ manifest, status }) => {
     const parsed = artworkManifestSchema.safeParse(manifest);
-    return parsed.success && parsed.data.assets.gateInteractive?.default?.storageKey?.endsWith('/interactive-object.png')
-      && parsed.data.assets.gateTransition?.default?.storageKey?.endsWith('/transition-layer.png');
+    return status === 'PUBLISHED' && parsed.success
+      && parsed.data.assets.coverBackground?.default?.storageKey?.endsWith('/cover-premium.webp')
+      && parsed.data.assets.thumbnail?.default?.storageKey?.endsWith('/catalog-thumbnail-premium.webp');
+  });
+  const inherited = artworkManifestSchema.parse(latestPremiumBase?.manifest ?? matching[0].artworkVersion?.manifest ?? (matching[0].layoutSchema as Record<string, unknown>).artwork);
+  const prepared = await Promise.all(FILES.map(async (file) => ({ ...file, ...(await readAsset(designId, file.filename)) })));
+  const retained = Object.fromEntries(Object.entries(inherited.assets).filter(([slot]) => !REPLACED.has(slot as ArtworkSlot)));
+  const manifestFor = (candidateVersion: number): ArtworkManifest => {
+    const newAssets = Object.fromEntries(prepared.map(({ slot, filename, contentType, body, width, height }) => {
+      const storageKey = `templates/${designId}/v${candidateVersion}/${filename}`;
+      return [slot, { default: { url: storage.publicUrl(storageKey), storageKey, contentType, width, height, sizeBytes: body.length } }];
+    }));
+    return artworkManifestSchema.parse({ ...inherited, artworkVersion: candidateVersion, assets: { ...retained, ...newAssets } });
+  };
+  const existing = versions.find(({ version: candidateVersion, status, manifest: candidateManifest }) => {
+    if (status !== 'PUBLISHED') return false;
+    const parsed = artworkManifestSchema.safeParse(candidateManifest);
+    return parsed.success
+      && parsed.data.assets.gateInteractive?.default?.storageKey?.endsWith('/interactive-object.png')
+      && parsed.data.assets.gateTransition?.default?.storageKey?.endsWith('/transition-layer.png')
+      && isDeepStrictEqual(parsed.data, manifestFor(candidateVersion));
   });
   const version = existing?.version ?? ((versions.at(-1)?.version ?? 0) + 1);
-  const prepared = await Promise.all(FILES.map(async (file) => ({ ...file, ...(await readAsset(designId, file.filename)) })));
-  const newAssets = Object.fromEntries(prepared.map(({ slot, filename, contentType, body, width, height }) => {
-    const storageKey = `templates/${designId}/v${version}/${filename}`;
-    return [slot, { default: { url: storage.publicUrl(storageKey), storageKey, contentType, width, height, sizeBytes: body.length } }];
-  }));
-  const retained = Object.fromEntries(Object.entries(inherited.assets).filter(([slot]) => !REPLACED.has(slot as ArtworkSlot)));
-  const manifest: ArtworkManifest = artworkManifestSchema.parse({ ...inherited, artworkVersion: version, assets: { ...retained, ...newAssets } });
+  const manifest = manifestFor(version);
 
   await Promise.all(prepared.map(({ filename, contentType, body }) => ensureObject(`templates/${designId}/v${version}/${filename}`, body, contentType)));
 
   if (existing) {
-    if (existing.status !== 'PUBLISHED' || !isDeepStrictEqual(artworkManifestSchema.parse(existing.manifest), manifest)) throw new Error(`Konflik gerbang immutable ${designId} v${version}`);
     await prisma.$transaction(matching.map((template) => prisma.template.update({ where: { id: template.id }, data: { artworkVersionId: existing.id, layoutSchema: { ...(template.layoutSchema as object), artwork: manifest } } })));
     console.log(`${designId}: gate v${version} sudah sama`);
     return;

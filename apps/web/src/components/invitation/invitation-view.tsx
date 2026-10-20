@@ -28,6 +28,9 @@ import { Gunungan } from './gunungan-art';
 import { MeadowGhost } from './meadow-parts';
 import { TemplateArtwork } from './template-artwork';
 import { SeasonalCoverLayout } from './seasonal-cover';
+import { RasterCover } from './raster-cover';
+import { isRasterDesign } from './raster-theme';
+import { RasterCard, RasterDivider, RasterFooter, RasterCoupleSection, rasterRootVars } from './raster-sections';
 
 export interface InvitationViewProps {
   view: InvitationViewData;
@@ -97,6 +100,17 @@ const EMBED_HEIGHT = 810; // tinggi logis PhoneFrame
 const AKSARA = 'ꦲꦸꦤ꧀ꦝꦁꦔꦤ꧀'; // "undhangan" (undangan), aksara Jawa dekoratif
 const initialOf = (name: string, fallback = '') => (name.trim().charAt(0) || fallback).toUpperCase();
 
+// Lubang foto pada gambar bingkai (persen dari gambar; diukur dari alfa PNG-nya). Foto dibuat sedikit lebih besar dari lubang
+// supaya tepinya terselip di bawah bingkai. Desain tanpa ukuran khusus memakai nilai bawaan lama.
+const PHOTO_HOLE: Record<string, { aspect: string; box: CSSProperties }> = {
+  salju: { aspect: '960 / 1319', box: { left: '12%', top: '6.4%', width: '81.2%', height: '82.6%' } },
+  semi: { aspect: '960 / 1339', box: { left: '8.1%', top: '9.9%', width: '84.6%', height: '81.2%' } },
+  gugur: { aspect: '960 / 1326', box: { left: '7.8%', top: '5.6%', width: '84.2%', height: '85.8%' } },
+  panas: { aspect: '958 / 1376', box: { left: '8.3%', top: '11.5%', width: '81.1%', height: '76.5%' } },
+};
+const DEFAULT_PHOTO_HOLE = { aspect: '0.72', box: { left: '8%', top: '5%', width: '80%', height: '85%' } as CSSProperties };
+const photoHole = (designId: string) => PHOTO_HOLE[designId] ?? DEFAULT_PHOTO_HOLE;
+
 export function InvitationView({ view, mode = 'live', embedded = false, placeholders = false, gate }: InvitationViewProps) {
   const { theme } = view.layout;
   const { data } = view;
@@ -123,6 +137,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const bloom = skin === 'bloom';
   const keraton = skin === 'keraton';
   const garden = skin === 'garden';
+  const raster = skin === 'raster';
   // Untaian bunga & ikon bunga mini sebagai gambar CSS (data URI): bunga utamanya berwarna sekunder tema, jadi dihitung per tema.
   const bloomCss = useMemo(() => (bloom ? { garland: garlandCss(theme.secondary), mini: miniBloomCss(theme.secondary) } : null), [bloom, theme.secondary]);
   // Batik Jawa: parang, kawung, dan ikon gunungan sebagai gambar CSS (data URI) yang warnanya ikut tema; lihat batik-art.ts.
@@ -273,7 +288,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     backgroundColor: theme.background,
     color: theme.text,
     fontFamily: bf.family,
-    ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : garden ? { ...GARDEN_BG, ['--garden-flourish' as string]: GARDEN_FLOURISH } : gilded ? GILDED_BG : airy ? DOVE_BG : bloom && bloomCss ? { ...BLOOM_BG, ['--bloom-garland' as string]: bloomCss.garland, ['--bloom-mini' as string]: bloomCss.mini } : keraton && keratonCss ? { ...KERATON_BG, ...keratonCss } : null),
+    ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : garden ? { ...GARDEN_BG, ['--garden-flourish' as string]: GARDEN_FLOURISH } : gilded ? GILDED_BG : airy ? DOVE_BG : bloom && bloomCss ? { ...BLOOM_BG, ['--bloom-garland' as string]: bloomCss.garland, ['--bloom-mini' as string]: bloomCss.mini } : keraton && keratonCss ? { ...KERATON_BG, ...keratonCss } : raster && artwork ? rasterRootVars(artwork) : null),
   } as CSSProperties;
   const headingStyle: CSSProperties = {
     fontFamily: hf.family,
@@ -313,6 +328,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const coverPhoto = coverKind === 'ornamen' ? undefined : uploadedCover;
   const photoCover = coverKind && coverKind !== 'ornamen' ? coverKind : null;
   const seasonalPhotoCover = finalSeasonalCover && photoCover && artwork && ['semi', 'panas', 'gugur', 'salju'].includes(artwork.designId);
+  const rasterCover = isRasterDesign(artwork?.designId);
+  const rasterCoverKind = coverKind === 'bingkai' || coverKind === 'berdua' || coverKind === 'terbagi' ? coverKind : 'ornamen';
 
   const galleryPhotos = list(data, 'galeri', 'foto').map(url).filter((x): x is string => !!x);
   const galleryVideos = list(data, 'galeri', 'video').map(url).filter((x): x is string => !!x);
@@ -353,6 +370,9 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const openLabel = (lang === 'id' && motif.copy?.open) || t.open;
   const particleCount = fx === 'premium' ? motif.particles.count : Math.round(motif.particles.count * 0.6);
   const finalParticleCount = artwork?.designId === 'semi' ? 8 : artwork?.designId === 'gugur' ? 6 : artwork?.designId === 'salju' ? 8 : 0;
+  // Salju baru mulai setelah embun benar-benar selesai mencair; jangan biarkan salju bergerak di balik
+  // lapisan frost saat gerbang masih dalam fase opening.
+  const particlesReady = !gateKind || (artwork?.designId === 'salju' ? gatePhase === 'open' : coverKey === 'open');
   const coverInk = coverPhoto ? '#fff' : 'var(--p)';
   const cornerBase = `absolute ${fx === 'premium' ? 'wl-breathe' : ''}`;
   const cornerTop = `${cornerBase} ${motif.cornerSize?.top ?? 'w-24'}`;
@@ -420,7 +440,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 
         {/* Premium: partikel melayang di seluruh halaman (lapisan lengket seukuran layar). Dengan gerbang, baru
             dipasang saat sampul mulai terlihat dan masuk bertahap dari tepi layar, bukan muncul di tengah. */}
-        {fx === 'premium' && (!gateKind || coverKey === 'open') && (!finalSeasonalCover || finalParticleCount > 0) && (
+        {fx === 'premium' && particlesReady && (!finalSeasonalCover || finalParticleCount > 0) && (
           <div className="pointer-events-none sticky top-0 z-[5] h-0" style={keraton ? { color: 'var(--s)' } : undefined} aria-hidden>
             <div className="relative" style={{ height: layerHeight }}>
               <Particles kind={particleKind} count={finalSeasonalCover ? finalParticleCount : particleCount} mode={motif.particles.mode} height={layerHeight} enter={!!gateKind} />
@@ -434,14 +454,31 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
           className={`relative flex flex-col items-center justify-center overflow-hidden px-8 text-center ${finalSeasonalCover ? 'wl-final-seasonal-cover' : ''}`}
           style={{ ...(embedded ? { height: '100%' } : { minHeight: '100svh' }), ...(revealDelay ? { '--gd': `${revealDelay}ms` } : null) } as CSSProperties}
         >
-          {coverPhoto || photoCover ? null : (
+          {rasterCover || coverPhoto || photoCover ? null : (
             <div
               className="absolute inset-0"
               style={{ background: coverBackground }}
             />
           )}
-          {!seasonalPhotoCover && <TemplateArtwork artwork={artwork} context="cover" hasUserPhoto={!!(coverPhoto || photoCover)} onAssetError={() => setArtworkFailed(true)} />}
-          {seasonalPhotoCover ? (
+          {!seasonalPhotoCover && !rasterCover && <TemplateArtwork artwork={artwork} context="cover" hasUserPhoto={!!(coverPhoto || photoCover)} onAssetError={() => setArtworkFailed(true)} />}
+          {rasterCover && artwork ? (
+            <RasterCover
+              key={coverKey}
+              kind={rasterCoverKind}
+              artwork={artwork}
+              photo={uploadedCover}
+              groom={url(str(data, 'mempelai', 'pria_foto'))}
+              bride={url(str(data, 'mempelai', 'wanita_foto'))}
+              kicker={kicker}
+              names={names}
+              dateText={shortDate}
+              guest={mode === 'live' || placeholders ? { dear: t.dear, name: guest ?? t.guestFallback } : null}
+              openLabel={openLabel}
+              onOpen={open}
+              animated={animated}
+              onAssetError={() => setArtworkFailed(true)}
+            />
+          ) : seasonalPhotoCover ? (
             <SeasonalCoverLayout
               key={coverKey}
               kind={photoCover}
@@ -511,7 +548,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               {!coverPhoto && cornersNode}
             </>
           )}
-          {motif.ornament === 'romantic' && !finalSeasonalCover && <div key={`ff-${coverKey}`} className="pointer-events-none absolute inset-0 z-[3]" style={{ color: 'var(--p)' }}><FloralPageFrame /></div>}
+          {motif.ornament === 'romantic' && !finalSeasonalCover && !rasterCover && <div key={`ff-${coverKey}`} className="pointer-events-none absolute inset-0 z-[3]" style={{ color: 'var(--p)' }}><FloralPageFrame /></div>}
 
           {view.features.english && (
             <button
@@ -524,8 +561,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             </button>
           )}
 
-          {!photoCover && (
-          <div key={coverKey} className={`relative z-[4] flex flex-col items-center ${finalSeasonalCover ? 'wl-final-seasonal-content' : ''}`} style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
+          {!photoCover && !rasterCover && (
+          <div key={coverKey} className={`relative z-[4] flex flex-col items-center ${finalSeasonalCover ? 'wl-final-seasonal-content' : ''} ${finalSeasonalCover ? `wl-final-fit wl-season-${artwork?.designId}` : ''}`} style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
             {bloom && !coverPhoto && showMono && (
               <div className={`mb-1 ${enter(0).className}`} style={enter(0).style}>
                 <FloralMonogram a={monoA} b={monoB} size={128} />
@@ -603,6 +640,33 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         {visible.map((section) => {
           switch (section.id) {
             case 'mempelai':
+              if (artwork && isRasterDesign(artwork.designId)) {
+                return (
+                  <RasterCoupleSection
+                    key="mempelai"
+                    artwork={artwork}
+                    title={t.couple}
+                    animated={animated}
+                    people={[
+                      {
+                        nick: groom || (placeholders ? 'Andi' : ''),
+                        full: str(data, 'mempelai', 'pria_lengkap'),
+                        parents: str(data, 'mempelai', 'pria_ortu'),
+                        photo: url(str(data, 'mempelai', 'pria_foto')),
+                        role: t.groom,
+                      },
+                      {
+                        nick: bride || (placeholders ? 'Sinta' : ''),
+                        full: str(data, 'mempelai', 'wanita_lengkap'),
+                        parents: str(data, 'mempelai', 'wanita_ortu'),
+                        photo: url(str(data, 'mempelai', 'wanita_foto')),
+                        role: t.bride,
+                      },
+                    ]}
+                    onAssetError={() => setArtworkFailed(true)}
+                  />
+                );
+              }
               return (
                 <Block key="mempelai" title={t.couple} headingStyle={headingStyle} tint={soft}>
                   <div className={gilded || airy || bloom ? 'space-y-14' : 'space-y-12'}>
@@ -640,11 +704,11 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                           )}
                           <div className={`relative ${fx === 'premium' ? 'wl-float' : ''}`} style={fx === 'premium' ? { animationDelay: `${i * -2}s` } : undefined}>
                             {artwork?.assets.photoFrame ? (
-                              <div className="relative aspect-[0.72] w-[15rem] max-w-[72vw]">
+                              <div className="relative w-[15rem] max-w-[72vw]" style={{ aspectRatio: photoHole(artwork.designId).aspect }}>
                                 {photo ? (
-                                  <img src={photo} alt={nick} className="absolute left-[8%] top-[5%] h-[85%] w-[80%] rounded-[48%] object-cover" />
+                                  <img src={photo} alt={nick} className="absolute rounded-[50%] object-cover" style={photoHole(artwork.designId).box} />
                                 ) : (
-                                  <div className="absolute left-[17%] top-[12%] flex h-[76%] w-[66%] items-center justify-center rounded-[48%]" style={{ background: placeholders ? 'linear-gradient(160deg, color-mix(in srgb, var(--p) 25%, var(--bg)), color-mix(in srgb, var(--s) 45%, var(--bg)))' : 'color-mix(in srgb, var(--p) 10%, var(--bg))' }}>
+                                  <div className="absolute flex items-center justify-center rounded-[50%]" style={{ ...photoHole(artwork.designId).box, background: placeholders ? 'linear-gradient(160deg, color-mix(in srgb, var(--p) 25%, var(--bg)), color-mix(in srgb, var(--s) 45%, var(--bg)))' : 'color-mix(in srgb, var(--p) 10%, var(--bg))' }}>
                                     <span className="text-5xl" style={{ fontFamily: 'var(--font-script)', color: 'var(--p)' }}>{nick.charAt(0)}</span>
                                   </div>
                                 )}
@@ -676,7 +740,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               const story = str(data, 'cerita', 'cerita');
               return (
                 <Block key="cerita" title={t.story} headingStyle={headingStyle} tint={soft}>
-                  {quote && <blockquote className={gilded || airy || bloom || keraton ? 'wl-quote text-center' : 'text-center text-xl italic leading-relaxed'} style={{ fontFamily: 'var(--font-cormorant)' }}>{gilded || airy || bloom || keraton ? quote : `“${quote}”`}</blockquote>}
+                  {quote && <blockquote className={gilded || airy || bloom || keraton || raster ? 'wl-quote text-center' : 'text-center text-xl italic leading-relaxed'} style={{ fontFamily: 'var(--font-cormorant)' }}>{gilded || airy || bloom || keraton || raster ? quote : `“${quote}”`}</blockquote>}
                   {story && <p className={`mt-6 whitespace-pre-line text-center ${bodyText}`}>{story}</p>}
                 </Block>
               );
@@ -695,28 +759,39 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                       const cal = gcalLink(`${ev === 'akad' ? t.akad : t.reception} ${names}`, when, [place, address].filter(Boolean).join(', '));
                       return (
                         <Reveal key={ev} delay={i * 120}>
-                          <div className="wl-card border p-7 text-center" style={{ borderRadius: 'var(--r)', borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)', background: 'var(--bg)' }}>
-                            <h3 style={{ ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 600 }}>{ev === 'akad' ? t.akad : t.reception}</h3>
-                            <p className="wl-ev-date mt-4 text-lg font-semibold">{formatLocalDate(when, lang)}</p>
-                            <p className="wl-ev-time opacity-80">{formatLocalTime(when)}</p>
-                            <div style={{ color: 'var(--p)' }}>
-                              <orn.Divider className={bloom ? 'mx-auto my-3 w-48' : 'mx-auto my-4 w-24 opacity-70'} />
-                            </div>
-                            {place && <p className="font-semibold">{place}</p>}
-                            {address && <p className={`mt-1 opacity-80 ${bodyText}`}>{address}</p>}
-                            <div className="mt-5 flex flex-wrap justify-center gap-2">
-                              {maps && (
-                                <a href={maps} target="_blank" rel="noopener noreferrer" className="wl-btn px-4 py-2 text-xs font-medium text-white" style={{ background: 'var(--p)', borderRadius: 'var(--rb)' }}>
-                                  {t.openMaps}
-                                </a>
-                              )}
-                              {cal && (
-                                <a href={cal} target="_blank" rel="noopener noreferrer" className="wl-btn-o border px-4 py-2 text-xs font-medium" style={{ borderColor: 'var(--p)', color: 'var(--p)', borderRadius: 'var(--rb)' }}>
-                                  {t.saveDate}
-                                </a>
-                              )}
-                            </div>
-                          </div>
+                          {(() => {
+                            const body = (
+                              <>
+                                <h3 style={{ ...headingStyle, fontSize: hf.section, fontWeight: hf.weight === 400 ? 400 : 600 }}>{ev === 'akad' ? t.akad : t.reception}</h3>
+                                <p className="wl-ev-date mt-4 text-lg font-semibold">{formatLocalDate(when, lang)}</p>
+                                <p className="wl-ev-time opacity-80">{formatLocalTime(when)}</p>
+                                {raster ? <RasterDivider artwork={artwork} className="sk-divider-sm" /> : (
+                                  <div style={{ color: 'var(--p)' }}>
+                                    <orn.Divider className={bloom ? 'mx-auto my-3 w-48' : 'mx-auto my-4 w-24 opacity-70'} />
+                                  </div>
+                                )}
+                                {place && <p className="font-semibold">{place}</p>}
+                                {address && <p className={`mt-1 opacity-80 ${bodyText}`}>{address}</p>}
+                                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                                  {maps && (
+                                    <a href={maps} target="_blank" rel="noopener noreferrer" className="wl-btn px-4 py-2 text-xs font-medium text-white" style={{ background: 'var(--p)', borderRadius: 'var(--rb)' }}>
+                                      {t.openMaps}
+                                    </a>
+                                  )}
+                                  {cal && (
+                                    <a href={cal} target="_blank" rel="noopener noreferrer" className="wl-btn-o border px-4 py-2 text-xs font-medium" style={{ borderColor: 'var(--p)', color: 'var(--p)', borderRadius: 'var(--rb)' }}>
+                                      {t.saveDate}
+                                    </a>
+                                  )}
+                                </div>
+                              </>
+                            );
+                            return raster ? (
+                              <RasterCard artwork={artwork}>{body}</RasterCard>
+                            ) : (
+                              <div className="wl-card border p-7 text-center" style={{ borderRadius: 'var(--r)', borderColor: 'color-mix(in srgb, var(--p) 25%, transparent)', background: 'var(--bg)' }}>{body}</div>
+                            );
+                          })()}
                         </Reveal>
                       );
                     })}
@@ -729,7 +804,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 
             case 'galeri':
               return (
-                <Block key="galeri" title={t.gallery} headingStyle={headingStyle}>
+                <Block key="galeri" title={t.gallery} headingStyle={headingStyle} wide>
                   {galleryPhotos.length > 0 ? (
                     <div className={`grid grid-cols-2 ${gilded || airy || bloom ? 'gap-4' : 'gap-2.5'}`}>
                       {galleryPhotos.map((src, i) => (
@@ -763,7 +838,11 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               return (
                 <Block key="rsvp" title={t.rsvp} headingStyle={headingStyle} tint={soft}>
                   <p className={`mb-6 text-center opacity-85 ${bodyText}`}>{str(data, 'rsvp', 'pengantar') || t.rsvpIntro}</p>
-                  <RsvpForm slug={view.slug} preview={mode === 'preview'} t={t} accent="var(--p)" />
+                  {raster ? (
+                    <RasterCard artwork={artwork}><RsvpForm slug={view.slug} preview={mode === 'preview'} t={t} accent="var(--p)" /></RasterCard>
+                  ) : (
+                    <RsvpForm slug={view.slug} preview={mode === 'preview'} t={t} accent="var(--p)" />
+                  )}
                 </Block>
               );
 
@@ -798,8 +877,13 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         })}
 
         <footer className={`wl-art-footer relative overflow-hidden px-6 pb-24 pt-12 text-center text-xs ${gilded || airy || bloom || keraton ? '' : 'opacity-60'}`}>
-          <TemplateArtwork artwork={artwork} context="closing" />
-          {keraton ? (
+          {!raster && <TemplateArtwork artwork={artwork} context="closing" />}
+          {raster ? (
+            <RasterFooter artwork={artwork} names={names}>
+              <p className="mt-3 opacity-60">{t.madeWith}</p>
+              {preset?.credit && <p className="mt-2 opacity-50">{preset.credit}</p>}
+            </RasterFooter>
+          ) : keraton ? (
             <>
               <div className="mx-auto h-[6rem]" style={{ aspectRatio: '200 / 272' }}>
                 <Gunungan />
@@ -880,9 +964,21 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   );
 }
 
-function Block({ title, children, headingStyle, tint }: { title: string; children: ReactNode; headingStyle: CSSProperties; tint?: string }) {
+function Block({ title, children, headingStyle, tint, wide }: { title: string; children: ReactNode; headingStyle: CSSProperties; tint?: string; wide?: boolean }) {
   const { orn, motif, fx, sectionFont, artwork } = useTheme();
   const ghost = motif.ornament === 'hortensia';
+  if (motif.skin === 'raster') {
+    // Desain raster (Sekar Keraton, Pusako Minang): kertas berukir dari akar halaman terlihat penuh; tiap bagian hanya judul + pemisah kawung + isi.
+    return (
+      <section className="wl-block relative">
+        <div className="wl-reveal relative z-[1] mb-9 text-center">
+          <h2 className="sk-h2">{title}</h2>
+          <RasterDivider artwork={artwork} />
+        </div>
+        <div className={`sk-body relative z-[1] ${wide ? 'sk-wide' : ''}`}>{children}</div>
+      </section>
+    );
+  }
   return (
     <section className={`wl-block relative px-6 py-16 ${tint ? 'wl-tint' : ''} ${ghost ? 'overflow-hidden' : ''}`} style={{ background: tint }}>
       {tint && <TemplateArtwork artwork={artwork} context="section" />}
@@ -952,6 +1048,15 @@ const COUNTDOWN_LOOK: Record<CountdownKind, { section: CSSProperties; cell: CSSP
       boxShadow: 'inset 0 0 0 3px color-mix(in srgb, var(--tx) 90%, #000), inset 0 0 0 4px color-mix(in srgb, var(--p) 32%, transparent)',
     },
     num: { fontWeight: 500, backgroundImage: 'var(--foil-lit)', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', WebkitTextFillColor: 'transparent' },
+  },
+  raster: {
+    section: { background: 'var(--sk-gate) center / cover no-repeat, var(--sk-countdown-bg, #5c1c21)', paddingInline: '15%', borderTop: '1px solid var(--s)', borderBottom: '1px solid var(--s)' },
+    cell: {
+      border: '1px solid color-mix(in srgb, var(--s) 75%, transparent)',
+      background: 'rgba(20,4,6,.34)',
+      boxShadow: 'inset 0 0 0 3px rgba(20,4,6,.3), inset 0 0 0 4px color-mix(in srgb, var(--s) 40%, transparent)',
+    },
+    num: { fontFamily: 'var(--font-libre), serif', fontWeight: 400, color: '#f3e4c3' },
   },
   keraton: {
     section: { background: 'var(--kr-kawung-dark, none), linear-gradient(180deg, color-mix(in srgb, var(--p) 82%, #000), var(--p))', borderTop: '1px solid var(--s)', borderBottom: '1px solid var(--s)' },

@@ -1,0 +1,52 @@
+{
+  "designId": "pusako-minang",
+  "visualRevision": "concept-gate-01",
+  "cultureScope": "Minangkabau — Padang/Pariaman",
+  "formatPolicy": "raster-only-no-svg",
+  "canvas": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": "2:3"
+  },
+  "assets": {
+    "gateBackground": "gate-background.png",
+    "leftPanel": "left-panel.png",
+    "rightPanel": "right-panel.png",
+    "interactiveObject": "interactive-gonjong.png",
+    "closedPreview": "closed-preview.png",
+    "openingPreview": "opening-preview.png",
+    "motionSpec": "motion-spec.md"
+  },
+  "presentation": {
+    "backgroundFit": "cover",
+    "backgroundPosition": "center",
+    "panelMotion": "horizontal-ceremonial-reveal",
+    "interactiveObjectMotion": "press-lift-fade",
+    "primaryDurationMs": 1550,
+    "reducedMotionDurationMs": 320
+  },
+  "palette": {
+    "pusakoMaroon": "#681813",
+    "charcoalWood": "#211712",
+    "antiqueGold": "#B9853F",
+    "warmIvory": "#EFE1C4"
+  },
+  "rules": {
+    "productionTextBakedIn": false,
+    "movableAssetsTransparent": true,
+    "allowedMotifs": [
+      "gonjong",
+      "pucuak-rabuang",
+      "kaluak-paku",
+      "restrained-songket-geometry"
+    ],
+    "neverStackWith": [
+      "literal-suntiang-overlay",
+      "javanese-kayon",
+      "balinese-carving",
+      "mosque-dome",
+      "generic-arabesque",
+      "particle-effects"
+    ]
+  }
+}

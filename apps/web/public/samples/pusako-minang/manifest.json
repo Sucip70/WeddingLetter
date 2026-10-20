@@ -1,0 +1,48 @@
+{
+  "designId": "pusako-minang",
+  "assetType": "opaque-sample-prewedding-photography",
+  "cultureScope": "Minangkabau — Padang/Pariaman-inspired",
+  "palette": [
+    "#681813",
+    "#b9853f",
+    "#efe1c4",
+    "#211712"
+  ],
+  "assets": {
+    "cover": {
+      "file": "cover.webp",
+      "source": "sources/cover.png",
+      "dimensions": "1024x1536",
+      "ratio": "2:3"
+    },
+    "groom": {
+      "file": "groom.webp",
+      "source": "sources/groom.png",
+      "dimensions": "1024x1280",
+      "ratio": "4:5"
+    },
+    "bride": {
+      "file": "bride.webp",
+      "source": "sources/bride.png",
+      "dimensions": "1024x1280",
+      "ratio": "4:5"
+    },
+    "galleryRomantic": {
+      "file": "gallery-romantic.webp",
+      "source": "sources/gallery-romantic.png",
+      "dimensions": "1024x1280",
+      "ratio": "4:5"
+    },
+    "galleryWalking": {
+      "file": "gallery-walking.webp",
+      "source": "sources/gallery-walking.png",
+      "dimensions": "1536x960",
+      "ratio": "8:5"
+    }
+  },
+  "generation": {
+    "mode": "imagegen-new-image-with-reference-derived-variants",
+    "background": "opaque warm-ivory and soft-charcoal editorial studio",
+    "style": "photorealistic premium editorial pre-wedding photography"
+  }
+}

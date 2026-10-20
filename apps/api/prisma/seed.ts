@@ -8,7 +8,7 @@ import { DEMO_SLOTS, defaultKey } from "../src/demo-photos/demo-photos.slots.js"
 import { uploadDefaultFile } from "../src/demo-photos/demo-photos.service.js";
 import { StorageService } from "../src/storage/storage.service.js";
 import { autoPalettes, BASIC_DESIGN_IDS, BASIC_PALETTES, basicPalettes, DESIGNS } from "../src/templates/themes.js";
-import { seasonalArtworkFor } from "../src/templates/artwork.js";
+import { RASTER_ARTWORK, seasonalArtworkFor } from "../src/templates/artwork.js";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -44,21 +44,35 @@ const TIERS = {
 // Nama baris yang sudah ada sejak seed awal dipertahankan supaya pesanan lama tetap menunjuk ke template yang sama.
 const LEGACY_NAMES: Record<string, string> = { "BASIC:rustic": "Basic Rustic", "STANDARD:floral": "Standard Floral", "PREMIUM:elegant": "Premium Elegant" };
 
+const SEKAR_KERATON_DESIGN_ID = "jawa-sekar-keraton";
+// Desain beraset raster yang belum disetujui tampil sebagai DRAFT di katalog baru (Sekar Keraton sudah disetujui).
+const RASTER_DRAFT_DESIGN_IDS: string[] = ["pusako-minang", "horas-nauli"];
+const SEKAR_KERATON_SAMPLE_PHOTOS = {
+  cover: "/samples/sekar-keraton/cover.webp",
+  groom: "/samples/sekar-keraton/groom-v2.webp",
+  bride: "/samples/sekar-keraton/bride-v2.webp",
+  gallery1: "/samples/sekar-keraton/gallery-walking.webp",
+  gallery2: "/samples/sekar-keraton/gallery-romantic.webp",
+};
+
 function buildTemplates() {
-  const rows: { name: string; category: string; tier: "BASIC" | "STANDARD" | "PREMIUM"; price: number; includedWeeks: number; artworkVersionId?: string; layoutSchema: object }[] = [];
+  const rows: { name: string; category: string; tier: "BASIC" | "STANDARD" | "PREMIUM"; price: number; includedWeeks: number; status?: "DRAFT"; artworkVersionId?: string; layoutSchema: object }[] = [];
   for (const design of DESIGNS) {
     const palettes = design.id === "rustic" ? BASIC_PALETTES : autoPalettes(design);
     for (const tier of ["BASIC", "STANDARD", "PREMIUM"] as const) {
       if (tier === "BASIC" && !BASIC_DESIGN_IDS.includes(design.id)) continue;
       const cfg = TIERS[tier];
-      const artwork = seasonalArtworkFor(design.id);
+      const seasonalArtwork = seasonalArtworkFor(design.id);
+      const artwork = seasonalArtwork ?? RASTER_ARTWORK[design.id]?.();
       rows.push({
         name: LEGACY_NAMES[tier + ":" + design.id] ?? cfg.label + " " + design.name,
         category: design.group,
         tier,
         price: cfg.price,
         includedWeeks: 4,
-        ...(artwork ? { artworkVersionId: `seasonal-${design.id}-v1` } : {}),
+        // Desain raster baru tidak masuk katalog publik sebelum disetujui.
+        ...(RASTER_DRAFT_DESIGN_IDS.includes(design.id) ? { status: "DRAFT" as const } : {}),
+        ...(seasonalArtwork ? { artworkVersionId: `seasonal-${design.id}-v1` } : {}),
         layoutSchema: {
           // Gerbang pembuka hanya untuk Premium (admin bisa mengubahnya per template di builder).
           theme: { preset: design.id, fx: cfg.fx, gate: tier === "PREMIUM" ? design.gate : "none" },
@@ -66,6 +80,7 @@ function buildTemplates() {
           palettes: tier === "BASIC" ? basicPalettes(design.id) : palettes,
           sections: cfg.sections,
           ...(artwork ? { artwork } : {}),
+          ...(design.id === SEKAR_KERATON_DESIGN_ID ? { samplePhotos: SEKAR_KERATON_SAMPLE_PHOTOS } : {}),
           galeri: cfg.galeri,
           musik: { allowed: true },
         },
@@ -105,7 +120,11 @@ async function installDemoPhotos() {
 const RENAMED_TEMPLATES: Record<string, string> = {
   "Standard Kristiani Lily": "Standard Sepasang Merpati",
   "Premium Kristiani Lily": "Premium Sepasang Merpati",
+  // Peranakan Seruni diganti total oleh Hong Xi (desain & aset baru): barisnya diganti nama lalu skemanya ditimpa (lihat RESET_AFTER_RENAME).
+  "Standard Peranakan Seruni": "Standard Hong Xi",
+  "Premium Peranakan Seruni": "Premium Hong Xi",
 };
+const RESET_AFTER_RENAME = new Set(["Standard Hong Xi", "Premium Hong Xi"]);
 
 async function main() {
   for (const [from, to] of Object.entries(RENAMED_TEMPLATES)) {
@@ -113,16 +132,17 @@ async function main() {
     await prisma.template.updateMany({ where: { name: from }, data: { name: to } });
   }
   for (const t of templates) {
-    const existing = await prisma.template.findFirst({ where: { name: t.name }, select: { id: true } });
+    const existing = await prisma.template.findFirst({ where: { name: t.name }, select: { id: true, layoutSchema: true } });
     if (existing) {
       // Template yang sudah ada TIDAK ditimpa (perubahan admin di builder: tema, palet, gerbang, bagian, harga, status tetap
       // aman). Untuk sengaja memutakhirkan skema dari seed, jalankan dengan SEED_OVERWRITE_TEMPLATES=1.
-      if (process.env.SEED_OVERWRITE_TEMPLATES === "1") {
+      const overwriteSekarKeraton = process.env.SEED_OVERWRITE_SEKAR_KERATON === "1" && t.name.endsWith(" Sekar Keraton");
+      if (process.env.SEED_OVERWRITE_TEMPLATES === "1" || overwriteSekarKeraton || (RESET_AFTER_RENAME.has(t.name) && JSON.stringify(existing.layoutSchema ?? "").includes("peranakan-seruni"))) {
         await prisma.template.update({ where: { id: existing.id }, data: { layoutSchema: t.layoutSchema, includedWeeks: t.includedWeeks, category: t.category } });
         console.log(`Skema dimutakhirkan: ${t.name}`);
       }
     } else {
-      await prisma.template.create({ data: { ...t, status: "PUBLISHED" } });
+      await prisma.template.create({ data: { ...t, status: t.status ?? "PUBLISHED" } });
     }
   }
 

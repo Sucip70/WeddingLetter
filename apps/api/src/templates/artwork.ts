@@ -4,7 +4,7 @@ export const ARTWORK_SLOTS = [
   'coverBackground', 'coverForeground', 'pageBackground', 'sectionBackground',
   'topDecoration', 'bottomDecoration', 'cornerTopLeft', 'cornerTopRight',
   'cornerBottomLeft', 'cornerBottomRight', 'divider', 'photoFrame', 'texture',
-  'thumbnail', 'gateBackground', 'gateForeground', 'gateTransition', 'gateInteractive',
+  'thumbnail', 'gateBackground', 'gateForeground', 'gateTransition', 'gateInteractive', 'cardFrame',
 ] as const;
 export type ArtworkSlot = (typeof ARTWORK_SLOTS)[number];
 
@@ -125,3 +125,351 @@ export function seasonalArtworkFor(designId: string): ArtworkManifest | undefine
     fallback: {},
   });
 }
+
+// Sekar Keraton: raster artwork painted by The Artist (artwork-handoff/jawa/sekar-keraton/{content,kayon}-raster), served from
+// apps/web/public/themes/sekar-keraton/. Slot usage is specific to this design (sekar-keraton-cover/-sections/-gate.tsx):
+//   coverBackground = page-background (cover paper)     pageBackground = page-tile (mirrored, seamless vertical tile for the body)
+//   cornerTopLeft/BottomRight = carved corners          topDecoration = mini-kayon         divider = kawung divider
+//   sectionBackground = card-paper-panel                cardFrame = card-frame             photoFrame = photo mount (2:3)
+//   bottomDecoration = footer ornament                  gateBackground = gate-background   gateInteractive = kayon-wayang
+export function sekarKeratonArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/sekar-keraton/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'jawa-sekar-keraton',
+    artworkVersion: 2,
+    assets: {
+      coverBackground: { default: source('page-background', 1024, 1536, 236_000) },
+      pageBackground: { default: source('page-tile', 1024, 3072, 439_000) },
+      cornerTopLeft: { default: source('corner-top-left', 1155, 1048, 149_000) },
+      cornerBottomRight: { default: source('corner-bottom-right', 1155, 1048, 149_000) },
+      divider: { default: source('divider-kawung', 2208, 364, 108_000) },
+      topDecoration: { default: source('mini-kayon', 838, 1483, 232_000) },
+      sectionBackground: { default: source('card-paper-panel', 1000, 1250, 215_000) },
+      cardFrame: { default: source('card-frame', 1101, 1434, 135_000) },
+      photoFrame: { default: source('photo-frame', 1014, 1496, 126_000) },
+      bottomDecoration: { default: source('footer-ornament', 2234, 372, 109_000) },
+      gateBackground: { default: source('gate-background', 1024, 1536, 332_000) },
+      gateInteractive: { default: source('kayon-wayang', 1024, 1536, 454_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+  });
+}
+
+// Pusako Minang (Minangkabau, Padang/Pariaman): aset raster dari artwork-handoff/minangkabau/pusako-minang, dipangkas ke
+// bounding box-nya dan dipasang di apps/web/public/themes/pusako-minang/. Peta slot:
+//   coverBackground = page-background    pageBackground = page-tile (ubin cermin mulus)   gateBackground = gate-tile (ubin kain songket)
+//   cornerTopLeft/BottomRight = ukiran sudut   topDecoration = mini gonjong   divider = pucuak rabuang   bottomDecoration = ornamen penutup
+//   cardFrame = info-card (bingkai kayu, diiris 9 oleh CSS)   photoFrame = bingkai potret 2:3
+//   gateTransition/gateForeground = tiang kiri/kanan   gateInteractive = gonjong
+export function pusakoMinangArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/pusako-minang/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'pusako-minang',
+    artworkVersion: 1,
+    assets: {
+      coverBackground: { default: source('page-background', 1024, 1536, 253_000) },
+      pageBackground: { default: source('page-tile', 1024, 3072, 440_000) },
+      cornerTopLeft: { default: source('corner-top-left', 1100, 1105, 176_000) },
+      cornerBottomRight: { default: source('corner-bottom-right', 1100, 1105, 177_000) },
+      divider: { default: source('divider', 1996, 274, 112_000) },
+      topDecoration: { default: source('mini-gonjong', 1183, 652, 169_000) },
+      cardFrame: { default: source('info-card', 896, 1405, 263_000) },
+      photoFrame: { default: source('photo-frame', 892, 1413, 91_000) },
+      bottomDecoration: { default: source('footer', 2015, 297, 115_000) },
+      gateBackground: { default: source('gate-tile', 1024, 3072, 436_000) },
+      gateTransition: { default: source('gate-post-left', 323, 1497, 133_000) },
+      gateForeground: { default: source('gate-post-right', 323, 1497, 132_000) },
+      gateInteractive: { default: source('gate-gonjong', 1160, 868, 266_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+  });
+}
+
+// Horas Nauli (Batak Toba): aset raster dari artwork-handoff/batak-toba/horas-nauli, dipangkas ke bounding box-nya dan dipasang di
+// apps/web/public/themes/horas-nauli/. Struktur utama = ulos Ragi Hotang (tepi halaman, jilid kartu, pita, bingkai foto); gorga hanya aksen.
+//   coverBackground/pageBackground = page-tile (ubin cermin mulus)   divider = gorga ipon-ipon   topDecoration = simpul tenun mini
+//   bottomDecoration = pita ragi hotang (penutup)   cardFrame = info-card (jilid ulos atas-bawah)   photoFrame = bingkai potret
+//   gateBackground = gate-tile (kain arang + friezes)   gateTransition/gateForeground = panel ulos kiri/kanan   gateInteractive = simpul tenun
+export function horasNauliArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/horas-nauli/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'horas-nauli',
+    artworkVersion: 1,
+    assets: {
+      coverBackground: { default: source('page-tile', 1024, 3072, 463_000) },
+      pageBackground: { default: source('page-tile', 1024, 3072, 463_000) },
+      divider: { default: source('divider', 1934, 106, 82_000) },
+      topDecoration: { default: source('mini-knot', 795, 795, 184_000) },
+      bottomDecoration: { default: source('ribbon', 1981, 314, 305_000) },
+      cardFrame: { default: source('info-card', 917, 1393, 384_000) },
+      photoFrame: { default: source('photo-frame', 901, 1372, 197_000) },
+      gateBackground: { default: source('gate-tile', 1024, 3010, 261_000) },
+      gateTransition: { default: source('gate-panel-left', 675, 1512, 298_000) },
+      gateForeground: { default: source('gate-panel-right', 675, 1512, 296_000) },
+      gateInteractive: { default: source('gate-knot', 1123, 1121, 379_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+  });
+}
+
+// Pawiwahan Agung (Bali): aset raster dari artwork-handoff/bali/pawiwahan-agung (candi bentar batu paras, prada tua, merah bata; tanpa
+// figur pengantin/objek sakral), dipangkas ke bounding box-nya dan dipasang di apps/web/public/themes/pawiwahan-agung/.
+//   coverBackground/pageBackground = page-tile (ubin cermin mulus)   divider & bottomDecoration = prada   topDecoration = aksen section kecil
+//   cardFrame = info-card (bingkai penuh, diiris 9)   photoFrame = bingkai potret   cornerTopLeft/BottomRight = sudut batu paras
+//   gateBackground = candi bentar (tab bawaan sudah dihapus dari gambar)   gateTransition/gateForeground = panel prada kiri/kanan   gateInteractive = tab prada
+export function pawiwahanAgungArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/pawiwahan-agung/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'pawiwahan-agung',
+    artworkVersion: 1,
+    assets: {
+      coverBackground: { default: source('page-tile', 1024, 3072, 286_000) },
+      pageBackground: { default: source('page-tile', 1024, 3072, 286_000) },
+      cornerTopLeft: { default: source('corner-top-left', 947, 942, 122_000) },
+      cornerBottomRight: { default: source('corner-bottom-right', 978, 931, 124_000) },
+      divider: { default: source('divider', 1973, 137, 47_000) },
+      topDecoration: { default: source('accent', 531, 531, 71_000) },
+      bottomDecoration: { default: source('divider', 1973, 137, 47_000) },
+      cardFrame: { default: source('info-card', 858, 1229, 156_000) },
+      photoFrame: { default: source('photo-frame', 872, 1263, 132_000) },
+      gateBackground: { default: source('gate-bg', 1024, 1536, 391_000) },
+      gateTransition: { default: source('gate-panel-left', 315, 1536, 112_000) },
+      gateForeground: { default: source('gate-panel-right', 329, 1536, 114_000) },
+      gateInteractive: { default: source('gate-tab', 727, 970, 416_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+  });
+}
+
+// Hong Xi (Tionghoa Indonesia, tampilan modern): aset raster dari artwork-handoff/chinese-indonesian/.../source-renders-v2
+// (kertas merah berawan emas, lentera, koi, 囍, kipas), dipangkas dan dipasang di apps/web/public/themes/hong-xi/. Peta slot:
+//   coverBackground/gateBackground = page-bg (kertas merah berbingkai emas, ukuran cover)   pageBackground = page-tile (pita tengah, ubin cermin)   cornerTopLeft = sepasang lentera (selebar layar)
+//   cornerBottomRight = koi (selebar layar)   topDecoration = 囍 (medali)   divider = kipas + garis emas   bottomDecoration = koi
+//   cardFrame = kartu gading berbingkai emas (diiris 9)   photoFrame = bingkai emas   gateInteractive = 囍 (medali ketuk)
+export function hongXiArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/hong-xi/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'hong-xi',
+    artworkVersion: 1,
+    assets: {
+      coverBackground: { default: source('page-bg', 1024, 1536, 218_000) },
+      pageBackground: { default: source('page-tile', 1024, 1400, 130_000) },
+      gateBackground: { default: source('page-bg', 1024, 1536, 218_000) },
+      cornerTopLeft: { default: source('lanterns', 1024, 816, 131_000) },
+      cornerBottomRight: { default: source('koi', 1024, 536, 198_000) },
+      topDecoration: { default: source('xi', 1094, 1049, 389_000) },
+      divider: { default: source('divider', 2010, 372, 91_000) },
+      bottomDecoration: { default: source('koi', 1024, 536, 198_000) },
+      cardFrame: { default: source('info-card', 897, 1264, 165_000) },
+      photoFrame: { default: source('photo-frame', 926, 1243, 93_000) },
+      gateInteractive: { default: source('xi', 1094, 1049, 389_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+  });
+}
+
+// Noor-e-Nikah (Pakistan, pernikahan Muslim kontemporer berpengaruh Lahore): aset raster dari artwork-handoff/pakistan/noor-e-nikah (marmer gading,
+// zamrud, jali, inlay bunga; tanpa kaligrafi/bulan sabit), dipangkas dan dipasang di apps/web/public/themes/noor-e-nikah/.
+//   coverBackground/pageBackground = page-tile   cornerBottomRight = inlay bawah (selebar layar)   topDecoration = penanda jali   divider = pemisah jali
+//   cardFrame = kartu lengkung cusped (diiris 9; irisan atas memuat lengkung)   photoFrame = bingkai zamrud-emas   gateTransition/gateForeground = panel kiri/kanan
+//   gateInteractive = roset jali
+export function noorENikahArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/noor-e-nikah/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'noor-e-nikah',
+    artworkVersion: 1,
+    assets: {
+      coverBackground: { default: source('page-bg', 1024, 1536, 160_000) },
+      pageBackground: { default: source('page-tile', 1024, 1400, 60_000) },
+      cornerBottomRight: { default: source('inlay', 2123, 462, 614_000) },
+      topDecoration: { default: source('marker', 373, 367, 101_000) },
+      divider: { default: source('divider', 2089, 252, 82_000) },
+      bottomDecoration: { default: source('inlay', 2123, 462, 614_000) },
+      cardFrame: { default: source('info-card', 946, 1442, 106_000) },
+      photoFrame: { default: source('photo-frame', 1024, 1462, 294_000) },
+      gateTransition: { default: source('gate-panel-left', 529, 1536, 202_000) },
+      gateForeground: { default: source('gate-panel-right', 529, 1536, 200_000) },
+      gateInteractive: { default: source('gate-rosette', 912, 897, 475_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+  });
+}
+
+// Vivaha Rani (India Utara, pernikahan Hindu kontemporer): aset raster dari artwork-handoff/india/vivaha-rani (sutra rani/sindoor bersulam zardozi, paisley,
+// marigold, kertas chikan; tanpa dewa/mantra/simbol sakral), dipangkas dan dipasang di apps/web/public/themes/vivaha-rani/.
+//   coverBackground = page-bg   pageBackground = page-tile (pita tengah, cermin)   gateBackground = kertas toran   cornerBottomRight/bottomDecoration = border zardozi
+//   topDecoration = penanda genda   divider = pemisah paisley   cardFrame = kartu gading (diiris 9)   photoFrame = bingkai paisley-zardozi
+//   gateTransition/gateForeground = panel sutra kiri/kanan (jendela lengkung transparan)   gateInteractive = genda
+export function vivahaRaniArtwork(): ArtworkManifest {
+  const source = (file: string, width: number, height: number, sizeBytes: number) => ({
+    url: `/themes/vivaha-rani/${file}.webp`,
+    contentType: 'image/webp' as const,
+    width,
+    height,
+    sizeBytes,
+  });
+  return artworkManifestSchema.parse({
+    schemaVersion: 1,
+    designId: 'vivaha-rani',
+    artworkVersion: 1,
+    assets: {
+      coverBackground: { default: source('page-bg', 1024, 1536, 150_000) },
+      pageBackground: { default: source('page-tile', 1024, 780, 35_000) },
+      gateBackground: { default: source('gate-bg', 1024, 1536, 150_000) },
+      cornerBottomRight: { default: source('zardozi', 1400, 239, 316_000) },
+      bottomDecoration: { default: source('zardozi', 1400, 239, 316_000) },
+      topDecoration: { default: source('marker', 360, 343, 90_000) },
+      divider: { default: source('divider', 2106, 352, 146_000) },
+      cardFrame: { default: source('info-card', 860, 1208, 92_000) },
+      photoFrame: { default: source('photo-frame', 760, 985, 236_000) },
+      gateTransition: { default: source('gate-panel-left', 516, 1536, 289_000) },
+      gateForeground: { default: source('gate-panel-right', 516, 1536, 287_000) },
+      gateInteractive: { default: source('gate-rosette', 640, 607, 260_000) },
+    },
+    presentation: {
+      backgroundFit: 'cover',
+      backgroundPosition: 'center',
+      foregroundPosition: 'center',
+      foregroundMotion: 'none',
+      opacity: 1,
+      scale: 1,
+      backgroundLayer: 0,
+      decorationLayer: 2,
+      foregroundLayer: 3,
+      showOnOrnamentCover: true,
+      showOnPhotoCover: true,
+    },
+    fallback: { ornament: 'keraton', coverEffect: 'none', particle: 'dust' },
+  });
+}
+
+/** Desain beraset raster: id desain -> pembuat manifest (dipakai seed dan skrip sinkronisasi). */
+export const RASTER_ARTWORK: Record<string, () => ArtworkManifest> = {
+  'jawa-sekar-keraton': sekarKeratonArtwork,
+  'pusako-minang': pusakoMinangArtwork,
+  'horas-nauli': horasNauliArtwork,
+  'pawiwahan-agung': pawiwahanAgungArtwork,
+  'hong-xi': hongXiArtwork,
+  'noor-e-nikah': noorENikahArtwork,
+  'vivaha-rani': vivahaRaniArtwork,
+};

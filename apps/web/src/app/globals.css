@@ -908,6 +908,15 @@ body {
   min-height: 46px;
   white-space: normal;
 }
+/* Tema musim: karangan bawah setinggi --fgh (±lebar sampul), jadi teks dipusatkan di ruang di atasnya (bukan menumpuk di atas dengan celah kosong di bawah). */
+.wl-season-semi { --fgh: 54cqw; --fgm: 48cqw; }
+.wl-season-panas { --fgh: 46cqw; --fgm: 40cqw; }
+.wl-season-gugur { --fgh: 38cqw; --fgm: 34cqw; }
+.wl-season-salju { --fgh: 50cqw; --fgm: 44cqw; }
+.wl-final-seasonal-content.wl-final-fit { justify-content: center; padding: 6cqh 8cqw var(--fgh, 50cqw); }
+.wl-final-fit .wl-cover-guest { margin-top: 5cqh !important; }
+.wl-final-fit .wl-cover-cta { margin-top: 3.4cqh !important; }
+@media (max-height: 720px) { .wl-final-seasonal-content.wl-final-fit { padding-top: 4cqh; } }
 .wl-art-cover-breathe { animation: wl-art-cover-breathe 12s ease-in-out infinite alternate; transform-origin: center; }
 @keyframes wl-art-cover-breathe { from { transform: scale(1); } to { transform: scale(1.02); } }
 @media (max-height: 720px) {
@@ -933,6 +942,7 @@ body {
   padding: 13cqh 8cqw 7cqh;
   text-align: center;
 }
+.wl-seasonal-fit .wl-seasonal-paper-copy { justify-content: center; padding: 6cqh 8cqw var(--fgm, 44cqw); }
 .wl-seasonal-kicker { font-size: 0.72rem; line-height: 1.25; letter-spacing: .34em; text-transform: uppercase; opacity: .84; }
 .wl-seasonal-names {
   margin-top: 1.5cqh;
@@ -1098,3 +1108,109 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .wl-seasonal-photo-breathe { animation: none !important; }
 }
+
+/* ===== Kulit "raster" (Sekar Keraton, Pusako Minang): kertas berukir (ubin raster di akar), bingkai kayu sogan, pigura foto kertas, pemisah kawung ===== */
+.wl-root.wl-raster { --sk-maroon: #68252a; --sk-gold-d: #8a6326; --sk-ink: #3a291e; }
+.wl-raster .wl-pulse { animation: none !important; }
+.wl-raster .wl-shimmer { animation: none !important; background: none !important; color: inherit !important; -webkit-text-fill-color: currentColor !important; }
+.wl-raster .wl-block { padding: 4.25rem 7%; container-type: inline-size; }
+/* teks mengisi koridor tengah (relief tepi kertas ±17%); kartu & galeri boleh melebar ke tepinya */
+.wl-raster .sk-body { padding-inline: 9%; }
+.wl-raster .sk-body.sk-wide { padding-inline: 0; }
+.sk-h2 { margin: 0; font-family: var(--sk-display, var(--font-libre), Georgia, serif); font-size: 1.75rem; font-weight: 400; line-height: 1.2; color: var(--sk-title, var(--p)); }
+.sk-divider { display: block; width: min(52%, 210px); height: auto; margin: 0.85rem auto 0; user-select: none; }
+.sk-divider.sk-divider-sm { width: min(70%, 170px); margin: 0.9rem auto; }
+/* kartu informasi = panel kertas + bingkai kayu; aspek aset = tinggi minimum, isi yang lebih panjang menambah tinggi */
+.sk-card { position: relative; display: flex; margin-inline: -9%; aspect-ratio: 1101 / 1434; filter: drop-shadow(0 14px 16px rgba(58, 41, 30, 0.22)); }
+.sk-card-panel, .sk-card-frame { position: absolute; display: block; pointer-events: none; user-select: none; }
+.sk-card-panel { inset: 2.5% 3%; width: 94%; height: 95%; }
+.sk-card-frame { inset: 0; width: 100%; height: 100%; }
+.sk-card-body { position: relative; z-index: 2; display: flex; width: 100%; flex-direction: column; justify-content: center; padding: 17% 15% 13%; text-align: center; }
+.sk-card-body h3 { font-family: var(--font-source), sans-serif !important; font-size: 0.72rem !important; font-weight: 600 !important; letter-spacing: 0.32em; text-transform: uppercase; color: var(--sk-gold-d) !important; }
+.sk-card-body { color: var(--sk-card-ink, inherit); }
+.sk-card-body h3 { color: var(--sk-card-label, var(--sk-gold-d)) !important; }
+.sk-card-body .wl-ev-date { font-family: var(--sk-display, var(--font-libre), Georgia, serif); font-size: 1.2rem; font-weight: 400; line-height: 1.35; color: inherit; }
+.sk-card-body .wl-ev-time { font-size: 0.74rem; letter-spacing: 0.24em; opacity: 0.8; }
+.sk-card-body form { text-align: left; }
+.wl-raster .wl-card {
+  position: relative;
+  border: 0 !important;
+  border-radius: 2px !important;
+  background: var(--sk-panel) center / 100% 100% no-repeat, var(--sk-card-bg, #f0dfbd) !important;
+  box-shadow: 0 0 0 1px rgba(138, 99, 38, 0.55), inset 0 0 0 5px rgba(240, 223, 189, 0.9), inset 0 0 0 6px rgba(var(--sk-edge-rgb, 170, 125, 56), 0.45), 0 16px 24px -20px rgba(58, 41, 30, 0.55);
+}
+.wl-raster .wl-quote { font-family: var(--sk-display, var(--font-libre), Georgia, serif); font-size: 1.1rem; font-style: italic; line-height: 1.8; color: var(--sk-quote, var(--sk-ink)); }
+.wl-raster .wl-quote::before { content: ''; display: block; width: var(--sk-quote-w, 34px); height: var(--sk-quote-h, 60px); margin: 0 auto 14px; background: var(--sk-kayon) center / contain no-repeat; }
+.wl-raster .wl-btn {
+  background: var(--sk-btn-bg, var(--sk-maroon)) !important;
+  color: var(--sk-btn-fg, #f5e6c6) !important;
+  border: 1px solid rgba(var(--sk-edge-rgb, 170, 125, 56), 0.85);
+  border-radius: 2px !important;
+  font-family: var(--font-source), sans-serif;
+  font-size: 0.7rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  box-shadow: inset 0 0 0 2px var(--sk-btn-bg, var(--sk-maroon)), inset 0 0 0 3px rgba(var(--sk-edge-rgb, 170, 125, 56), 0.55) !important;
+}
+.wl-raster .wl-btn-o {
+  background: transparent !important;
+  color: var(--sk-maroon) !important;
+  border: 1px solid var(--sk-gold-d) !important;
+  border-radius: 2px !important;
+  font-family: var(--font-source), sans-serif;
+  font-size: 0.68rem !important;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.wl-raster form input, .wl-raster form textarea, .wl-raster form label, .wl-raster form button[aria-pressed] { border-radius: 2px !important; }
+.wl-raster form button[aria-pressed='true'], .wl-raster form button[type='submit'] {
+  background: var(--sk-btn-bg, var(--sk-maroon)) !important;
+  color: var(--sk-btn-fg, #f5e6c6) !important;
+  border: 1px solid rgba(var(--sk-edge-rgb, 170, 125, 56), 0.85) !important;
+  font-family: var(--font-source), sans-serif;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.wl-raster .wl-fab { background: var(--sk-btn-bg, var(--sk-maroon)) !important; border: 1px solid rgba(var(--sk-edge-rgb, 170, 125, 56), 0.85); color: var(--sk-btn-fg, #f5e6c6) !important; }
+.wl-raster .wl-gal { margin: 4px; border-radius: 2px !important; box-shadow: 0 0 0 3px #f0dfbd, 0 0 0 4px rgba(138, 99, 38, 0.7), 0 14px 22px -16px rgba(58, 41, 30, 0.55); }
+/* mempelai: pigura foto kertas (foto di belakang, pigura di depan) */
+.sk-person { position: relative; text-align: center; }
+.sk-person + .sk-person { margin-top: 5.2rem; }
+.sk-mount { position: relative; margin: 0 auto; width: min(82%, 310px); aspect-ratio: var(--sk-mount-ar, 1014 / 1496); filter: drop-shadow(0 14px 16px rgba(58, 41, 30, 0.28)); }
+.sk-person[data-side='l'] .sk-mount { transform: rotate(-1.4deg); }
+.sk-person[data-side='r'] .sk-mount { transform: rotate(1.4deg); }
+.sk-mount-photo { position: absolute; left: var(--sk-hole-l, 12.4%); top: var(--sk-hole-t, 8.4%); width: var(--sk-hole-w, 75.2%); height: var(--sk-hole-h, 82.8%); overflow: hidden; background: #d8c49b; }
+.sk-mount-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+.sk-mount-photo > span { display: flex; height: 100%; align-items: center; justify-content: center; font-family: var(--sk-display, var(--font-libre), serif); font-size: 4rem; color: var(--sk-maroon); }
+.sk-mount-frame { position: absolute; inset: 0; display: block; width: 100%; height: 100%; pointer-events: none; user-select: none; }
+.sk-role { margin: 1.4rem 0 0; font-family: var(--font-source), sans-serif; font-size: 0.62rem; font-weight: 600; line-height: 1.5; letter-spacing: 0.32em; text-transform: uppercase; color: var(--sk-label, var(--sk-gold-d)); }
+.sk-person-name { margin: 0.55rem 0 0; font-family: var(--sk-display, var(--font-libre), Georgia, serif); font-size: 1.65rem; font-weight: 400; line-height: 1.25; color: var(--sk-name, var(--sk-maroon)); }
+.sk-parents { margin: 0.7rem auto 0; max-width: 17rem; font-size: 0.84rem; line-height: 1.7; opacity: 0.85; }
+.sk-amp { position: absolute; left: 50%; bottom: -3.9rem; transform: translateX(-50%); font-family: var(--sk-display, var(--font-libre), Georgia, serif); font-size: 2.4rem; font-style: italic; color: var(--sk-label, var(--sk-gold-d)); }
+/* penutup */
+.sk-foot-kayon { display: block; width: var(--sk-foot-w, 3.9rem); height: auto; margin: 0 auto; }
+.sk-foot-names { margin: 0.9rem 0 0; font-family: var(--sk-display, var(--font-libre), Georgia, serif); font-size: 1.7rem; font-style: italic; line-height: 1.25; color: var(--sk-title, var(--p)); }
+.sk-foot-sill { display: block; width: min(78%, 300px); height: auto; margin: 1.1rem auto 0; }
+/* kartu 'sliced' (Pusako Minang): satu bingkai diiris 9, sudut berproporsi di tinggi berapa pun; penanda jadi mahkota di tepi atas */
+.sk-card.sk-card-sliced {
+  --cw: min(calc(var(--sk-card-w, 92) * 1cqw), 360px);
+  display: block;
+  box-sizing: border-box;
+  width: var(--cw);
+  /* auto gagal bila kartu lebih lebar dari wadahnya (margin jadi 0, kartu miring ke kanan): pusatkan dengan hitungan eksplisit */
+  margin: 3.4rem 0 0 calc((100% - var(--cw)) / 2);
+  aspect-ratio: auto;
+  min-height: calc(var(--cw) * 0.95);
+  border: solid transparent;
+  border-width: calc(var(--cw) * var(--sk-bt, 0.15)) calc(var(--cw) * var(--sk-br, 0.15)) calc(var(--cw) * var(--sk-bb, 0.15)) calc(var(--cw) * var(--sk-bl, 0.15));
+  border-image: var(--sk-card) var(--sk-slice, 135) fill / calc(var(--cw) * var(--sk-bt, 0.15)) calc(var(--cw) * var(--sk-br, 0.15)) calc(var(--cw) * var(--sk-bb, 0.15)) calc(var(--cw) * var(--sk-bl, 0.15)) stretch;
+  filter: drop-shadow(0 14px 16px rgba(33, 23, 18, 0.28));
+}
+.sk-card-sliced .sk-card-body { padding: calc(var(--cw) * var(--sk-card-pt, 0.025)) calc(var(--cw) * var(--sk-card-px, 0)) calc(var(--cw) * var(--sk-card-pb, 0.02)); }
+.sk-card-sliced .sk-card-crown { position: absolute; left: 50%; top: calc(var(--cw) * var(--sk-crown-top, -0.105)); z-index: 3; width: calc(var(--cw) * var(--sk-crown-w, 0.4)); height: auto; transform: translate(-50%, var(--sk-crown-y, -50%)); pointer-events: none; }
+.sk-card-sliced + .sk-card-sliced { margin-top: 4.6rem; }
+.skr-cover .sk-card.sk-card-sliced { --cw: 68cqw; margin: 0; }
+/* kartu sederhana (kotak salin rekening, buku tamu) di halaman gelap: teks gelap di atas kertas gading */
+.wl-raster .wl-card { color: var(--sk-card-ink, inherit); }

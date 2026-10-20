@@ -150,7 +150,7 @@ export default async function HomePage() {
               return (
                 <Link key={e.key} href={`/templates/${first.id}`} className="group overflow-hidden rounded-3xl border border-line bg-paper transition-shadow hover:shadow-xl hover:shadow-ink/5">
                   <div className="aspect-[4/5] overflow-hidden">
-                    <TemplateThumb theme={first.layout.theme} imageUrl={first.thumbnailUrl} className="transition-transform duration-500 group-hover:scale-[1.03]" />
+                    <TemplateThumb theme={first.layout.theme} imageUrl={first.thumbnailUrl} coverLayouts={first.layout.coverLayouts} coverDefault={first.layout.coverDefault} photos={photos} samplePhotos={first.layout.samplePhotos} artwork={first.layout.artwork} className="transition-transform duration-500 group-hover:scale-[1.03]" />
                   </div>
                   <div className="flex items-center justify-between gap-3 p-5">
                     <div>
