@@ -7,7 +7,7 @@ import type { CoverKind } from '@/lib/cover-layouts';
 import { rasterAsset, rasterTheme, rasterThemeVars } from './raster-theme';
 import { RasterCard } from './raster-sections';
 
-export type RasterCoverKind = Extract<CoverKind, 'ornamen' | 'bingkai' | 'berdua' | 'terbagi'>;
+export type RasterCoverKind = Extract<CoverKind, 'ornamen' | 'penuh' | 'bingkai' | 'berdua' | 'terbagi'>;
 
 interface CoverProps {
   kind: RasterCoverKind;
@@ -95,6 +95,16 @@ export function RasterCover(p: CoverProps) {
         </>
       )}
 
+      {/* 05 Foto penuh: foto pasangan memenuhi layar, gradasi gelap di bawah, garis emas ganda di dalam tepi, tulisan terang di bawah. */}
+      {p.kind === 'penuh' && (
+        <>
+          {photo && <div className="skr-p-photo"><img src={photo} alt="Foto pasangan" /></div>}
+          <div className="skr-p-shade" aria-hidden />
+          <div className="skr-p-frame" aria-hidden />
+          <div className="skr-copy skr-p-copy"><Copy p={p} divider={divider} /></div>
+        </>
+      )}
+
       {/* 03 Berdua: dua pigura berukuran sama, sedikit bertumpuk dan miring. */}
       {p.kind === 'berdua' && (
         <>
@@ -167,6 +177,13 @@ const SEKAR_CSS = `
 .skr-cover[data-animated=true] .skr-mount,.skr-cover[data-animated=true] .skr-t-box{animation:skr-rise .85s cubic-bezier(.2,.75,.2,1) both}.skr-cover[data-animated=true] .skr-o-kayon{animation:skr-breathe 4.5s ease-in-out infinite alternate}
 .skr-cover[data-animated=true] .skr-d-right{animation-delay:.12s}
 @keyframes skr-rise{from{opacity:0;translate:0 18px}to{opacity:1;translate:0 0}}@keyframes skr-breathe{to{transform:translate(-50%,-5px)}}
+/* 05 Foto penuh */
+.skr-p-photo{position:absolute;inset:0;z-index:1;background:#2a1a12}.skr-p-photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 30%}
+.skr-p-shade{position:absolute;inset:0;z-index:2;background:linear-gradient(180deg,rgba(20,10,6,.35) 0%,rgba(20,10,6,0) 22%,rgba(20,10,6,0) 42%,rgba(20,10,6,.62) 66%,rgba(20,10,6,.9) 100%)}
+.skr-p-frame{position:absolute;inset:3.5cqw;z-index:3;border:1px solid rgba(var(--sk-edge-rgb,170,125,56),.85);pointer-events:none}.skr-p-frame::after{content:"";position:absolute;inset:5px;border:1px solid rgba(var(--sk-edge-rgb,170,125,56),.45)}
+.skr-p-copy{top:auto;bottom:8cqh;left:12cqw;right:12cqw;--skr-ink:#f8eedb;--skr-sogan:rgb(var(--sk-edge-rgb,226,190,120));--skr-name:clamp(32px,10cqw,44px);--skr-m1:1.4cqh;--skr-m2:1.8cqh;--skr-gap:1.6cqh;--skr-m3:2.6cqh;text-shadow:0 2px 12px rgba(0,0,0,.55)}
+.skr-p-copy .skr-kicker,.skr-p-copy .skr-date{color:#ecd29a}.skr-p-copy .skr-guest{color:rgba(248,238,219,.82)}
+.skr-cover[data-long=true] .skr-p-copy{--skr-name:clamp(28px,8.6cqw,38px)}
 /* Kanvas pendek (mis. 360x640): rapatkan tanpa mengubah komposisi. */
 @container (max-height:720px){.skr-o-kayon{top:5cqh;width:calc(var(--sk-marker-w,27cqw)*.82)}.skr-o-copy{top:27cqh;bottom:9cqh;--skr-m1:2cqh;--skr-m2:2cqh;--skr-gap:1.8cqh;--skr-m3:2.8cqh}.skr-b-mount{top:2.5cqh;width:54cqw}.skr-b-copy{top:53.5cqh;bottom:4cqh;--skr-gap:1.1cqh}.skr-d-mount{width:43cqw;top:4cqh}.skr-d-left{left:6cqw}.skr-d-right{left:51cqw;top:6cqh}.skr-d-copy{top:39cqh;bottom:7cqh;--skr-gap:1.6cqh;--skr-m3:2.6cqh}.skr-t-box{top:40cqh;width:76cqw}.skr-t-sliced{top:41cqh}.skr-t-photo{height:56cqh}}
 @media (prefers-reduced-motion:reduce){.skr-cover *{animation:none!important;transition:none!important}}

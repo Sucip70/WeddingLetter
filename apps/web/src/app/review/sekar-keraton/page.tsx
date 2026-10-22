@@ -68,11 +68,12 @@ const ARTWORKS: Record<string, ArtworkManifest> = {
   }),
 };
 
-const reviewKinds = ['ornamen', 'bingkai', 'berdua', 'terbagi'] as const;
+const reviewKinds = ['ornamen', 'penuh', 'bingkai', 'berdua', 'terbagi'] as const;
 type ReviewKind = (typeof reviewKinds)[number];
 
 const labels: Record<ReviewKind, string> = {
   ornamen: 'Ornamen',
+  penuh: 'Foto penuh',
   bingkai: 'Foto Berbingkai',
   berdua: 'Berdua',
   terbagi: 'Terbagi',
@@ -80,6 +81,7 @@ const labels: Record<ReviewKind, string> = {
 
 const references: Record<ReviewKind, string> = {
   ornamen: `${ROOT}/reference-ornamen.webp`,
+  penuh: `${ROOT}/reference-couple.webp`,
   bingkai: `${ROOT}/reference-bingkai.webp`,
   berdua: `${ROOT}/reference-berdua.webp`,
   terbagi: `${ROOT}/reference-terbagi.webp`,

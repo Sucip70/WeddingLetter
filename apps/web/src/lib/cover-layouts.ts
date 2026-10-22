@@ -40,7 +40,7 @@ const THEME_BY_DESIGN: Record<string, CoverKind> = {
 // Untuk pratinjau di builder (paket & tema belum tersimpan). Undangan sungguhan memakai daftar dari API.
 // Layout khusus tema yang juga tersedia di Standard (sinkron dengan STANDARD_THEME_COVERS di API).
 const STANDARD_THEME_COVERS: readonly string[] = ['emas', 'bunga'];
-const SEKAR_KERATON_REVIEW_COVERS: CoverKind[] = ['ornamen', 'bingkai', 'berdua', 'terbagi'];
+const SEKAR_KERATON_REVIEW_COVERS: CoverKind[] = ['ornamen', 'penuh', 'bingkai', 'berdua', 'terbagi'];
 
 export function coverLayoutsFor(tier: Tier, motif: string): CoverKind[] {
   if (tier === 'BASIC') return [];
