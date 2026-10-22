@@ -20,6 +20,8 @@ export interface RasterSlicedCard {
   pad: { t: number; x: number; b: number };
   /** Lebar kartu dalam cqw lebar bagian (README aset: 74-84% lebar layar). */
   w: number;
+  /** Panel kertas (sectionBackground) dipasang di bawah bingkai, untuk bingkai yang bagian tengahnya transparan. */
+  panel?: boolean;
 }
 
 export interface RasterTheme {
@@ -47,6 +49,12 @@ export interface RasterTheme {
    *               dipasang sebagai mahkota di tepi atas (Pusako Minang).
    */
   card: { kind: 'panel' } | RasterSlicedCard;
+  /**
+   * Kartu di bagian isi (acara, RSVP), bila berbeda dari kartu sampul. Bingkai yang diregangkan utuh (kind 'panel') ikut
+   * memipih/memanjang saat isi kartu lebih tinggi dari rasio asetnya (layar sempit, mis. 360px): ornamen atas-bawah
+   * jadi lebih tebal dari padding sehingga teks menabrak bingkai. Versi iris-9 menjaga ketebalan bingkai tetap.
+   */
+  contentCard?: RasterSlicedCard;
   /** Lebar relief sudut di sampul 'ornamen' (cqw); bawaan 25. */
   cornerW?: number;
   /** Lebar bingkai foto di sampul "bingkai" (cqw); bawaan 71. */
@@ -68,6 +76,8 @@ export const RASTER_THEMES: Record<string, RasterTheme> = {
     mountAspect: '1014 / 1496',
     markerCover: '27cqw', markerQuote: { w: '34px', h: '60px' }, markerFoot: '3.9rem',
     card: { kind: 'panel' },
+    // card-frame.png 1101x1434: lubang tengah 132..967 x 196..1248 (bounding box alfa).
+    contentCard: { kind: 'sliced', imgW: 1101, slice: [205, 140, 195, 140], pad: { t: 0.02, x: 0.03, b: 0.02 }, w: 94, panel: true },
     edgeRgb: '170, 125, 56',
   },
   'pusako-minang': {
@@ -177,22 +187,23 @@ export function rasterThemeVars(designId: string | undefined): CSSProperties {
   if (t.vars) Object.assign(vars, t.vars);
   if (t.mountW) vars['--sk-b-w'] = `${t.mountW}cqw`;
   if (t.cornerW) vars['--sk-corner-w'] = `${t.cornerW}cqw`;
-  if (t.card.kind === 'sliced') {
-    const [st, sr, sb, sl] = t.card.slice;
-    vars['--sk-slice'] = t.card.slice.join(' ');
-    vars['--sk-bt'] = String(st / t.card.imgW);
-    vars['--sk-br'] = String(sr / t.card.imgW);
-    vars['--sk-bb'] = String(sb / t.card.imgW);
-    vars['--sk-bl'] = String(sl / t.card.imgW);
-    if (t.card.crown) {
-      vars['--sk-crown-w'] = String(t.card.crown.w);
-      vars['--sk-crown-top'] = String(t.card.crown.top);
-      vars['--sk-crown-y'] = t.card.crown.y;
+  const sc = t.contentCard ?? (t.card.kind === 'sliced' ? t.card : undefined);
+  if (sc) {
+    const [st, sr, sb, sl] = sc.slice;
+    vars['--sk-slice'] = sc.slice.join(' ');
+    vars['--sk-bt'] = String(st / sc.imgW);
+    vars['--sk-br'] = String(sr / sc.imgW);
+    vars['--sk-bb'] = String(sb / sc.imgW);
+    vars['--sk-bl'] = String(sl / sc.imgW);
+    if (sc.crown) {
+      vars['--sk-crown-w'] = String(sc.crown.w);
+      vars['--sk-crown-top'] = String(sc.crown.top);
+      vars['--sk-crown-y'] = sc.crown.y;
     }
-    vars['--sk-card-pt'] = String(t.card.pad.t);
-    vars['--sk-card-px'] = String(t.card.pad.x);
-    vars['--sk-card-pb'] = String(t.card.pad.b);
-    vars['--sk-card-w'] = String(t.card.w);
+    vars['--sk-card-pt'] = String(sc.pad.t);
+    vars['--sk-card-px'] = String(sc.pad.x);
+    vars['--sk-card-pb'] = String(sc.pad.b);
+    vars['--sk-card-w'] = String(sc.w);
   }
   return vars as CSSProperties;
 }
