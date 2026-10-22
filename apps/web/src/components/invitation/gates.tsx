@@ -124,7 +124,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
     }
   };
   return (
-    <div className={`wl-gate-host ${embedded ? 'absolute inset-x-0 top-0 z-[60] h-[810px]' : 'fixed inset-y-0 left-1/2 z-[60] w-full max-w-[480px] -translate-x-1/2'}`}>
+    <div className={`wl-gate-host ${embedded ? 'absolute inset-x-0 top-0 z-[60] h-full' : 'fixed inset-y-0 left-1/2 z-[60] w-full max-w-[480px] -translate-x-1/2'}`}>
       <style>{GATE_CSS}</style>
       <div
         className="wl-gate"
