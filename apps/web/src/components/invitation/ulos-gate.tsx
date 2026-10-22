@@ -56,7 +56,7 @@ const GATE_CSS = `
 .ug-kicker{top:13.2%;font-family:var(--font-source),sans-serif;font-size:clamp(8.5px,2.45cqw,10.5px);font-weight:600;letter-spacing:.32em;text-transform:uppercase;color:var(--ug-copper)}
 .ug-names{top:17.4%;left:27%;right:27%;font-family:var(--font-libre),Georgia,serif;font-size:clamp(26px,8.2cqw,35px);font-style:italic;font-weight:400;line-height:1.16;text-wrap:balance;overflow-wrap:anywhere;color:var(--ug-bone);text-shadow:0 2px 14px rgba(0,0,0,.7)}
 .ug[data-long=true] .ug-names{font-size:clamp(21px,6.6cqw,29px)}
-.ug-guest{top:37%;display:flex;flex-direction:column;gap:.3em;font-family:var(--font-source),sans-serif;font-size:clamp(9.5px,2.6cqw,11.5px);letter-spacing:.1em;color:rgba(233,221,200,.75)}.ug-guest strong{font-family:var(--font-libre),Georgia,serif;font-size:clamp(14px,4.2cqw,18px);font-weight:400;letter-spacing:0;color:var(--ug-bone);overflow-wrap:anywhere}
+.ug-guest{top:37%;left:27%;right:27%;display:flex;flex-direction:column;gap:.3em;font-family:var(--font-source),sans-serif;font-size:clamp(9.5px,2.6cqw,11.5px);letter-spacing:.1em;color:rgba(233,221,200,.75)}.ug-guest strong{font-family:var(--font-libre),Georgia,serif;font-size:clamp(12px,3.5cqw,16px);font-weight:400;letter-spacing:0;color:var(--ug-bone);overflow-wrap:anywhere}
 .ug-panel{position:absolute;top:0;z-index:2;display:block;width:65.92%;height:98.44%;max-width:none;will-change:transform;filter:drop-shadow(0 10px 18px rgba(0,0,0,.55));transition:transform .99s cubic-bezier(.22,.72,.18,1) .43s}
 .ug-panel-l{left:0}.ug-panel-r{left:34.08%}
 .ug-knot{position:absolute;left:50%;top:71.6%;z-index:3;width:15.5%;transform:translate(-50%,-50%)}
