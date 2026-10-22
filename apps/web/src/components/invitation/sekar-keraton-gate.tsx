@@ -4,6 +4,7 @@
 import type { CSSProperties } from 'react';
 import type { ArtworkManifest, ArtworkSlot } from '@/lib/types';
 import type { GatePhase } from './gates';
+import { STRINGS } from './i18n';
 
 function asset(artwork: ArtworkManifest, slot: ArtworkSlot) {
   const layer = artwork.assets[slot];
@@ -47,7 +48,7 @@ export function SekarKeratonGate({ artwork, phase, names, kicker, guest, cta, pr
       <div className="skg-copy">
         <p className="skg-kicker">{kicker}</p>
         <h1 className="skg-names">{names}</h1>
-        {guest && <p className="skg-guest"><span>Kepada Yth.</span><strong>{guest}</strong></p>}
+        <p className="skg-guest"><span>{STRINGS.id.dear}</span><strong>{guest || STRINGS.id.guestFallback}</strong></p>
         {cta && <p className="skg-cta">{cta}</p>}
       </div>
     </div>

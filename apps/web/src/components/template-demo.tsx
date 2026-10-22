@@ -12,37 +12,21 @@ import { PhoneFrame } from './invitation/phone-frame';
 import { PauseIcon, PlayIcon } from './invitation/ornaments';
 import { LinkButton } from './ui';
 
-const PREVIEW_WIDTH = 390;
-const PREVIEW_HEIGHT = 810;
-
 function FullscreenPreview({ children, onClose }: { children: ReactNode; onClose: () => void }) {
-  const areaRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.5);
-
-  useEffect(() => {
-    const area = areaRef.current;
-    if (!area) return;
-    const resize = () => {
-      const { width, height } = area.getBoundingClientRect();
-      setScale(Math.max(0.35, Math.min(1, (width - 24) / PREVIEW_WIDTH, (height - 24) / PREVIEW_HEIGHT)));
-    };
-    resize();
-    const observer = new ResizeObserver(resize);
-    observer.observe(area);
-    return () => observer.disconnect();
-  }, []);
-
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-[#171210]" role="dialog" aria-modal="true" aria-labelledby="preview-title">
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-white/15 bg-[#211a17] px-4 text-white sm:px-6">
-        <div>
-          <p id="preview-title" className="text-sm font-semibold">Pratinjau template</p>
-          <p className="text-[11px] text-white/65">Geser di dalam undangan untuk menjelajah</p>
-        </div>
-        <button type="button" autoFocus onClick={onClose} className="flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xl leading-none hover:bg-white/20" aria-label="Tutup pratinjau">×</button>
-      </div>
-      <div ref={areaRef} className="flex min-h-0 flex-1 items-center justify-center overflow-hidden p-2 sm:p-4">
-        <PhoneFrame scale={scale}>{children}</PhoneFrame>
+    <div className="fixed inset-0 z-[100] overflow-hidden bg-[#171210]" role="dialog" aria-modal="true" aria-label="Pratinjau template layar penuh">
+      <div className="relative mx-auto h-full w-full max-w-[480px] overflow-hidden bg-white shadow-[0_0_80px_rgba(0,0,0,0.55)]">
+        {children}
+        <button
+          type="button"
+          autoFocus
+          onClick={onClose}
+          className="absolute right-3 z-[120] flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/40 bg-black/55 text-2xl leading-none text-white shadow-lg backdrop-blur-md transition hover:bg-black/75 focus-visible:ring-4 focus-visible:ring-white/70"
+          style={{ top: 'max(0.75rem, env(safe-area-inset-top))' }}
+          aria-label="Tutup pratinjau"
+        >
+          &times;
+        </button>
       </div>
     </div>
   );
