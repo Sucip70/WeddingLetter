@@ -124,7 +124,7 @@ export function TemplateThumb({
 
   // Desain beraset raster (Sekar Keraton, Pusako Minang, Horas Nauli): miniatur = sampul aslinya (aset lukisan), bukan tiruan dari motif.
   if (artwork && isRasterDesign(artwork.designId)) {
-    const rasterKinds = ['ornamen', 'bingkai', 'berdua', 'terbagi'] as const;
+    const rasterKinds = ['ornamen', 'penuh', 'bingkai', 'berdua', 'terbagi'] as const;
     const kind: RasterCoverKind = rasterKinds.find((k) => k === resolved) ?? 'ornamen';
     return (
       <RasterCoverThumb

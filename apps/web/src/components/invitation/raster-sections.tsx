@@ -42,12 +42,17 @@ export function RasterDivider({ artwork, className = '' }: { artwork?: ArtworkMa
 
 /** Kartu informasi: panel kertas + bingkai kayu sogan & emas. Tinggi mengikuti isi (rasio aset adalah tinggi minimum). */
 export function RasterCard({ artwork, children, className = '' }: { artwork?: ArtworkManifest; children: ReactNode; className?: string }) {
-  if (rasterTheme(artwork?.designId)?.card.kind === 'sliced' && artwork) {
-    const cardCfg = rasterTheme(artwork.designId)?.card;
-    const crown = cardCfg?.kind === 'sliced' && cardCfg.crown ? rasterAsset(artwork, 'topDecoration') : undefined;
+  const theme = rasterTheme(artwork?.designId);
+  const sliced = theme?.contentCard ?? (theme?.card.kind === 'sliced' ? theme.card : undefined);
+  if (sliced && artwork) {
+    const crown = sliced.crown ? rasterAsset(artwork, 'topDecoration') : undefined;
     const card = rasterAsset(artwork, 'cardFrame');
+    const panel = sliced.panel ? rasterAsset(artwork, 'sectionBackground') : undefined;
     return (
-      <div className={`sk-card sk-card-sliced ${className}`} style={card ? ({ '--sk-card': `url(${card})` } as CSSProperties) : undefined}>
+      <div
+        className={`sk-card sk-card-sliced ${panel ? 'sk-card-paneled' : ''} ${className}`}
+        style={card ? ({ '--sk-card': `url(${card})`, ...(panel ? { '--sk-card-panel': `url(${panel})` } : null) } as CSSProperties) : undefined}
+      >
         {crown && <img src={crown} alt="" className="sk-card-crown" draggable={false} />}
         <div className="sk-card-body">{children}</div>
       </div>

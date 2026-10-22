@@ -329,7 +329,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const photoCover = coverKind && coverKind !== 'ornamen' ? coverKind : null;
   const seasonalPhotoCover = finalSeasonalCover && photoCover && artwork && ['semi', 'panas', 'gugur', 'salju'].includes(artwork.designId);
   const rasterCover = isRasterDesign(artwork?.designId);
-  const rasterCoverKind = coverKind === 'bingkai' || coverKind === 'berdua' || coverKind === 'terbagi' ? coverKind : 'ornamen';
+  const rasterCoverKind = coverKind === 'penuh' || coverKind === 'bingkai' || coverKind === 'berdua' || coverKind === 'terbagi' ? coverKind : 'ornamen';
 
   const galleryPhotos = list(data, 'galeri', 'foto').map(url).filter((x): x is string => !!x);
   const galleryVideos = list(data, 'galeri', 'video').map(url).filter((x): x is string => !!x);

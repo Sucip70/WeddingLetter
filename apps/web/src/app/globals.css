@@ -1211,6 +1211,8 @@ body {
 .sk-card-sliced .sk-card-body { padding: calc(var(--cw) * var(--sk-card-pt, 0.025)) calc(var(--cw) * var(--sk-card-px, 0)) calc(var(--cw) * var(--sk-card-pb, 0.02)); }
 .sk-card-sliced .sk-card-crown { position: absolute; left: 50%; top: calc(var(--cw) * var(--sk-crown-top, -0.105)); z-index: 3; width: calc(var(--cw) * var(--sk-crown-w, 0.4)); height: auto; transform: translate(-50%, var(--sk-crown-y, -50%)); pointer-events: none; }
 .sk-card-sliced + .sk-card-sliced { margin-top: 4.6rem; }
+/* bingkai bertengah transparan (Sekar Keraton): panel kertas mengisi bagian dalam, sedikit masuk ke bawah bingkai */
+.sk-card-sliced.sk-card-paneled { background: var(--sk-card-panel) center / 94% 96% no-repeat border-box; }
 .skr-cover .sk-card.sk-card-sliced { --cw: 68cqw; margin: 0; }
 /* kartu sederhana (kotak salin rekening, buku tamu) di halaman gelap: teks gelap di atas kertas gading */
 .wl-raster .wl-card { color: var(--sk-card-ink, inherit); }

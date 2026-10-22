@@ -24,8 +24,8 @@ describe('tata letak sampul', () => {
     expect(availableCoverLayouts('STANDARD', 'buket')).toEqual([...GENERIC_COVERS, 'bunga']); // Lengkung bunga juga untuk Standard
     expect(availableCoverLayouts('PREMIUM', 'rustic')).toEqual([...GENERIC_COVERS]); // tanpa layout khusus
     expect(availableCoverLayouts('STANDARD', 'elegant')).toEqual([...GENERIC_COVERS, 'emas']); // Bingkai emas juga untuk Standard Elegan
-    expect(availableCoverLayouts('STANDARD', 'jawa-sekar-keraton')).toEqual(['ornamen', 'bingkai', 'berdua', 'terbagi']);
-    expect(availableCoverLayouts('PREMIUM', 'jawa-sekar-keraton')).toEqual(['ornamen', 'bingkai', 'berdua', 'terbagi']);
+    expect(availableCoverLayouts('STANDARD', 'jawa-sekar-keraton')).toEqual(['ornamen', 'penuh', 'bingkai', 'berdua', 'terbagi']);
+    expect(availableCoverLayouts('PREMIUM', 'jawa-sekar-keraton')).toEqual(['ornamen', 'penuh', 'bingkai', 'berdua', 'terbagi']);
   });
 
   it('withCoverLayouts mengisi daftar sesuai paket & motif template', () => {
