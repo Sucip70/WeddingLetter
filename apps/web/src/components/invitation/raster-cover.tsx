@@ -71,11 +71,12 @@ export function RasterCover(p: CoverProps) {
   const cardFrame = rasterAsset(p.artwork, 'cardFrame');
   const photoFrame = rasterAsset(p.artwork, 'photoFrame');
   const photo = p.photo ?? p.groom ?? p.bride;
+  const set = p.kind === 'bingkai' ? rasterTheme(p.artwork.designId)?.bingkaiSet : undefined;
 
   return (
     <div className="skr-cover" style={rasterThemeVars(p.artwork.designId)} data-kind={p.kind} data-long={p.names.length > 22 ? 'true' : 'false'} data-animated={p.animated ? 'true' : 'false'}>
       <style>{SEKAR_CSS}</style>
-      <div className="skr-paper" style={paper ? { backgroundImage: `url(${paper})`, ...(fullPaper ? { backgroundSize: 'cover', backgroundRepeat: 'no-repeat' } : null) } : undefined} />
+      <div className="skr-paper" style={set ? { backgroundImage: `url(${set.paper})`, backgroundSize: 'cover', backgroundRepeat: 'no-repeat' } : paper ? { backgroundImage: `url(${paper})`, ...(fullPaper ? { backgroundSize: 'cover', backgroundRepeat: 'no-repeat' } : null) } : undefined} />
 
       {/* 01 Ornamen: kertas berukir + sudut ukir + mini kayon sebagai titik upacara di atas teks; tanpa foto. */}
       {p.kind === 'ornamen' && (
@@ -90,8 +91,19 @@ export function RasterCover(p: CoverProps) {
       {/* 02 Foto Berbingkai: satu foto dominan dalam pigura kertas bersudut ukir. */}
       {p.kind === 'bingkai' && (
         <>
-          <Mount frame={photoFrame} photo={photo} alt="Foto pasangan" className="skr-b-mount" onError={p.onAssetError} />
-          <div className="skr-copy skr-b-copy"><Copy p={p} divider={divider} /></div>
+          {set && <Art src={set.top} className="skr-b-top" onError={p.onAssetError} />}
+          {set && <Art src={set.bottom} className="skr-b-bottom" onError={p.onAssetError} />}
+          <div className={`skr-b-stack ${set ? 'skr-b-stack-set' : ''}`}>
+            <Mount
+              frame={set?.frame ?? photoFrame}
+              photo={photo}
+              alt="Foto pasangan"
+              className="skr-b-mount"
+              style={set ? ({ '--sk-mount-ar': set.aspect, '--sk-hole-l': `${set.hole.l}%`, '--sk-hole-t': `${set.hole.t}%`, '--sk-hole-w': `${set.hole.w}%`, '--sk-hole-h': `${set.hole.h}%` } as CSSProperties) : undefined}
+              onError={p.onAssetError}
+            />
+            <div className="skr-copy skr-b-copy"><Copy p={p} divider={set?.divider ?? divider} /></div>
+          </div>
         </>
       )}
 
@@ -162,8 +174,20 @@ const SEKAR_CSS = `
 .skr-o-kayon{position:absolute;z-index:3;left:50%;top:7.5cqh;display:block;width:var(--sk-marker-w,27cqw);height:auto;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 6px 8px rgba(58,41,30,.25))}
 .skr-o-copy{top:32cqh;bottom:var(--sk-o-bottom,13cqh);--skr-name:var(--sk-name-size,clamp(36px,12cqw,50px));--skr-m1:3cqh;--skr-m2:3.2cqh;--skr-gap:2.6cqh;--skr-m3:4.4cqh}.skr-cover[data-long=true] .skr-o-copy{--skr-name:clamp(30px,9.3cqw,40px)}
 /* 02 Foto Berbingkai */
-.skr-b-mount{left:50%;top:3.4cqh;width:var(--sk-b-w,71cqw);transform:translateX(-50%)}
-.skr-b-copy{top:52.5cqh;bottom:7cqh;--skr-name:clamp(30px,9.6cqw,40px);--skr-m1:1.5cqh;--skr-m2:1.7cqh;--skr-gap:1.5cqh;--skr-m3:2.2cqh}.skr-cover[data-long=true] .skr-b-copy{--skr-name:clamp(27px,8.4cqw,35px)}
+/* foto + tulisan = satu tumpukan yang dipusatkan vertikal; lebar foto dibatasi tinggi kanvas supaya tulisan selalu muat */
+.skr-b-stack{position:absolute;inset:6cqh 0 5cqh;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3.2cqh}
+/* set khusus (Pendopo Emas): kanopi & fondasi selebar kanvas; tumpukan diletakkan di antaranya, tombol pil marun berbingkai emas */
+.skr-b-stack.skr-b-stack-set{top:calc(18.5cqw + 2.5cqh);bottom:calc(14cqw + 2.5cqh);gap:3cqh}
+.skr-b-stack-set .skr-b-mount{width:min(62cqw,27cqh)}
+.skr-b-stack-set .skr-b-copy{--skr-name:clamp(34px,11cqw,46px);--skr-m1:1.2cqh;--skr-m2:1.4cqh;--skr-gap:1.6cqh;--skr-m3:2.6cqh}
+.skr-b-stack-set .skr-divider{width:min(32cqw,130px)}
+.skr-b-stack-set .skr-button{border-radius:999px;padding:0 2.6em;text-transform:none;letter-spacing:.04em;font-family:var(--sk-display,var(--font-libre),Georgia,serif);font-size:clamp(13px,3.7cqw,16px);font-weight:400}
+.skr-b-stack-set .skr-names{color:var(--skr-maroon)}
+.skr-b-stack .skr-mount{position:relative;flex:none}
+.skr-b-mount{width:min(var(--sk-b-w,74cqw),33cqh)}
+.skr-b-stack .skr-copy{position:relative;inset:auto;width:68cqw;flex:none}
+.skr-b-top,.skr-b-bottom{position:absolute;left:0;z-index:2;display:block;width:100%;height:auto;pointer-events:none;user-select:none}.skr-b-top{top:0}.skr-b-bottom{bottom:0}
+.skr-b-copy{--skr-name:clamp(30px,9.6cqw,40px);--skr-m1:1.5cqh;--skr-m2:1.7cqh;--skr-gap:1.5cqh;--skr-m3:2.2cqh}.skr-cover[data-long=true] .skr-b-copy{--skr-name:clamp(27px,8.4cqw,35px)}
 /* 03 Berdua */
 .skr-d-mount{width:49cqw;top:5.5cqh}.skr-d-left{left:2cqw;transform:rotate(-2.2deg)}.skr-d-right{left:49cqw;top:7.6cqh;z-index:5;transform:rotate(2.2deg)}
 .skr-d-copy{top:41cqh;bottom:13cqh;--skr-name:clamp(34px,11cqw,46px);--skr-m2:3cqh;--skr-gap:2.4cqh;--skr-m3:4cqh}.skr-cover[data-long=true] .skr-d-copy{--skr-name:clamp(30px,9.3cqw,40px)}
@@ -185,7 +209,7 @@ const SEKAR_CSS = `
 .skr-p-copy .skr-kicker,.skr-p-copy .skr-date{color:#ecd29a}.skr-p-copy .skr-guest{color:rgba(248,238,219,.82)}
 .skr-cover[data-long=true] .skr-p-copy{--skr-name:clamp(28px,8.6cqw,38px)}
 /* Kanvas pendek (mis. 360x640): rapatkan tanpa mengubah komposisi. */
-@container (max-height:720px){.skr-o-kayon{top:5cqh;width:calc(var(--sk-marker-w,27cqw)*.82)}.skr-o-copy{top:27cqh;bottom:9cqh;--skr-m1:2cqh;--skr-m2:2cqh;--skr-gap:1.8cqh;--skr-m3:2.8cqh}.skr-b-mount{top:2.5cqh;width:54cqw}.skr-b-copy{top:53.5cqh;bottom:4cqh;--skr-gap:1.1cqh}.skr-d-mount{width:43cqw;top:4cqh}.skr-d-left{left:6cqw}.skr-d-right{left:51cqw;top:6cqh}.skr-d-copy{top:39cqh;bottom:7cqh;--skr-gap:1.6cqh;--skr-m3:2.6cqh}.skr-t-box{top:40cqh;width:76cqw}.skr-t-sliced{top:41cqh}.skr-t-photo{height:56cqh}}
+@container (max-height:720px){.skr-o-kayon{top:5cqh;width:calc(var(--sk-marker-w,27cqw)*.82)}.skr-o-copy{top:27cqh;bottom:9cqh;--skr-m1:2cqh;--skr-m2:2cqh;--skr-gap:1.8cqh;--skr-m3:2.8cqh}.skr-b-stack{gap:2.4cqh}.skr-b-copy{--skr-gap:1.1cqh}.skr-d-mount{width:43cqw;top:4cqh}.skr-d-left{left:6cqw}.skr-d-right{left:51cqw;top:6cqh}.skr-d-copy{top:39cqh;bottom:7cqh;--skr-gap:1.6cqh;--skr-m3:2.6cqh}.skr-t-box{top:40cqh;width:76cqw}.skr-t-sliced{top:41cqh}.skr-t-photo{height:56cqh}}
 @media (prefers-reduced-motion:reduce){.skr-cover *{animation:none!important;transition:none!important}}
 `;
 
