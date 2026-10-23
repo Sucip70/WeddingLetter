@@ -71,40 +71,38 @@ export function RasterCover(p: CoverProps) {
   const cardFrame = rasterAsset(p.artwork, 'cardFrame');
   const photoFrame = rasterAsset(p.artwork, 'photoFrame');
   const photo = p.photo ?? p.groom ?? p.bride;
-  const set = p.kind === 'bingkai' ? rasterTheme(p.artwork.designId)?.bingkaiSet : undefined;
+  // Set sampul khusus (Sekar Keraton "Pendopo Emas") dipakai bersama oleh Ornamen, Foto berbingkai, dan Berdua.
+  const set = p.kind === 'ornamen' || p.kind === 'bingkai' || p.kind === 'berdua' ? rasterTheme(p.artwork.designId)?.coverSet : undefined;
+  const setMount = set ? ({ '--sk-mount-ar': set.aspect, '--sk-hole-l': `${set.hole.l}%`, '--sk-hole-t': `${set.hole.t}%`, '--sk-hole-w': `${set.hole.w}%`, '--sk-hole-h': `${set.hole.h}%` } as CSSProperties) : undefined;
 
   return (
-    <div className="skr-cover" style={rasterThemeVars(p.artwork.designId)} data-kind={p.kind} data-long={p.names.length > 22 ? 'true' : 'false'} data-animated={p.animated ? 'true' : 'false'}>
+    <div className={`skr-cover ${set ? 'skr-set' : ''}`} style={rasterThemeVars(p.artwork.designId)} data-kind={p.kind} data-long={p.names.length > 22 ? 'true' : 'false'} data-animated={p.animated ? 'true' : 'false'}>
       <style>{SEKAR_CSS}</style>
       <div className="skr-paper" style={set ? { backgroundImage: `url(${set.paper})`, backgroundSize: 'cover', backgroundRepeat: 'no-repeat' } : paper ? { backgroundImage: `url(${paper})`, ...(fullPaper ? { backgroundSize: 'cover', backgroundRepeat: 'no-repeat' } : null) } : undefined} />
+      {set && <Art src={set.top} className="skr-b-top" onError={p.onAssetError} />}
+      {set && <Art src={set.bottom} className="skr-b-bottom" onError={p.onAssetError} />}
 
-      {/* 01 Ornamen: kertas berukir + sudut ukir + mini kayon sebagai titik upacara di atas teks; tanpa foto. */}
-      {p.kind === 'ornamen' && (
+      {/* 01 Ornamen: kertas berukir + sudut ukir + mini kayon sebagai titik upacara di atas teks; tanpa foto.
+          Dengan set Pendopo Emas: kanopi & fondasi saja (aturan aset: jangan ditumpuk dengan kayon mini / sudut ukir). */}
+      {p.kind === 'ornamen' && (set ? (
+        <div className="skr-b-stack skr-b-stack-set skr-o-set">
+          <div className="skr-copy skr-b-copy"><Copy p={p} divider={set.divider} /></div>
+        </div>
+      ) : (
         <>
           <Art src={cornerTL} className="skr-corner skr-corner-tl" onError={p.onAssetError} />
           <Art src={cornerBR} className="skr-corner skr-corner-br" onError={p.onAssetError} />
           <Art src={miniKayon} className="skr-o-kayon" onError={p.onAssetError} />
           <div className="skr-copy skr-o-copy"><Copy p={p} divider={divider} /></div>
         </>
-      )}
+      ))}
 
       {/* 02 Foto Berbingkai: satu foto dominan dalam pigura kertas bersudut ukir. */}
       {p.kind === 'bingkai' && (
-        <>
-          {set && <Art src={set.top} className="skr-b-top" onError={p.onAssetError} />}
-          {set && <Art src={set.bottom} className="skr-b-bottom" onError={p.onAssetError} />}
-          <div className={`skr-b-stack ${set ? 'skr-b-stack-set' : ''}`}>
-            <Mount
-              frame={set?.frame ?? photoFrame}
-              photo={photo}
-              alt="Foto pasangan"
-              className="skr-b-mount"
-              style={set ? ({ '--sk-mount-ar': set.aspect, '--sk-hole-l': `${set.hole.l}%`, '--sk-hole-t': `${set.hole.t}%`, '--sk-hole-w': `${set.hole.w}%`, '--sk-hole-h': `${set.hole.h}%` } as CSSProperties) : undefined}
-              onError={p.onAssetError}
-            />
-            <div className="skr-copy skr-b-copy"><Copy p={p} divider={set?.divider ?? divider} /></div>
-          </div>
-        </>
+        <div className={`skr-b-stack ${set ? 'skr-b-stack-set' : ''}`}>
+          <Mount frame={set?.frame ?? photoFrame} photo={photo} alt="Foto pasangan" className="skr-b-mount" style={setMount} onError={p.onAssetError} />
+          <div className="skr-copy skr-b-copy"><Copy p={p} divider={set?.divider ?? divider} /></div>
+        </div>
       )}
 
       {/* 05 Foto penuh: foto pasangan memenuhi layar, gradasi gelap di bawah, garis emas ganda di dalam tepi, tulisan terang di bawah. */}
@@ -118,7 +116,16 @@ export function RasterCover(p: CoverProps) {
       )}
 
       {/* 03 Berdua: dua pigura berukuran sama, sedikit bertumpuk dan miring. */}
-      {p.kind === 'berdua' && (
+      {p.kind === 'berdua' && set && (
+        <div className="skr-b-stack skr-b-stack-set skr-d-set">
+          <div className="skr-d-row">
+            <Mount frame={set.frame} photo={p.groom} alt="Foto mempelai pria" className="skr-d-pm skr-d-pl" style={setMount} onError={p.onAssetError} />
+            <Mount frame={set.frame} photo={p.bride} alt="Foto mempelai wanita" className="skr-d-pm skr-d-pr" style={setMount} onError={p.onAssetError} />
+          </div>
+          <div className="skr-copy skr-b-copy"><Copy p={p} divider={set.divider} kicker={false} /></div>
+        </div>
+      )}
+      {p.kind === 'berdua' && !set && (
         <>
           <Mount frame={photoFrame} photo={p.groom} alt="Foto mempelai pria" className="skr-d-mount skr-d-left" onError={p.onAssetError} />
           <Mount frame={photoFrame} photo={p.bride} alt="Foto mempelai wanita" className="skr-d-mount skr-d-right" onError={p.onAssetError} />
@@ -177,16 +184,27 @@ const SEKAR_CSS = `
 /* foto + tulisan = satu tumpukan yang dipusatkan vertikal; lebar foto dibatasi tinggi kanvas supaya tulisan selalu muat */
 .skr-b-stack{position:absolute;inset:6cqh 0 5cqh;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3.2cqh}
 /* set khusus (Pendopo Emas): kanopi & fondasi selebar kanvas; tumpukan diletakkan di antaranya, tombol pil marun berbingkai emas */
-.skr-b-stack.skr-b-stack-set{top:calc(18.5cqw + 2.5cqh);bottom:calc(14cqw + 2.5cqh);gap:3cqh}
-.skr-b-stack-set .skr-b-mount{width:min(62cqw,27cqh)}
-.skr-b-stack-set .skr-b-copy{--skr-name:clamp(34px,11cqw,46px);--skr-m1:1.2cqh;--skr-m2:1.4cqh;--skr-gap:1.6cqh;--skr-m3:2.6cqh}
-.skr-b-stack-set .skr-divider{width:min(32cqw,130px)}
-.skr-b-stack-set .skr-button{border-radius:999px;padding:0 2.6em;text-transform:none;letter-spacing:.04em;font-family:var(--sk-display,var(--font-libre),Georgia,serif);font-size:clamp(13px,3.7cqw,16px);font-weight:400}
-.skr-b-stack-set .skr-names{color:var(--skr-maroon)}
+.skr-b-stack.skr-b-stack-set{top:calc(18.5cqw + 2.5cqh);bottom:calc(21cqw + 2.5cqh);gap:2.6cqh}
+.skr-cover[data-long=true] .skr-b-stack-set .skr-b-copy{--skr-name:clamp(24px,min(7.4cqw,4.2cqh),32px)}
+.skr-b-stack-set .skr-b-mount{width:min(62cqw,26cqh)}
+.skr-b-stack-set .skr-b-copy{--skr-name:clamp(28px,min(9cqw,5cqh),38px);--skr-m1:1.2cqh;--skr-m2:1.4cqh;--skr-gap:1.6cqh;--skr-m3:2.6cqh}
+.skr-set .skr-divider{width:min(32cqw,130px)}
+.skr-set .skr-button{border-radius:999px;padding:0 2.6em;text-transform:none;letter-spacing:.04em;font-family:var(--sk-display,var(--font-libre),Georgia,serif);font-size:clamp(13px,3.7cqw,16px);font-weight:400}
+.skr-set .skr-names{color:var(--skr-maroon)}
+/* Ornamen bertset: hanya tulisan, lebih besar */
+.skr-o-set .skr-b-copy{--skr-name:clamp(34px,min(11cqw,6cqh),46px);--skr-m1:2.4cqh;--skr-m2:2.6cqh;--skr-gap:2.4cqh;--skr-m3:4cqh}
+.skr-cover[data-long=true] .skr-o-set .skr-b-copy{--skr-name:clamp(28px,min(8.6cqw,5cqh),36px)}
+.skr-o-set .skr-copy{width:80cqw}
+/* Berdua bertset: dua pigura emas berdampingan, sedikit bertumpuk & miring */
+.skr-d-row{display:flex;justify-content:center;align-items:flex-start;flex:none}
+.skr-d-pm{position:relative;flex:none;width:min(44cqw,22cqh)}
+.skr-d-pl{transform:rotate(-2deg);z-index:1}.skr-d-pr{margin-left:-4cqw;margin-top:2cqh;transform:rotate(2deg);z-index:2}
 .skr-b-stack .skr-mount{position:relative;flex:none}
 .skr-b-mount{width:min(var(--sk-b-w,74cqw),33cqh)}
 .skr-b-stack .skr-copy{position:relative;inset:auto;width:68cqw;flex:none}
-.skr-b-top,.skr-b-bottom{position:absolute;left:0;z-index:2;display:block;width:100%;height:auto;pointer-events:none;user-select:none}.skr-b-top{top:0}.skr-b-bottom{bottom:0}
+.skr-b-top,.skr-b-bottom{position:absolute;left:0;z-index:2;display:block;width:100%;height:auto;pointer-events:none;user-select:none}.skr-b-top{top:0}
+/* fondasi (1600x224) lebih pipih dari approved-preview: ditinggikan 1,5x (object-fit fill) supaya tiang & pita ukir setinggi di preview */
+.skr-b-bottom{bottom:0;height:21cqw;object-fit:fill}
 .skr-b-copy{--skr-name:clamp(30px,9.6cqw,40px);--skr-m1:1.5cqh;--skr-m2:1.7cqh;--skr-gap:1.5cqh;--skr-m3:2.2cqh}.skr-cover[data-long=true] .skr-b-copy{--skr-name:clamp(27px,8.4cqw,35px)}
 /* 03 Berdua */
 .skr-d-mount{width:49cqw;top:5.5cqh}.skr-d-left{left:2cqw;transform:rotate(-2.2deg)}.skr-d-right{left:49cqw;top:7.6cqh;z-index:5;transform:rotate(2.2deg)}

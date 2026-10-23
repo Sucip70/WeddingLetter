@@ -62,11 +62,11 @@ export interface RasterTheme {
   /** Warna tepi tipis tombol/kartu sebagai "r, g, b" (emas tua, atau tembaga untuk Batak: palet tidak boleh jadi emas terang). */
   edgeRgb: string;
   /**
-   * Komposisi khusus sampul "Foto berbingkai" (aset statis di public/themes; bukan slot manifest), mis. Sekar Keraton
+   * Komposisi khusus sampul Ornamen, Foto berbingkai, dan Berdua (aset statis di public/themes; bukan slot manifest), mis. Sekar Keraton
    * "Pendopo Emas": kertas sendiri, kanopi emas di atas, fondasi emas di bawah, pigura emas, dan pemisah kawung emas.
    * hole/aspect = lubang foto pada pigura yang sudah dipangkas (persen) dan rasio pigura.
    */
-  bingkaiSet?: { paper: string; top: string; bottom: string; frame: string; divider: string; aspect: string; hole: { l: number; t: number; w: number; h: number } };
+  coverSet?: { paper: string; top: string; bottom: string; frame: string; divider: string; aspect: string; hole: { l: number; t: number; w: number; h: number } };
   /** Sampul memakai coverBackground (satu gambar utuh, ukuran cover) alih-alih ubin halaman. */
   coverPaper?: boolean;
   /** Variabel CSS tambahan khusus tema (mis. halaman gelap: judul/nama terang, tombol emas, teks kartu gelap). */
@@ -84,7 +84,7 @@ export const RASTER_THEMES: Record<string, RasterTheme> = {
     card: { kind: 'panel' },
     // card-frame.png 1101x1434: lubang tengah 132..967 x 196..1248 (bounding box alfa).
     // artwork-handoff/jawa/sekar-keraton/pendopo-emas-raster (approved-preview.png); pigura 1104x1555, lubang 91..1011 x 92..1457.
-    bingkaiSet: {
+    coverSet: {
       paper: '/themes/sekar-keraton/pendopo-paper.webp',
       top: '/themes/sekar-keraton/pendopo-canopy.webp',
       bottom: '/themes/sekar-keraton/pendopo-footer.webp',
