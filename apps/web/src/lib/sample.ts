@@ -4,7 +4,6 @@ import type { InvitationViewData, Layout } from './types';
 
 // Isi contoh per key field, dipakai untuk demo template, hero, dan pratinjau builder admin.
 const SAMPLE_TEXT: Record<string, string> = {
-  pembuka: 'Dengan penuh syukur, kami mengundang Anda untuk hadir dan berbagi kebahagiaan di hari pernikahan kami.',
   pria_nama: 'Andi',
   pria_lengkap: 'Andi Pratama Wijaya',
   pria_ortu: 'Putra dari Bapak Hendra Wijaya & Ibu Ratna Sari',

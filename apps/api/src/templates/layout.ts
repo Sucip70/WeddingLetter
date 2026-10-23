@@ -106,10 +106,6 @@ export const SECTION_REGISTRY: Record<SectionId, { title: string; fields: FieldD
     fields: [
       f('foto', 'Foto sampul', 'image'),
       f('tata_letak', 'Tata letak sampul', 'coverlayout'),
-      f('pembuka', 'Kalimat pembuka', 'textarea', {
-        maxLength: 300,
-        placeholder: 'Dengan penuh syukur, kami mengundang Anda di hari bahagia kami',
-      }),
     ],
   },
   musik: { title: 'Musik latar', fields: [f('lagu', 'Lagu latar', 'song')] },

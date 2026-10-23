@@ -7,54 +7,11 @@ import { sampleView } from '@/lib/sample';
 import type { DemoPhotos } from '@/lib/sample';
 import type { TemplateDetail } from '@/lib/types';
 import { CoverIcon } from './editor/cover-picker';
+import { FullscreenInvitationPreview } from './invitation/fullscreen-preview';
 import { InvitationView } from './invitation/invitation-view';
 import { PhoneFrame } from './invitation/phone-frame';
 import { PauseIcon, PlayIcon } from './invitation/ornaments';
 import { LinkButton } from './ui';
-
-// Layar ponsel yang terlihat di browser (tanpa bilah alamat & navigasi): ±360x650 di Android, ±390x665 di iPhone.
-// Di laptop pratinjau penuh dirender pada ukuran logis ini lalu diskalakan, jadi yang terpotong di ponsel juga terpotong di sini.
-const PHONE_W = 390;
-const PHONE_H = 700;
-
-function useDesktopScale() {
-  const [scale, setScale] = useState<number | null>(null);
-  useEffect(() => {
-    const fit = () => setScale(window.innerWidth >= 768 ? Math.min((window.innerHeight * 0.92) / PHONE_H, (window.innerWidth * 0.9) / PHONE_W) : null);
-    fit();
-    window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
-  }, []);
-  return scale;
-}
-
-function FullscreenPreview({ children, onClose }: { children: ReactNode; onClose: () => void }) {
-  const scale = useDesktopScale();
-  const phone = scale !== null;
-  return (
-    <div className={`fixed inset-0 z-[100] overflow-hidden bg-[#171210] ${phone ? 'flex flex-col items-center justify-center' : ''}`} role="dialog" aria-modal="true" aria-label="Pratinjau template layar penuh">
-      <div
-        className={phone ? 'relative overflow-hidden rounded-[1.6rem] bg-white shadow-[0_0_80px_rgba(0,0,0,0.55)] ring-8 ring-[#2a221d]' : 'relative mx-auto h-full w-full max-w-[480px] overflow-hidden bg-white shadow-[0_0_80px_rgba(0,0,0,0.55)]'}
-        style={phone ? { width: PHONE_W * scale, height: PHONE_H * scale } : undefined}
-      >
-        <div className="h-full w-full" style={phone ? { width: PHONE_W, height: PHONE_H, transform: `scale(${scale})`, transformOrigin: 'top left' } : undefined}>
-          {children}
-        </div>
-        <button
-          type="button"
-          autoFocus
-          onClick={onClose}
-          className="absolute right-3 z-[120] flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/40 bg-black/55 text-2xl leading-none text-white shadow-lg backdrop-blur-md transition hover:bg-black/75 focus-visible:ring-4 focus-visible:ring-white/70"
-          style={{ top: 'max(0.75rem, env(safe-area-inset-top))' }}
-          aria-label="Tutup pratinjau"
-        >
-          &times;
-        </button>
-      </div>
-      {phone && <p className="mt-3 text-xs text-white/60">Ukuran layar ponsel {PHONE_W}×{PHONE_H} (area tampil browser ponsel)</p>}
-    </div>
-  );
-}
 
 // Demo interaktif di halaman detail template: ganti warna, dengarkan lagu bawaan, lalu "Pakai template ini".
 // Kolom kanan dirakit dari `header` (judul, harga) + tombol pakai + `children` (fitur, add-on) dari server.
@@ -69,23 +26,6 @@ export function TemplateDemo({ template, header, children, photos }: { template:
   const [playing, setPlaying] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const previewButtonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    if (!previewOpen) return;
-    const opener = previewButtonRef.current;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape') setPreviewOpen(false);
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', onKeyDown);
-      requestAnimationFrame(() => opener?.focus());
-    };
-  }, [previewOpen]);
 
   const palette = palettes.find((p) => p.id === paletteId);
   const view = useMemo(() => {
@@ -118,7 +58,6 @@ export function TemplateDemo({ template, header, children, photos }: { template:
             </PhoneFrame>
           </div>
           <button
-            ref={previewButtonRef}
             type="button"
             onClick={() => setPreviewOpen(true)}
             className="absolute inset-0 flex items-end justify-center rounded-[2.4rem] bg-gradient-to-t from-black/70 via-transparent to-transparent p-5 text-white outline-none ring-rose transition hover:from-black/80 focus-visible:ring-4"
@@ -214,9 +153,9 @@ export function TemplateDemo({ template, header, children, photos }: { template:
       </div>
 
       {previewOpen && (
-        <FullscreenPreview onClose={() => setPreviewOpen(false)}>
+        <FullscreenInvitationPreview onClose={() => setPreviewOpen(false)}>
           <InvitationView key={`${coverKind}:${picked}:fullscreen`} view={view} mode="preview" embedded placeholders gate={picked ? 'skip' : 'show'} />
-        </FullscreenPreview>
+        </FullscreenInvitationPreview>
       )}
     </div>
   );
