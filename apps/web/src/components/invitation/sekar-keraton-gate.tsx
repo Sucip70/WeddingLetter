@@ -68,7 +68,7 @@ const GATE_CSS = `
 .skg-mid i{position:absolute;left:0;right:0;height:calc(50% + .5px);background-size:100cqw calc(var(--hm) * 1.5118);background-position:center calc(var(--hm) * -.3248)}
 .skg-mid i:first-child{top:0}.skg-mid i:last-child{bottom:0;transform:scaleY(-1)}
 .skg-glow{position:absolute;left:50%;top:44cqh;z-index:3;width:150cqw;height:150cqw;margin:-75cqw 0 0 -75cqw;border-radius:50%;background:radial-gradient(circle,rgba(233,190,104,.34) 0,rgba(233,190,104,.1) 34%,transparent 62%);opacity:.7;animation:skg-breathe 4.6s ease-in-out infinite alternate;transition:opacity .3s}
-.skg-kayon{position:absolute;left:50%;top:18.5cqh;z-index:4;width:min(56cqw,40cqh);margin-left:calc(min(56cqw,40cqh) / -2);transform-origin:50% 92%}
+.skg-kayon{position:absolute;left:50%;top:18.5cqh;z-index:4;width:min(56cqw,27cqh);margin-left:calc(min(56cqw,27cqh) / -2);transform-origin:50% 92%}
 .skg-kayon img{display:block;width:100%;height:auto;filter:drop-shadow(0 14px 18px rgba(20,4,6,.55));animation:skg-float 4.2s ease-in-out infinite alternate}
 .skg-copy{position:absolute;inset:0;z-index:5;text-align:center;transition:opacity .35s ease}
 .skg-copy>*{position:absolute;left:14cqw;right:14cqw;margin:0}
