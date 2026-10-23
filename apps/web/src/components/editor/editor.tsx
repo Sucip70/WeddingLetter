@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FullscreenInvitationPreview } from '@/components/invitation/fullscreen-preview';
 import { InvitationView } from '@/components/invitation/invitation-view';
 import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { LoginPanel } from '@/components/login-panel';
@@ -450,6 +451,7 @@ export function Editor({ template, addOns, initialUser, initialPalette }: { temp
             <PhoneFrame size="md" watermark>
               <InvitationView view={view} mode="preview" embedded placeholders />
             </PhoneFrame>
+            <Button variant="secondary" onClick={() => setPreviewOpen(true)} className="mt-4 w-full">Buka pratinjau layar penuh</Button>
             <div className="mt-5 rounded-2xl border border-line bg-paper p-4 text-center">
               <p className="text-xs uppercase tracking-wider text-ink-soft">Total sementara</p>
               <p className={cn('font-display text-3xl text-ink transition-opacity', quoting && 'opacity-50')}>{total === undefined ? '—' : rupiah(total)}</p>
@@ -470,13 +472,11 @@ export function Editor({ template, addOns, initialUser, initialPalette }: { temp
         </div>
       </div>
 
-      <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Pratinjau undangan">
-        <div className="flex justify-center">
-          <PhoneFrame size="md" watermark>
-            <InvitationView view={view} mode="preview" embedded placeholders />
-          </PhoneFrame>
-        </div>
-      </Modal>
+      {previewOpen && (
+        <FullscreenInvitationPreview onClose={() => setPreviewOpen(false)} watermark>
+          <InvitationView view={view} mode="preview" embedded placeholders gate="show" />
+        </FullscreenInvitationPreview>
+      )}
 
       <Modal open={loginOpen} onClose={() => setLoginOpen(false)} title="Masuk untuk melanjutkan">
         <p className="mb-5 text-sm text-ink-soft">Akun diperlukan agar Anda bisa kembali mengedit, memperpanjang, dan melihat RSVP. Isi undangan & file yang sudah Anda pilih tidak hilang.</p>
