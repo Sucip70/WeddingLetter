@@ -57,6 +57,15 @@ enum OrderKind {
   EXTENSION
 }
 
+enum PaymentAttemptStatus {
+  CREATING
+  PENDING
+  PAID
+  CANCELLED
+  EXPIRED
+  FAILED
+}
+
 enum InvitationStatus {
   DRAFT
   ACTIVE
@@ -243,10 +252,34 @@ model Order {
   extendsInvitation Invitation?  @relation("InvitationExtensions", fields: [extendsInvitationId], references: [id])
   addOns            OrderAddOn[]
   invitation        Invitation?  @relation("InvitationOrigin")
+  paymentAttempts   PaymentAttempt[]
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
   @@map("orders")
+}
+
+model PaymentAttempt {
+  id              String               @id @default(cuid())
+  orderId         String
+  sequence        Int
+  provider        String
+  providerOrderId String               @unique
+  providerRef     String?
+  token           String?
+  redirectUrl     String?
+  status          PaymentAttemptStatus @default(CREATING)
+  cancelledAt     DateTime?
+  paidAt          DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, sequence])
+  @@index([orderId, createdAt])
+  @@index([status, createdAt])
+  @@map("payment_attempts")
 }
 
 model OrderAddOn {

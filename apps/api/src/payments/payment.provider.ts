@@ -21,4 +21,6 @@ export interface PaymentInit {
 
 export interface PaymentProvider {
   createPayment(request: PaymentRequest): Promise<PaymentInit>;
+  // false berarti gateway menolak pembatalan karena status berubah (biasanya baru saja dibayar).
+  cancelPayment(orderId: string): Promise<boolean>;
 }

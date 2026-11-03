@@ -69,4 +69,21 @@ export class MidtransProvider implements PaymentProvider {
     }
     return (await res.json()) as MidtransStatus;
   }
+
+  async cancelPayment(orderId: string): Promise<boolean> {
+    const res = await fetch(`${midtransApiBase()}/v2/${encodeURIComponent(orderId)}/cancel`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Basic ${Buffer.from(`${this.serverKey}:`).toString('base64')}`,
+      },
+    });
+    if (res.ok) return true;
+    // Status 404: belum ada metode yang dikonfirmasi. Status 412: transaksi berubah
+    // di antara GET status dan cancel. Pemanggil wajib sinkron ulang sebelum melanjutkan.
+    if (res.status === 404 || res.status === 412) return false;
+    this.logger.error(`Midtrans cancel gagal (${res.status}): ${await res.text()}`);
+    throw new ServiceUnavailableException('Gagal membatalkan metode pembayaran lama, coba lagi sebentar');
+  }
 }

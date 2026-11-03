@@ -216,7 +216,16 @@ export class OrdersService {
   }
 
   async expireStale(olderThan: Date) {
-    const stale = await this.prisma.order.findMany({ where: { status: 'PENDING', createdAt: { lt: olderThan } }, select: { id: true } });
+    const stale = await this.prisma.order.findMany({
+      where: {
+        status: 'PENDING',
+        createdAt: { lt: olderThan },
+        // Pergantian metode membuat kode pembayaran baru dengan masa berlaku baru. Jangan hapus
+        // draft hanya karena order induknya lama selama masih ada attempt yang dibuat dalam TTL.
+        paymentAttempts: { none: { createdAt: { gte: olderThan } } },
+      },
+      select: { id: true },
+    });
     for (const o of stale) await this.closeUnpaid(o.id, 'EXPIRED');
     return stale.length;
   }
