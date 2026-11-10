@@ -96,7 +96,7 @@ function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
   }
 }
 
-export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, motif, headingFamily, artwork, onOpen }: {
+export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, motif, headingFamily, artwork, onOpen, dateText }: {
   kind: GateKind;
   phase: GatePhase;
   embedded: boolean;
@@ -108,6 +108,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
   headingFamily: string;
   artwork?: ArtworkManifest;
   onOpen: () => void;
+  dateText?: string;
 }) {
   const seasonal = hasSeasonalGate(artwork, motif);
   const sekarKeraton = hasSekarKeratonGate(artwork, motif);
@@ -132,7 +133,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
         data-phase={phase}
         data-tone={DARK[kind] ? 'dark' : 'light'}
         data-seasonal={seasonal ? 'true' : undefined}
-        {...(seasonal ? {} : { role: 'button', tabIndex: 0, 'aria-label': `Buka undangan. ${CTA[kind]}`, onClick: onOpen, onKeyDown: onKey })}
+        {...(seasonal || pusako ? {} : { role: 'button', tabIndex: 0, 'aria-label': `Buka undangan. ${CTA[kind]}`, onClick: onOpen, onKeyDown: onKey })}
       >
         {seasonal ? (
           <SeasonalGate designId={artwork.designId as SeasonalGateDesign} phase={phase} artwork={artwork} names={names} kicker={kicker} guest={guest} headingFamily={headingFamily} onOpen={onOpen} />
@@ -145,9 +146,9 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
         ) : candi && artwork ? (
           <CandiGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
         ) : ulos && artwork ? (
-          <UlosGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
+          <UlosGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} dateText={dateText} />
         ) : pusako && artwork ? (
-          <PusakoGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
+          <PusakoGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} dateText={dateText} onOpen={onOpen} />
         ) : sekarKeraton && artwork ? (
           <SekarKeratonGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
         ) : (

@@ -1,8 +1,9 @@
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { isDemoPhotoUploadKey } from '../storage/storage-keys.js';
 import { DEMO_SLOTS, SLOT_IDS, defaultKey } from './demo-photos.slots.js';
-import { DemoPhotosService, KEY_RE, uploadDefaultFile } from './demo-photos.service.js';
+import { DemoPhotosService, uploadDefaultFile } from './demo-photos.service.js';
 
 interface Row {
   slot: string;
@@ -44,15 +45,15 @@ describe('slot foto demo', () => {
     }
   });
 
-  it('kunci bawaan mengikuti pola assets/demo-<slot>.svg', () => {
-    expect(defaultKey('groom')).toBe('assets/demo-groom.svg');
+  it('kunci bawaan mengikuti hierarki system/demo/defaults', () => {
+    expect(defaultKey('groom')).toBe('system/demo/defaults/groom.svg');
   });
 
   it('uploadDefaultFile mengirim SVG ke kunci bawaan', async () => {
     const puts: [string, number, string][] = [];
     await uploadDefaultFile({ put: async (k: string, b: Buffer, t: string) => void puts.push([k, b.length, t]) }, 'bride');
     expect(puts).toHaveLength(1);
-    expect(puts[0]![0]).toBe('assets/demo-bride.svg');
+    expect(puts[0]![0]).toBe('system/demo/defaults/bride.svg');
     expect(puts[0]![1]).toBeGreaterThan(500);
     expect(puts[0]![2]).toBe('image/svg+xml');
   });
@@ -60,15 +61,15 @@ describe('slot foto demo', () => {
 
 describe('DemoPhotosService', () => {
   it('publicMap hanya memuat slot terisi dengan URL bertanda versi', async () => {
-    const { svc } = setup(['groom=assets/demo-groom.svg']);
-    expect(await svc.publicMap()).toEqual({ groom: 'https://cdn.test/assets/demo-groom.svg?v=1000' });
+    const { svc } = setup(['groom=system/demo/defaults/groom.svg']);
+    expect(await svc.publicMap()).toEqual({ groom: 'https://cdn.test/system/demo/defaults/groom.svg?v=1000' });
   });
 
   it('list menampilkan semua slot, menandai bawaan vs foto sendiri vs kosong', async () => {
-    const { svc } = setup(['groom=assets/demo-groom.svg', 'bride=assets/mine.jpg']);
+    const { svc } = setup(['groom=system/demo/defaults/groom.svg', 'bride=assets/mine.jpg']);
     const list = await svc.list();
     expect(list).toHaveLength(DEMO_SLOTS.length);
-    expect(list.find((s) => s.slot === 'groom')).toMatchObject({ isDefault: true, url: expect.stringContaining('demo-groom.svg') });
+    expect(list.find((s) => s.slot === 'groom')).toMatchObject({ isDefault: true, url: expect.stringContaining('defaults/groom.svg') });
     expect(list.find((s) => s.slot === 'bride')).toMatchObject({ isDefault: false });
     expect(list.find((s) => s.slot === 'gallery1')).toMatchObject({ url: null, isDefault: false }); // belum terisi
   });
@@ -81,7 +82,7 @@ describe('DemoPhotosService', () => {
   });
 
   it('set: mengganti foto menghapus unggahan lama tetapi mempertahankan berkas bawaan', async () => {
-    const { svc, rows, deleted } = setup(['groom=assets/demo-groom.svg']);
+    const { svc, rows, deleted } = setup(['groom=system/demo/defaults/groom.svg']);
     await svc.set('groom', 'assets/mine.jpg');
     expect(rows.get('groom')!.storageKey).toBe('assets/mine.jpg');
     expect(deleted).toEqual([]); // bawaan tidak dihapus
@@ -94,8 +95,8 @@ describe('DemoPhotosService', () => {
   it('reset: mengunggah ulang bawaan, memasang kunci bawaan, dan menghapus unggahan admin', async () => {
     const { svc, rows, uploaded, deleted } = setup(['gallery2=assets/mine.jpg']);
     await svc.reset('gallery2');
-    expect(uploaded).toEqual(['assets/demo-gallery2.svg']);
-    expect(rows.get('gallery2')!.storageKey).toBe('assets/demo-gallery2.svg');
+    expect(uploaded).toEqual(['system/demo/defaults/gallery2.svg']);
+    expect(rows.get('gallery2')!.storageKey).toBe('system/demo/defaults/gallery2.svg');
     expect(deleted).toEqual(['assets/mine.jpg']);
     await expect(svc.reset('xyz')).rejects.toBeInstanceOf(NotFoundException); // slot asing
   });
@@ -106,17 +107,18 @@ describe('DemoPhotosService', () => {
     expect(custom.rows.has('bride')).toBe(false);
     expect(custom.deleted).toEqual(['assets/mine.jpg']);
 
-    const def = setup(['bride=assets/demo-bride.svg']);
+    const def = setup(['bride=system/demo/defaults/bride.svg']);
     await def.svc.clear('bride');
     expect(def.rows.has('bride')).toBe(false);
     expect(def.deleted).toEqual([]);
   });
 
-  it('KEY_RE hanya menerima gambar JPG/PNG/WebP di folder assets', () => {
-    expect(KEY_RE.test('assets/abc_1-2.jpg')).toBe(true);
-    expect(KEY_RE.test('assets/abc.webp')).toBe(true);
-    expect(KEY_RE.test('assets/abc.svg')).toBe(false);
-    expect(KEY_RE.test('uploads/abc.jpg')).toBe(false);
-    expect(KEY_RE.test('assets/../abc.jpg')).toBe(false);
+  it('validator menerima key baru serta legacy selama migrasi', () => {
+    expect(isDemoPhotoUploadKey('assets/abc_1-2.jpg')).toBe(true);
+    expect(isDemoPhotoUploadKey('assets/abc.webp')).toBe(true);
+    expect(isDemoPhotoUploadKey('system/demo/uploads/groom/abc.webp')).toBe(true);
+    expect(isDemoPhotoUploadKey('assets/abc.svg')).toBe(false);
+    expect(isDemoPhotoUploadKey('uploads/abc.jpg')).toBe(false);
+    expect(isDemoPhotoUploadKey('assets/../abc.jpg')).toBe(false);
   });
 });

@@ -45,7 +45,9 @@ export function DemoPhotosManager({ initial }: { initial: DemoSlotRow[] }) {
     await run(
       slot,
       async () => {
-        const presigned = await api<{ uploadUrl: string; method: string; headers: Record<string, string>; key: string }>('admin/assets/presign', { body: { kind: 'image', contentType: file.type, sizeBytes: file.size } });
+        const presigned = await api<{ uploadUrl: string; method: string; headers: Record<string, string>; key: string }>('admin/assets/presign', {
+          body: { kind: 'image', purpose: 'demo-photo', slot, contentType: file.type, sizeBytes: file.size },
+        });
         setBusy({ slot, progress: 0 });
         await uploadWithProgress(presigned, file, (p) => setBusy({ slot, progress: p }));
         return api<DemoSlotRow[]>(`admin/demo-photos/${slot}`, { method: 'PUT', body: { key: presigned.key } });

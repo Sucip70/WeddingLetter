@@ -75,4 +75,18 @@ server {
         auth_basic_user_file /etc/nginx/htpasswd;
         proxy_pass $web_upstream;
     }
+
+    # Publisher uses admin bearer authentication, validated by the API.
+    location = /admin/catalog/entries {
+        auth_basic off;
+        limit_except POST { deny all; }
+        client_max_body_size 100k;
+        proxy_pass $api_upstream;
+    }
+    location = /admin/catalog/verify {
+        auth_basic off;
+        limit_except POST { deny all; }
+        client_max_body_size 100k;
+        proxy_pass $api_upstream;
+    }
 }

@@ -7,4 +7,8 @@ export class DevProvider implements PaymentProvider {
     const base = process.env.WEB_BASE_URL ?? 'http://localhost:3000';
     return { provider: 'DEV', redirectUrl: `${base}/dev/pay/${request.orderId}` };
   }
+
+  async cancelPayment() {
+    return true;
+  }
 }

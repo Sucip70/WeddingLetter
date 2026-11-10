@@ -77,7 +77,7 @@ export interface TemplateLayout {
   // Manifest artwork immutable yang ikut disalin ke snapshot saat order dibuat.
   artwork?: ArtworkManifest;
   // Foto contoh khusus template untuk katalog dan pratinjau. Slot yang kosong memakai foto demo global.
-  samplePhotos?: Partial<Record<'cover' | 'groom' | 'bride' | 'gallery1' | 'gallery2', string>>;
+  samplePhotos?: Partial<Record<'cover' | 'groom' | 'bride' | 'gallery1' | 'gallery2' | 'gallery3' | 'gallery4', string>>;
 }
 
 const f = (
@@ -243,6 +243,8 @@ export const layoutInputSchema = z.object({
     bride: samplePhotoUrl.optional(),
     gallery1: samplePhotoUrl.optional(),
     gallery2: samplePhotoUrl.optional(),
+    gallery3: samplePhotoUrl.optional(),
+    gallery4: samplePhotoUrl.optional(),
   }).optional(),
 });
 

@@ -8,12 +8,14 @@ import { EXT_BY_TYPE, newId } from '../orders/orders.service.js';
 import { PaymentsService } from '../payments/payments.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
+import { adminAssetKey } from '../storage/storage-keys.js';
 import { SECTION_REGISTRY, layoutIncludes, normalizeLayout, toAuthoring } from '../templates/layout.js';
 import { artworkManifestSchema } from '../templates/artwork.js';
 import { RASTER_ARTWORK } from '../templates/artwork.js';
 import type { ArtworkSlot, ArtworkVariant } from '../templates/artwork.js';
 import { BASIC_PALETTES, DESIGNS, GATE_LABEL, GROUP_LABEL, GROUP_ORDER, autoPalettes } from '../templates/themes.js';
 import type { z } from 'zod';
+import { installCatalogEntry, verifyCatalogEntry, catalogEntrySchema } from './catalog.js';
 import type { artworkConfirmSchema, artworkDraftSchema, artworkPublishSchema, artworkUploadSchema, assetPresignSchema, couponCreateSchema, couponUpdateSchema, listQuerySchema, templateCreateSchema, templateUpdateSchema } from './admin.dto.js';
 
 type ListQuery = z.infer<typeof listQuerySchema>;
@@ -49,6 +51,15 @@ export class AdminService {
   ) {}
 
   // ----- Ringkasan -----
+
+  installCatalog(entry: z.infer<typeof catalogEntrySchema>) {
+    if (entry.kind === 'template' && entry.data.status === 'PUBLISHED') this.assertPublishable(entry.data.layoutSchema, String(entry.data.category));
+    return installCatalogEntry(this.prisma, this.storage, entry);
+  }
+
+  verifyCatalog(entry: z.infer<typeof catalogEntrySchema>) {
+    return verifyCatalogEntry(this.prisma, this.storage, entry);
+  }
 
   async stats() {
     const now = new Date();
@@ -151,7 +162,15 @@ export class AdminService {
     if (!allowed.includes(input.contentType)) throw new BadRequestException('Tipe file tidak didukung');
     // Lagu pustaka (rekaman klasik utuh) bisa lebih besar dari lagu unggahan pembeli.
     if (input.sizeBytes > (input.kind === 'image' ? 5 : 25) * MB) throw new BadRequestException(`File terlalu besar (maks. ${input.kind === 'image' ? 5 : 25} MB)`);
-    const key = `assets/${newId()}.${EXT_BY_TYPE[input.contentType] ?? 'bin'}`;
+    const key = adminAssetKey({
+      kind: input.kind,
+      purpose: input.purpose,
+      id: newId(),
+      extension: EXT_BY_TYPE[input.contentType] ?? 'bin',
+      designId: input.designId,
+      templateId: input.templateId,
+      slot: input.slot,
+    });
     const presigned = await this.storage.presignUpload({ key, contentType: input.contentType, sizeBytes: input.sizeBytes });
     return { ...presigned, key, publicUrl: this.storage.publicUrl(key) };
   }

@@ -23,6 +23,7 @@ import {
   userRoleSchema,
 } from './admin.dto.js';
 import { AdminService } from './admin.service.js';
+import { catalogEntrySchema } from './catalog.js';
 
 @Controller('admin')
 @UseGuards(AuthGuard)
@@ -39,6 +40,18 @@ export class AdminController {
   }
 
   // ----- Template builder -----
+
+  @Post('catalog/entries')
+  @HttpCode(200)
+  installCatalog(@Body() body: unknown) {
+    return this.admin.installCatalog(parseBody(catalogEntrySchema, body));
+  }
+
+  @Post('catalog/verify')
+  @HttpCode(200)
+  verifyCatalog(@Body() body: unknown) {
+    return this.admin.verifyCatalog(parseBody(catalogEntrySchema, body));
+  }
   @Get('builder-meta')
   builderMeta() {
     return this.admin.builderMeta();

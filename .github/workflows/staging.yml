@@ -108,6 +108,7 @@ jobs:
         run: |
           ssh "$SSH_TARGET" "mkdir -p $REMOTE_DIR/nginx"
           scp deploy/staging/docker-compose.yml "$SSH_TARGET:$REMOTE_DIR/docker-compose.yml"
+          scp deploy/staging/reset-database.sh "$SSH_TARGET:$REMOTE_DIR/reset-database.sh"
           scp -r deploy/staging/nginx/templates deploy/staging/nginx/cloudflare-realip.conf "$SSH_TARGET:$REMOTE_DIR/nginx/"
       - name: Tarik image & jalankan
         run: |

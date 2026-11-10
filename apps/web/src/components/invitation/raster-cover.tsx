@@ -72,7 +72,14 @@ export function RasterCover(p: CoverProps) {
   const photoFrame = rasterAsset(p.artwork, 'photoFrame');
   const photo = p.photo ?? p.groom ?? p.bride;
   // Set sampul khusus (Sekar Keraton "Pendopo Emas") dipakai bersama oleh Ornamen, Foto berbingkai, dan Berdua.
-  const set = p.kind === 'ornamen' || p.kind === 'bingkai' || p.kind === 'berdua' ? rasterTheme(p.artwork.designId)?.coverSet : undefined;
+  const baseSet = p.kind === 'ornamen' || p.kind === 'bingkai' || p.kind === 'berdua' ? rasterTheme(p.artwork.designId)?.coverSet : undefined;
+  const set = baseSet ? { ...baseSet,
+    paper: rasterAsset(p.artwork, 'coverPaper') ?? baseSet.paper,
+    top: rasterAsset(p.artwork, 'coverCanopy') ?? baseSet.top,
+    bottom: rasterAsset(p.artwork, 'coverFooter') ?? baseSet.bottom,
+    frame: rasterAsset(p.artwork, 'coverFrame') ?? baseSet.frame,
+    divider: rasterAsset(p.artwork, 'coverDivider') ?? baseSet.divider,
+  } : undefined;
   const setMount = set ? ({ '--sk-mount-ar': set.aspect, '--sk-hole-l': `${set.hole.l}%`, '--sk-hole-t': `${set.hole.t}%`, '--sk-hole-w': `${set.hole.w}%`, '--sk-hole-h': `${set.hole.h}%` } as CSSProperties) : undefined;
 
   return (

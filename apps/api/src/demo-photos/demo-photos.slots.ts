@@ -1,10 +1,12 @@
+import { defaultDemoPhotoKey } from '../storage/storage-keys.js';
+
 // Slot foto demo. Foto bawaan (ilustrasi placeholder) ada di apps/api/assets/demo/<slot>.svg dan diunggah
-// ke storage sebagai assets/demo-<slot>.svg oleh seed / `npm run demo:photos`.
+// ke storage sebagai system/demo/defaults/<slot>.svg oleh seed / `npm run demo:photos`.
 export interface DemoSlot {
   slot: string;
   label: string;
   hint: string;
-  // Ada berkas bawaan di assets/demo.
+  // Ada berkas bawaan di apps/api/assets/demo.
   hasDefault: boolean;
 }
 
@@ -23,4 +25,5 @@ export const DEMO_SLOTS: DemoSlot[] = [
 ];
 
 export const SLOT_IDS = DEMO_SLOTS.map((s) => s.slot);
-export const defaultKey = (slot: string) => `assets/demo-${slot}.svg`;
+
+export const defaultKey = defaultDemoPhotoKey;

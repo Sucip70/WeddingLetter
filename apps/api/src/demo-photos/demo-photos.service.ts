@@ -3,10 +3,10 @@ import { fileURLToPath } from 'node:url';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
+import { isDemoPhotoUploadKey } from '../storage/storage-keys.js';
 import { DEMO_SLOTS, SLOT_IDS, defaultKey } from './demo-photos.slots.js';
 
 const DEFAULTS_DIR = new URL('../../assets/demo/', import.meta.url);
-export const KEY_RE = /^assets\/[A-Za-z0-9_-]+\.(jpe?g|png|webp)$/;
 
 // Mengunggah berkas bawaan (SVG) untuk satu slot ke storage. Kunci tetap, jadi aman dijalankan berulang.
 export async function uploadDefaultFile(storage: Pick<StorageService, 'put'>, slot: string) {
@@ -46,7 +46,7 @@ export class DemoPhotosService {
   // Ganti foto slot dengan berkas yang sudah diunggah admin lewat /admin/assets/presign.
   async set(slot: string, key: string) {
     this.assertSlot(slot);
-    if (!KEY_RE.test(key)) throw new BadRequestException('Kunci file tidak valid');
+    if (!isDemoPhotoUploadKey(key)) throw new BadRequestException('Kunci file tidak valid');
     if (!(await this.storage.head(key))) throw new BadRequestException('File belum terunggah. Unggah dulu, lalu simpan.');
     await this.replace(slot, key);
     return this.list();
