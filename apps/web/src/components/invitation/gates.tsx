@@ -146,7 +146,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
         ) : candi && artwork ? (
           <CandiGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
         ) : ulos && artwork ? (
-          <UlosGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
+          <UlosGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} dateText={dateText} />
         ) : pusako && artwork ? (
           <PusakoGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} dateText={dateText} onOpen={onOpen} />
         ) : sekarKeraton && artwork ? (
