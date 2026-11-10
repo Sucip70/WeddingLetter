@@ -1,0 +1,98 @@
+{
+  "designId": "pusako-minang",
+  "visualRevision": "surat-bersegel-01",
+  "packageKind": "renderer-supplement",
+  "productionText": false,
+  "note": "Visual revision only. Existing database artwork versions are not reassigned.",
+  "assets": {
+    "gate-cloth": {
+      "url": "/themes/pusako-minang/surat-bersegel-01/gate-cloth.webp",
+      "width": 1024,
+      "height": 3072,
+      "sizeBytes": 498068,
+      "transparency": "opaque",
+      "source": "/themes/pusako-minang/gate-tile.webp"
+    },
+    "letter-card": {
+      "url": "/themes/pusako-minang/surat-bersegel-01/letter-card.webp",
+      "width": 896,
+      "height": 1405,
+      "sizeBytes": 257684,
+      "transparency": "opaque",
+      "source": "/themes/pusako-minang/info-card.webp"
+    },
+    "post-left": {
+      "url": "/themes/pusako-minang/surat-bersegel-01/post-left.webp",
+      "width": 323,
+      "height": 1497,
+      "sizeBytes": 130804,
+      "transparency": "transparent",
+      "source": "/themes/pusako-minang/gate-post-left.webp"
+    },
+    "post-right": {
+      "url": "/themes/pusako-minang/surat-bersegel-01/post-right.webp",
+      "width": 323,
+      "height": 1497,
+      "sizeBytes": 129488,
+      "transparency": "transparent",
+      "source": "/themes/pusako-minang/gate-post-right.webp"
+    },
+    "gonjong-seal": {
+      "url": "/themes/pusako-minang/surat-bersegel-01/gonjong-seal.webp",
+      "width": 640,
+      "height": 479,
+      "sizeBytes": 87798,
+      "transparency": "transparent",
+      "source": "/themes/pusako-minang/gate-gonjong.webp"
+    },
+    "gold-divider": {
+      "url": "/themes/pusako-minang/surat-bersegel-01/gold-divider.webp",
+      "width": 1000,
+      "height": 137,
+      "sizeBytes": 36136,
+      "transparency": "transparent",
+      "source": "/themes/pusako-minang/divider.webp"
+    },
+    "gold-foundation": {
+      "url": "/themes/pusako-minang/surat-bersegel-01/gold-foundation.webp",
+      "width": 1200,
+      "height": 177,
+      "sizeBytes": 49854,
+      "transparency": "transparent",
+      "source": "/themes/pusako-minang/footer.webp"
+    }
+  },
+  "geometry": {
+    "letter": {
+      "left": "10%",
+      "right": "10%",
+      "top": "8%",
+      "bottom": "23%",
+      "borderSlice": 135,
+      "borderWidth": 14
+    },
+    "text": {
+      "left": "18%",
+      "right": "18%",
+      "top": "15.5%",
+      "bottom": "35%"
+    },
+    "seal": {
+      "left": "21%",
+      "right": "21%",
+      "top": "68.5%"
+    }
+  },
+  "motion": {
+    "durationMs": 1650,
+    "paperAndPosts": "split-left-right",
+    "delayMs": 230,
+    "reduced": "fade-only"
+  },
+  "neverStack": [
+    "old floating gonjong",
+    "old pulsing CTA",
+    "old gate glow",
+    "upgrade-scroll-01 canopy or couple illustrations"
+  ]
+}
