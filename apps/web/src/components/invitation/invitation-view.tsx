@@ -180,6 +180,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const seasonalGate = hasSeasonalGate(artwork, theme.motif ?? theme.preset);
   const [gatePhase, setGatePhase] = useState<GatePhase | 'open'>(gateKind && gateMode === 'show' ? 'closed' : 'open');
   const gateTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const gateOpening = useRef(false);
   // Jeda animasi masuk sampul (ms) untuk gerbang yang menyingkap sampul belakangan; dipertahankan sampai diputar ulang
   // supaya animasi yang sedang berjalan tidak melompat saat gerbang dilepas.
   const [revealDelay, setRevealDelay] = useState(0);
@@ -223,7 +224,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   }, []);
 
   const openGate = useCallback(() => {
-    if (!gateKind || gatePhase !== 'closed') return;
+    if (!gateKind || gatePhase !== 'closed' || gateOpening.current) return;
+    gateOpening.current = true;
     // Ketukan = sentuhan pengguna: buka izin audio sekarang, bunyikan saat gerbang selesai (di pratinjau tidak).
     const live = mode === 'live';
     if (live) unlockMusic();
@@ -233,12 +235,14 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     const duration = seasonalGate ? SEASONAL_GATE_MS[artwork.designId as keyof typeof SEASONAL_GATE_MS] : GATE_MS[gateKind];
     gateTimer.current = setTimeout(() => {
       setGatePhase('open');
+      gateOpening.current = false;
       if (live) startMusic();
     }, reduced ? (seasonalGate ? 220 : 350) : duration);
   }, [gateKind, gatePhase, mode, unlockMusic, startMusic, seasonalGate, artwork]);
 
   const replayGate = useCallback(() => {
     clearTimeout(gateTimer.current);
+    gateOpening.current = false;
     rootRef.current?.scrollTo({ top: 0 });
     window.scrollTo({ top: 0 });
     setGatePhase('closed');
@@ -258,8 +262,9 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const open = useCallback(() => {
     if (mode === 'live' && audioRef.current?.paused) void audioRef.current.play().catch(() => undefined);
     const top = (coverRef.current?.offsetHeight ?? 0) - 1;
-    if (embedded) rootRef.current?.scrollTo({ top, behavior: 'smooth' });
-    else window.scrollTo({ top, behavior: 'smooth' });
+    const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth';
+    if (embedded) rootRef.current?.scrollTo({ top, behavior });
+    else window.scrollTo({ top, behavior });
   }, [mode, embedded]);
 
   const groom = str(data, 'mempelai', 'pria_nama');
