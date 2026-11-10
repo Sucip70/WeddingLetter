@@ -79,7 +79,9 @@ export function MusicManager({ initial }: { initial: AdminTrack[] }) {
     try {
       const [duration, target] = await Promise.all([
         readDuration(file),
-        api<{ uploadUrl: string; method: string; headers: Record<string, string>; key: string }>('admin/assets/presign', { body: { kind: 'audio', contentType: file.type, sizeBytes: file.size } }),
+        api<{ uploadUrl: string; method: string; headers: Record<string, string>; key: string }>('admin/assets/presign', {
+          body: { kind: 'audio', purpose: 'music-library', contentType: file.type, sizeBytes: file.size },
+        }),
       ]);
       await uploadWithProgress(target, file, setProgress);
       await api('admin/music', {

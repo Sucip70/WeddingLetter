@@ -6,6 +6,7 @@ import { EXT_BY_TYPE, newId } from '../orders/orders.service.js';
 import { billableMb } from '../pricing/pricing.calculator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
+import { invitationMediaKey } from '../storage/storage-keys.js';
 
 export const replaceSchema = z.object({
   contentType: z.string().min(1).max(100),
@@ -98,7 +99,7 @@ export class MediaService {
     await this.dropMedia(previous);
 
     const id = newId();
-    const key = `${invitation.id}/${id}.${EXT_BY_TYPE[input.contentType] ?? 'bin'}`;
+    const key = invitationMediaKey({ invitationId: invitation.id, mediaId: id, type: old.type, extension: EXT_BY_TYPE[input.contentType] ?? 'bin' });
     await this.prisma.mediaFile.create({
       data: {
         id,

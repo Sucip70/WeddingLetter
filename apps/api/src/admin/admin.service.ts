@@ -8,6 +8,7 @@ import { EXT_BY_TYPE, newId } from '../orders/orders.service.js';
 import { PaymentsService } from '../payments/payments.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
+import { adminAssetKey } from '../storage/storage-keys.js';
 import { SECTION_REGISTRY, layoutIncludes, normalizeLayout, toAuthoring } from '../templates/layout.js';
 import { artworkManifestSchema } from '../templates/artwork.js';
 import { RASTER_ARTWORK } from '../templates/artwork.js';
@@ -151,7 +152,15 @@ export class AdminService {
     if (!allowed.includes(input.contentType)) throw new BadRequestException('Tipe file tidak didukung');
     // Lagu pustaka (rekaman klasik utuh) bisa lebih besar dari lagu unggahan pembeli.
     if (input.sizeBytes > (input.kind === 'image' ? 5 : 25) * MB) throw new BadRequestException(`File terlalu besar (maks. ${input.kind === 'image' ? 5 : 25} MB)`);
-    const key = `assets/${newId()}.${EXT_BY_TYPE[input.contentType] ?? 'bin'}`;
+    const key = adminAssetKey({
+      kind: input.kind,
+      purpose: input.purpose,
+      id: newId(),
+      extension: EXT_BY_TYPE[input.contentType] ?? 'bin',
+      designId: input.designId,
+      templateId: input.templateId,
+      slot: input.slot,
+    });
     const presigned = await this.storage.presignUpload({ key, contentType: input.contentType, sizeBytes: input.sizeBytes });
     return { ...presigned, key, publicUrl: this.storage.publicUrl(key) };
   }

@@ -169,8 +169,23 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
 
   const setPalette = (i: number, patch: Partial<Palette>) => setLayout({ palettes: layout.palettes.map((p, j) => (j === i ? { ...p, ...patch } : p)) });
 
-  async function uploadAsset(file: File, kind: 'image' | 'audio') {
-    const target = await api<{ uploadUrl: string; method: string; headers: Record<string, string>; publicUrl: string }>('admin/assets/presign', { body: { kind, contentType: file.type, sizeBytes: file.size } });
+  async function uploadAsset(
+    file: File,
+    kind: 'image' | 'audio',
+    purpose: 'template-thumbnail' | 'template-sample' | 'template-audio',
+    context: { slot?: string } = {},
+  ) {
+    const target = await api<{ uploadUrl: string; method: string; headers: Record<string, string>; publicUrl: string }>('admin/assets/presign', {
+      body: {
+        kind,
+        purpose,
+        contentType: file.type,
+        sizeBytes: file.size,
+        templateId: form.id || undefined,
+        designId: layout.theme.motif || layout.theme.preset,
+        slot: context.slot,
+      },
+    });
     await uploadWithProgress(target, file, () => undefined);
     return target.publicUrl;
   }
@@ -180,7 +195,7 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
     setUploading('thumb');
     setError('');
     try {
-      const url = await uploadAsset(file, 'image');
+      const url = await uploadAsset(file, 'image', 'template-thumbnail');
       setForm((f) => ({ ...f, thumbnailUrl: url }));
     } catch (e) {
       setError(errorMessage(e));
@@ -194,7 +209,7 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
     setUploading('song');
     setError('');
     try {
-      const url = await uploadAsset(file, 'audio');
+      const url = await uploadAsset(file, 'audio', 'template-audio');
       setLayout({ musik: { ...layout.musik, presets: [...layout.musik.presets, { name: file.name.replace(/\.[^.]+$/, '').slice(0, 80), url }] } });
     } catch (e) {
       setError(errorMessage(e));
@@ -208,7 +223,7 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
     setUploading(`sample:${slot}`);
     setError('');
     try {
-      const url = await uploadAsset(file, 'image');
+      const url = await uploadAsset(file, 'image', 'template-sample', { slot });
       setLayout({ samplePhotos: { ...layout.samplePhotos, [slot]: url } });
     } catch (e) {
       setError(errorMessage(e));
