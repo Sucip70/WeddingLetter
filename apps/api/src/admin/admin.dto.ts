@@ -51,11 +51,22 @@ export const extendSchema = z.object({ weeks: z.number().int().min(1).max(LIMITS
 export const setExpirySchema = z.object({ expiresAt: z.coerce.date() });
 export const userRoleSchema = z.object({ role: z.enum(['USER', 'ADMIN']) });
 
-export const assetPresignSchema = z.object({
-  kind: z.enum(['image', 'audio']),
-  contentType: z.string().min(1).max(100),
-  sizeBytes: z.number().int().positive(),
-});
+export const assetPresignSchema = z
+  .object({
+    kind: z.enum(['image', 'audio']),
+    purpose: z.enum(['template-thumbnail', 'template-sample', 'template-audio', 'demo-photo', 'music-library']).optional(),
+    designId: z.string().regex(/^[a-z0-9-]{2,80}$/).optional(),
+    templateId: z.string().regex(/^[A-Za-z0-9_-]{2,120}$/).optional(),
+    slot: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/).optional(),
+    contentType: z.string().min(1).max(100),
+    sizeBytes: z.number().int().positive(),
+  })
+  .superRefine((value, ctx) => {
+    const audioPurpose = value.purpose === 'template-audio' || value.purpose === 'music-library';
+    if (value.purpose && (value.kind === 'audio') !== audioPurpose) {
+      ctx.addIssue({ code: 'custom', path: ['purpose'], message: 'Purpose tidak sesuai jenis aset' });
+    }
+  });
 
 export const artworkDraftSchema = z.object({
   designId: z.string().regex(/^[a-z0-9-]{2,80}$/).optional(),

@@ -421,6 +421,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             embedded={embedded}
             names={names}
             kicker={kicker}
+            dateText={shortDate}
             guest={mode === 'live' ? guest : null}
             pattern={motif.pattern}
             motif={theme.motif ?? theme.preset}
