@@ -23,7 +23,5 @@ export function resolveTemplateSamplePhotos(
   globalPhotos: Record<string, string> = {},
 ): Record<string, string> {
   const builtIn = layout.artwork?.designId === SEKAR_KERATON_DESIGN_ID ? SEKAR_KERATON_SAMPLE_PHOTOS : {};
-  // Sekar Keraton has an approved, internally consistent pre-wedding set. Keep it
-  // authoritative for previews so stale per-template/R2 demo photos cannot replace it.
-  return { ...globalPhotos, ...layout.samplePhotos, ...builtIn };
+  return { ...globalPhotos, ...builtIn, ...layout.samplePhotos };
 }

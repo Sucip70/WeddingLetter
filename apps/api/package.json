@@ -28,7 +28,14 @@
     "artwork:seasonal-gates": "tsx scripts/publish-seasonal-gates.ts",
     "demo:photos": "tsx scripts/demo-photos.ts",
     "artwork:raster": "tsx scripts/sync-raster-artwork.ts",
-    "storage:migrate-prefixes": "tsx scripts/migrate-storage-prefixes.ts"
+    "storage:migrate-prefixes": "tsx scripts/migrate-storage-prefixes.ts",
+    "catalog:export": "tsx scripts/catalog.ts export",
+    "catalog:check": "tsx scripts/catalog.ts check",
+    "catalog:sync": "tsx scripts/catalog.ts sync",
+    "catalog:publish": "tsx scripts/catalog.ts publish",
+    "catalog:verify": "tsx scripts/catalog.ts verify",
+    "catalog:retire-local": "tsx scripts/catalog.ts retire-local",
+    "staging:bootstrap": "prisma migrate deploy && tsx scripts/bootstrap-staging.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1136.0",

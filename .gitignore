@@ -6,6 +6,7 @@ generated/
 *.tsbuildinfo
 .env
 .env.local
+.env.publisher
 *.log
 .DS_Store
 .next-*/
@@ -28,3 +29,13 @@ artwork-handoff/**/*.jpg
 artwork-handoff/**/*.zip
 artwork-handoff/**/*.psd
 artwork-handoff/**/*.kra
+
+# Published template media. Local publisher reads these files directly.
+apps/web/public/themes/**/*.webp
+apps/web/public/themes/**/*.png
+apps/web/public/themes/**/*.jpg
+apps/web/public/themes/**/*.avif
+apps/web/public/samples/**/*.webp
+apps/web/public/samples/**/*.png
+apps/web/public/samples/**/*.jpg
+apps/web/public/audio/*.mp3

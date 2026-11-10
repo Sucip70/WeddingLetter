@@ -11,7 +11,7 @@ describe('resolveTemplateSamplePhotos', () => {
     });
   });
 
-  it('keeps the approved Sekar Keraton set ahead of stale per-template photos', () => {
+  it('uses published template photos ahead of bundled fallback photos', () => {
     const photos = resolveTemplateSamplePhotos(
       {
         artwork: { designId: 'jawa-sekar-keraton' },
@@ -20,10 +20,10 @@ describe('resolveTemplateSamplePhotos', () => {
       { cover: '/global-cover.webp', gallery1: '/global-walking.webp' },
     );
 
-    expect(photos.cover).toBe('/samples/sekar-keraton/cover.webp');
+    expect(photos.cover).toBe('https://cdn.example.com/cover.webp');
     expect(photos.groom).toBe('/samples/sekar-keraton/groom-v2.webp');
     expect(photos.bride).toBe('/samples/sekar-keraton/bride-v2.webp');
-    expect(photos.gallery1).toBe('/samples/sekar-keraton/gallery-walking.webp');
+    expect(photos.gallery1).toBe('https://cdn.example.com/walking.webp');
     expect(photos.gallery2).toBe('/samples/sekar-keraton/gallery-romantic.webp');
   });
 

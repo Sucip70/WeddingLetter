@@ -83,15 +83,17 @@ mati), email OTP lewat Resend sungguhan, file di bucket R2 khusus staging.
 git push origin master:staging     # atau: Actions → Staging → Run workflow
 ```
 
-Deploy pertama: setelah workflow hijau, isi data awal (template, desain, foto demo) dan akun admin pertama:
+Deploy pertama: setelah workflow hijau, buat akun admin awal:
 
 ```bash
 cd ~/weddingletter-staging
-docker compose run --rm -e ADMIN_EMAIL=email-anda@contoh.com api npm run prisma:seed
+docker compose run --rm -e ADMIN_EMAIL=email-anda@contoh.com api npm run staging:bootstrap
 ```
 
 Lalu buka `https://staging.weddingletter.id` (login basic auth dulu), masuk dengan email admin tadi (OTP via Resend),
-dan tambahkan lagu di Admin → Musik.
+dan gunakan publisher lokal untuk memasang katalog template beserta aset dan musik.
+Panduan ekspor, sinkronisasi bucket `weddingletter-staging`, fresh reset, publish, dan pelepasan
+gambar dari Git ada di [PUBLISHER.md](PUBLISHER.md).
 
 ## Operasional
 

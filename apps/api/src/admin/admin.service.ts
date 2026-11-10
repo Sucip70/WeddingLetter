@@ -15,6 +15,7 @@ import { RASTER_ARTWORK } from '../templates/artwork.js';
 import type { ArtworkSlot, ArtworkVariant } from '../templates/artwork.js';
 import { BASIC_PALETTES, DESIGNS, GATE_LABEL, GROUP_LABEL, GROUP_ORDER, autoPalettes } from '../templates/themes.js';
 import type { z } from 'zod';
+import { installCatalogEntry, verifyCatalogEntry, catalogEntrySchema } from './catalog.js';
 import type { artworkConfirmSchema, artworkDraftSchema, artworkPublishSchema, artworkUploadSchema, assetPresignSchema, couponCreateSchema, couponUpdateSchema, listQuerySchema, templateCreateSchema, templateUpdateSchema } from './admin.dto.js';
 
 type ListQuery = z.infer<typeof listQuerySchema>;
@@ -50,6 +51,15 @@ export class AdminService {
   ) {}
 
   // ----- Ringkasan -----
+
+  installCatalog(entry: z.infer<typeof catalogEntrySchema>) {
+    if (entry.kind === 'template' && entry.data.status === 'PUBLISHED') this.assertPublishable(entry.data.layoutSchema, String(entry.data.category));
+    return installCatalogEntry(this.prisma, this.storage, entry);
+  }
+
+  verifyCatalog(entry: z.infer<typeof catalogEntrySchema>) {
+    return verifyCatalogEntry(this.prisma, this.storage, entry);
+  }
 
   async stats() {
     const now = new Date();
