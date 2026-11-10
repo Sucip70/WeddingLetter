@@ -6,7 +6,7 @@ import { AuthGuard, CurrentUser } from '../auth/auth.guard.js';
 import type { AuthUser } from '../auth/auth.guard.js';
 import { OrdersService } from '../orders/orders.service.js';
 import { extensionInputSchema } from '../pricing/pricing.dto.js';
-import { InvitationsService, rsvpSchema } from './invitations.service.js';
+import { InvitationsService, rsvpSchema, wishSchema } from './invitations.service.js';
 
 const updateSchema = z.object({ data: z.record(z.string(), z.unknown()), palette: z.string().max(40).optional() });
 
@@ -77,5 +77,11 @@ export class PublicInvitationsController {
   @HttpCode(200)
   rsvp(@Param('slug') slug: string, @Body() body: unknown, @Req() req: Request) {
     return this.invitations.submitRsvp(slug, parseBody(rsvpSchema, body), req.ip ?? 'unknown');
+  }
+
+  @Post(':slug/wishes')
+  @HttpCode(200)
+  wish(@Param('slug') slug: string, @Body() body: unknown, @Req() req: Request) {
+    return this.invitations.submitWish(slug, parseBody(wishSchema, body), req.ip ?? 'unknown');
   }
 }

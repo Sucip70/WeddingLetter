@@ -17,6 +17,10 @@ export const rsvpSchema = z.object({
   message: z.string().trim().max(500).optional(),
 });
 export type RsvpInput = z.infer<typeof rsvpSchema>;
+export const wishSchema = z.object({
+  name: z.string().trim().min(1, 'Nama wajib diisi').max(80),
+  message: z.string().trim().min(1, 'Ucapan wajib diisi').max(500),
+});
 
 // Snapshot skema yang disimpan di undangan (tema, section efektif, kuota, lagu bawaan).
 type LayoutSnapshot = TemplateLayout;
@@ -217,7 +221,21 @@ export class InvitationsService {
         message: input.message || null,
       },
     });
-    return { ok: true };
+    return { ok: true, name: input.name, attending: input.attending, guestCount: input.attending ? input.guestCount : 0, message: input.message ?? '' };
+  }
+
+  async submitWish(slug: string, input: z.infer<typeof wishSchema>, ip: string) {
+    const inv = await this.prisma.invitation.findUnique({ where: { slug }, select: { id: true, status: true, layout: true } });
+    if (!inv || inv.status !== 'ACTIVE') throw new NotFoundException('Undangan tidak ditemukan');
+    if (!this.snapshot(inv).sections.some((s) => s.id === 'buku_tamu')) throw new ForbiddenException('Buku tamu tidak aktif untuk undangan ini');
+    // Both public forms share one quota.
+    const key = `${ip}:${slug}`;
+    const now = Date.now();
+    const recent = (rsvpHits.get(key) ?? []).filter((t) => now - t < 3600_000);
+    if (recent.length >= RSVP_LIMIT) throw new HttpException('Terlalu banyak pengiriman, coba lagi nanti', HttpStatus.TOO_MANY_REQUESTS);
+    rsvpHits.set(key, [...recent, now]);
+    const wish = await this.prisma.rsvpGuest.create({ data: { invitationId: inv.id, name: input.name, message: input.message, attending: null, guestCount: 0 } });
+    return { ok: true, name: wish.name, message: wish.message, attending: null, guestCount: 0, createdAt: wish.createdAt };
   }
 
   private async buildView(

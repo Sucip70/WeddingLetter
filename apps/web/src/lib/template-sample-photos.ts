@@ -1,10 +1,10 @@
-export type TemplateSamplePhotoSlot = 'cover' | 'groom' | 'bride' | 'gallery1' | 'gallery2';
+export type TemplateSamplePhotoSlot = 'cover' | 'groom' | 'bride' | 'gallery1' | 'gallery2' | 'gallery3' | 'gallery4';
 export type TemplateSamplePhotos = Partial<Record<TemplateSamplePhotoSlot, string>>;
 
 const SEKAR_KERATON_DESIGN_ID = 'jawa-sekar-keraton';
 const SEKAR_KERATON_SAMPLE_ROOT = '/samples/sekar-keraton';
 
-export const SEKAR_KERATON_SAMPLE_PHOTOS: Readonly<Required<TemplateSamplePhotos>> = {
+export const SEKAR_KERATON_SAMPLE_PHOTOS: Readonly<TemplateSamplePhotos> = {
   cover: `${SEKAR_KERATON_SAMPLE_ROOT}/cover.webp`,
   groom: `${SEKAR_KERATON_SAMPLE_ROOT}/groom-v2.webp`,
   bride: `${SEKAR_KERATON_SAMPLE_ROOT}/bride-v2.webp`,
