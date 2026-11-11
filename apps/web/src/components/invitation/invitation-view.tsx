@@ -226,6 +226,11 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const openGate = useCallback(() => {
     if (!gateKind || gatePhase !== 'closed' || gateOpening.current) return;
     gateOpening.current = true;
+    // Focusing the native Noor CTA can scroll its embedded root. Reveal the cover from its top.
+    if (gateKind === 'jali') {
+      if (embedded) rootRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+      else window.scrollTo({ top: 0, behavior: 'instant' });
+    }
     // Ketukan = sentuhan pengguna: buka izin audio sekarang, bunyikan saat gerbang selesai (di pratinjau tidak).
     const live = mode === 'live';
     if (live) unlockMusic();
@@ -238,7 +243,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
       gateOpening.current = false;
       if (live) startMusic();
     }, reduced ? (seasonalGate ? 220 : 350) : duration);
-  }, [gateKind, gatePhase, mode, unlockMusic, startMusic, seasonalGate, artwork]);
+  }, [gateKind, gatePhase, mode, unlockMusic, startMusic, seasonalGate, artwork, embedded]);
 
   const replayGate = useCallback(() => {
     clearTimeout(gateTimer.current);

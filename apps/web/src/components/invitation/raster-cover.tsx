@@ -6,10 +6,11 @@ import type { ArtworkManifest } from '@/lib/types';
 import type { CoverKind } from '@/lib/cover-layouts';
 import { rasterAsset, rasterTheme, rasterThemeVars } from './raster-theme';
 import { RasterCard } from './raster-sections';
+import { NoorCover } from './noor-cover';
 
 export type RasterCoverKind = Extract<CoverKind, 'ornamen' | 'penuh' | 'bingkai' | 'berdua' | 'terbagi'>;
 
-interface CoverProps {
+export interface CoverProps {
   kind: RasterCoverKind;
   artwork: ArtworkManifest;
   photo?: string;
@@ -61,6 +62,9 @@ function Mount({ frame, photo, alt, className, style, onError }: { frame?: strin
 }
 
 export function RasterCover(p: CoverProps) {
+  if (p.artwork.designId === 'noor-e-nikah' && ['ornamen', 'bingkai', 'berdua'].includes(p.kind)) {
+    return <NoorCover {...p} />;
+  }
   const paper = rasterTheme(p.artwork.designId)?.coverPaper ? rasterAsset(p.artwork, 'coverBackground') : rasterAsset(p.artwork, 'pageBackground') ?? rasterAsset(p.artwork, 'coverBackground');
   const fullPaper = !!rasterTheme(p.artwork.designId)?.coverPaper;
   const cornerTL = rasterAsset(p.artwork, 'cornerTopLeft');
