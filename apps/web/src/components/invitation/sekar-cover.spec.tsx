@@ -1,10 +1,8 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { ArtworkManifest } from '../../lib/types';
 import type { CoverProps } from './raster-cover';
-vi.mock('./assets/sekar-cover-paper.webp',()=>({default:{src:'/_next/static/media/sekar-cover-paper.webp'}}));
-vi.mock('./assets/sekar-cover-divider.webp',()=>({default:{src:'/_next/static/media/sekar-cover-divider.webp'}}));
 import { RasterCover } from './raster-cover';
 
 const artwork={designId:'jawa-sekar-keraton',assets:Object.fromEntries(Object.entries({coverBackground:'page-bg',coverPaper:'old-pendopo-paper',coverCanopy:'old-canopy',coverFooter:'old-footer',photoFrame:'old-photo-frame',topDecoration:'mini-kayon',divider:'divider'}).map(([slot,file])=>[slot,{default:{url:`https://cdn.example.com/sekar/${file}.webp`}}]))} as ArtworkManifest;
@@ -16,9 +14,9 @@ describe('Sekar cover — approved Bingkai Pusaka',()=>{
     for(const kind of ['penuh','terbagi'] as const)expect(render({kind})).not.toContain('data-cover-design="sekar-bingkai-pusaka"');
     expect(render({artwork:{...artwork,designId:'pusako-minang'}})).not.toContain('data-cover-design="sekar-bingkai-pusaka"');
   });
-  it('uses bundled raster artwork, never stacked with the legacy border or frame',()=>{
+  it('uses manifest raster artwork, never stacked with the legacy border or frame',()=>{
     const html=render();
-    for(const text of ['/_next/static/media/sekar-cover-paper.webp','/_next/static/media/sekar-cover-divider.webp'])expect(html).toContain(text);
+    for(const text of ['/themes/sekar-keraton/stationery-01/sekar-cover-paper.webp','/themes/sekar-keraton/stationery-01/sekar-cover-divider.webp'])expect(html).toContain(text);
     for(const text of ['old-pendopo-paper','old-canopy','old-footer','old-photo-frame','.tmp','/samples/','<svg'])expect(html).not.toContain(text);
   });
   it('preserves real uploaded photos and live invitation data',()=>{

@@ -4,7 +4,7 @@
 import { Fragment, useState, type CSSProperties } from 'react';
 import type { CoverProps } from './raster-cover';
 import { rasterAsset } from './raster-theme';
-import paper from './assets/vivaha-cover-paper.webp';
+import { culturalRevisionSource } from './cultural-artwork';
 import styles from './vivaha-cover.module.css';
 
 /** Approved stationery cover; never contains baked-in text or user photos. */
@@ -17,7 +17,8 @@ export function VivahaCover(p: CoverProps) {
   const divider = rasterAsset(p.artwork, 'divider');
   const marker = rasterAsset(p.artwork, 'topDecoration');
   const frame = rasterAsset(p.artwork, 'photoFrame');
-  const style = { '--vivaha-paper': `url("${rasterAsset(p.artwork, 'coverPaper') ?? paper.src}")` } as CSSProperties;
+  const paper = rasterAsset(p.artwork, 'stationeryBackground') ?? rasterAsset(p.artwork, 'coverPaper') ?? culturalRevisionSource(p.artwork, 'stationeryBackground')?.url;
+  const style = { '--vivaha-paper': `url("${paper}")` } as CSSProperties;
   const Tag = p.decorative ? 'span' : 'button';
   return (
     <div className={styles.cover} style={style} data-cover-design="vivaha-zardozi" data-kind={p.kind}

@@ -14,6 +14,7 @@ import { config } from 'dotenv';
 import { parseCatalogTemplate, resolveCatalog } from '../src/admin/catalog.js';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { ARTWORK_SLOTS, artworkSourceSchema } from '../src/templates/artwork.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const publicDir = path.join(root, 'apps/web/public');
@@ -91,6 +92,10 @@ async function exportCatalog() {
   }
   try {
     const entries: z.infer<typeof catalogEntrySchema>[] = [];
+    const revisions = z.object({
+      schemaVersion: z.literal(1),
+      designs: z.record(z.string(), z.partialRecord(z.enum(ARTWORK_SLOTS), artworkSourceSchema)),
+    }).parse(JSON.parse(await readFile(path.join(publicDir, 'themes/cultural-revisions.json'), 'utf8')));
     const samplePhotoSchema = z.object({
       designId: z.string().min(1),
       samplePhotos: z.partialRecord(z.enum(['cover', 'groom', 'bride', 'gallery1', 'gallery2', 'gallery3', 'gallery4']), z.string()).optional(),
@@ -102,7 +107,7 @@ async function exportCatalog() {
       if (!manifest.samplePhotos) continue;
       if (samplePhotosByDesign.has(manifest.designId)) throw new Error(`Duplicate sample manifest: ${manifest.designId}`);
       for (const url of Object.values(manifest.samplePhotos)) {
-        if (!url.startsWith(`/samples/${folder.name}/`)) throw new Error(`Sample photo outside manifest folder: ${url}`);
+        if (url !== '' && !/^\/samples\/[a-z0-9/-]+\.(webp|png|avif)$/.test(url)) throw new Error(`Invalid sample photo path: ${url}`);
       }
       samplePhotosByDesign.set(manifest.designId, manifest.samplePhotos);
     }
@@ -110,8 +115,17 @@ async function exportCatalog() {
     for (const row of templates) {
       const { id, name, category, tier, price, includedWeeks, status, thumbnailUrl } = row;
       const layout = structuredClone(row.layoutSchema) as Record<string, any>;
+      const designId = layout.artwork?.designId ?? layout.theme?.motif ?? layout.theme?.preset;
+      if (!layout.artwork && revisions.designs[designId]) layout.artwork = { schemaVersion: 1, designId, artworkVersion: 1, assets: {}, fallback: {} };
       const artwork = layout.artwork;
-      const designId = artwork?.designId ?? layout.theme?.motif ?? layout.theme?.preset;
+      if (artwork) {
+        for (const [slot, source] of Object.entries(revisions.designs[designId] ?? {})) {
+          if (!artwork.assets[slot]) {
+            const legacyPaper = slot === 'stationeryBackground' && ['noor-e-nikah', 'vivaha-rani'].includes(designId) ? artwork.assets.coverPaper : undefined;
+            artwork.assets[slot] = legacyPaper ?? { default: source };
+          }
+        }
+      }
       const samplePhotos = samplePhotosByDesign.get(designId);
       if (samplePhotos) layout.samplePhotos = { ...samplePhotos, ...layout.samplePhotos };
       if (artwork?.designId === 'jawa-sekar-keraton') {

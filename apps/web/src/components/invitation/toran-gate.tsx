@@ -3,7 +3,7 @@
 import { Fragment, type CSSProperties } from 'react';
 import type { ArtworkManifest } from '@/lib/types';
 import type { GatePhase } from './gates';
-import doors from './assets/vivaha-gate-doors.webp';
+import { culturalRevisionSource } from './cultural-artwork';
 import styles from './toran-gate.module.css';
 
 export function hasToranGate(artwork: ArtworkManifest | undefined, motif: string) {
@@ -11,7 +11,7 @@ export function hasToranGate(artwork: ArtworkManifest | undefined, motif: string
 }
 
 /** Approved opaque silk doors. Each leaf shows its own half of the same raster. */
-export function ToranGate({ phase, names, guest, onOpen, previewState }: {
+export function ToranGate({ artwork, phase, names, guest, onOpen, previewState }: {
   artwork: ArtworkManifest;
   phase: GatePhase;
   names: string;
@@ -22,7 +22,8 @@ export function ToranGate({ phase, names, guest, onOpen, previewState }: {
   previewState?: 'closed' | 'open';
 }) {
   const opening = phase !== 'closed' || previewState === 'open';
-  const style = { '--vivaha-doors': `url("${doors.src}")` } as CSSProperties;
+  const doors = culturalRevisionSource(artwork, 'gateDoors');
+  const style = { '--vivaha-doors': `url("${doors?.url}")` } as CSSProperties;
   return <div className={styles.gate} style={style} data-phase={phase} data-preview={previewState}
     data-gate-design="vivaha-pintu-sutra" data-long={names.length > 24 ? 'true' : undefined}>
     {(['left', 'right'] as const).map(side => <div key={side} className={`${styles.leaf} ${styles[side]}`} aria-hidden="true"><div className={styles.canvas} /></div>)}

@@ -33,6 +33,10 @@ import { isRasterDesign } from './raster-theme';
 import { RasterCard, RasterDivider, RasterFooter, RasterCoupleSection, rasterRootVars } from './raster-sections';
 import { LavenderBlock, LavenderClosing, LavenderCover, LavenderPortrait, LAVENDER_ORNAMENTS, lavenderPalette, lavenderRootClass, lavenderRootVars } from './lavender-stationery';
 import lavenderStyles from './lavender-stationery.module.css';
+import { wisteriaArtworkVars, wisteriaPalette } from './wisteria-stationery';
+import { marigoldArtworkVars, marigoldPalette } from './marigold-stationery';
+import { gardenArtworkVars, gardenPalette } from './garden-stationery';
+import { HortensiaBlock, HortensiaClosing, HortensiaCover, HortensiaPortrait, hortensiaPalette, hortensiaRootClass, hortensiaRootVars } from './hortensia-stationery';
 
 export interface InvitationViewProps {
   view: InvitationViewData;
@@ -49,6 +53,7 @@ export interface InvitationViewProps {
 
 // Konteks tema untuk sub-komponen (ornamen, gaya sudut, level animasi) tanpa oper-prop berlapis.
 interface ThemeCtx {
+  hortensia: boolean;
   lavender: boolean;
   orn: OrnamentSet;
   motif: Motif;
@@ -118,7 +123,12 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const { theme } = view.layout;
   const { data } = view;
   // Snapshot lama (sebelum ada motif/fx) tetap dirender: motif mengikuti preset, tanpa animasi.
-  const lavender = (theme.motif ?? theme.preset) === 'lavender';
+  // Lavender and Wisteria share responsive stationery mechanics, not their artwork/composition.
+  const wisteria = (theme.motif ?? theme.preset) === 'wisteria';
+  const marigold = (theme.motif ?? theme.preset) === 'marigold';
+  const serambi = (theme.motif ?? theme.preset) === 'garden';
+  const hortensia = (theme.motif ?? theme.preset) === 'hortensia';
+  const lavender = (theme.motif ?? theme.preset) === 'lavender' || wisteria || marigold || hortensia || serambi;
   const motif = motifFor(theme.motif ?? theme.preset);
   const artwork = view.layout.artwork;
   const [artworkFailed, setArtworkFailed] = useState(false);
@@ -140,7 +150,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const airy = skin === 'dove';
   const bloom = skin === 'bloom';
   const keraton = skin === 'keraton';
-  const garden = skin === 'garden';
+  const garden = skin === 'garden' && !serambi;
   const raster = skin === 'raster';
   // Untaian bunga & ikon bunga mini sebagai gambar CSS (data URI): bunga utamanya berwarna sekunder tema, jadi dihitung per tema.
   const bloomCss = useMemo(() => (bloom ? { garland: garlandCss(theme.secondary), mini: miniBloomCss(theme.secondary) } : null), [bloom, theme.secondary]);
@@ -304,6 +314,10 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     fontFamily: bf.family,
     ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : garden ? { ...GARDEN_BG, ['--garden-flourish' as string]: GARDEN_FLOURISH } : gilded ? GILDED_BG : airy ? DOVE_BG : bloom && bloomCss ? { ...BLOOM_BG, ['--bloom-garland' as string]: bloomCss.garland, ['--bloom-mini' as string]: bloomCss.mini } : keraton && keratonCss ? { ...KERATON_BG, ...keratonCss } : raster && artwork ? rasterRootVars(artwork) : null),
     ...(lavender ? { ...lavenderRootVars, ...lavenderPalette(theme.primary, theme.text) } : null),
+    ...(wisteria ? { ...wisteriaArtworkVars, ...wisteriaPalette(theme.primary, theme.text) } : null),
+    ...(marigold ? { ...marigoldArtworkVars, ...marigoldPalette(theme.primary, theme.text) } : null),
+    ...(serambi ? { ...gardenArtworkVars, ...gardenPalette(theme.primary, theme.text) } : null),
+    ...(hortensia ? { ...hortensiaRootVars, ...hortensiaPalette(theme.primary, theme.text) } : null),
   } as CSSProperties;
   const headingStyle: CSSProperties = {
     fontFamily: hf.family,
@@ -378,7 +392,10 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 
   useReveal(rootRef, fx !== 'none', embedded, visible.map((s) => s.id).join(',') + galleryPhotos.length);
 
-  const themeCtx: ThemeCtx = { orn, motif, fx, radius, sectionFont, artwork, lavender };
+  const themeCtx: ThemeCtx = { orn, motif, fx, radius, sectionFont, artwork, lavender, hortensia };
+  const BotanicalCover = hortensia ? HortensiaCover : LavenderCover;
+  const BotanicalPortrait = hortensia ? HortensiaPortrait : LavenderPortrait;
+  const BotanicalClosing = hortensia ? HortensiaClosing : LavenderClosing;
   const animated = fx !== 'none';
   // Animasi masuk sampul bertahap (var(--d)); tanpa efek: langsung tampil.
   const enter = (ms: number) => (animated ? { className: 'wl-enter', style: { '--d': `${ms}ms` } as CSSProperties } : { className: '', style: undefined });
@@ -422,7 +439,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         data-gate={coverKey === 'gate' ? 'closed' : undefined}
         // Terpasang sejak render server: keadaan awal "tersembunyi" sudah aktif sebelum hidrasi, jadi tidak ada kedipan.
         data-armed={animated ? '' : undefined}
-        className={`wl-root relative ${lavender ? lavenderRootClass : ''} ${skin ? `wl-${skin}` : ''} ${embedded ? 'phone-scroll h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}
+        data-stationery={hortensia ? 'hortensia' : lavender ? serambi ? 'garden' : marigold ? 'marigold' : wisteria ? 'wisteria' : 'lavender' : undefined}
+        className={`wl-root relative ${lavender ? lavenderRootClass : ''} ${hortensia ? hortensiaRootClass : ''} ${skin && !serambi ? `wl-${skin}` : ''} ${embedded ? 'phone-scroll h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}
       >
         {animated && (
           <noscript>
@@ -478,7 +496,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             />
           )}
           {!lavender && !seasonalPhotoCover && !rasterCover && <TemplateArtwork artwork={artwork} context="cover" hasUserPhoto={!!(coverPhoto || photoCover)} onAssetError={() => setArtworkFailed(true)} />}
-          {lavender ? <LavenderCover key={coverKey} kind={coverKind ?? 'ornamen'} photo={uploadedCover}
+          {lavender ? <BotanicalCover design={serambi ? 'garden' : marigold ? 'marigold' : wisteria ? 'wisteria' : 'lavender'} key={coverKey} kind={coverKind ?? 'ornamen'} photo={uploadedCover}
             groom={url(str(data, 'mempelai', 'pria_foto'))} bride={url(str(data, 'mempelai', 'wanita_foto'))}
             kicker={kicker} names={names} dateText={shortDate}
             guest={mode === 'live' || placeholders ? { dear: t.dear, name: guest ?? t.guestFallback } : null}
@@ -582,7 +600,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             </button>
           )}
 
-          {!photoCover && !rasterCover && (
+          {!lavender && !photoCover && !rasterCover && (
           <div key={coverKey} className={`relative z-[4] flex flex-col items-center ${finalSeasonalCover ? 'wl-final-seasonal-content' : ''} ${finalSeasonalCover ? `wl-final-fit wl-season-${artwork?.designId}` : ''}`} style={{ color: coverPhoto ? '#fff' : 'var(--tx)' }}>
             {bloom && !coverPhoto && showMono && (
               <div className={`mb-1 ${enter(0).className}`} style={enter(0).style}>
@@ -724,7 +742,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                             </div>
                           )}
                           <div className={`relative ${fx === 'premium' ? 'wl-float' : ''}`} style={fx === 'premium' ? { animationDelay: `${i * -2}s` } : undefined}>
-                            {lavender ? <LavenderPortrait src={photo} label={nick} /> : artwork?.assets.photoFrame ? (
+                            {lavender ? <BotanicalPortrait src={photo} label={nick} /> : artwork?.assets.photoFrame ? (
                               <div className="relative w-[15rem] max-w-[72vw]" style={{ aspectRatio: photoHole(artwork.designId).aspect }}>
                                 {photo ? (
                                   <img src={photo} alt={nick} className="absolute rounded-[50%] object-cover" style={photoHole(artwork.designId).box} />
@@ -899,9 +917,9 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 
         <footer className={`wl-art-footer relative overflow-hidden px-6 pb-24 pt-12 text-center text-xs ${gilded || airy || bloom || keraton ? '' : 'opacity-60'}`}>
           {!lavender && !raster && <TemplateArtwork artwork={artwork} context="closing" />}
-          {lavender ? <LavenderClosing names={names} dateText={shortDate} thanks={lang === 'id' ? 'Terima kasih' : 'Thank you'}>
+          {lavender ? <BotanicalClosing names={names} dateText={shortDate} thanks={lang === 'id' ? 'Terima kasih' : 'Thank you'}>
             <p className="text-xs opacity-60">{t.madeWith}</p>{preset?.credit && <p className="text-xs opacity-50">{preset.credit}</p>}
-          </LavenderClosing> : raster ? (
+          </BotanicalClosing> : raster ? (
             <RasterFooter artwork={artwork} names={names}>
               <p className="mt-3 opacity-60">{t.madeWith}</p>
               {preset?.credit && <p className="mt-2 opacity-50">{preset.credit}</p>}
@@ -988,8 +1006,9 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 }
 
 function Block({ title, children, headingStyle, tint, wide }: { title: string; children: ReactNode; headingStyle: CSSProperties; tint?: string; wide?: boolean }) {
-  const { orn, motif, fx, sectionFont, artwork, lavender } = useTheme();
-  if (lavender) return <LavenderBlock title={title}>{children}</LavenderBlock>;
+  const { orn, motif, fx, sectionFont, artwork, lavender, hortensia } = useTheme();
+  const BotanicalBlock = hortensia ? HortensiaBlock : LavenderBlock;
+  if (lavender) return <BotanicalBlock title={title}>{children}</BotanicalBlock>;
   const ghost = motif.ornament === 'hortensia';
   if (motif.skin === 'raster') {
     // Desain raster (Sekar Keraton, Pusako Minang): kertas berukir dari akar halaman terlihat penuh; tiap bagian hanya judul + pemisah kawung + isi.
@@ -1098,7 +1117,8 @@ const COUNTDOWN_LOOK: Record<CountdownKind, { section: CSSProperties; cell: CSSP
 };
 
 function Countdown({ target, t }: { target: string; t: Strings }) {
-  const { orn, motif, fx, radius, sectionFont, lavender } = useTheme();
+  const { orn, motif, fx, radius, sectionFont, lavender, hortensia } = useTheme();
+  const BotanicalBlock = hortensia ? HortensiaBlock : LavenderBlock;
   const keraton = motif.countdown === 'keraton';
   const luxe = motif.countdown === 'luxe' || keraton;
   const sky = motif.countdown === 'sky';
@@ -1109,7 +1129,7 @@ function Countdown({ target, t }: { target: string; t: Strings }) {
   const parts = diff === null ? null : [Math.floor(diff / 86_400_000), Math.floor((diff / 3_600_000) % 24), Math.floor((diff / 60_000) % 60), Math.floor((diff / 1000) % 60)];
   const labels = [t.days, t.hours, t.minutes, t.seconds];
   const look = COUNTDOWN_LOOK[motif.countdown];
-  if (lavender) return <LavenderBlock title={t.countdown}><div className={lavenderStyles.timer} role="timer" aria-live="off">{labels.map((label, i) => <div key={label}><strong>{parts ? String(parts[i]).padStart(2, '0') : '--'}</strong><small>{label}</small></div>)}</div></LavenderBlock>;
+  if (lavender) return <BotanicalBlock title={t.countdown}><div className={lavenderStyles.timer} role="timer" aria-live="off">{labels.map((label, i) => <div key={label}><strong>{parts ? String(parts[i]).padStart(2, '0') : '--'}</strong><small>{label}</small></div>)}</div></BotanicalBlock>;
   return (
     <section className="wl-reveal relative overflow-hidden px-6 py-14 text-center" style={{ ...look.section, color: light ? 'var(--tx)' : '#fff' }}>
       {sky && (

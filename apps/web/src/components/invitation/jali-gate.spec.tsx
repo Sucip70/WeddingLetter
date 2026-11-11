@@ -1,9 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { ArtworkManifest } from '../../lib/types';
-vi.mock('./assets/noor-gate-cloth.webp',()=>({default:{src:'/_next/static/media/noor-gate-cloth.webp'}}));
-vi.mock('./assets/noor-gate-jali.webp',()=>({default:{src:'/_next/static/media/noor-gate-jali.webp'}}));
 import { JaliGate, hasJaliGate } from './jali-gate';
 import { Gate } from './gates';
 const artwork={designId:'noor-e-nikah',assets:Object.fromEntries(Object.entries({cardFrame:'info-card',gateInteractive:'gate-rosette',divider:'divider',bottomDecoration:'inlay'}).map(([slot,file])=>[slot,{default:{url:`https://cdn.example.com/noor/${file}.webp`}}]))} as ArtworkManifest;

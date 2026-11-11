@@ -5,8 +5,7 @@ import { Fragment, type CSSProperties } from 'react';
 import type { ArtworkManifest } from '@/lib/types';
 import type { GatePhase } from './gates';
 import { rasterAsset } from './raster-theme';
-import cloth from './assets/noor-gate-cloth.webp';
-import jali from './assets/noor-gate-jali.webp';
+import { culturalRevisionSource } from './cultural-artwork';
 import styles from './jali-gate.module.css';
 
 export function hasJaliGate(artwork: ArtworkManifest | undefined, motif: string) {
@@ -30,15 +29,17 @@ export function JaliGate({ artwork, phase, names, kicker, guest, cta = 'Buka und
   const opening = phase === 'opening' || previewState === 'open';
   const divider = rasterAsset(artwork, 'divider');
   const footer = rasterAsset(artwork, 'bottomDecoration');
+  const cloth = culturalRevisionSource(artwork, 'gateCloth');
+  const jali = culturalRevisionSource(artwork, 'gateLattice');
   const style = {
-    '--jg-cloth': `url("${cloth.src}")`,
+    '--jg-cloth': `url("${cloth?.url}")`,
     '--jg-card': `url("${rasterAsset(artwork, 'cardFrame')}")`,
   } as CSSProperties;
   return (
     <div className={styles.gate} style={style} data-phase={phase} data-preview={previewState}
       data-gate-design="lengkung-gading" data-long={names.length > 24 ? 'true' : undefined}>
       {(['left','right'] as const).map(side => <div key={side} className={`${styles.leaf} ${styles[side]}`} aria-hidden="true">
-        <img className={styles.jali} src={jali.src} alt="" draggable={false} />
+        <img className={styles.jali} src={jali?.url} alt="" draggable={false} />
       </div>)}
       {footer && <img className={styles.footer} src={footer} alt="" draggable={false} aria-hidden="true" />}
       <div className={styles.stack} inert={opening}>

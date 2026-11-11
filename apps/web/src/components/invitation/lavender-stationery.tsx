@@ -9,6 +9,11 @@ import type { OrnamentSet } from './ornaments';
 import paper from './assets/lavender-cover.webp';
 import letter from './assets/lavender-gate.webp';
 import styles from './lavender-stationery.module.css';
+import { wisteriaArtworkVars, type BotanicalDesign } from './wisteria-stationery';
+import { marigoldArtworkVars } from './marigold-stationery';
+import { gardenArtworkVars } from './garden-stationery';
+
+type StationeryDesign = BotanicalDesign | 'marigold' | 'garden';
 
 export const LAVENDER_CANVAS = { width: 390, height: 390 * 956 / 440 };
 export function lavenderCanvasSize(width: number, height: number, thumbnail = false) {
@@ -33,8 +38,9 @@ export const LAVENDER_ORNAMENTS: OrnamentSet = {
 };
 
 /** The host reserves this canvas's aspect ratio; only the main invitation scrolls. */
-function Canvas({ children, gate = false, opening = false, thumbnail = false, ...data }: {
+function Canvas({ children, gate = false, opening = false, thumbnail = false, design = 'lavender', ...data }: {
   children: ReactNode; gate?: boolean; opening?: boolean; thumbnail?: boolean;
+  design?: StationeryDesign;
   'data-photo'?: string; 'data-long'?: string; 'data-kind'?: string;
 }) {
   const root = useRef<HTMLDivElement>(null);
@@ -48,9 +54,11 @@ function Canvas({ children, gate = false, opening = false, thumbnail = false, ..
     resize(); const observer = new ResizeObserver(resize); observer.observe(el);
     return () => observer.disconnect();
   }, [thumbnail]);
-  return <div ref={root} className={`${styles.host} ${gate ? styles.gateHost : ''}`} data-lavender={gate ? 'gate' : 'cover'} data-thumbnail={thumbnail || undefined} data-opening={opening || undefined} {...data}>
+  return <div ref={root} className={`${styles.host} ${gate ? styles.gateHost : ''}`} data-lavender={gate ? 'gate' : 'cover'} data-stationery={design} data-thumbnail={thumbnail || undefined} data-opening={opening || undefined} {...data}>
     <div className={styles.extent} style={{ height: fit.height * fit.scale }}>
-      <div className={`${styles.canvas} ${gate ? styles.letter : ''}`} style={{ ...lavenderRootVars, '--lavender-letter': `url("${letter.src}")`, '--composition-scale': fit.scale, width: 390, height: fit.height, transform: `scale(${fit.scale})` } as CSSProperties}>{children}</div>
+      <div className={`${styles.canvas} ${gate ? styles.letter : ''}`} style={{ ...lavenderRootVars, '--lavender-letter': `url("${letter.src}")`, ...(design === 'garden' ? gardenArtworkVars : design === 'wisteria' ? wisteriaArtworkVars : design === 'marigold' ? marigoldArtworkVars : null), '--composition-scale': fit.scale, width: 390, height: fit.height, transform: `scale(${fit.scale})` } as CSSProperties}>
+        {gate && (design === 'wisteria' || design === 'garden') && <div aria-hidden="true"><div className={styles.panelLeft} /><div className={styles.panelRight} /></div>}
+        {children}</div>
     </div>
   </div>;
 }
@@ -63,14 +71,14 @@ export function LavenderPortrait({ src, label, className = '' }: { src?: string;
   </figure>;
 }
 
-type LavenderCoverProps = Omit<CoverProps, 'kind' | 'artwork'> & { kind: CoverKind; thumbnail?: boolean };
+type LavenderCoverProps = Omit<CoverProps, 'kind' | 'artwork'> & { kind: CoverKind; thumbnail?: boolean; design?: StationeryDesign };
 export function LavenderCover(p: LavenderCoverProps) {
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const candidates = p.kind === 'berdua' && (p.groom || p.bride) ? [p.groom, p.bride] : [p.photo || p.groom || p.bride];
   const photos = candidates.filter((src): src is string => !!src && !failed.has(src));
   const withPhoto = p.kind !== 'ornamen' && photos.length > 0;
   const Tag = p.decorative ? 'span' : 'button';
-  return <Canvas thumbnail={p.thumbnail} data-kind={p.kind} data-photo={String(withPhoto)} data-long={String(p.names.length > 24)}>
+  return <Canvas design={p.design} thumbnail={p.thumbnail} data-kind={p.kind} data-photo={String(withPhoto)} data-long={String(p.names.length > 24)}>
     <div className={styles.stack}>
       <p className={styles.label}>{p.kicker}</p>
       {withPhoto && <div className={styles.portraits}>{photos.map((src, i) => <figure className={styles.portrait} key={`${i}-${src}`}>
@@ -89,16 +97,17 @@ export function LavenderCover(p: LavenderCoverProps) {
   </Canvas>;
 }
 
-export function LavenderGate({ names, kicker, dateText, guest, phase, onOpen }: {
+export function LavenderGate({ names, kicker, dateText, guest, phase, onOpen, design = 'lavender' }: {
   names: string; kicker: string; dateText?: string; guest: string | null; phase: GatePhase; onOpen: () => void;
+  design?: StationeryDesign;
 }) {
-  return <Canvas gate opening={phase === 'opening'} data-long={String(names.length > 24)}>
+  return <Canvas design={design} gate opening={phase === 'opening'} data-long={String(names.length > 24)}>
     <div className={styles.gateTop}><p className={styles.label}>{kicker}</p>
       <h1 className={styles.gateNames} aria-label={names}>{names.split(/\s*&\s*/u).map((part, i) => <Fragment key={i}>{i > 0 && <span className={styles.amp}>&amp;</span>}<span>{part}</span></Fragment>)}</h1>
       {dateText && <p className={styles.date}>{dateText}</p>}
     </div>
-    <button type="button" className={styles.seal} aria-label={`Buka undangan ${names}`} onClick={onOpen} disabled={phase !== 'closed'} />
-    <div className={styles.gateBottom}><p className={styles.dear}>Kepada Yth.</p><p className={styles.guest}>{guest || 'Bapak/Ibu/Saudara/i'}</p><p className={styles.hint}>Ketuk segel untuk membuka</p></div>
+    {design !== 'marigold' && design !== 'garden' && <button type="button" className={styles.seal} aria-label={`Buka undangan ${names}`} onClick={onOpen} disabled={phase !== 'closed'} />}
+    <div className={styles.gateBottom}><p className={styles.dear}>Kepada Yth.</p><p className={styles.guest}>{guest || 'Bapak/Ibu/Saudara/i'}</p>{design === 'marigold' || design === 'garden' ? <button type="button" className={styles.action} aria-label={`Buka undangan ${names}`} onClick={onOpen} disabled={phase !== 'closed'}>Buka Undangan</button> : <p className={styles.hint}>{design === 'wisteria' ? 'Ketuk pengait untuk membuka' : 'Ketuk segel untuk membuka'}</p>}</div>
   </Canvas>;
 }
 

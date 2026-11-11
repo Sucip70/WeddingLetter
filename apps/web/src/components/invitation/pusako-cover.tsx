@@ -4,8 +4,7 @@
 import { Fragment, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import type { CoverProps } from './raster-cover';
 import { rasterAsset } from './raster-theme';
-import paper from './assets/pusako-cover-paper.webp';
-import divider from './assets/pusako-cover-divider.webp';
+import { culturalRevisionSource } from './cultural-artwork';
 import styles from './pusako-cover.module.css';
 
 export const PUSAKO_CANVAS = { width: 390, height: 390 * 956 / 440 };
@@ -33,8 +32,10 @@ export function PusakoCover(p: CoverProps) {
   const withPhoto = p.kind !== 'ornamen' && portraits.length > 0;
   const marker = rasterAsset(p.artwork, 'topDecoration');
   const Tag = p.decorative ? 'span' : 'button';
+  const paper = culturalRevisionSource(p.artwork, 'stationeryBackground');
+  const divider = culturalRevisionSource(p.artwork, 'stationeryDivider');
   const style = {
-    '--pusako-paper': `url("${paper.src}")`, '--composition-scale': scale,
+    '--pusako-paper': `url("${paper?.url}")`, '--composition-scale': scale,
     width: PUSAKO_CANVAS.width, height: PUSAKO_CANVAS.height, transform: `scale(${scale})`,
   } as CSSProperties;
   return <div ref={root} className={styles.cover} data-cover-design="pusako-songket" data-kind={p.kind}
@@ -52,7 +53,7 @@ export function PusakoCover(p: CoverProps) {
             {i > 0 && <span className={styles.amp}> &amp; </span>}<span className={styles.name}>{part}</span>
           </Fragment>)}</h1>
           {p.dateText && <p className={styles.date}>{p.dateText}</p>}
-          <img className={styles.divider} src={divider.src} alt="" draggable={false} />
+          <img className={styles.divider} src={divider?.url} alt="" draggable={false} />
           {p.guest && <div className={styles.recipient}><p className={styles.dear}>{p.guest.dear}</p><p className={styles.guest}>{p.guest.name}</p></div>}
           <Tag className={styles.action} {...(p.decorative ? {} : { type: 'button' as const, onClick: p.onOpen })}>{p.openLabel}</Tag>
         </div>

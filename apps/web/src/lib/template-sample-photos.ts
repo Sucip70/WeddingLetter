@@ -6,6 +6,7 @@ import hongXi from '../../public/samples/hong-xi/manifest.json';
 import noorENikah from '../../public/samples/noor-e-nikah/manifest.json';
 import vivahaRani from '../../public/samples/vivaha-rani/manifest.json';
 import lavenderSample from '../components/invitation/assets/lavender-sample.webp';
+import hortensiaSample from '../components/invitation/assets/hortensia-sample.webp';
 
 export type TemplateSamplePhotoSlot = 'cover' | 'groom' | 'bride' | 'gallery1' | 'gallery2' | 'gallery3' | 'gallery4';
 export type TemplateSamplePhotos = Partial<Record<TemplateSamplePhotoSlot, string>>;
@@ -30,6 +31,6 @@ export function resolveTemplateSamplePhotos(
   globalPhotos: Record<string, string> = {},
 ): Record<string, string> {
   const designId = layout.artwork?.designId ?? layout.theme?.motif ?? layout.theme?.preset;
-  const builtIn = designId === 'lavender' ? { cover: lavenderSample.src, gallery1: lavenderSample.src, groom: '', bride: '' } : SAMPLE_PHOTOS[designId ?? ''] ?? {};
+  const builtIn = designId === 'hortensia' ? { cover: hortensiaSample.src, gallery1: hortensiaSample.src, groom: '', bride: '' } : designId === 'garden' || designId === 'lavender' || designId === 'wisteria' || designId === 'marigold' ? { cover: lavenderSample.src, gallery1: lavenderSample.src, groom: '', bride: '' } : SAMPLE_PHOTOS[designId ?? ''] ?? {};
   return { ...globalPhotos, ...builtIn, ...layout.samplePhotos };
 }

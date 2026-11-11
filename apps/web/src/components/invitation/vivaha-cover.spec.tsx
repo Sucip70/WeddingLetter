@@ -1,9 +1,8 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { ArtworkManifest } from '../../lib/types';
 import type { CoverProps } from './raster-cover';
-vi.mock('./assets/vivaha-cover-paper.webp',()=>({default:{src:'/_next/static/media/vivaha-cover-paper.webp'}}));
 import { RasterCover } from './raster-cover';
 
 const artwork={designId:'vivaha-rani',assets:Object.fromEntries(Object.entries({coverBackground:'page-bg',photoFrame:'photo-frame',topDecoration:'marker',divider:'divider'}).map(([slot,file])=>[slot,{default:{url:`https://cdn.example.com/vivaha/${file}.webp`}}]))} as ArtworkManifest;

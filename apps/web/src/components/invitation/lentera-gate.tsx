@@ -5,7 +5,7 @@ import { Fragment, type CSSProperties } from 'react';
 import type { ArtworkManifest } from '@/lib/types';
 import type { GatePhase } from './gates';
 import { rasterAsset } from './raster-theme';
-import cloud from './assets/hong-xi-cloud.webp';
+import { culturalRevisionSource } from './cultural-artwork';
 import styles from './lentera-gate.module.css';
 
 export function hasLenteraGate(artwork: ArtworkManifest | undefined, motif: string) {
@@ -26,6 +26,7 @@ export function LenteraGate({ artwork, phase, names, kicker, guest, cta = 'Buka 
 }) {
   const opening = phase === 'opening' || previewState === 'open';
   const divider = rasterAsset(artwork, 'divider');
+  const cloud = culturalRevisionSource(artwork, 'gateCta');
   const style = { '--lg-paper': `url("${rasterAsset(artwork, 'gateBackground')}")` } as CSSProperties;
   return (
     <div className={styles.gate} data-phase={phase} data-preview={previewState}
@@ -47,7 +48,7 @@ export function LenteraGate({ artwork, phase, names, kicker, guest, cta = 'Buka 
           <div><p className={styles.dear}>Kepada Yth.</p><p className={styles.guest}>{guest?.trim() || 'Bapak/Ibu/Saudara/i'}</p></div>
         </div>
         <button className={styles.seal} type="button" onClick={onOpen} disabled={opening || !onOpen} aria-label={`Buka undangan ${names}`}>
-          <img src={cloud.src} width={cloud.width} height={cloud.height} alt="" draggable={false} />
+          <img src={cloud?.url} width={cloud?.width} height={cloud?.height} alt="" draggable={false} />
           <span>{cta}</span>
         </button>
       </div>

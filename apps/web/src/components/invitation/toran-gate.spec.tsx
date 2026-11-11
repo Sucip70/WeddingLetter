@@ -1,8 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { ArtworkManifest } from '../../lib/types';
-vi.mock('./assets/vivaha-gate-doors.webp',()=>({default:{src:'/_next/static/media/vivaha-gate-doors.webp'}}));
 import { ToranGate, hasToranGate } from './toran-gate';
 import { Gate } from './gates';
 const artwork={designId:'vivaha-rani',assets:{}} as ArtworkManifest;

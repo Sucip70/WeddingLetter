@@ -25,6 +25,10 @@ import { BLOOM_BG, DOVE_BG, GARDEN_BG, GARDEN_FLOURISH, GILDED_BG, KRAFT_COVER, 
 import { FloralPageFrame, GardenPageFrame } from './invitation/garden-parts';
 import { MeadowPageFrame } from './invitation/meadow-parts';
 import { LavenderCover, lavenderPalette } from './invitation/lavender-stationery';
+import { wisteriaPalette } from './invitation/wisteria-stationery';
+import { marigoldPalette } from './invitation/marigold-stationery';
+import { gardenPalette } from './invitation/garden-stationery';
+import { HortensiaCover, hortensiaPalette } from './invitation/hortensia-stationery';
 
 // Miniatur sampul template (statis, ringan) untuk kartu katalog. Memakai motif desain: ornamen sudut,
 // pola latar, dan font judul yang sama dengan undangan sungguhan.
@@ -58,7 +62,11 @@ export function TemplateThumb({
   seed?: string;
 }) {
   const liveCultural = usesLiveCulturalThumbnail(artwork?.designId, theme);
-  const lavender = (theme.motif ?? theme.preset) === 'lavender';
+  const wisteria = (theme.motif ?? theme.preset) === 'wisteria';
+  const marigold = (theme.motif ?? theme.preset) === 'marigold';
+  const serambi = (theme.motif ?? theme.preset) === 'garden';
+  const hortensia = (theme.motif ?? theme.preset) === 'hortensia';
+  const lavender = (theme.motif ?? theme.preset) === 'lavender' || wisteria || marigold || hortensia || serambi;
   if (imageUrl && !liveCultural && !lavender) {
     const designId = theme.motif ?? theme.preset;
     const imageFit = ['semi', 'panas', 'gugur', 'salju'].includes(designId) ? 'object-cover' : 'object-contain';
@@ -68,7 +76,8 @@ export function TemplateThumb({
   const effectivePhotos = resolveTemplateSamplePhotos({ artwork, samplePhotos, theme }, photos);
   if (lavender) {
     const kind = coverLayouts.length ? resolveCover(defaultCoverLayout(coverLayouts, coverDefault), effectivePhotos) : 'ornamen';
-    return <div className={`relative h-full w-full ${className}`} style={lavenderPalette(theme.primary, theme.text)}><LavenderCover thumbnail decorative animated={false} kind={kind}
+    const BotanicalCover = hortensia ? HortensiaCover : LavenderCover;
+    return <div className={`relative h-full w-full ${className}`} style={serambi ? gardenPalette(theme.primary, theme.text) : hortensia ? hortensiaPalette(theme.primary, theme.text) : marigold ? marigoldPalette(theme.primary, theme.text) : wisteria ? wisteriaPalette(theme.primary, theme.text) : lavenderPalette(theme.primary, theme.text)}><BotanicalCover design={serambi ? 'garden' : marigold ? 'marigold' : wisteria ? 'wisteria' : 'lavender'} thumbnail decorative animated={false} kind={kind}
       photo={effectivePhotos.cover} groom={effectivePhotos.groom} bride={effectivePhotos.bride}
       kicker="Undangan Pernikahan" names="Andi & Sinta" dateText="28 · 11 · 2026"
       guest={{ dear: 'Kepada Yth.', name: 'Bapak/Ibu/Saudara/i' }} openLabel="Buka Undangan" /></div>;

@@ -1,10 +1,8 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { ArtworkManifest } from '../../lib/types';
 import type { CoverProps } from './raster-cover';
-vi.mock('./assets/pusako-cover-paper.webp', () => ({ default: { src: '/_next/static/media/pusako-cover-paper.webp' } }));
-vi.mock('./assets/pusako-cover-divider.webp', () => ({ default: { src: '/_next/static/media/pusako-cover-divider.webp' } }));
 import { RasterCover } from './raster-cover';
 import { PUSAKO_CANVAS, isPusakoStationery } from './pusako-cover';
 

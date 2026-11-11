@@ -1,9 +1,8 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { ArtworkManifest } from '../../lib/types';
 
-vi.mock('./assets/hong-xi-cloud.webp', () => ({ default: { src: '/_next/static/media/hong-xi-cloud.webp', width: 1962, height: 259 } }));
 import { LenteraGate, hasLenteraGate } from './lentera-gate';
 import { Gate } from './gates';
 

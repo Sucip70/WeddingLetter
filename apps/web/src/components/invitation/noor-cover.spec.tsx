@@ -1,9 +1,8 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { ArtworkManifest } from '../../lib/types';
 import type { CoverProps } from './raster-cover';
-vi.mock('./assets/noor-cover-paper.webp',()=>({default:{src:'/_next/static/media/noor-cover-paper.webp',width:851,height:1848}}));
 import { RasterCover } from './raster-cover';
 
 const artwork={designId:'noor-e-nikah',assets:Object.fromEntries(Object.entries({coverBackground:'page-bg',photoFrame:'photo-frame',topDecoration:'marker',divider:'divider'}).map(([slot,file])=>[slot,{default:{url:`https://cdn.example.com/noor/${file}.webp`}}]))} as ArtworkManifest;
@@ -17,9 +16,9 @@ describe('Noor cover — approved ivory inlay',()=>{
     expect(render({kind:'penuh'})).not.toContain('data-cover-design="noor-inlay-ivory"');
     expect(render({kind:'terbagi'})).not.toContain('data-cover-design="noor-inlay-ivory"');
   });
-  it('uses the bundled background without relying on ignored public files',()=>{
+  it('uses the background declared in the revision manifest',()=>{
     const html=render();
-    expect(html).toContain('/_next/static/media/noor-cover-paper.webp');
+    expect(html).toContain('/themes/noor-e-nikah/stationery-01/noor-cover-paper.webp');
     expect(html).not.toContain('.tmp');
     expect(html).not.toContain('<svg');
   });

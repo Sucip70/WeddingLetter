@@ -4,7 +4,7 @@
 import { Fragment, useState, type CSSProperties } from 'react';
 import type { CoverProps } from './raster-cover';
 import { rasterAsset } from './raster-theme';
-import paper from './assets/noor-cover-paper.webp';
+import { culturalRevisionSource } from './cultural-artwork';
 import styles from './noor-cover.module.css';
 
 /** The invitation cover AFTER the gate. Artwork never contains names or user photos. */
@@ -17,7 +17,8 @@ export function NoorCover(p: CoverProps) {
   const divider = rasterAsset(p.artwork, 'divider');
   const marker = rasterAsset(p.artwork, 'topDecoration');
   const frame = rasterAsset(p.artwork, 'photoFrame');
-  const style = { '--noor-paper': `url("${rasterAsset(p.artwork, 'coverPaper') ?? paper.src}")` } as CSSProperties;
+  const paper = rasterAsset(p.artwork, 'stationeryBackground') ?? rasterAsset(p.artwork, 'coverPaper') ?? culturalRevisionSource(p.artwork, 'stationeryBackground')?.url;
+  const style = { '--noor-paper': `url("${paper}")` } as CSSProperties;
   const Tag = p.decorative ? 'span' : 'button';
   return (
     <div className={styles.cover} style={style} data-cover-design="noor-inlay-ivory" data-kind={p.kind}
