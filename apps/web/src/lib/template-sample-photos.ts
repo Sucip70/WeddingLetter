@@ -5,6 +5,7 @@ import pawiwahanAgung from '../../public/samples/pawiwahan-agung/manifest.json';
 import hongXi from '../../public/samples/hong-xi/manifest.json';
 import noorENikah from '../../public/samples/noor-e-nikah/manifest.json';
 import vivahaRani from '../../public/samples/vivaha-rani/manifest.json';
+import lavenderSample from '../components/invitation/assets/lavender-sample.webp';
 
 export type TemplateSamplePhotoSlot = 'cover' | 'groom' | 'bride' | 'gallery1' | 'gallery2' | 'gallery3' | 'gallery4';
 export type TemplateSamplePhotos = Partial<Record<TemplateSamplePhotoSlot, string>>;
@@ -19,6 +20,7 @@ const SAMPLE_PHOTOS: Record<string, Readonly<TemplateSamplePhotos>> = Object.fro
 
 type SamplePhotoLayout = {
   artwork?: { designId: string };
+  theme?: { motif?: string; preset: string };
   samplePhotos?: TemplateSamplePhotos;
 };
 
@@ -27,6 +29,7 @@ export function resolveTemplateSamplePhotos(
   layout: SamplePhotoLayout,
   globalPhotos: Record<string, string> = {},
 ): Record<string, string> {
-  const builtIn = SAMPLE_PHOTOS[layout.artwork?.designId ?? ''] ?? {};
+  const designId = layout.artwork?.designId ?? layout.theme?.motif ?? layout.theme?.preset;
+  const builtIn = designId === 'lavender' ? { cover: lavenderSample.src, gallery1: lavenderSample.src, groom: '', bride: '' } : SAMPLE_PHOTOS[designId ?? ''] ?? {};
   return { ...globalPhotos, ...builtIn, ...layout.samplePhotos };
 }

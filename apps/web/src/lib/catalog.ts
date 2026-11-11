@@ -74,7 +74,7 @@ export function templateFeatures(t: Pick<Template, 'layout' | 'includedWeeks'>) 
   const tracks = layout.musik.count ?? layout.musik.presets.length;
   if (layout.musik.allowed) features.push(tracks > 1 ? `Musik latar (${tracks} pilihan lagu)` : 'Musik latar');
   if (layout.theme.fx !== 'none') features.push(FX_LABEL[layout.theme.fx]);
-  if (layout.theme.gate && layout.theme.gate !== 'none') features.push(`Gerbang pembuka: ${GATE_LABEL[layout.theme.gate]}`);
+  if (layout.theme.gate && layout.theme.gate !== 'none') features.push(`Gerbang pembuka: ${(layout.theme.motif ?? layout.theme.preset) === 'lavender' ? 'Surat Herbarium Lavender' : GATE_LABEL[layout.theme.gate]}`);
   if ((layout.palettes?.length ?? 0) > 1) features.push(`${layout.palettes.length} pilihan warna`);
   for (const id of ['rsvp', 'amplop_digital', 'buku_tamu', 'countdown', 'cerita']) if (ids.includes(id)) features.push(SECTION_LABEL[id]!);
   features.push(`Masa aktif ${t.includedWeeks} minggu`);

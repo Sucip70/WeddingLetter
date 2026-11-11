@@ -17,6 +17,7 @@ import { CandiGate, hasCandiGate } from './candi-gate';
 import { LenteraGate, hasLenteraGate } from './lentera-gate';
 import { JaliGate, hasJaliGate } from './jali-gate';
 import { ToranGate, hasToranGate } from './toran-gate';
+import { LavenderGate } from './lavender-stationery';
 
 // Gerbang berat (Motion / CSS 3D / seni SVG) dimuat per jenis: undangan hanya mengunduh kode gerbangnya sendiri,
 // bukan keenam-enamnya. Tetap di-render di server (ssr bawaan), jadi tidak ada kedipan saat halaman dibuka.
@@ -111,6 +112,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
   dateText?: string;
 }) {
   const seasonal = hasSeasonalGate(artwork, motif);
+  const lavender = motif === 'lavender';
   const sekarKeraton = hasSekarKeratonGate(artwork, motif);
   const pusako = hasPusakoGate(artwork, motif);
   const ulos = hasUlosGate(artwork, motif);
@@ -133,9 +135,9 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
         data-phase={phase}
         data-tone={DARK[kind] ? 'dark' : 'light'}
         data-seasonal={seasonal ? 'true' : undefined}
-        {...(seasonal || pusako || candi || lentera || jali || toran ? {} : { role: 'button', tabIndex: 0, 'aria-label': `Buka undangan. ${CTA[kind]}`, onClick: onOpen, onKeyDown: onKey })}
+        {...(lavender || seasonal || pusako || candi || lentera || jali || toran ? {} : { role: 'button', tabIndex: 0, 'aria-label': `Buka undangan. ${CTA[kind]}`, onClick: onOpen, onKeyDown: onKey })}
       >
-        {seasonal ? (
+        {lavender ? <LavenderGate names={names} kicker={kicker} dateText={dateText} guest={guest} phase={phase} onOpen={onOpen} /> : seasonal ? (
           <SeasonalGate designId={artwork.designId as SeasonalGateDesign} phase={phase} artwork={artwork} names={names} kicker={kicker} guest={guest} headingFamily={headingFamily} onOpen={onOpen} />
         ) : toran && artwork ? (
           <ToranGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} onOpen={onOpen} />

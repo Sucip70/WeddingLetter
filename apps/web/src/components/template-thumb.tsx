@@ -24,6 +24,7 @@ import { STRINGS } from './invitation/i18n';
 import { BLOOM_BG, DOVE_BG, GARDEN_BG, GARDEN_FLOURISH, GILDED_BG, KRAFT_COVER, KRAFT_TEXTURE, coverBackgroundFor } from './invitation/skin-bg';
 import { FloralPageFrame, GardenPageFrame } from './invitation/garden-parts';
 import { MeadowPageFrame } from './invitation/meadow-parts';
+import { LavenderCover, lavenderPalette } from './invitation/lavender-stationery';
 
 // Miniatur sampul template (statis, ringan) untuk kartu katalog. Memakai motif desain: ornamen sudut,
 // pola latar, dan font judul yang sama dengan undangan sungguhan.
@@ -57,13 +58,21 @@ export function TemplateThumb({
   seed?: string;
 }) {
   const liveCultural = usesLiveCulturalThumbnail(artwork?.designId, theme);
-  if (imageUrl && !liveCultural) {
+  const lavender = (theme.motif ?? theme.preset) === 'lavender';
+  if (imageUrl && !liveCultural && !lavender) {
     const designId = theme.motif ?? theme.preset;
     const imageFit = ['semi', 'panas', 'gugur', 'salju'].includes(designId) ? 'object-cover' : 'object-contain';
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={imageUrl} alt="" className={`h-full w-full ${imageFit} ${className}`} />;
   }
-  const effectivePhotos = resolveTemplateSamplePhotos({ artwork, samplePhotos }, photos);
+  const effectivePhotos = resolveTemplateSamplePhotos({ artwork, samplePhotos, theme }, photos);
+  if (lavender) {
+    const kind = coverLayouts.length ? resolveCover(defaultCoverLayout(coverLayouts, coverDefault), effectivePhotos) : 'ornamen';
+    return <div className={`relative h-full w-full ${className}`} style={lavenderPalette(theme.primary, theme.text)}><LavenderCover thumbnail decorative animated={false} kind={kind}
+      photo={effectivePhotos.cover} groom={effectivePhotos.groom} bride={effectivePhotos.bride}
+      kicker="Undangan Pernikahan" names="Andi & Sinta" dateText="28 · 11 · 2026"
+      guest={{ dear: 'Kepada Yth.', name: 'Bapak/Ibu/Saudara/i' }} openLabel="Buka Undangan" /></div>;
+  }
   const motif = motifFor(theme.motif ?? theme.preset);
   const orn = ORNAMENTS[motif.ornament];
   const hf = HEADING[theme.headingFont] ?? HEADING.serif;

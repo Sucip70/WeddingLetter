@@ -31,6 +31,8 @@ import { SeasonalCoverLayout } from './seasonal-cover';
 import { RasterCover } from './raster-cover';
 import { isRasterDesign } from './raster-theme';
 import { RasterCard, RasterDivider, RasterFooter, RasterCoupleSection, rasterRootVars } from './raster-sections';
+import { LavenderBlock, LavenderClosing, LavenderCover, LavenderPortrait, LAVENDER_ORNAMENTS, lavenderPalette, lavenderRootClass, lavenderRootVars } from './lavender-stationery';
+import lavenderStyles from './lavender-stationery.module.css';
 
 export interface InvitationViewProps {
   view: InvitationViewData;
@@ -47,6 +49,7 @@ export interface InvitationViewProps {
 
 // Konteks tema untuk sub-komponen (ornamen, gaya sudut, level animasi) tanpa oper-prop berlapis.
 interface ThemeCtx {
+  lavender: boolean;
   orn: OrnamentSet;
   motif: Motif;
   fx: 'none' | 'standard' | 'premium';
@@ -115,6 +118,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const { theme } = view.layout;
   const { data } = view;
   // Snapshot lama (sebelum ada motif/fx) tetap dirender: motif mengikuti preset, tanpa animasi.
+  const lavender = (theme.motif ?? theme.preset) === 'lavender';
   const motif = motifFor(theme.motif ?? theme.preset);
   const artwork = view.layout.artwork;
   const [artworkFailed, setArtworkFailed] = useState(false);
@@ -123,14 +127,14 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const finalSeasonalCover = hasCoverArtwork && ['semi', 'panas', 'gugur', 'salju'].includes(artwork?.designId ?? '')
     && /\/cover-(standard|premium)\.webp$/.test(coverArtworkKey);
   const fx = theme.fx ?? 'none';
-  const orn = ORNAMENTS[artwork?.fallback.ornament ?? motif.ornament];
+  const orn = lavender ? LAVENDER_ORNAMENTS : ORNAMENTS[artwork?.fallback.ornament ?? motif.ornament];
   const coverEffect = artwork?.fallback.coverEffect ?? motif.cover;
   const particleKind = artwork?.fallback.particle ?? motif.particles.kind;
-  const radius = RADIUS[motif.radius];
-  const hf = HEADING[motif.heading ?? theme.headingFont] ?? HEADING.serif;
-  const bf = BODY[motif.body ?? theme.bodyFont] ?? BODY.serif;
+  const radius = RADIUS[lavender ? 'sharp' : motif.radius];
+  const hf = lavender ? { ...HEADING.serif, family: 'var(--font-cormorant), Georgia, serif', section: '2.2rem', tracking: 'normal', upper: false } : HEADING[motif.heading ?? theme.headingFont] ?? HEADING.serif;
+  const bf = BODY[lavender ? 'source' : motif.body ?? theme.bodyFont] ?? BODY.serif;
   // Font nama mempelai bisa berbeda dari font judul seksi (Elegan: aksara tulisan tangan vs Cinzel).
-  const nf = HEADING[motif.names ?? motif.heading ?? theme.headingFont] ?? hf;
+  const nf = lavender ? hf : HEADING[motif.names ?? motif.heading ?? theme.headingFont] ?? hf;
   const skin = motif.skin;
   const gilded = skin === 'gilded';
   const airy = skin === 'dove';
@@ -227,7 +231,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     if (!gateKind || gatePhase !== 'closed' || gateOpening.current) return;
     gateOpening.current = true;
     // Native gate controls may scroll their embedded root. Reveal these covers from the top.
-    if (gateKind === 'jali' || gateKind === 'toran') {
+    if (lavender || gateKind === 'jali' || gateKind === 'toran') {
       if (embedded) rootRef.current?.scrollTo({ top: 0, behavior: 'instant' });
       else window.scrollTo({ top: 0, behavior: 'instant' });
     }
@@ -237,13 +241,13 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     setGatePhase('opening');
     setRevealDelay(REVEAL_DELAY_MS[gateKind] ?? 0);
     const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const duration = seasonalGate ? SEASONAL_GATE_MS[artwork.designId as keyof typeof SEASONAL_GATE_MS] : GATE_MS[gateKind];
+    const duration = lavender ? 1650 : seasonalGate ? SEASONAL_GATE_MS[artwork.designId as keyof typeof SEASONAL_GATE_MS] : GATE_MS[gateKind];
     gateTimer.current = setTimeout(() => {
       setGatePhase('open');
       gateOpening.current = false;
       if (live) startMusic();
-    }, reduced ? (seasonalGate ? 220 : 350) : duration);
-  }, [gateKind, gatePhase, mode, unlockMusic, startMusic, seasonalGate, artwork, embedded]);
+    }, reduced ? (lavender || seasonalGate ? 220 : 350) : duration);
+  }, [gateKind, gatePhase, mode, unlockMusic, startMusic, seasonalGate, artwork, embedded, lavender]);
 
   const replayGate = useCallback(() => {
     clearTimeout(gateTimer.current);
@@ -299,6 +303,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     color: theme.text,
     fontFamily: bf.family,
     ...(skin === 'kraft' ? { backgroundImage: KRAFT_TEXTURE, backgroundBlendMode: 'multiply' } : garden ? { ...GARDEN_BG, ['--garden-flourish' as string]: GARDEN_FLOURISH } : gilded ? GILDED_BG : airy ? DOVE_BG : bloom && bloomCss ? { ...BLOOM_BG, ['--bloom-garland' as string]: bloomCss.garland, ['--bloom-mini' as string]: bloomCss.mini } : keraton && keratonCss ? { ...KERATON_BG, ...keratonCss } : raster && artwork ? rasterRootVars(artwork) : null),
+    ...(lavender ? { ...lavenderRootVars, ...lavenderPalette(theme.primary, theme.text) } : null),
   } as CSSProperties;
   const headingStyle: CSSProperties = {
     fontFamily: hf.family,
@@ -373,7 +378,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 
   useReveal(rootRef, fx !== 'none', embedded, visible.map((s) => s.id).join(',') + galleryPhotos.length);
 
-  const themeCtx: ThemeCtx = { orn, motif, fx, radius, sectionFont, artwork };
+  const themeCtx: ThemeCtx = { orn, motif, fx, radius, sectionFont, artwork, lavender };
   const animated = fx !== 'none';
   // Animasi masuk sampul bertahap (var(--d)); tanpa efek: langsung tampil.
   const enter = (ms: number) => (animated ? { className: 'wl-enter', style: { '--d': `${ms}ms` } as CSSProperties } : { className: '', style: undefined });
@@ -417,14 +422,14 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         data-gate={coverKey === 'gate' ? 'closed' : undefined}
         // Terpasang sejak render server: keadaan awal "tersembunyi" sudah aktif sebelum hidrasi, jadi tidak ada kedipan.
         data-armed={animated ? '' : undefined}
-        className={`wl-root relative ${skin ? `wl-${skin}` : ''} ${embedded ? 'phone-scroll h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}
+        className={`wl-root relative ${lavender ? lavenderRootClass : ''} ${skin ? `wl-${skin}` : ''} ${embedded ? 'phone-scroll h-full overflow-y-auto overflow-x-hidden' : 'mx-auto w-full max-w-[480px] overflow-x-clip shadow-[0_0_60px_rgba(0,0,0,0.08)]'}`}
       >
         {animated && (
           <noscript>
             <style>{'.wl-root[data-armed] .wl-reveal{opacity:1!important;transform:none!important;filter:none!important}'}</style>
           </noscript>
         )}
-        {artwork?.assets.pageBackground && <TemplateArtwork artwork={artwork} context="page" />}
+        {!lavender && artwork?.assets.pageBackground && <TemplateArtwork artwork={artwork} context="page" />}
         {gateActive && gateKind && (
           <Gate
             kind={gateKind}
@@ -452,7 +457,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 
         {/* Premium: partikel melayang di seluruh halaman (lapisan lengket seukuran layar). Dengan gerbang, baru
             dipasang saat sampul mulai terlihat dan masuk bertahap dari tepi layar, bukan muncul di tengah. */}
-        {fx === 'premium' && particlesReady && (!finalSeasonalCover || finalParticleCount > 0) && (
+        {!lavender && fx === 'premium' && particlesReady && (!finalSeasonalCover || finalParticleCount > 0) && (
           <div className="pointer-events-none sticky top-0 z-[5] h-0" style={keraton ? { color: 'var(--s)' } : undefined} aria-hidden>
             <div className="relative" style={{ height: layerHeight }}>
               <Particles kind={particleKind} count={finalSeasonalCover ? finalParticleCount : particleCount} mode={motif.particles.mode} height={layerHeight} enter={!!gateKind} />
@@ -464,7 +469,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         <section
           ref={coverRef}
           className={`relative flex flex-col items-center justify-center overflow-hidden px-8 text-center ${finalSeasonalCover ? 'wl-final-seasonal-cover' : ''}`}
-          style={{ ...(pusakoStationery ? { height: 'auto', minHeight: 0, aspectRatio: '440 / 956', flexShrink: 0 } : embedded ? { height: '100%' } : { minHeight: '100svh' }), ...(revealDelay ? { '--gd': `${revealDelay}ms` } : null) } as CSSProperties}
+          style={{ ...(lavender || pusakoStationery ? { height: 'auto', minHeight: 0, aspectRatio: '440 / 956', flexShrink: 0 } : embedded ? { height: '100%' } : { minHeight: '100svh' }), ...(revealDelay ? { '--gd': `${revealDelay}ms` } : null) } as CSSProperties}
         >
           {rasterCover || coverPhoto || photoCover ? null : (
             <div
@@ -472,8 +477,12 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               style={{ background: coverBackground }}
             />
           )}
-          {!seasonalPhotoCover && !rasterCover && <TemplateArtwork artwork={artwork} context="cover" hasUserPhoto={!!(coverPhoto || photoCover)} onAssetError={() => setArtworkFailed(true)} />}
-          {rasterCover && artwork ? (
+          {!lavender && !seasonalPhotoCover && !rasterCover && <TemplateArtwork artwork={artwork} context="cover" hasUserPhoto={!!(coverPhoto || photoCover)} onAssetError={() => setArtworkFailed(true)} />}
+          {lavender ? <LavenderCover key={coverKey} kind={coverKind ?? 'ornamen'} photo={uploadedCover}
+            groom={url(str(data, 'mempelai', 'pria_foto'))} bride={url(str(data, 'mempelai', 'wanita_foto'))}
+            kicker={kicker} names={names} dateText={shortDate}
+            guest={mode === 'live' || placeholders ? { dear: t.dear, name: guest ?? t.guestFallback } : null}
+            openLabel={openLabel} onOpen={open} animated={animated} /> : rasterCover && artwork ? (
             <RasterCover
               key={coverKey}
               kind={rasterCoverKind}
@@ -715,7 +724,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                             </div>
                           )}
                           <div className={`relative ${fx === 'premium' ? 'wl-float' : ''}`} style={fx === 'premium' ? { animationDelay: `${i * -2}s` } : undefined}>
-                            {artwork?.assets.photoFrame ? (
+                            {lavender ? <LavenderPortrait src={photo} label={nick} /> : artwork?.assets.photoFrame ? (
                               <div className="relative w-[15rem] max-w-[72vw]" style={{ aspectRatio: photoHole(artwork.designId).aspect }}>
                                 {photo ? (
                                   <img src={photo} alt={nick} className="absolute rounded-[50%] object-cover" style={photoHole(artwork.designId).box} />
@@ -889,8 +898,10 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         })}
 
         <footer className={`wl-art-footer relative overflow-hidden px-6 pb-24 pt-12 text-center text-xs ${gilded || airy || bloom || keraton ? '' : 'opacity-60'}`}>
-          {!raster && <TemplateArtwork artwork={artwork} context="closing" />}
-          {raster ? (
+          {!lavender && !raster && <TemplateArtwork artwork={artwork} context="closing" />}
+          {lavender ? <LavenderClosing names={names} dateText={shortDate} thanks={lang === 'id' ? 'Terima kasih' : 'Thank you'}>
+            <p className="text-xs opacity-60">{t.madeWith}</p>{preset?.credit && <p className="text-xs opacity-50">{preset.credit}</p>}
+          </LavenderClosing> : raster ? (
             <RasterFooter artwork={artwork} names={names}>
               <p className="mt-3 opacity-60">{t.madeWith}</p>
               {preset?.credit && <p className="mt-2 opacity-50">{preset.credit}</p>}
@@ -977,7 +988,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
 }
 
 function Block({ title, children, headingStyle, tint, wide }: { title: string; children: ReactNode; headingStyle: CSSProperties; tint?: string; wide?: boolean }) {
-  const { orn, motif, fx, sectionFont, artwork } = useTheme();
+  const { orn, motif, fx, sectionFont, artwork, lavender } = useTheme();
+  if (lavender) return <LavenderBlock title={title}>{children}</LavenderBlock>;
   const ghost = motif.ornament === 'hortensia';
   if (motif.skin === 'raster') {
     // Desain raster (Sekar Keraton, Pusako Minang): kertas berukir dari akar halaman terlihat penuh; tiap bagian hanya judul + pemisah kawung + isi.
@@ -1086,7 +1098,7 @@ const COUNTDOWN_LOOK: Record<CountdownKind, { section: CSSProperties; cell: CSSP
 };
 
 function Countdown({ target, t }: { target: string; t: Strings }) {
-  const { orn, motif, fx, radius, sectionFont } = useTheme();
+  const { orn, motif, fx, radius, sectionFont, lavender } = useTheme();
   const keraton = motif.countdown === 'keraton';
   const luxe = motif.countdown === 'luxe' || keraton;
   const sky = motif.countdown === 'sky';
@@ -1097,6 +1109,7 @@ function Countdown({ target, t }: { target: string; t: Strings }) {
   const parts = diff === null ? null : [Math.floor(diff / 86_400_000), Math.floor((diff / 3_600_000) % 24), Math.floor((diff / 60_000) % 60), Math.floor((diff / 1000) % 60)];
   const labels = [t.days, t.hours, t.minutes, t.seconds];
   const look = COUNTDOWN_LOOK[motif.countdown];
+  if (lavender) return <LavenderBlock title={t.countdown}><div className={lavenderStyles.timer} role="timer" aria-live="off">{labels.map((label, i) => <div key={label}><strong>{parts ? String(parts[i]).padStart(2, '0') : '--'}</strong><small>{label}</small></div>)}</div></LavenderBlock>;
   return (
     <section className="wl-reveal relative overflow-hidden px-6 py-14 text-center" style={{ ...look.section, color: light ? 'var(--tx)' : '#fff' }}>
       {sky && (
