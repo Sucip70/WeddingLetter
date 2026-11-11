@@ -133,7 +133,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
         data-phase={phase}
         data-tone={DARK[kind] ? 'dark' : 'light'}
         data-seasonal={seasonal ? 'true' : undefined}
-        {...(seasonal || pusako || candi ? {} : { role: 'button', tabIndex: 0, 'aria-label': `Buka undangan. ${CTA[kind]}`, onClick: onOpen, onKeyDown: onKey })}
+        {...(seasonal || pusako || candi || lentera ? {} : { role: 'button', tabIndex: 0, 'aria-label': `Buka undangan. ${CTA[kind]}`, onClick: onOpen, onKeyDown: onKey })}
       >
         {seasonal ? (
           <SeasonalGate designId={artwork.designId as SeasonalGateDesign} phase={phase} artwork={artwork} names={names} kicker={kicker} guest={guest} headingFamily={headingFamily} onOpen={onOpen} />
@@ -142,7 +142,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
         ) : jali && artwork ? (
           <JaliGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
         ) : lentera && artwork ? (
-          <LenteraGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
+          <LenteraGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta="Buka undangan" dateText={dateText} onOpen={onOpen} />
         ) : candi && artwork ? (
           <CandiGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta="Buka undangan" dateText={dateText} onOpen={onOpen} />
         ) : ulos && artwork ? (
