@@ -133,12 +133,12 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
         data-phase={phase}
         data-tone={DARK[kind] ? 'dark' : 'light'}
         data-seasonal={seasonal ? 'true' : undefined}
-        {...(seasonal || pusako || candi || lentera || jali ? {} : { role: 'button', tabIndex: 0, 'aria-label': `Buka undangan. ${CTA[kind]}`, onClick: onOpen, onKeyDown: onKey })}
+        {...(seasonal || pusako || candi || lentera || jali || toran ? {} : { role: 'button', tabIndex: 0, 'aria-label': `Buka undangan. ${CTA[kind]}`, onClick: onOpen, onKeyDown: onKey })}
       >
         {seasonal ? (
           <SeasonalGate designId={artwork.designId as SeasonalGateDesign} phase={phase} artwork={artwork} names={names} kicker={kicker} guest={guest} headingFamily={headingFamily} onOpen={onOpen} />
         ) : toran && artwork ? (
-          <ToranGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
+          <ToranGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} onOpen={onOpen} />
         ) : jali && artwork ? (
           <JaliGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta="Buka undangan" dateText={dateText} onOpen={onOpen} />
         ) : lentera && artwork ? (

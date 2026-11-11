@@ -226,8 +226,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const openGate = useCallback(() => {
     if (!gateKind || gatePhase !== 'closed' || gateOpening.current) return;
     gateOpening.current = true;
-    // Focusing the native Noor CTA can scroll its embedded root. Reveal the cover from its top.
-    if (gateKind === 'jali') {
+    // Native gate controls may scroll their embedded root. Reveal these covers from the top.
+    if (gateKind === 'jali' || gateKind === 'toran') {
       if (embedded) rootRef.current?.scrollTo({ top: 0, behavior: 'instant' });
       else window.scrollTo({ top: 0, behavior: 'instant' });
     }

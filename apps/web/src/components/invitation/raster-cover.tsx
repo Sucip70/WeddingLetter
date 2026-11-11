@@ -7,6 +7,7 @@ import type { CoverKind } from '@/lib/cover-layouts';
 import { rasterAsset, rasterTheme, rasterThemeVars } from './raster-theme';
 import { RasterCard } from './raster-sections';
 import { NoorCover } from './noor-cover';
+import { VivahaCover } from './vivaha-cover';
 
 export type RasterCoverKind = Extract<CoverKind, 'ornamen' | 'penuh' | 'bingkai' | 'berdua' | 'terbagi'>;
 
@@ -62,6 +63,9 @@ function Mount({ frame, photo, alt, className, style, onError }: { frame?: strin
 }
 
 export function RasterCover(p: CoverProps) {
+  if (p.artwork.designId === 'vivaha-rani' && ['ornamen', 'bingkai', 'berdua'].includes(p.kind)) {
+    return <VivahaCover {...p} />;
+  }
   if (p.artwork.designId === 'noor-e-nikah' && ['ornamen', 'bingkai', 'berdua'].includes(p.kind)) {
     return <NoorCover {...p} />;
   }
