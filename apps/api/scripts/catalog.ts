@@ -11,8 +11,7 @@ import { z } from 'zod';
 import sharp from 'sharp';
 import { R2Driver } from '../src/storage/r2.driver.js';
 import { config } from 'dotenv';
-import { templateBaseSchema } from '../src/admin/admin.dto.js';
-import { resolveCatalog } from '../src/admin/catalog.js';
+import { parseCatalogTemplate, resolveCatalog } from '../src/admin/catalog.js';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
@@ -210,7 +209,10 @@ async function main() {
   for (const entry of packet.entries) {
     const keys = new Set<string>();
     const resolved = resolveCatalog(entry.data, { publicUrl: (key) => `https://destination.example/${key}` }, keys);
-    if (entry.kind === 'template') templateBaseSchema.parse(resolved);
+    if (entry.kind === 'template') {
+      try { parseCatalogTemplate(resolved); }
+      catch (error) { throw new Error(`Template ${entry.id} (${entry.data.name}): ${error instanceof Error ? error.message : String(error)}`); }
+    }
     if (entry.kind === 'demoPhoto' || entry.kind === 'musicTrack') keys.add(String(entry.data.storageKey));
     for (const key of keys) if (!inventoryKeys.has(key)) throw new Error(`Asset missing from inventory: ${key}`);
   }

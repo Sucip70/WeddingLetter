@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { BadRequestException } from '@nestjs/common';
 import { LIMITS } from '../config/constants.js';
-import { layoutInputSchema } from '../templates/layout.js';
+import { layoutIncludes, layoutInputSchema, normalizeLayout } from '../templates/layout.js';
 import { ARTWORK_SLOTS, ARTWORK_VARIANTS, DEFAULT_ARTWORK_PRESENTATION, artworkFallbackSchema, artworkPresentationSchema } from '../templates/artwork.js';
 
 export const templateBaseSchema = z.object({
@@ -15,6 +16,13 @@ export const templateBaseSchema = z.object({
 });
 export const templateCreateSchema = templateBaseSchema;
 export const templateUpdateSchema = templateBaseSchema.partial();
+
+export function assertPublishableLayout(layoutSchema: unknown, category: string) {
+  const layout = normalizeLayout(layoutSchema, category);
+  if (!layoutIncludes(layout, 'mempelai') || !layoutIncludes(layout, 'tanggal_lokasi')) {
+    throw new BadRequestException('Template yang dipublikasikan harus memuat section Mempelai dan Tanggal & lokasi');
+  }
+}
 
 export const addOnUpdateSchema = z.object({
   name: z.string().trim().min(2).max(80).optional(),
