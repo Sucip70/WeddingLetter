@@ -1,5 +1,12 @@
 {
   "designId": "vivaha-rani",
+  "samplePhotos": {
+    "cover": "/samples/vivaha-rani/cover.webp",
+    "groom": "/samples/vivaha-rani/groom.webp",
+    "bride": "/samples/vivaha-rani/bride.webp",
+    "gallery1": "/samples/vivaha-rani/gallery-walking.webp",
+    "gallery2": "/samples/vivaha-rani/gallery-romantic.webp"
+  },
   "assetType": "opaque-sample-prewedding-photography",
   "cultureScope": "contemporary North Indian Hindu wedding",
   "palette": [

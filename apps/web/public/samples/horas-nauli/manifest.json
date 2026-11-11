@@ -1,5 +1,12 @@
 {
   "designId": "horas-nauli",
+  "samplePhotos": {
+    "cover": "/samples/horas-nauli/cover.webp",
+    "groom": "/samples/horas-nauli/groom.webp",
+    "bride": "/samples/horas-nauli/bride.webp",
+    "gallery1": "/samples/horas-nauli/gallery-walking.webp",
+    "gallery2": "/samples/horas-nauli/gallery-romantic.webp"
+  },
   "assetType": "opaque-sample-prewedding-photography",
   "cultureScope": "Batak Toba",
   "palette": [

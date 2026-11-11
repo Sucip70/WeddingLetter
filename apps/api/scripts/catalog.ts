@@ -91,16 +91,33 @@ async function exportCatalog() {
   }
   try {
     const entries: z.infer<typeof catalogEntrySchema>[] = [];
+    const samplePhotoSchema = z.object({
+      designId: z.string().min(1),
+      samplePhotos: z.partialRecord(z.enum(['cover', 'groom', 'bride', 'gallery1', 'gallery2', 'gallery3', 'gallery4']), z.string()).optional(),
+    });
+    const samplePhotosByDesign = new Map<string, Record<string, string>>();
+    for (const folder of await readdir(path.join(publicDir, 'samples'), { withFileTypes: true })) {
+      if (!folder.isDirectory()) continue;
+      const manifest = samplePhotoSchema.parse(JSON.parse(await readFile(path.join(publicDir, 'samples', folder.name, 'manifest.json'), 'utf8')));
+      if (!manifest.samplePhotos) continue;
+      if (samplePhotosByDesign.has(manifest.designId)) throw new Error(`Duplicate sample manifest: ${manifest.designId}`);
+      for (const url of Object.values(manifest.samplePhotos)) {
+        if (!url.startsWith(`/samples/${folder.name}/`)) throw new Error(`Sample photo outside manifest folder: ${url}`);
+      }
+      samplePhotosByDesign.set(manifest.designId, manifest.samplePhotos);
+    }
     const templates = await prisma.template.findMany({ orderBy: { id: 'asc' } });
     for (const row of templates) {
       const { id, name, category, tier, price, includedWeeks, status, thumbnailUrl } = row;
       const layout = structuredClone(row.layoutSchema) as Record<string, any>;
       const artwork = layout.artwork;
+      const designId = artwork?.designId ?? layout.theme?.motif ?? layout.theme?.preset;
+      const samplePhotos = samplePhotosByDesign.get(designId);
+      if (samplePhotos) layout.samplePhotos = { ...samplePhotos, ...layout.samplePhotos };
       if (artwork?.designId === 'jawa-sekar-keraton') {
         for (const [slot, file] of Object.entries({ coverPaper: 'paper', coverCanopy: 'canopy', coverFooter: 'footer', coverFrame: 'frame', coverDivider: 'divider' })) {
           artwork.assets[slot] = { default: await imageSource(`/themes/sekar-keraton/pendopo-${file}.webp`) };
         }
-        layout.samplePhotos = Object.fromEntries(Object.entries({ cover: 'cover', groom: 'groom-v2', bride: 'bride-v2', gallery1: 'gallery-walking', gallery2: 'gallery-romantic' }).map(([slot, file]) => [slot, `/samples/sekar-keraton/${file}.webp`]));
       }
       if (artwork?.designId === 'pusako-minang') {
         const replacements = { gateBackground: ['gate-tile', 'gate-cloth'], cardFrame: ['info-card', 'letter-card'], gateTransition: ['gate-post-left', 'post-left'], gateForeground: ['gate-post-right', 'post-right'], gateInteractive: ['gate-gonjong', 'gonjong-seal'], divider: ['divider', 'gold-divider'], bottomDecoration: ['footer', 'gold-foundation'] };

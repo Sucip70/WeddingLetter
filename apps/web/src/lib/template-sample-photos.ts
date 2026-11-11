@@ -1,24 +1,21 @@
+import sekarKeraton from '../../public/samples/sekar-keraton/manifest.json';
+import pusakoMinang from '../../public/samples/pusako-minang/manifest.json';
+import horasNauli from '../../public/samples/horas-nauli/manifest.json';
+import pawiwahanAgung from '../../public/samples/pawiwahan-agung/manifest.json';
+import hongXi from '../../public/samples/hong-xi/manifest.json';
+import noorENikah from '../../public/samples/noor-e-nikah/manifest.json';
+import vivahaRani from '../../public/samples/vivaha-rani/manifest.json';
+
 export type TemplateSamplePhotoSlot = 'cover' | 'groom' | 'bride' | 'gallery1' | 'gallery2' | 'gallery3' | 'gallery4';
 export type TemplateSamplePhotos = Partial<Record<TemplateSamplePhotoSlot, string>>;
 
-const SEKAR_KERATON_DESIGN_ID = 'jawa-sekar-keraton';
-const SEKAR_KERATON_SAMPLE_ROOT = '/samples/sekar-keraton';
+export const PUSAKO_MINANG_SAMPLE_PHOTOS: Readonly<TemplateSamplePhotos> = pusakoMinang.samplePhotos;
+export const SEKAR_KERATON_SAMPLE_PHOTOS: Readonly<TemplateSamplePhotos> = sekarKeraton.samplePhotos;
 
-export const PUSAKO_MINANG_SAMPLE_PHOTOS: Readonly<TemplateSamplePhotos> = {
-  cover: '/samples/pusako-minang/cover.webp',
-  groom: '/samples/pusako-minang/groom.webp',
-  bride: '/samples/pusako-minang/bride.webp',
-  gallery1: '/samples/pusako-minang/gallery-walking.webp',
-  gallery2: '/samples/pusako-minang/gallery-romantic.webp',
-};
-
-export const SEKAR_KERATON_SAMPLE_PHOTOS: Readonly<TemplateSamplePhotos> = {
-  cover: `${SEKAR_KERATON_SAMPLE_ROOT}/cover.webp`,
-  groom: `${SEKAR_KERATON_SAMPLE_ROOT}/groom-v2.webp`,
-  bride: `${SEKAR_KERATON_SAMPLE_ROOT}/bride-v2.webp`,
-  gallery1: `${SEKAR_KERATON_SAMPLE_ROOT}/gallery-walking.webp`,
-  gallery2: `${SEKAR_KERATON_SAMPLE_ROOT}/gallery-romantic.webp`,
-};
+const SAMPLE_PHOTOS: Record<string, Readonly<TemplateSamplePhotos>> = Object.fromEntries(
+  [sekarKeraton, pusakoMinang, horasNauli, pawiwahanAgung, hongXi, noorENikah, vivahaRani]
+    .map((manifest) => [manifest.designId, manifest.samplePhotos]),
+);
 
 type SamplePhotoLayout = {
   artwork?: { designId: string };
@@ -30,7 +27,6 @@ export function resolveTemplateSamplePhotos(
   layout: SamplePhotoLayout,
   globalPhotos: Record<string, string> = {},
 ): Record<string, string> {
-  const builtIn = layout.artwork?.designId === SEKAR_KERATON_DESIGN_ID ? SEKAR_KERATON_SAMPLE_PHOTOS
-    : layout.artwork?.designId === 'pusako-minang' ? PUSAKO_MINANG_SAMPLE_PHOTOS : {};
+  const builtIn = SAMPLE_PHOTOS[layout.artwork?.designId ?? ''] ?? {};
   return { ...globalPhotos, ...builtIn, ...layout.samplePhotos };
 }
