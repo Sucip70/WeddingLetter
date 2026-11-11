@@ -340,6 +340,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const seasonalPhotoCover = finalSeasonalCover && photoCover && artwork && ['semi', 'panas', 'gugur', 'salju'].includes(artwork.designId);
   const rasterCover = isRasterDesign(artwork?.designId);
   const rasterCoverKind = coverKind === 'penuh' || coverKind === 'bingkai' || coverKind === 'berdua' || coverKind === 'terbagi' ? coverKind : 'ornamen';
+  const pusakoStationery = rasterCover && artwork?.designId === 'pusako-minang' && ['ornamen', 'bingkai', 'berdua'].includes(rasterCoverKind);
 
   const galleryPhotos = list(data, 'galeri', 'foto').map(url).filter((x): x is string => !!x);
   const galleryVideos = list(data, 'galeri', 'video').map(url).filter((x): x is string => !!x);
@@ -463,7 +464,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         <section
           ref={coverRef}
           className={`relative flex flex-col items-center justify-center overflow-hidden px-8 text-center ${finalSeasonalCover ? 'wl-final-seasonal-cover' : ''}`}
-          style={{ ...(embedded ? { height: '100%' } : { minHeight: '100svh' }), ...(revealDelay ? { '--gd': `${revealDelay}ms` } : null) } as CSSProperties}
+          style={{ ...(pusakoStationery ? { height: 'auto', minHeight: 0, aspectRatio: '440 / 956', flexShrink: 0 } : embedded ? { height: '100%' } : { minHeight: '100svh' }), ...(revealDelay ? { '--gd': `${revealDelay}ms` } : null) } as CSSProperties}
         >
           {rasterCover || coverPhoto || photoCover ? null : (
             <div

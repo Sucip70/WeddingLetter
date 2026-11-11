@@ -9,6 +9,7 @@ import { RasterCard } from './raster-sections';
 import { NoorCover } from './noor-cover';
 import { VivahaCover } from './vivaha-cover';
 import { SekarCover } from './sekar-cover';
+import { PusakoCover, isPusakoStationery } from './pusako-cover';
 
 export type RasterCoverKind = Extract<CoverKind, 'ornamen' | 'penuh' | 'bingkai' | 'berdua' | 'terbagi'>;
 
@@ -64,6 +65,7 @@ function Mount({ frame, photo, alt, className, style, onError }: { frame?: strin
 }
 
 export function RasterCover(p: CoverProps) {
+  if (isPusakoStationery(p.artwork.designId, p.kind)) return <PusakoCover {...p} />;
   if (p.artwork.designId === 'jawa-sekar-keraton' && ['ornamen', 'bingkai', 'berdua'].includes(p.kind)) {
     return <SekarCover {...p} />;
   }
