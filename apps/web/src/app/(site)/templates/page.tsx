@@ -166,8 +166,8 @@ export default async function TemplatesPage({ searchParams }: PageProps<'/templa
                       // Baris: miniatur kecil (dirender selebar 293px lalu diperkecil, supaya isinya utuh) + nama.
                       return (
                         <Link key={t.id} href={`/templates/${t.id}`} className="group flex gap-4 overflow-hidden rounded-2xl border border-line bg-paper p-3 transition-shadow hover:shadow-lg hover:shadow-ink/5">
-                          <div className="relative h-[110px] w-[88px] shrink-0 overflow-hidden rounded-xl">
-                            <div className="absolute left-0 top-0 aspect-[4/5] w-[293px] origin-top-left scale-[0.3]">{thumb}</div>
+                          <div className={`relative w-[88px] shrink-0 overflow-hidden rounded-xl ${g === 'suku' ? 'h-[154px]' : 'h-[110px]'}`}>
+                            <div className={`absolute left-0 top-0 w-[293px] origin-top-left scale-[0.3] ${g === 'suku' ? 'aspect-[390/680]' : 'aspect-[4/5]'}`}>{thumb}</div>
                           </div>
                           <div className="flex min-w-0 flex-1 flex-col justify-center">
                             <p className="truncate font-semibold text-ink">{name}</p>

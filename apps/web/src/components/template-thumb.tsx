@@ -7,11 +7,12 @@ import type { CSSProperties } from 'react';
 import { CoverLayout } from './invitation/cover';
 import { RasterCoverThumb, type RasterCoverKind } from './invitation/raster-cover';
 import { isRasterDesign } from './invitation/raster-theme';
-import { defaultCoverLayout, isCoverKind, resolveCover } from '@/lib/cover-layouts';
+import { CulturalTemplateThumb, usesLiveCulturalThumbnail } from './invitation/cultural-template-thumb';
+import { defaultCoverLayout, isCoverKind, resolveCover } from '../lib/cover-layouts';
 import type { DemoPhotos } from '@/lib/sample';
 import type { Theme } from '@/lib/types';
 import type { Layout } from '@/lib/types';
-import { resolveTemplateSamplePhotos } from '@/lib/template-sample-photos';
+import { resolveTemplateSamplePhotos } from '../lib/template-sample-photos';
 import { PatternLayer } from './invitation/effects';
 import { HEADING, RADIUS, motifFor } from './invitation/motifs';
 import { FloralMonogram } from './invitation/bloom-parts';
@@ -55,7 +56,8 @@ export function TemplateThumb({
   // Tidak dipakai lagi (dulu memilih tata letak acak per kartu); dipertahankan agar pemanggil lama tetap valid.
   seed?: string;
 }) {
-  if (imageUrl) {
+  const liveCultural = usesLiveCulturalThumbnail(artwork?.designId, theme);
+  if (imageUrl && !liveCultural) {
     const designId = theme.motif ?? theme.preset;
     const imageFit = ['semi', 'panas', 'gugur', 'salju'].includes(designId) ? 'object-cover' : 'object-contain';
     // eslint-disable-next-line @next/next/no-img-element
@@ -126,6 +128,12 @@ export function TemplateThumb({
   if (artwork && isRasterDesign(artwork.designId)) {
     const rasterKinds = ['ornamen', 'penuh', 'bingkai', 'berdua', 'terbagi'] as const;
     const kind: RasterCoverKind = rasterKinds.find((k) => k === resolved) ?? 'ornamen';
+    if (liveCultural) {
+      return <CulturalTemplateThumb theme={theme} className={className} kind={kind} artwork={artwork}
+        photo={effectivePhotos.cover} groom={effectivePhotos.groom} bride={effectivePhotos.bride}
+        kicker="Undangan Pernikahan" names="Andi & Sinta" dateText="12 . 12 . 2026"
+        guest={{dear:'Kepada Yth.',name:'Bapak/Ibu/Saudara/i'}} openLabel="Buka Undangan" />;
+    }
     return (
       <RasterCoverThumb
         kind={kind}

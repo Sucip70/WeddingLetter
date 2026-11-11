@@ -1,0 +1,4 @@
+.thumbnail { position:relative; height:100%; width:100%; overflow:hidden; pointer-events:none; }
+.screen { position:absolute; left:0; top:0; transform-origin:top left; }
+/* Catalog cards are links, not interactive invitations. Never loop gate idle effects in the grid. */
+.thumbnail *,.thumbnail *::before,.thumbnail *::after { animation:none!important; transition:none!important; }
