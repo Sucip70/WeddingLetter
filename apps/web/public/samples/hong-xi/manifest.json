@@ -1,5 +1,12 @@
 {
   "designId": "hong-xi",
+  "samplePhotos": {
+    "cover": "/samples/hong-xi/cover.webp",
+    "groom": "/samples/hong-xi/groom.webp",
+    "bride": "/samples/hong-xi/bride.webp",
+    "gallery1": "/samples/hong-xi/gallery-walking.webp",
+    "gallery2": "/samples/hong-xi/gallery-romantic.webp"
+  },
   "assetType": "opaque-sample-prewedding-photography",
   "cultureScope": "modern Chinese-Indonesian",
   "palette": [

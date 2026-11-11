@@ -2,6 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { resolveTemplateSamplePhotos, SEKAR_KERATON_SAMPLE_PHOTOS } from './template-sample-photos';
 
 describe('resolveTemplateSamplePhotos', () => {
+  it.each(['horas-nauli', 'pawiwahan-agung', 'hong-xi', 'noor-e-nikah', 'vivaha-rani'])('loads the matching sample manifest for %s', (designId) => {
+    const photos = resolveTemplateSamplePhotos({ artwork: { designId } });
+    for (const slot of ['cover', 'groom', 'bride', 'gallery1', 'gallery2']) {
+      expect(photos[slot]).toMatch(new RegExp(`^/samples/${designId}/`));
+    }
+    expect(resolveTemplateSamplePhotos({ artwork: { designId }, samplePhotos: { cover: 'https://cdn.example.com/custom.webp' } }).cover).toBe('https://cdn.example.com/custom.webp');
+  });
+  it('uses local Pusako preview photos without changing other designs or published overrides', () => {
+    const layout = { artwork: { designId: 'pusako-minang' } };
+    expect(resolveTemplateSamplePhotos(layout, { cover: '/unavailable-global.webp' }).cover).toBe('/samples/pusako-minang/cover.webp');
+    expect(resolveTemplateSamplePhotos({ ...layout, samplePhotos: { cover: '/published.webp' } }).cover).toBe('/published.webp');
+  });
   it('adds the complete Sekar Keraton set and keeps unused global slots', () => {
     const global = { cover: '/global-cover.webp', groom: '/global-groom.webp', gallery3: '/global-gallery-3.webp' };
 

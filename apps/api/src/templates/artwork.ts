@@ -6,6 +6,7 @@ export const ARTWORK_SLOTS = [
   'cornerBottomLeft', 'cornerBottomRight', 'divider', 'photoFrame', 'texture',
   'thumbnail', 'gateBackground', 'gateForeground', 'gateTransition', 'gateInteractive', 'cardFrame',
   'coverPaper', 'coverCanopy', 'coverFooter', 'coverFrame', 'coverDivider',
+  'stationeryBackground', 'stationeryDivider', 'gateCloth', 'gateLattice', 'gateDoors', 'gateCta',
 ] as const;
 export type ArtworkSlot = (typeof ARTWORK_SLOTS)[number];
 

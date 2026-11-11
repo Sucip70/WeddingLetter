@@ -1,5 +1,12 @@
 {
   "designId": "pusako-minang",
+  "samplePhotos": {
+    "cover": "/samples/pusako-minang/cover.webp",
+    "groom": "/samples/pusako-minang/groom.webp",
+    "bride": "/samples/pusako-minang/bride.webp",
+    "gallery1": "/samples/pusako-minang/gallery-walking.webp",
+    "gallery2": "/samples/pusako-minang/gallery-romantic.webp"
+  },
   "assetType": "opaque-sample-prewedding-photography",
   "cultureScope": "Minangkabau — Padang/Pariaman-inspired",
   "palette": [

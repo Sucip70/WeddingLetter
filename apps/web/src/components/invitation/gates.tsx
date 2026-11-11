@@ -17,6 +17,8 @@ import { CandiGate, hasCandiGate } from './candi-gate';
 import { LenteraGate, hasLenteraGate } from './lentera-gate';
 import { JaliGate, hasJaliGate } from './jali-gate';
 import { ToranGate, hasToranGate } from './toran-gate';
+import { LavenderGate } from './lavender-stationery';
+import { HortensiaGate } from './hortensia-stationery';
 
 // Gerbang berat (Motion / CSS 3D / seni SVG) dimuat per jenis: undangan hanya mengunduh kode gerbangnya sendiri,
 // bukan keenam-enamnya. Tetap di-render di server (ssr bawaan), jadi tidak ada kedipan saat halaman dibuka.
@@ -111,6 +113,11 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
   dateText?: string;
 }) {
   const seasonal = hasSeasonalGate(artwork, motif);
+  const lavender = motif === 'lavender';
+  const wisteria = motif === 'wisteria';
+  const marigold = motif === 'marigold';
+  const serambi = motif === 'garden';
+  const hortensia = motif === 'hortensia';
   const sekarKeraton = hasSekarKeratonGate(artwork, motif);
   const pusako = hasPusakoGate(artwork, motif);
   const ulos = hasUlosGate(artwork, motif);
@@ -133,18 +140,18 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
         data-phase={phase}
         data-tone={DARK[kind] ? 'dark' : 'light'}
         data-seasonal={seasonal ? 'true' : undefined}
-        {...(seasonal || pusako ? {} : { role: 'button', tabIndex: 0, 'aria-label': `Buka undangan. ${CTA[kind]}`, onClick: onOpen, onKeyDown: onKey })}
+        {...(hortensia || lavender || wisteria || marigold || serambi || seasonal || pusako || candi || lentera || jali || toran ? {} : { role: 'button', tabIndex: 0, 'aria-label': `Buka undangan. ${CTA[kind]}`, onClick: onOpen, onKeyDown: onKey })}
       >
-        {seasonal ? (
+        {hortensia ? <HortensiaGate names={names} kicker={kicker} dateText={dateText} guest={guest} phase={phase} onOpen={onOpen} /> : lavender || wisteria || marigold || serambi ? <LavenderGate design={serambi ? 'garden' : marigold ? 'marigold' : wisteria ? 'wisteria' : 'lavender'} names={names} kicker={kicker} dateText={dateText} guest={guest} phase={phase} onOpen={onOpen} /> : seasonal ? (
           <SeasonalGate designId={artwork.designId as SeasonalGateDesign} phase={phase} artwork={artwork} names={names} kicker={kicker} guest={guest} headingFamily={headingFamily} onOpen={onOpen} />
         ) : toran && artwork ? (
-          <ToranGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
+          <ToranGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} onOpen={onOpen} />
         ) : jali && artwork ? (
-          <JaliGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
+          <JaliGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta="Buka undangan" dateText={dateText} onOpen={onOpen} />
         ) : lentera && artwork ? (
-          <LenteraGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
+          <LenteraGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta="Buka undangan" dateText={dateText} onOpen={onOpen} />
         ) : candi && artwork ? (
-          <CandiGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
+          <CandiGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta="Buka undangan" dateText={dateText} onOpen={onOpen} />
         ) : ulos && artwork ? (
           <UlosGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} dateText={dateText} />
         ) : pusako && artwork ? (

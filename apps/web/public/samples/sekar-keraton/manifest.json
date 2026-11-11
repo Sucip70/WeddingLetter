@@ -1,5 +1,12 @@
 {
   "designId": "jawa-sekar-keraton",
+  "samplePhotos": {
+    "cover": "/samples/sekar-keraton/cover.webp",
+    "groom": "/samples/sekar-keraton/groom-v2.webp",
+    "bride": "/samples/sekar-keraton/bride-v2.webp",
+    "gallery1": "/samples/sekar-keraton/gallery-walking.webp",
+    "gallery2": "/samples/sekar-keraton/gallery-romantic.webp"
+  },
   "purpose": "Opaque sample pre-wedding photography for template previews; customers replace these with their own photographs.",
   "style": "Photorealistic editorial pre-wedding photography in a Javanese pendopo",
   "format": {

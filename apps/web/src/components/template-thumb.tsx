@@ -7,11 +7,12 @@ import type { CSSProperties } from 'react';
 import { CoverLayout } from './invitation/cover';
 import { RasterCoverThumb, type RasterCoverKind } from './invitation/raster-cover';
 import { isRasterDesign } from './invitation/raster-theme';
-import { defaultCoverLayout, isCoverKind, resolveCover } from '@/lib/cover-layouts';
+import { CulturalTemplateThumb, usesLiveCulturalThumbnail } from './invitation/cultural-template-thumb';
+import { defaultCoverLayout, isCoverKind, resolveCover } from '../lib/cover-layouts';
 import type { DemoPhotos } from '@/lib/sample';
 import type { Theme } from '@/lib/types';
 import type { Layout } from '@/lib/types';
-import { resolveTemplateSamplePhotos } from '@/lib/template-sample-photos';
+import { resolveTemplateSamplePhotos } from '../lib/template-sample-photos';
 import { PatternLayer } from './invitation/effects';
 import { HEADING, RADIUS, motifFor } from './invitation/motifs';
 import { FloralMonogram } from './invitation/bloom-parts';
@@ -23,6 +24,11 @@ import { STRINGS } from './invitation/i18n';
 import { BLOOM_BG, DOVE_BG, GARDEN_BG, GARDEN_FLOURISH, GILDED_BG, KRAFT_COVER, KRAFT_TEXTURE, coverBackgroundFor } from './invitation/skin-bg';
 import { FloralPageFrame, GardenPageFrame } from './invitation/garden-parts';
 import { MeadowPageFrame } from './invitation/meadow-parts';
+import { LavenderCover, lavenderPalette } from './invitation/lavender-stationery';
+import { wisteriaPalette } from './invitation/wisteria-stationery';
+import { marigoldPalette } from './invitation/marigold-stationery';
+import { gardenPalette } from './invitation/garden-stationery';
+import { HortensiaCover, hortensiaPalette } from './invitation/hortensia-stationery';
 
 // Miniatur sampul template (statis, ringan) untuk kartu katalog. Memakai motif desain: ornamen sudut,
 // pola latar, dan font judul yang sama dengan undangan sungguhan.
@@ -55,13 +61,27 @@ export function TemplateThumb({
   // Tidak dipakai lagi (dulu memilih tata letak acak per kartu); dipertahankan agar pemanggil lama tetap valid.
   seed?: string;
 }) {
-  if (imageUrl) {
+  const liveCultural = usesLiveCulturalThumbnail(artwork?.designId, theme);
+  const wisteria = (theme.motif ?? theme.preset) === 'wisteria';
+  const marigold = (theme.motif ?? theme.preset) === 'marigold';
+  const serambi = (theme.motif ?? theme.preset) === 'garden';
+  const hortensia = (theme.motif ?? theme.preset) === 'hortensia';
+  const lavender = (theme.motif ?? theme.preset) === 'lavender' || wisteria || marigold || hortensia || serambi;
+  if (imageUrl && !liveCultural && !lavender) {
     const designId = theme.motif ?? theme.preset;
     const imageFit = ['semi', 'panas', 'gugur', 'salju'].includes(designId) ? 'object-cover' : 'object-contain';
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={imageUrl} alt="" className={`h-full w-full ${imageFit} ${className}`} />;
   }
-  const effectivePhotos = resolveTemplateSamplePhotos({ artwork, samplePhotos }, photos);
+  const effectivePhotos = resolveTemplateSamplePhotos({ artwork, samplePhotos, theme }, photos);
+  if (lavender) {
+    const kind = coverLayouts.length ? resolveCover(defaultCoverLayout(coverLayouts, coverDefault), effectivePhotos) : 'ornamen';
+    const BotanicalCover = hortensia ? HortensiaCover : LavenderCover;
+    return <div className={`relative h-full w-full ${className}`} style={serambi ? gardenPalette(theme.primary, theme.text) : hortensia ? hortensiaPalette(theme.primary, theme.text) : marigold ? marigoldPalette(theme.primary, theme.text) : wisteria ? wisteriaPalette(theme.primary, theme.text) : lavenderPalette(theme.primary, theme.text)}><BotanicalCover design={serambi ? 'garden' : marigold ? 'marigold' : wisteria ? 'wisteria' : 'lavender'} thumbnail decorative animated={false} kind={kind}
+      photo={effectivePhotos.cover} groom={effectivePhotos.groom} bride={effectivePhotos.bride}
+      kicker="Undangan Pernikahan" names="Andi & Sinta" dateText="28 · 11 · 2026"
+      guest={{ dear: 'Kepada Yth.', name: 'Bapak/Ibu/Saudara/i' }} openLabel="Buka Undangan" /></div>;
+  }
   const motif = motifFor(theme.motif ?? theme.preset);
   const orn = ORNAMENTS[motif.ornament];
   const hf = HEADING[theme.headingFont] ?? HEADING.serif;
@@ -126,6 +146,12 @@ export function TemplateThumb({
   if (artwork && isRasterDesign(artwork.designId)) {
     const rasterKinds = ['ornamen', 'penuh', 'bingkai', 'berdua', 'terbagi'] as const;
     const kind: RasterCoverKind = rasterKinds.find((k) => k === resolved) ?? 'ornamen';
+    if (liveCultural) {
+      return <CulturalTemplateThumb theme={theme} className={className} kind={kind} artwork={artwork}
+        photo={effectivePhotos.cover} groom={effectivePhotos.groom} bride={effectivePhotos.bride}
+        kicker="Undangan Pernikahan" names="Andi & Sinta" dateText="12 . 12 . 2026"
+        guest={{dear:'Kepada Yth.',name:'Bapak/Ibu/Saudara/i'}} openLabel="Buka Undangan" />;
+    }
     return (
       <RasterCoverThumb
         kind={kind}

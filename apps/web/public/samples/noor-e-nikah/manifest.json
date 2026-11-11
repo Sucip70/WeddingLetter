@@ -1,5 +1,12 @@
 {
   "designId": "noor-e-nikah",
+  "samplePhotos": {
+    "cover": "/samples/noor-e-nikah/cover.webp",
+    "groom": "/samples/noor-e-nikah/groom.webp",
+    "bride": "/samples/noor-e-nikah/bride.webp",
+    "gallery1": "/samples/noor-e-nikah/gallery-walking.webp",
+    "gallery2": "/samples/noor-e-nikah/gallery-romantic.webp"
+  },
   "assetType": "opaque-sample-prewedding-photography",
   "cultureScope": "contemporary Pakistani Muslim wedding with restrained Lahore influence",
   "palette": [

@@ -38,4 +38,10 @@ apps/web/public/themes/**/*.avif
 apps/web/public/samples/**/*.webp
 apps/web/public/samples/**/*.png
 apps/web/public/samples/**/*.jpg
+# Bundled fallback photographs required by the Pusako catalog preview.
+!apps/web/public/samples/pusako-minang/cover.webp
+!apps/web/public/samples/pusako-minang/groom.webp
+!apps/web/public/samples/pusako-minang/bride.webp
+!apps/web/public/samples/pusako-minang/gallery-romantic.webp
+!apps/web/public/samples/pusako-minang/gallery-walking.webp
 apps/web/public/audio/*.mp3

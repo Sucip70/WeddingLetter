@@ -183,7 +183,7 @@ const presetUrl = z
   .refine((u) => /^https?:\/\/\S+$/.test(u) || /^\/audio\/[a-z0-9-]+\.mp3$/.test(u), 'URL lagu harus https atau /audio/<nama>.mp3');
 
 const samplePhotoUrl = z.string().trim().max(500).refine(
-  (u) => /^https?:\/\/\S+$/.test(u) || /^\/samples\/[a-z0-9/-]+\.(webp|png|avif)$/.test(u),
+  (u) => u === '' || /^https?:\/\/\S+$/.test(u) || /^\/samples\/[a-z0-9/-]+\.(webp|png|avif)$/.test(u),
   'URL foto contoh harus http(s) atau aset /samples milik aplikasi',
 );
 

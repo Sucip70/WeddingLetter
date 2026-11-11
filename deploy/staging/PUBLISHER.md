@@ -3,6 +3,12 @@
 Katalog lokal menjadi sumber template, harga paket, add-on, foto demo, dan pustaka musik.
 Script mengunggah seluruh media tema, foto contoh, dan audio lokal serta objek storage yang
 dirujuk katalog. Data pelanggan, order, pembayaran, kupon, dan pengaturan situs tidak disalin.
+Revisi sampul dan gerbang budaya dibaca dari `apps/web/public/themes/cultural-revisions.json`.
+Slot revisi terpisah dari layer dekorasi lama. Publisher memasangkannya pada artwork template
+sebelum mengubah referensi lokal menjadi storage key. Renderer memprioritaskan versi pada
+manifest template dan memakai manifest lokal sebagai fallback untuk snapshot lama.
+Pemasangan pertama slot revisi memerlukan sinkronisasi R2, lalu deploy API/web sebelum publish. Setelah itu,
+penggantian gambar pada slot yang sama menggunakan publisher seperti pembaruan aset biasa.
 Database staging yang di-reset kehilangan seluruh data lamanya, termasuk akun dan transaksi uji.
 
 ## 1. Ekspor dan periksa katalog lokal

@@ -67,7 +67,7 @@ export interface Palette {
   text: string;
 }
 
-export type ArtworkSlot = 'coverBackground' | 'coverForeground' | 'pageBackground' | 'sectionBackground' | 'topDecoration' | 'bottomDecoration' | 'cornerTopLeft' | 'cornerTopRight' | 'cornerBottomLeft' | 'cornerBottomRight' | 'divider' | 'photoFrame' | 'texture' | 'thumbnail' | 'gateBackground' | 'gateForeground' | 'gateTransition' | 'gateInteractive' | 'cardFrame' | 'coverPaper' | 'coverCanopy' | 'coverFooter' | 'coverFrame' | 'coverDivider';
+export type ArtworkSlot = 'coverBackground' | 'coverForeground' | 'pageBackground' | 'sectionBackground' | 'topDecoration' | 'bottomDecoration' | 'cornerTopLeft' | 'cornerTopRight' | 'cornerBottomLeft' | 'cornerBottomRight' | 'divider' | 'photoFrame' | 'texture' | 'thumbnail' | 'gateBackground' | 'gateForeground' | 'gateTransition' | 'gateInteractive' | 'cardFrame' | 'coverPaper' | 'coverCanopy' | 'coverFooter' | 'coverFrame' | 'coverDivider' | 'stationeryBackground' | 'stationeryDivider' | 'gateCloth' | 'gateLattice' | 'gateDoors' | 'gateCta';
 export interface ArtworkSource { url: string; storageKey?: string; contentType: 'image/webp' | 'image/png' | 'image/avif'; width: number; height: number; sizeBytes: number }
 export interface ArtworkLayer { default?: ArtworkSource; mobile?: ArtworkSource; desktop?: ArtworkSource }
 export interface ArtworkManifest {
