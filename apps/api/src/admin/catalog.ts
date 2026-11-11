@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { z } from 'zod';
 import type { PrismaService } from '../prisma/prisma.service.js';
 import type { StorageService } from '../storage/storage.service.js';
-import { templateBaseSchema } from './admin.dto.js';
+import { assertPublishableLayout, templateBaseSchema } from './admin.dto.js';
 import { DEMO_SLOTS } from '../demo-photos/demo-photos.slots.js';
 import { parseBody } from '../auth/auth.dto.js';
 import { isDeepStrictEqual } from 'node:util';
@@ -36,15 +36,22 @@ const musicSchema = z.object({
 });
 const addOnSchema = z.object({ code: z.string().min(1), name: z.string().min(1), type: z.enum(['FLAT', 'PER_UNIT']), price: z.number().int().nonnegative(), unit: z.string().nullable() });
 
+export function parseCatalogTemplate(resolved: unknown) {
+  const data = parseBody(templateBaseSchema, resolved);
+  if (data.status === 'PUBLISHED') assertPublishableLayout(data.layoutSchema, data.category);
+  return data;
+}
+
 export async function installCatalogEntry(prisma: PrismaService, storage: StorageService, entry: z.infer<typeof catalogEntrySchema>) {
   const keys = new Set<string>();
   const resolved = resolveCatalog(entry.data, storage, keys);
+  const template = entry.kind === 'template' ? parseCatalogTemplate(resolved) : undefined;
   if (entry.kind === 'demoPhoto' || entry.kind === 'musicTrack') keys.add(catalogKey.parse(entry.data.storageKey));
   for (const key of keys) if (!await storage.head(key)) throw new BadRequestException(`Upload aset terlebih dahulu: ${key}`);
 
   switch (entry.kind) {
     case 'template': {
-      const data = parseBody(templateBaseSchema, resolved);
+      const data = template!;
       // The installed manifest is an immutable layout snapshot. Subsequent artwork drafts
       // can be published through the existing artwork API without source database IDs.
       return prisma.template.upsert({ where: { id: entry.id }, create: { id: entry.id, ...data }, update: { ...data, artworkVersionId: null } });

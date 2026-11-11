@@ -9,13 +9,14 @@ import { PaymentsService } from '../payments/payments.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { adminAssetKey } from '../storage/storage-keys.js';
-import { SECTION_REGISTRY, layoutIncludes, normalizeLayout, toAuthoring } from '../templates/layout.js';
+import { SECTION_REGISTRY, normalizeLayout, toAuthoring } from '../templates/layout.js';
 import { artworkManifestSchema } from '../templates/artwork.js';
 import { RASTER_ARTWORK } from '../templates/artwork.js';
 import type { ArtworkSlot, ArtworkVariant } from '../templates/artwork.js';
 import { BASIC_PALETTES, DESIGNS, GATE_LABEL, GROUP_LABEL, GROUP_ORDER, autoPalettes } from '../templates/themes.js';
 import type { z } from 'zod';
 import { installCatalogEntry, verifyCatalogEntry, catalogEntrySchema } from './catalog.js';
+import { assertPublishableLayout } from './admin.dto.js';
 import type { artworkConfirmSchema, artworkDraftSchema, artworkPublishSchema, artworkUploadSchema, assetPresignSchema, couponCreateSchema, couponUpdateSchema, listQuerySchema, templateCreateSchema, templateUpdateSchema } from './admin.dto.js';
 
 type ListQuery = z.infer<typeof listQuerySchema>;
@@ -53,7 +54,6 @@ export class AdminService {
   // ----- Ringkasan -----
 
   installCatalog(entry: z.infer<typeof catalogEntrySchema>) {
-    if (entry.kind === 'template' && entry.data.status === 'PUBLISHED') this.assertPublishable(entry.data.layoutSchema, String(entry.data.category));
     return installCatalogEntry(this.prisma, this.storage, entry);
   }
 
@@ -119,15 +119,8 @@ export class AdminService {
     return { ...rest, orders: _count.orders, layout: toAuthoring(layoutSchema, t.category) };
   }
 
-  private assertPublishable(layoutSchema: unknown, category: string) {
-    const layout = normalizeLayout(layoutSchema, category);
-    if (!layoutIncludes(layout, 'mempelai') || !layoutIncludes(layout, 'tanggal_lokasi')) {
-      throw new BadRequestException('Template yang dipublikasikan harus memuat section Mempelai dan Tanggal & lokasi');
-    }
-  }
-
   async createTemplate(input: z.infer<typeof templateCreateSchema>) {
-    if (input.status === 'PUBLISHED') this.assertPublishable(input.layoutSchema, input.category);
+    if (input.status === 'PUBLISHED') assertPublishableLayout(input.layoutSchema, input.category);
     const { artwork: _untrustedArtwork, ...layoutSchema } = input.layoutSchema;
     const created = await this.prisma.template.create({ data: { ...input, layoutSchema } });
     return this.getTemplate(created.id);
@@ -143,7 +136,7 @@ export class AdminService {
       return { ...rest, ...(currentRaw.artwork ? { artwork: currentRaw.artwork } : {}) };
     })() : undefined;
     const layout = submitted ?? current.layoutSchema;
-    if (status === 'PUBLISHED') this.assertPublishable(layout, input.category ?? current.category);
+    if (status === 'PUBLISHED') assertPublishableLayout(layout, input.category ?? current.category);
     await this.prisma.template.update({ where: { id }, data: { ...input, ...(submitted ? { layoutSchema: submitted as object } : {}) } });
     return this.getTemplate(id);
   }
