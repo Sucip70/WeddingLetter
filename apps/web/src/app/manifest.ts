@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-// Ikon dibuat oleh scripts/build-icons.mjs (npm run icons --workspace apps/web). Warna = --color-ivory / --color-rose di globals.css.
+// PNG icons share the approved Surat Janji raster master with the website logo.
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'WeddingLetter — Undangan pernikahan digital',
@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/',
     display: 'standalone',
     background_color: '#fbf7f1',
-    theme_color: '#b4533c',
+    theme_color: '#80051c',
     icons: [
       { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
       { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
