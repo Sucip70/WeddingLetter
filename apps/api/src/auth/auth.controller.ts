@@ -29,8 +29,8 @@ export class AuthController {
   @Post('otp/verify')
   @HttpCode(200)
   verifyOtp(@Body() body: unknown) {
-    const { email, code, name } = parseBody(verifyOtpSchema, body);
-    return this.auth.verifyOtp(email, code, name);
+    const { email, code, name, password } = parseBody(verifyOtpSchema, body);
+    return this.auth.verifyOtp(email, code, name, password);
   }
 
   @Post('password/forgot')

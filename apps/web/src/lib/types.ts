@@ -126,6 +126,8 @@ export interface Layout {
 export type Tier = 'BASIC' | 'STANDARD' | 'PREMIUM';
 
 export interface Template {
+  showOnHome?: boolean;
+  homeOrder?: number;
   id: string;
   name: string;
   category: string;

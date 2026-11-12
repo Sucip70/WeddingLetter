@@ -10,7 +10,7 @@ describe('portable catalog', () => {
     const storage = { head: vi.fn().mockResolvedValue({}), publicUrl: (key: string) => `https://staging.example/${key}` } as unknown as StorageService;
     const key = 'templates/semi/v3/divider.webp';
     const data = {
-      name: 'Standard Musim Semi', category: 'musim', tier: 'STANDARD', price: 75_000, includedWeeks: 4, status: 'PUBLISHED',
+      name: 'Standard Musim Semi', category: 'musim', tier: 'STANDARD', price: 75_000, includedWeeks: 4, status: 'PUBLISHED', showOnHome: true, homeOrder: 3,
       layoutSchema: {
         sections: ['mempelai', 'tanggal_lokasi'],
         artwork: { designId: 'semi', artworkVersion: 3, assets: { divider: { default: { url: `storage://${key}`, storageKey: key, contentType: 'image/webp', width: 100, height: 100, sizeBytes: 1000 } } } },
@@ -18,6 +18,10 @@ describe('portable catalog', () => {
     };
     await installCatalogEntry(prisma, storage, { kind: 'template', id: 'spring', data });
     expect(upsert).toHaveBeenCalledOnce();
+    expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
+      create: expect.objectContaining({ showOnHome: true, homeOrder: 3 }),
+      update: expect.objectContaining({ showOnHome: true, homeOrder: 3 }),
+    }));
     await expect(installCatalogEntry(prisma, storage, { kind: 'template', id: 'spring', data: { ...data, layoutSchema: { ...data.layoutSchema, sections: ['mempelai'] } } })).rejects.toThrow('Tanggal & lokasi');
     expect(upsert).toHaveBeenCalledOnce();
   });

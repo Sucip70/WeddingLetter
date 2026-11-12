@@ -45,6 +45,17 @@ export function groupByDesign(all: Template[]): DesignEntry[] {
     .sort((a, b) => groupRank(a.group) - groupRank(b.group));
 }
 
+// One card per selected design; preserve all its published tiers and starting price.
+export function homeShowcase(all: Template[]): DesignEntry[] {
+  const ranked = groupByDesign(all.filter((t) => t.status === 'PUBLISHED'))
+    .flatMap((entry) => {
+      const selected = entry.rows.filter((t) => t.showOnHome);
+      return selected.length ? [{ entry, order: Math.min(...selected.map((t) => t.homeOrder ?? 0)) }] : [];
+    });
+  return ranked.sort((a, b) => a.order - b.order || a.entry.key.localeCompare(b.entry.key))
+    .map(({ entry }) => entry);
+}
+
 export const getTemplates = (query: { category?: string; tier?: string } = {}) => {
   const q = new URLSearchParams();
   if (query.category) q.set('category', query.category);

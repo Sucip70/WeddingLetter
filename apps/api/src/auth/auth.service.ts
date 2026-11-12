@@ -104,17 +104,22 @@ export class AuthService {
     if (consumed.count === 0) throw invalid;
   }
 
-  async verifyOtp(email: string, code: string, name?: string) {
+  async verifyOtp(email: string, code: string, name?: string, password?: string) {
     await this.consumeOtp(email, code);
+    // A password is only installed after proving ownership of this email.
+    const passwordHash = password === undefined ? undefined : await hashPassword(password);
 
     const existing = await this.prisma.user.findUnique({ where: { email } });
     const user = existing
       ? await this.prisma.user.update({
           where: { id: existing.id },
-          data: { emailVerifiedAt: existing.emailVerifiedAt ?? new Date() },
+          data: {
+            emailVerifiedAt: existing.emailVerifiedAt ?? new Date(),
+            ...(passwordHash ? { passwordHash } : !existing.emailVerifiedAt ? { passwordHash: null } : {}),
+          },
         })
       : await this.prisma.user.create({
-          data: { email, name: name ?? email.split('@')[0], emailVerifiedAt: new Date() },
+          data: { email, name: name ?? email.split('@')[0], emailVerifiedAt: new Date(), ...(passwordHash ? { passwordHash } : {}) },
         });
 
     return this.session(user);
@@ -165,7 +170,9 @@ export class AuthService {
     const user = existing
       ? await this.prisma.user.update({
           where: { id: existing.id },
-          data: { googleId, emailVerifiedAt: existing.emailVerifiedAt ?? new Date() },
+          // Legacy unverified signups may contain a password chosen by someone
+          // who did not own the email. Never retain it when Google verifies ownership.
+          data: { googleId, emailVerifiedAt: existing.emailVerifiedAt ?? new Date(), ...(!existing.emailVerifiedAt ? { passwordHash: null } : {}) },
         })
       : await this.prisma.user.create({
           data: {
@@ -179,22 +186,12 @@ export class AuthService {
     return this.session(user);
   }
 
-  // Daftar akun baru dengan kata sandi. Email harus diverifikasi lewat kode (endpoint otp/verify yang sama
-  // dipakai login tanpa kata sandi) sebelum akun bisa dipakai — kecuali sudah terverifikasi lewat Google.
-  async registerWithPassword(email: string, password: string, name: string) {
+  // Start registration without storing credentials. The client submits its chosen
+  // password again together with the OTP, which must be verified first.
+  async registerWithPassword(email: string, _password: string, _name: string) {
     const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing?.passwordHash) {
-      throw new ConflictException('Email ini sudah terdaftar. Silakan masuk.');
-    }
-
-    const passwordHash = await hashPassword(password);
-    const user = existing
-      ? await this.prisma.user.update({ where: { id: existing.id }, data: { passwordHash, name } })
-      : await this.prisma.user.create({ data: { email, name, passwordHash } });
-
-    // Akun lama yang sudah terverifikasi (misalnya pernah masuk lewat Google) tidak perlu verifikasi ulang.
-    if (user.emailVerifiedAt) {
-      return this.session(user);
+    if (existing) {
+      throw new ConflictException('Email ini sudah terdaftar. Masuk dengan Google/kode email, atau gunakan Lupa kata sandi untuk mengatur kata sandi.');
     }
 
     const otp = await this.requestOtp(email);
@@ -206,7 +203,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user || !(await verifyPassword(password, user.passwordHash))) throw invalid;
     if (!user.emailVerifiedAt) {
-      throw new UnauthorizedException('Email belum diverifikasi. Minta kode verifikasi baru lewat halaman daftar.');
+      throw new UnauthorizedException('Email belum diverifikasi. Masuk dengan kode email atau gunakan Lupa kata sandi.');
     }
     return this.session(user);
   }

@@ -11,6 +11,8 @@ export const verifyOtpSchema = z.object({
   code: z.string().regex(/^\d{6}$/, 'Kode harus 6 digit'),
   // Hanya dipakai saat akun baru dibuat.
   name: z.string().trim().min(1).max(100).optional(),
+  // Registration password is accepted only alongside a valid, single-use OTP.
+  password: password.optional(),
 });
 
 export const resetPasswordSchema = z.object({ email, code: z.string().regex(/^\d{6}$/, 'Kode harus 6 digit'), password });
