@@ -35,6 +35,8 @@ export interface TemplateForm {
   tier: 'BASIC' | 'STANDARD' | 'PREMIUM';
   price: number;
   includedWeeks: number;
+  showOnHome?: boolean;
+  homeOrder?: number;
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   thumbnailUrl: string | null;
   layout: Authoring;
@@ -99,6 +101,8 @@ function blank(meta: BuilderMeta): TemplateForm {
     price: 20000,
     includedWeeks: 4,
     status: 'DRAFT',
+    showOnHome: false,
+    homeOrder: 0,
     thumbnailUrl: null,
     layout: { theme: themeOf(rustic, 'none', 'none'), sections, galeri: { maxPhotos: 4, maxVideos: 0 }, musik: { allowed: false, presets: [] }, palettes: rustic.palettes },
   };
@@ -249,6 +253,8 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
       price: Number(form.price),
       includedWeeks: Number(form.includedWeeks),
       status: status ?? form.status,
+      showOnHome: form.showOnHome ?? false,
+      homeOrder: Number(form.homeOrder ?? 0),
       thumbnailUrl: form.thumbnailUrl || null,
       layoutSchema: {
         theme: layout.theme,
@@ -324,6 +330,11 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
               {!form.id && <Field label="Paket (tier)"><Select value={form.tier} onChange={(e) => changeTier(e.target.value as TemplateForm['tier'])}><option value="BASIC">Basic</option><option value="STANDARD">Standard</option><option value="PREMIUM">Premium</option></Select></Field>}
               {!form.id && <Field label="Harga (Rp)" hint="Setelah dibuat, harga & ketersediaan diatur di panel Paket & ketersediaan."><Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} /></Field>}
               <Field label="Masa aktif termasuk (minggu)" hint="Lama tayang yang sudah termasuk di harga template."><Input type="number" min={1} max={52} value={form.includedWeeks} onChange={(e) => setForm({ ...form, includedWeeks: Number(e.target.value) })} /></Field>
+              <div className="space-y-3 rounded-xl border border-line p-4">
+                <Toggle checked={form.showOnHome ?? false} onChange={(showOnHome) => setForm({ ...form, showOnHome })} label="Tampilkan di Home" />
+                <p className="text-xs text-ink-soft">Tema tampil jika paket ini dipublikasikan. Cukup aktifkan pada satu paket per tema; katalog lengkap tidak terpengaruh.</p>
+                <Field label="Urutan di Home" hint="Angka lebih kecil tampil lebih dulu. Jika beberapa paket dipilih, urutan terkecil digunakan."><Input type="number" min={0} max={9999} step={1} disabled={!form.showOnHome} value={form.homeOrder ?? 0} onChange={(e) => setForm({ ...form, homeOrder: Number(e.target.value) })} /></Field>
+              </div>
               {!form.id && <Field label="Status"><Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TemplateForm['status'] })}><option value="DRAFT">Draf (tidak tampil)</option><option value="PUBLISHED">Dipublikasikan</option><option value="ARCHIVED">Diarsipkan</option></Select></Field>}
               <Field label="Gambar thumbnail (opsional)" className="sm:col-span-2" hint="Kosongkan untuk memakai miniatur otomatis dari tema.">
                 <div className="flex gap-2">

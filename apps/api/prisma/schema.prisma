@@ -136,6 +136,8 @@ model Template {
   // Berapa minggu masa aktif yang sudah termasuk di harga dasar template (perpanjangan: add-on EXTEND_ACTIVE_WEEK).
   includedWeeks Int            @default(4)
   status        TemplateStatus @default(DRAFT)
+  showOnHome    Boolean        @default(false)
+  homeOrder     Int            @default(0)
   layoutSchema  Json
   thumbnailUrl  String?
   createdById   String?

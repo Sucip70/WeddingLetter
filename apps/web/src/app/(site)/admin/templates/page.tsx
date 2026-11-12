@@ -19,6 +19,7 @@ interface Row {
   tier: Tier;
   price: number;
   includedWeeks: number;
+  showOnHome?: boolean;
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   thumbnailUrl: string | null;
   orders: number;
@@ -114,6 +115,7 @@ export default async function AdminTemplates({ searchParams }: PageProps<'/admin
               <div className="w-28 shrink-0"><TemplateThumb theme={d.main.theme} imageUrl={d.main.thumbnailUrl} artwork={d.main.artwork} /></div>
               <div className="min-w-0 flex-1 p-4">
                 <p className="truncate font-semibold text-ink">{d.name}</p>
+                {d.rows.some((r) => r.showOnHome && r.status === 'PUBLISHED') && <Badge tone="sage">Tampil di Home</Badge>}
                 <p className="mt-1 text-sm text-ink-soft">{GROUP_LABEL[d.main.category as ThemeGroup] ?? d.main.category}</p>
                 {/* Ketersediaan tiap paket sekilas (tanpa harga; harga diatur di dalam halaman tema). */}
                 <div className="mt-3 flex flex-wrap gap-1.5">

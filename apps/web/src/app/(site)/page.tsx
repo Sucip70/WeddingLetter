@@ -3,7 +3,7 @@ import { InvitationView } from '@/components/invitation/invitation-view';
 import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { TemplateThumb } from '@/components/template-thumb';
 import { Badge, LinkButton } from '@/components/ui';
-import { GROUP_LABEL, TIER_LABEL, getAddOns, getDemoPhotos, getTemplate, getTemplates, groupByDesign, templateFeatures } from '@/lib/catalog';
+import { GROUP_LABEL, TIER_LABEL, getAddOns, getDemoPhotos, getTemplate, getTemplates, homeShowcase, templateFeatures } from '@/lib/catalog';
 import { contactHref, getSupportWhatsapp } from '@/lib/contact';
 import { rupiah } from '@/lib/format';
 import { sampleView } from '@/lib/sample';
@@ -51,10 +51,7 @@ export default async function HomePage() {
     // API belum jalan: halaman tetap tampil tanpa bagian yang butuh data.
   }
 
-  // Satu contoh desain per grup tema untuk etalase.
-  const showcase = (['klasik', 'musim'] as const)
-    .map((g) => groupByDesign(templates).find((e) => e.group === g))
-    .filter((e): e is NonNullable<typeof e> => !!e);
+  const showcase = homeShowcase(templates);
 
   const tiers = (['BASIC', 'STANDARD', 'PREMIUM'] as const)
     .map((tier) => templates.find((t) => t.tier === tier))

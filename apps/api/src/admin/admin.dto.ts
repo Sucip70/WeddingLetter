@@ -11,6 +11,8 @@ export const templateBaseSchema = z.object({
   price: z.number().int().min(0).max(10_000_000),
   includedWeeks: z.number().int().min(1).max(LIMITS.maxWeeks),
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
+  showOnHome: z.boolean().optional(),
+  homeOrder: z.number().int().min(0).max(9999).optional(),
   thumbnailUrl: z.string().url().max(500).nullable().optional(),
   layoutSchema: layoutInputSchema,
 });

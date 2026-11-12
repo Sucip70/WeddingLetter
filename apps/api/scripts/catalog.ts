@@ -113,7 +113,7 @@ async function exportCatalog() {
     }
     const templates = await prisma.template.findMany({ orderBy: { id: 'asc' } });
     for (const row of templates) {
-      const { id, name, category, tier, price, includedWeeks, status, thumbnailUrl } = row;
+      const { id, name, category, tier, price, includedWeeks, status, thumbnailUrl, showOnHome, homeOrder } = row;
       const layout = structuredClone(row.layoutSchema) as Record<string, any>;
       const designId = layout.artwork?.designId ?? layout.theme?.motif ?? layout.theme?.preset;
       if (!layout.artwork && revisions.designs[designId]) layout.artwork = { schemaVersion: 1, designId, artworkVersion: 1, assets: {}, fallback: {} };
@@ -140,7 +140,7 @@ async function exportCatalog() {
           if (!source || source.url === `/themes/pusako-minang/${original}.webp`) artwork.assets[slot] = { default: await imageSource(`/themes/pusako-minang/surat-bersegel-01/${approved}.webp`) };
         }
       }
-      const data = await portable({ name, category, tier, price, includedWeeks, status, thumbnailUrl, layoutSchema: layout }) as Record<string, unknown>;
+      const data = await portable({ name, category, tier, price, includedWeeks, status, thumbnailUrl, showOnHome, homeOrder, layoutSchema: layout }) as Record<string, unknown>;
       entries.push({ kind: 'template', id, data });
     }
     for (const { slot, storageKey } of await prisma.demoPhoto.findMany()) {
