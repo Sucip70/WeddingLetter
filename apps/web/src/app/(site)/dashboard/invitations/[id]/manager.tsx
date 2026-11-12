@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FieldInput } from '@/components/editor/fields';
+import { GuestManager } from '@/components/guest-manager';
 import { ACCEPT, compressImage, fileProblem } from '@/components/editor/model';
 import type { FieldCtx } from '@/components/editor/fields';
 import { InvitationView } from '@/components/invitation/invitation-view';
@@ -15,10 +16,12 @@ import { daysLeft, formatDate, formatDateTime, mb, rupiah, whatsappLink } from '
 import { presetToken } from '@/lib/presets';
 import type { InvitationData, InvitationDetail, InvitationMedia, InvitationViewData, MusicPreset, QuoteLine, RsvpSummary, Upload } from '@/lib/types';
 
-type Tab = 'overview' | 'edit' | 'rsvp' | 'extend';
+type Tab = 'overview' | 'edit' | 'guests' | 'checkin' | 'rsvp' | 'extend';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Ringkasan' },
   { id: 'edit', label: 'Isi undangan' },
+  { id: 'guests', label: 'Daftar tamu' },
+  { id: 'checkin', label: 'Check-in kehadiran' },
   { id: 'rsvp', label: 'RSVP' },
   { id: 'extend', label: 'Perpanjang' },
 ];
@@ -80,6 +83,8 @@ export function InvitationManager({ initial, initialTab, baseUrl, now, supportWh
         {tab === 'overview' && <Overview inv={inv} link={link} reload={reload} goto={setTab} now={now} supportWhatsapp={supportWhatsapp} />}
         {tab === 'edit' && <EditTab inv={inv} setInv={setInv} supportWhatsapp={supportWhatsapp} />}
         {tab === 'rsvp' && <RsvpTab inv={inv} />}
+        {tab === 'guests' && <GuestManager key="guests" invitationId={inv.id} link={link} active={inv.status === 'ACTIVE'} />}
+        {tab === 'checkin' && <GuestManager key="checkin" invitationId={inv.id} link={link} checkin active={inv.status === 'ACTIVE'} />}
         {tab === 'extend' && <ExtendTab inv={inv} now={now} />}
       </div>
     </div>
@@ -163,7 +168,8 @@ function Overview({ inv, link, reload, goto, now, supportWhatsapp }: { inv: Invi
           {!live && <p className="mt-3 text-xs text-ink-soft">Link baru bisa dibuka tamu saat status <strong>Aktif</strong>.</p>}
 
           <div className="mt-6 border-t border-line pt-5">
-            <Field label="Link personal per tamu" hint="Tamu akan disapa dengan namanya di sampul undangan.">
+            <Button variant="secondary" size="sm" className="mb-3" onClick={() => goto('guests')}>Kelola daftar tamu, status berbagi & QR</Button>
+            <Field label="Link personal cepat (tidak tersimpan)" hint="Untuk menyimpan nama, melacak pengiriman dan membuat QR, gunakan tab Daftar tamu.">
               <Input value={guest} onChange={(e) => setGuest(e.target.value)} placeholder="Nama tamu, mis. Bapak Budi & Keluarga" maxLength={60} />
             </Field>
             <div className="mt-3 flex flex-wrap gap-2">

@@ -142,7 +142,7 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
         data-seasonal={seasonal ? 'true' : undefined}
         {...(hortensia || lavender || wisteria || marigold || serambi || seasonal || pusako || candi || lentera || jali || toran ? {} : { role: 'button', tabIndex: 0, 'aria-label': `Buka undangan. ${CTA[kind]}`, onClick: onOpen, onKeyDown: onKey })}
       >
-        {hortensia ? <HortensiaGate names={names} kicker={kicker} dateText={dateText} guest={guest} phase={phase} onOpen={onOpen} /> : lavender || wisteria || marigold || serambi ? <LavenderGate design={serambi ? 'garden' : marigold ? 'marigold' : wisteria ? 'wisteria' : 'lavender'} names={names} kicker={kicker} dateText={dateText} guest={guest} phase={phase} onOpen={onOpen} /> : seasonal ? (
+        {hortensia ? <HortensiaGate artwork={artwork} names={names} kicker={kicker} dateText={dateText} guest={guest} phase={phase} onOpen={onOpen} /> : lavender || wisteria || marigold || serambi ? <LavenderGate artwork={artwork} design={serambi ? 'garden' : marigold ? 'marigold' : wisteria ? 'wisteria' : 'lavender'} names={names} kicker={kicker} dateText={dateText} guest={guest} phase={phase} onOpen={onOpen} /> : seasonal ? (
           <SeasonalGate designId={artwork.designId as SeasonalGateDesign} phase={phase} artwork={artwork} names={names} kicker={kicker} guest={guest} headingFamily={headingFamily} onOpen={onOpen} />
         ) : toran && artwork ? (
           <ToranGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} onOpen={onOpen} />

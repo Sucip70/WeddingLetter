@@ -1,5 +1,8 @@
 'use client';
 
+import { stationeryArtworkVars } from './cultural-artwork';
+import { parseYearlyStory } from '@/lib/invitation-content';
+
 /* eslint-disable @next/next/no-img-element */
 import { Fragment, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { CSSProperties, FormEvent, ReactNode } from 'react';
@@ -39,6 +42,7 @@ import { gardenArtworkVars, gardenPalette } from './garden-stationery';
 import { HortensiaBlock, HortensiaClosing, HortensiaCover, HortensiaPortrait, hortensiaPalette, hortensiaRootClass, hortensiaRootVars } from './hortensia-stationery';
 
 export interface InvitationViewProps {
+  personalGuestName?: string;
   view: InvitationViewData;
   // preview: RSVP tidak benar-benar terkirim & musik tidak autoplay.
   mode?: 'live' | 'preview';
@@ -119,7 +123,7 @@ const PHOTO_HOLE: Record<string, { aspect: string; box: CSSProperties }> = {
 const DEFAULT_PHOTO_HOLE = { aspect: '0.72', box: { left: '8%', top: '5%', width: '80%', height: '85%' } as CSSProperties };
 const photoHole = (designId: string) => PHOTO_HOLE[designId] ?? DEFAULT_PHOTO_HOLE;
 
-export function InvitationView({ view, mode = 'live', embedded = false, placeholders = false, gate }: InvitationViewProps) {
+export function InvitationView({ view, mode = 'live', embedded = false, placeholders = false, gate, personalGuestName }: InvitationViewProps) {
   const { theme } = view.layout;
   const { data } = view;
   // Snapshot lama (sebelum ada motif/fx) tetap dirender: motif mengikuti preset, tanpa animasi.
@@ -167,12 +171,13 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const audioRef = useRef<HTMLAudioElement>(null);
 
   // Nama tamu dari ?to= (hanya di halaman live). Snapshot server = null supaya hidrasi konsisten.
-  const guest = useSyncExternalStore(
+  const urlGuest = useSyncExternalStore(
     () => () => undefined,
     () => (mode === 'live' ? (new URLSearchParams(window.location.search).get('to')?.slice(0, 60) ?? null) : null),
     () => null,
   );
   const url = (id: string | undefined) => (id ? view.media[id]?.url : undefined);
+  const guest = personalGuestName ?? urlGuest;
 
   const song = str(data, 'musik', 'lagu');
   const preset = findPreset(view.layout.musik.presets, song);
@@ -318,6 +323,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
     ...(marigold ? { ...marigoldArtworkVars, ...marigoldPalette(theme.primary, theme.text) } : null),
     ...(serambi ? { ...gardenArtworkVars, ...gardenPalette(theme.primary, theme.text) } : null),
     ...(hortensia ? { ...hortensiaRootVars, ...hortensiaPalette(theme.primary, theme.text) } : null),
+    ...(lavender ? stationeryArtworkVars(hortensia ? 'hortensia' : serambi ? 'garden' : marigold ? 'marigold' : wisteria ? 'wisteria' : 'lavender', hortensia ? 'hortensia' : 'lavender', artwork) : null),
   } as CSSProperties;
   const headingStyle: CSSProperties = {
     fontFamily: hf.family,
@@ -496,7 +502,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             />
           )}
           {!lavender && !seasonalPhotoCover && !rasterCover && <TemplateArtwork artwork={artwork} context="cover" hasUserPhoto={!!(coverPhoto || photoCover)} onAssetError={() => setArtworkFailed(true)} />}
-          {lavender ? <BotanicalCover design={serambi ? 'garden' : marigold ? 'marigold' : wisteria ? 'wisteria' : 'lavender'} key={coverKey} kind={coverKind ?? 'ornamen'} photo={uploadedCover}
+          {lavender ? <BotanicalCover artwork={artwork} design={serambi ? 'garden' : marigold ? 'marigold' : wisteria ? 'wisteria' : 'lavender'} key={coverKey} kind={coverKind ?? 'ornamen'} photo={uploadedCover}
             groom={url(str(data, 'mempelai', 'pria_foto'))} bride={url(str(data, 'mempelai', 'wanita_foto'))}
             kicker={kicker} names={names} dateText={shortDate}
             guest={mode === 'live' || placeholders ? { dear: t.dear, name: guest ?? t.guestFallback } : null}
@@ -777,10 +783,15 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             case 'cerita': {
               const quote = str(data, 'cerita', 'kutipan') || (placeholders ? 'Di antara sekian banyak pilihan, hatiku memilihmu.' : '');
               const story = str(data, 'cerita', 'cerita');
+              const yearlyStory = parseYearlyStory(story);
               return (
                 <Block key="cerita" title={t.story} headingStyle={headingStyle} tint={soft}>
                   {quote && <blockquote className={gilded || airy || bloom || keraton || raster ? 'wl-quote text-center' : 'text-center text-xl italic leading-relaxed'} style={{ fontFamily: 'var(--font-cormorant)' }}>{gilded || airy || bloom || keraton || raster ? quote : `“${quote}”`}</blockquote>}
-                  {story && <p className={`mt-6 whitespace-pre-line text-center ${bodyText}`}>{story}</p>}
+                  {yearlyStory ? <ol className={`mt-6 space-y-6 ${bodyText}`}>{yearlyStory.map((entry, index) => <li key={index} className="border-l-2 border-current/20 pl-5">
+                    {entry.year && <p className="text-sm font-semibold opacity-75">{entry.year}</p>}
+                    {entry.title && <h3 className="mt-1 text-lg font-semibold">{entry.title}</h3>}
+                    {entry.text && <p className="mt-2 whitespace-pre-line leading-relaxed">{entry.text}</p>}
+                  </li>)}</ol> : story && <p className={`mt-6 whitespace-pre-line text-center ${bodyText}`}>{story}</p>}
                 </Block>
               );
             }

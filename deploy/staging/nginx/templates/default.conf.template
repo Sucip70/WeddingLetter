@@ -32,7 +32,7 @@ server {
     add_header Strict-Transport-Security "max-age=31536000" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Permissions-Policy "camera=(), geolocation=(), microphone=()" always;
+    add_header Permissions-Policy "camera=(self), geolocation=(), microphone=()" always;
     proxy_hide_header X-Powered-By;
 
     # Nama container di-resolve ulang lewat DNS Docker (proxy_pass dengan variabel). Tanpa ini Nginx menyimpan

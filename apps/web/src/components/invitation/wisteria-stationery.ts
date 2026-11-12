@@ -1,9 +1,8 @@
+import { stationeryArtworkVars } from './cultural-artwork';
 import type { CSSProperties } from 'react';
-import paper from './assets/wisteria-cover.webp';
-import gate from './assets/wisteria-gate.webp';
 
 export type BotanicalDesign = 'lavender' | 'wisteria';
-export const wisteriaArtworkVars = { '--lavender-paper': `url("${paper.src}")`, '--lavender-letter': `url("${gate.src}")` } as CSSProperties;
+export const wisteriaArtworkVars = stationeryArtworkVars('wisteria');
 export function wisteriaPalette(primary = '#284f7d', text = '#213c62'): CSSProperties {
   // Old Wisteria used the generic Hortensia palette; map its default to the approved ink.
   const accent = primary.toLowerCase() === '#3f5fb0' ? '#284f7d' : primary;

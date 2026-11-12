@@ -17,6 +17,7 @@ import type { AddOn, InvitationData, InvitationViewData, OrderDetail, Quote, Ses
 import { runCheckout } from './checkout';
 import type { CheckoutProgress } from './checkout';
 import { FieldInput } from './fields';
+import { initialInvitationContent } from '@/lib/invitation-content';
 import type { FieldCtx } from './fields';
 import {
   LIMITS,
@@ -55,7 +56,7 @@ export function Editor({ template, addOns, initialUser, initialPalette, demoPhot
   const price = useMemo(() => Object.fromEntries(addOns.map((a) => [a.code, a.price])) as Record<string, number>, [addOns]);
 
   const [user, setUser] = useState(initialUser);
-  const [data, setData] = useState<InvitationData>({});
+  const [data, setData] = useState<InvitationData>(() => initialInvitationContent(template.layout.sections));
   const [weeks, setWeeks] = useState(template.includedWeeks);
   const [selected, setSelected] = useState<Selectable[]>([]);
   const [couponCode, setCouponCode] = useState('');

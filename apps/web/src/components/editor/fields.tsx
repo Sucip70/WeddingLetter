@@ -10,6 +10,8 @@ import { Badge, Button, Field, Input, Select, Textarea, cn } from '../ui';
 import { CoverLayoutPicker } from './cover-picker';
 import { ACCEPT, LIMITS } from './model';
 import type { LocalFile } from './model';
+import { StoryField } from './story-field';
+import { DEFAULT_INVITATION_TEXT } from '@/lib/invitation-content';
 
 export interface FieldCtx {
   data: InvitationData;
@@ -285,18 +287,23 @@ export function FieldInput({ section, field, ctx }: { section: string; field: Fi
   const text = typeof v === 'string' ? v : '';
   const error = ctx.errors[`${section}.${field.key}`];
   const set = (val: string) => ctx.onChange(section, field.key, val);
+  if (section === 'cerita' && field.key === 'cerita') return <StoryField value={text} label={field.label} required={field.required} maxLength={field.maxLength} error={error} onChange={set} />;
 
   switch (field.type) {
     case 'text':
       return (
         <Field label={field.label} required={field.required} error={error} hint={field.maxLength && text.length > field.maxLength * 0.7 ? `${text.length}/${field.maxLength}` : undefined}>
           <Input value={text} onChange={(e) => set(e.target.value)} maxLength={field.maxLength} placeholder={field.placeholder} />
+          {section === 'tanggal_lokasi' && field.key === 'resepsi_lokasi' && <Button type="button" variant="secondary" size="sm" className="mt-2" disabled={!value(ctx, section, 'akad_lokasi')} onClick={() => {
+            for (const key of ['lokasi', 'alamat', 'maps']) ctx.onChange(section, `resepsi_${key}`, value(ctx, section, `akad_${key}`));
+          }}>Samakan tempat dengan akad</Button>}
         </Field>
       );
     case 'textarea':
       return (
         <Field label={field.label} required={field.required} error={error} hint={field.maxLength ? `${text.length}/${field.maxLength}` : undefined}>
           <Textarea value={text} onChange={(e) => set(e.target.value)} maxLength={field.maxLength} placeholder={field.placeholder} rows={3} />
+          {((section === 'cerita' && field.key === 'kutipan') || (section === 'rsvp' && field.key === 'pengantar')) && <Button type="button" variant="secondary" size="sm" className="mt-2" onClick={() => set(section === 'cerita' ? DEFAULT_INVITATION_TEXT.cerita.kutipan : DEFAULT_INVITATION_TEXT.rsvp.pengantar)}>Gunakan teks default</Button>}
         </Field>
       );
     case 'datetime':
