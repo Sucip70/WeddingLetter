@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { InvitationView } from '@/components/invitation/invitation-view';
 import { PhoneFrame } from '@/components/invitation/phone-frame';
+import { HeroPhones } from '@/components/hero-phones';
 import { TemplateThumb } from '@/components/template-thumb';
 import { Badge, LinkButton } from '@/components/ui';
 import { GROUP_LABEL, TIER_LABEL, getAddOns, getDemoPhotos, getTemplate, getTemplates, homeShowcase, templateFeatures } from '@/lib/catalog';
@@ -64,7 +65,7 @@ export default async function HomePage() {
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-rose-soft/70 blur-3xl" aria-hidden />
         <div className="pointer-events-none absolute -left-32 top-64 h-[26rem] w-[26rem] rounded-full bg-sage-soft/70 blur-3xl" aria-hidden />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-12 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:pt-20">
+        <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-4 pb-20 pt-12 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:pt-20">
           <div className="animate-fade-up">
             <Badge tone="rose" className="mb-5">Undangan digital mulai Rp20.000</Badge>
             <h1 className="font-display text-4xl leading-[1.1] text-ink sm:text-5xl lg:text-6xl">
@@ -89,22 +90,22 @@ export default async function HomePage() {
             </ul>
           </div>
 
-          <div className="relative flex h-[410px] justify-center sm:h-auto lg:justify-end" aria-hidden={false}>
+          <div className="min-w-0">
             {heroA && heroB ? (
-              <div className="relative h-[560px] w-[500px] shrink-0 origin-top scale-[0.7] sm:max-w-full sm:scale-100">
-                <div className="absolute left-0 top-10 -rotate-[5deg]">
+              <HeroPhones
+                back={
                   <PhoneFrame size="md">
                     <InvitationView view={sampleView(heroB.layout, {}, photos)} mode="preview" embedded placeholders />
                   </PhoneFrame>
-                </div>
-                <div className="absolute right-0 top-0 rotate-[4deg]">
+                }
+                front={
                   <PhoneFrame size="md">
                     <InvitationView view={sampleView(heroA.layout, {}, photos)} mode="preview" embedded placeholders />
                   </PhoneFrame>
-                </div>
-              </div>
+                }
+              />
             ) : (
-              <div className="h-80 w-56 overflow-hidden rounded-3xl border border-line shadow-xl">
+              <div className="mx-auto h-80 w-56 max-w-full overflow-hidden rounded-3xl border border-line shadow-xl">
                 <TemplateThumb theme={{ preset: 'floral', motif: 'floral', fx: 'none', primary: '#c4587a', secondary: '#e9b7c6', background: '#fff7f9', text: '#4a2c38', headingFont: 'script', bodyFont: 'sans' }} />
               </div>
             )}
