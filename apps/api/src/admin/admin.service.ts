@@ -11,7 +11,6 @@ import { StorageService } from '../storage/storage.service.js';
 import { adminAssetKey } from '../storage/storage-keys.js';
 import { SECTION_REGISTRY, normalizeLayout, toAuthoring } from '../templates/layout.js';
 import { artworkManifestSchema } from '../templates/artwork.js';
-import { RASTER_ARTWORK } from '../templates/artwork.js';
 import type { ArtworkSlot, ArtworkVariant } from '../templates/artwork.js';
 import { BASIC_PALETTES, DESIGNS, GATE_LABEL, GROUP_LABEL, GROUP_ORDER, autoPalettes } from '../templates/themes.js';
 import type { z } from 'zod';
@@ -106,8 +105,8 @@ export class AdminService {
         orders: _count.orders,
         sections: layout.sections.map((s) => s.id),
         theme: layout.theme,
-        // Desain beraset raster: miniatur daftar admin = sampul aslinya.
-        ...(layout.artwork && layout.artwork.designId in RASTER_ARTWORK ? { artwork: layout.artwork } : {}),
+        // Admin thumbnails also need published artwork for botanical and seasonal designs.
+        ...(layout.artwork ? { artwork: layout.artwork } : {}),
       };
     });
   }
