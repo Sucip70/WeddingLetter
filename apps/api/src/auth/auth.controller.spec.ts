@@ -13,7 +13,7 @@ describe('AuthController (HTTP)', () => {
   beforeAll(async () => {
     process.env.JWT_SECRET = 'test-secret';
     const prisma = {
-      user: { findUnique: async ({ where }: any) => users.find((u) => u.id === where.id) ?? null },
+      user: { findUnique: async ({ where }: any) => users.find((u) => u.id === where.id || u.email === where.email) ?? null },
     };
     const moduleRef = await Test.createTestingModule({ imports: [AuthModule] })
       .useMocker((t) => (t === PrismaService ? prisma : undefined))
@@ -52,5 +52,16 @@ describe('AuthController (HTTP)', () => {
   it('POST /auth/google tanpa GOOGLE_CLIENT_ID -> 503', async () => {
     delete process.env.GOOGLE_CLIENT_ID;
     await request(app.getHttpServer()).post('/auth/google').send({ idToken: 'x' }).expect(503);
+  });
+
+  it('POST /auth/register cannot attach credentials or return a session for an existing account', async () => {
+    const before = structuredClone(users[0]);
+    const response = await request(app.getHttpServer()).post('/auth/register').send({ email: 'a@b.com', password: 'attacker-password', name: 'Attacker' }).expect(409);
+    expect(response.body).not.toHaveProperty('accessToken');
+    expect(users[0]).toEqual(before);
+  });
+
+  it('POST /auth/otp/verify rejects invalid passwords before verifying or changing credentials', async () => {
+    await request(app.getHttpServer()).post('/auth/otp/verify').send({ email: 'a@b.com', code: '123456', password: 'short' }).expect(400);
   });
 });

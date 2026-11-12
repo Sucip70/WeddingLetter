@@ -95,12 +95,7 @@ export function LoginPanel({ onSuccess }: { onSuccess: (user: SessionUser) => vo
     if (password !== confirm) return setError('Konfirmasi kata sandi tidak sama.');
     setLoading(true);
     try {
-      const result = await authApi<{ user: SessionUser } | { needsVerification: true }>('register', { email, password, name });
-      if ('user' in result) {
-        // Sudah terverifikasi sebelumnya (misal pernah masuk via Google) — langsung masuk.
-        onSuccess(result.user);
-        return;
-      }
+      await authApi<{ needsVerification: true }>('register', { email, password, name });
       setStep('code');
       setCooldown(60);
     } catch (err) {
@@ -115,7 +110,7 @@ export function LoginPanel({ onSuccess }: { onSuccess: (user: SessionUser) => vo
     setError('');
     setLoading(true);
     try {
-      const { user } = await authApi<{ user: SessionUser }>('otp-verify', { email, code, name });
+      const { user } = await authApi<{ user: SessionUser }>('otp-verify', { email, code, name, password });
       onSuccess(user);
     } catch (err) {
       setError(errorMessage(err));
