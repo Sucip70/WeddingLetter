@@ -62,8 +62,12 @@ export default async function PublicInvitationPage({ params, searchParams }: Pag
 
   return (
     <div className="min-h-screen" style={{ background: `color-mix(in srgb, ${loaded.view.layout.theme.primary} 10%, #ece7e0)` }}>
-      <InvitationView view={loaded.view} mode="live" personalGuestName={personalGuest?.name} />
-      {personalGuest && token && <GuestTicket name={personalGuest.name} token={token} slug={slug} />}
+      <InvitationView
+        view={loaded.view}
+        mode="live"
+        personalGuestName={personalGuest?.name}
+        afterClosing={personalGuest && token ? <GuestTicket name={personalGuest.name} token={token} slug={slug} /> : undefined}
+      />
     </div>
   );
 }

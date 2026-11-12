@@ -43,6 +43,7 @@ import { HortensiaBlock, HortensiaClosing, HortensiaCover, HortensiaPortrait, ho
 
 export interface InvitationViewProps {
   personalGuestName?: string;
+  afterClosing?: ReactNode;
   view: InvitationViewData;
   // preview: RSVP tidak benar-benar terkirim & musik tidak autoplay.
   mode?: 'live' | 'preview';
@@ -123,7 +124,7 @@ const PHOTO_HOLE: Record<string, { aspect: string; box: CSSProperties }> = {
 const DEFAULT_PHOTO_HOLE = { aspect: '0.72', box: { left: '8%', top: '5%', width: '80%', height: '85%' } as CSSProperties };
 const photoHole = (designId: string) => PHOTO_HOLE[designId] ?? DEFAULT_PHOTO_HOLE;
 
-export function InvitationView({ view, mode = 'live', embedded = false, placeholders = false, gate, personalGuestName }: InvitationViewProps) {
+export function InvitationView({ view, mode = 'live', embedded = false, placeholders = false, gate, personalGuestName, afterClosing }: InvitationViewProps) {
   const { theme } = view.layout;
   const { data } = view;
   // Snapshot lama (sebelum ada motif/fx) tetap dirender: motif mengikuti preset, tanpa animasi.
@@ -996,6 +997,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
             </>
           )}
         </footer>
+
+        {afterClosing}
 
         {musicUrl && (
           <div className="pointer-events-none sticky bottom-4 z-20 flex h-0 justify-end pr-4">
