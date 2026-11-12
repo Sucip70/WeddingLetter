@@ -1,17 +1,18 @@
 'use client';
 
+import type { ArtworkManifest } from '@/lib/types';
+import { stationeryArtworkVars } from './cultural-artwork';
+
 /* eslint-disable @next/next/no-img-element */
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import type { CoverKind } from '@/lib/cover-layouts';
 import type { CoverProps } from './raster-cover';
 import type { GatePhase } from './gates';
-import paper from './assets/hortensia-cover.webp';
-import letter from './assets/hortensia-gate.webp';
 import styles from './hortensia-stationery.module.css';
 
 export const HORTENSIA_CANVAS = { width: 390, height: 390 * 956 / 440 };
 export const hortensiaRootClass = styles.root;
-export const hortensiaRootVars = { '--hortensia-paper': `url("${paper.src}")` } as CSSProperties;
+export const hortensiaRootVars = stationeryArtworkVars('hortensia', 'hortensia');
 export function hortensiaPalette(primary = '#12494d', text = '#103c40'): CSSProperties {
   const accent = primary.toLowerCase() === '#0f7a8c' ? '#12494d' : primary;
   const ink = text.toLowerCase() === '#0f2f3a' ? '#103c40' : text;
@@ -21,8 +22,8 @@ export function hortensiaCanvasSize(width: number, height: number, thumbnail = f
   const scale = width / HORTENSIA_CANVAS.width;
   return { scale, height: thumbnail && scale > 0 && height > 0 ? height / scale : HORTENSIA_CANVAS.height };
 }
-function Canvas({ children, gate = false, opening = false, thumbnail = false, ...data }: {
-  children: ReactNode; gate?: boolean; opening?: boolean; thumbnail?: boolean;
+function Canvas({ children, gate = false, opening = false, thumbnail = false, artwork, ...data }: {
+  children: ReactNode; gate?: boolean; opening?: boolean; thumbnail?: boolean; artwork?: ArtworkManifest;
   'data-photo'?: string; 'data-long'?: string; 'data-kind'?: string;
 }) {
   const root = useRef<HTMLDivElement>(null);
@@ -35,7 +36,7 @@ function Canvas({ children, gate = false, opening = false, thumbnail = false, ..
     return () => observer.disconnect();
   }, [thumbnail]);
   return <div ref={root} className={`${styles.host} ${gate ? styles.gateHost : ''}`} data-hortensia={gate ? 'gate' : 'cover'} data-thumbnail={thumbnail || undefined} data-opening={opening || undefined} {...data}>
-    <div className={styles.extent} style={{ height: fit.height * fit.scale }}><div className={`${styles.canvas} ${gate ? styles.letter : ''}`} style={{ ...hortensiaRootVars, '--hortensia-letter': `url("${letter.src}")`, '--composition-scale': fit.scale, width: 390, height: fit.height, transform: `scale(${fit.scale})` } as CSSProperties}>{children}</div></div>
+    <div className={styles.extent} style={{ height: fit.height * fit.scale }}><div className={`${styles.canvas} ${gate ? styles.letter : ''}`} style={{ ...stationeryArtworkVars('hortensia', 'hortensia', artwork), '--composition-scale': fit.scale, width: 390, height: fit.height, transform: `scale(${fit.scale})` } as CSSProperties}>{children}</div></div>
   </div>;
 }
 export function HortensiaDivider() { return <div className={styles.divider} aria-hidden="true" />; }
@@ -44,14 +45,14 @@ export function HortensiaPortrait({ src, label }: { src?: string; label: string 
   if (!src || failed === src) return null;
   return <figure className={styles.portrait}><img src={src} alt={label} ref={image => { if (image?.complete && image.naturalWidth === 0) setFailed(src); }} onError={() => setFailed(src)} /></figure>;
 }
-type Props = Omit<CoverProps, 'kind' | 'artwork'> & { kind: CoverKind; thumbnail?: boolean; design?: string };
+type Props = Omit<CoverProps, 'kind' | 'artwork'> & { kind: CoverKind; artwork?: ArtworkManifest; thumbnail?: boolean; design?: string };
 export function HortensiaCover(p: Props) {
   const [failed, setFailed] = useState<Set<string>>(() => new Set());
   const candidates = p.kind === 'berdua' && (p.groom || p.bride) ? [p.groom, p.bride] : [p.photo || p.groom || p.bride];
   const photos = candidates.filter((src): src is string => !!src && !failed.has(src));
   const withPhoto = p.kind !== 'ornamen' && photos.length > 0;
   const Tag = p.decorative ? 'span' : 'button';
-  return <Canvas thumbnail={p.thumbnail} data-kind={p.kind} data-photo={String(withPhoto)} data-long={String(p.names.length > 24)}><div className={styles.stack}>
+  return <Canvas artwork={p.artwork} thumbnail={p.thumbnail} data-kind={p.kind} data-photo={String(withPhoto)} data-long={String(p.names.length > 24)}><div className={styles.stack}>
     <p className={styles.kicker}>{p.kicker}</p>
     {withPhoto && <div className={styles.portraits}>{photos.map((src, i) => <figure className={styles.portrait} key={`${i}-${src}`}><img src={src} alt={p.kind === 'berdua' ? `Foto mempelai ${i + 1}` : 'Foto pasangan'} ref={image => { if (image?.complete && image.naturalWidth === 0) setFailed(current => new Set(current).add(src)); }} onError={() => setFailed(current => new Set(current).add(src))} /></figure>)}</div>}
     <div className={styles.copy}><h1 className={styles.names}>{p.names}</h1>{p.dateText && <p className={styles.date}>{p.dateText}</p>}<HortensiaDivider />
@@ -59,10 +60,10 @@ export function HortensiaCover(p: Props) {
       <Tag className={styles.action} {...(p.decorative ? {} : { type: 'button' as const, onClick: p.onOpen })}>{p.openLabel}</Tag>
     </div></div></Canvas>;
 }
-export function HortensiaGate({ names, kicker, dateText, guest, phase, onOpen }: {
-  names: string; kicker: string; dateText?: string; guest: string | null; phase: GatePhase; onOpen: () => void;
+export function HortensiaGate({ names, kicker, dateText, guest, phase, onOpen, artwork }: {
+  names: string; kicker: string; dateText?: string; guest: string | null; phase: GatePhase; onOpen: () => void; artwork?: ArtworkManifest;
 }) {
-  return <Canvas gate opening={phase === 'opening'} data-long={String(names.length > 24)}>
+  return <Canvas artwork={artwork} gate opening={phase === 'opening'} data-long={String(names.length > 24)}>
     <div className={styles.gateCard}><p className={styles.kicker}>{kicker}</p><h1 className={styles.names}>{names}</h1>{dateText && <p className={styles.date}>{dateText}</p>}<HortensiaDivider /></div>
     <div className={`${styles.recipient} ${styles.gateRecipient}`}><p>Kepada Yth.</p><strong>{guest || 'Bapak/Ibu/Saudara/i'}</strong></div>
     <button type="button" className={styles.clasp} aria-label={`Buka undangan ${names}`} onClick={onOpen} disabled={phase !== 'closed'} />

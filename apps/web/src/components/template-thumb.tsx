@@ -77,7 +77,7 @@ export function TemplateThumb({
   if (lavender) {
     const kind = coverLayouts.length ? resolveCover(defaultCoverLayout(coverLayouts, coverDefault), effectivePhotos) : 'ornamen';
     const BotanicalCover = hortensia ? HortensiaCover : LavenderCover;
-    return <div className={`relative h-full w-full ${className}`} style={serambi ? gardenPalette(theme.primary, theme.text) : hortensia ? hortensiaPalette(theme.primary, theme.text) : marigold ? marigoldPalette(theme.primary, theme.text) : wisteria ? wisteriaPalette(theme.primary, theme.text) : lavenderPalette(theme.primary, theme.text)}><BotanicalCover design={serambi ? 'garden' : marigold ? 'marigold' : wisteria ? 'wisteria' : 'lavender'} thumbnail decorative animated={false} kind={kind}
+    return <div className={`relative h-full w-full ${className}`} style={serambi ? gardenPalette(theme.primary, theme.text) : hortensia ? hortensiaPalette(theme.primary, theme.text) : marigold ? marigoldPalette(theme.primary, theme.text) : wisteria ? wisteriaPalette(theme.primary, theme.text) : lavenderPalette(theme.primary, theme.text)}><BotanicalCover artwork={artwork} design={serambi ? 'garden' : marigold ? 'marigold' : wisteria ? 'wisteria' : 'lavender'} thumbnail decorative animated={false} kind={kind}
       photo={effectivePhotos.cover} groom={effectivePhotos.groom} bride={effectivePhotos.bride}
       kicker="Undangan Pernikahan" names="Andi & Sinta" dateText="28 · 11 · 2026"
       guest={{ dear: 'Kepada Yth.', name: 'Bapak/Ibu/Saudara/i' }} openLabel="Buka Undangan" /></div>;
