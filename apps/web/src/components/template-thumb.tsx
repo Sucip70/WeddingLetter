@@ -262,7 +262,7 @@ export function TemplateThumb({
           <p className="text-xs uppercase tracking-[0.35em] opacity-80" style={kickerStyle ?? undefined}>{kicker}</p>
           {keraton && <div className="mt-6 h-[13.5rem]" style={{ aspectRatio: '200 / 272' }}><Gunungan /></div>}
           <p
-            className={`${keraton ? 'mt-7' : 'mt-4'} ${gilded ? 'wl-foil leading-[1.2]' : 'leading-[1.1]'}`}
+            className={`wl-name-text ${keraton ? 'mt-7' : 'mt-4'} leading-[1.3] ${gilded ? 'wl-foil' : ''}`}
             style={{ fontFamily: nf.family, fontWeight: nf.weight, fontSize: gilded ? '4.3rem' : nf.size, letterSpacing: nf.tracking, textTransform: nf.upper ? 'uppercase' : undefined, color: gilded ? undefined : 'var(--p)' }}
           >
             Andi & Sinta
@@ -295,7 +295,7 @@ export function TemplateThumb({
       {keraton && <div className="relative mb-1 h-[4.6rem]" style={{ aspectRatio: '200 / 272' }}><Gunungan /></div>}
       <p className="relative text-[8px] uppercase tracking-[0.3em]" style={{ color: theme.text, opacity: 0.7, ...(gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 7, letterSpacing: '0.38em' } : null) }}>{motif.copy?.kicker ?? 'Undangan Pernikahan'}</p>
       <p
-        className={`relative mt-2 ${gilded ? 'wl-foil leading-tight' : 'leading-none'}`}
+        className={`wl-name-text relative mt-2 leading-[1.3] ${gilded ? 'wl-foil' : ''}`}
         style={{ fontFamily: nf.family, fontWeight: nf.weight, fontSize: `calc(${nf.size} * ${nameSize})`, letterSpacing: nf.tracking, textTransform: nf.upper ? 'uppercase' : undefined }}
       >
         Andi & Sinta

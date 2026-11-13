@@ -98,7 +98,7 @@ export function CoverLayout(p: CoverProps) {
     const e = enter(250);
     return (
       <h1
-        className={`mt-3 ${e.className} ${p.premium && !l ? 'wl-shimmer' : p.gilded && !l ? 'wl-foil' : ''}`}
+        className={`wl-name-text mt-3 ${e.className} ${p.premium && !l ? 'wl-shimmer' : p.gilded && !l ? 'wl-foil' : ''}`}
         style={{
           ...e.style,
           fontFamily: p.heading.family,
@@ -106,7 +106,7 @@ export function CoverLayout(p: CoverProps) {
           letterSpacing: p.heading.tracking,
           textTransform: p.heading.upper ? 'uppercase' : undefined,
           fontSize: `calc(${p.heading.size} * ${scale})`,
-          lineHeight: p.gilded ? 1.2 : 1.1,
+          lineHeight: 1.3,
           color: l ? '#fff' : 'var(--p)',
           textShadow: l ? '0 2px 16px rgba(0,0,0,.5)' : undefined,
         }}
@@ -494,7 +494,7 @@ export function CoverLayout(p: CoverProps) {
                 </div>
               ))}
             </div>
-            <h1 className="mt-5 text-lg uppercase leading-snug text-white" style={{ textShadow: '0 0 12px var(--p)' }}>{p.names}</h1>
+            <h1 className="wl-name-text mt-5 text-lg uppercase leading-snug text-white" style={{ textShadow: '0 0 12px var(--p)' }}>{p.names}</h1>
             {p.dateText && <p className="mt-3 text-[10px] tracking-[0.2em] text-white/80">{p.dateText}</p>}
             {guestEl(true)}
             {buttonEl(true, 'mt-5')}
@@ -605,8 +605,8 @@ export function CoverLayout(p: CoverProps) {
           </div>
           <div className="absolute inset-x-0 bottom-0 z-[4] flex flex-col items-center px-8 pb-[6%] text-center">
             <h1
-              className="uppercase"
-              style={{ fontFamily: p.heading.family, fontWeight: p.heading.weight, fontSize: `calc(${p.heading.size} * 0.82)`, letterSpacing: '0.08em', lineHeight: 1.1, color: '#f4ecd8', textShadow: '0 2px 14px rgba(0,0,0,.6)' }}
+              className="wl-name-text uppercase"
+              style={{ fontFamily: p.heading.family, fontWeight: p.heading.weight, fontSize: `calc(${p.heading.size} * 0.82)`, letterSpacing: '0.08em', lineHeight: 1.3, color: '#f4ecd8', textShadow: '0 2px 14px rgba(0,0,0,.6)' }}
             >
               {p.names}
             </h1>
