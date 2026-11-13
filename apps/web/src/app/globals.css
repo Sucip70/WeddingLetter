@@ -137,6 +137,18 @@ body {
   to { opacity: 1; transform: none; filter: none; }
 }
 
+/* Script glyphs can extend outside their advance width and line box. Keep
+   breathing room INSIDE the gradient paint box, not just overflow: visible. */
+.wl-name-text {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  padding: 0.2em 0.3em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
 /* Kilau pada nama (premium) */
 .wl-shimmer {
   background-image: linear-gradient(100deg, var(--p) 20%, color-mix(in srgb, var(--s) 70%, #fff) 45%, var(--p) 70%);

@@ -634,7 +634,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
               </div>
             )}
             <h1
-              className={`wl-cover-names ${keraton ? 'mt-7' : 'mt-4'} ${gilded ? 'leading-[1.2]' : 'leading-[1.1]'} ${enter(250).className} ${fx === 'premium' && !coverPhoto ? 'wl-shimmer' : gilded && !coverPhoto ? 'wl-foil' : ''}`}
+              className={`wl-cover-names wl-name-text ${keraton ? 'mt-7' : 'mt-4'} leading-[1.3] ${enter(250).className} ${fx === 'premium' && !coverPhoto ? 'wl-shimmer' : gilded && !coverPhoto ? 'wl-foil' : ''}`}
               style={{ ...namesStyle, ...enter(250).style, color: coverInk, fontSize: scaled(gilded ? '4.3rem' : nf.size), fontWeight: nf.weight }}
             >
               {names}
@@ -770,7 +770,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                             )}
                           </div>
                           <p className="mt-6 text-xs uppercase tracking-[0.3em] opacity-60" style={gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 10.5, letterSpacing: '0.36em' } : undefined}>{who === 'pria' ? t.groom : t.bride}</p>
-                          <h3 className={gilded ? 'mt-2 wl-foil leading-[1.25]' : 'mt-2'} style={{ ...namesStyle, fontSize: keraton ? '2.3rem' : gilded || airy || bloom ? '2.9rem' : hf.section, fontWeight: nf.weight === 400 ? 400 : 500 }}>
+                          <h3 className={`wl-name-text mt-2 leading-[1.3] ${gilded ? 'wl-foil' : ''}`} style={{ ...namesStyle, fontSize: keraton ? '2.3rem' : gilded || airy || bloom ? '2.9rem' : hf.section, fontWeight: nf.weight === 400 ? 400 : 500 }}>
                             {full || nick}
                           </h3>
                           {parents && <p className={`mt-2 max-w-[18rem] opacity-80 ${bodyText}`}>{parents}</p>}
@@ -979,7 +979,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
                   <Monogram a={monoA} b={monoB} size={84} />
                 </div>
               )}
-              <p className="wl-foil mt-3 text-[2rem] leading-tight" style={{ fontFamily: 'var(--font-script), cursive' }}>{names}</p>
+              <p className="wl-name-text wl-foil mt-3 text-[2rem] leading-[1.3]" style={{ fontFamily: 'var(--font-script), cursive' }}>{names}</p>
               <div className="mt-3" style={{ color: 'var(--p)' }}>
                 <orn.Divider className="mx-auto w-32" />
               </div>
