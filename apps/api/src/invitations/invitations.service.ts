@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { applyPalette, validateInvitationData } from '../templates/layout.js';
 import type { InvitationFeatures, SectionDef, TemplateLayout } from '../templates/layout.js';
+import { withLegacyBotanicalArtwork } from '../templates/artwork-snapshot.js';
 import { LifecycleService } from './lifecycle.service.js';
 
 export const rsvpSchema = z.object({
@@ -50,14 +51,14 @@ export class InvitationsService {
     private readonly storage: StorageService,
   ) {}
 
-  private snapshot(inv: { layout: unknown }): LayoutSnapshot {
-    return inv.layout as LayoutSnapshot;
+  private snapshot(inv: { layout: unknown; template?: { layoutSchema?: unknown } }): LayoutSnapshot {
+    return withLegacyBotanicalArtwork(inv.layout as LayoutSnapshot, inv.template?.layoutSchema);
   }
 
   private async owned(userId: string, id: string) {
     const inv = await this.prisma.invitation.findFirst({
       where: { id, order: { userId } },
-      include: { order: true, template: { select: { name: true, category: true } }, mediaFiles: true },
+      include: { order: true, template: { select: { name: true, category: true, layoutSchema: true } }, mediaFiles: true },
     });
     if (!inv || inv.status === 'DELETED') throw new NotFoundException('Undangan tidak ditemukan');
     return inv;
@@ -192,7 +193,7 @@ export class InvitationsService {
   async publicView(slug: string): Promise<InvitationView> {
     const inv = await this.prisma.invitation.findUnique({
       where: { slug },
-      include: { template: { select: { name: true } }, mediaFiles: true },
+      include: { template: { select: { name: true, layoutSchema: true } }, mediaFiles: true },
     });
     if (!inv || inv.status === 'DRAFT' || inv.status === 'DELETED') throw new NotFoundException('Undangan tidak ditemukan');
     if (inv.status !== 'ACTIVE') throw new GoneException({ statusCode: 410, message: 'Undangan ini sedang tidak aktif', status: inv.status });
@@ -239,7 +240,7 @@ export class InvitationsService {
   }
 
   private async buildView(
-    inv: Invitation & { template: { name: string } },
+    inv: Invitation & { template: { name: string; layoutSchema?: unknown } },
     media: MediaFile[],
   ): Promise<InvitationView> {
     const layout = this.snapshot(inv);
