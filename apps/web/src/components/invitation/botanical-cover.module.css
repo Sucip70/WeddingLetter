@@ -1,0 +1,11 @@
+.host { position:absolute; inset:0; overflow:hidden; isolation:isolate; color:var(--tx); background:var(--bg); font-family:var(--font-source),sans-serif; }
+.composition { position:absolute; inset:0 auto auto 0; display:flex; flex-direction:column; align-items:center; justify-content:center; transform-origin:top left; text-align:center; }
+.paper { position:absolute; inset:0; pointer-events:none; background:var(--bg) center/100% 100% no-repeat; }
+.host:is([data-kind=bingkai],[data-kind=medali],[data-kind=berdua]) .composition > :global(.relative) { transform:scale(.88); }
+.ornamentCopy { position:relative; z-index:4; display:flex; flex-direction:column; align-items:center; gap:18px; width:100%; padding:70px 38px; }
+.ornamentCopy h1 { font-family:var(--font-cormorant),Georgia,serif; font-style:italic; line-height:1.3; color:var(--p); }
+.kicker { font-size:10px; letter-spacing:.28em; text-transform:uppercase; }
+.date { font-size:12px; letter-spacing:.2em; }
+.recipient { display:grid; gap:7px; margin-top:15px; font-size:12px; }
+.recipient strong { font-size:16px; overflow-wrap:anywhere; }
+.action { margin-top:10px; padding:12px 24px; min-height:44px; border:1px solid var(--s); border-radius:4px; background:var(--p); color:#fff; font-size:14px; }

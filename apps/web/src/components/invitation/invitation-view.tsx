@@ -494,7 +494,7 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
         <section
           ref={coverRef}
           className={`relative flex flex-col items-center justify-center overflow-hidden px-8 text-center ${finalSeasonalCover ? 'wl-final-seasonal-cover' : ''}`}
-          style={{ ...(lavender || pusakoStationery ? { height: 'auto', minHeight: 0, aspectRatio: '440 / 956', flexShrink: 0 } : embedded ? { height: '100%' } : { minHeight: '100svh' }), ...(revealDelay ? { '--gd': `${revealDelay}ms` } : null) } as CSSProperties}
+          style={{ ...(lavender ? { height: embedded ? '100%' : '100svh', minHeight: 0, flexShrink: 0 } : pusakoStationery ? { height: 'auto', minHeight: 0, aspectRatio: '440 / 956', flexShrink: 0 } : embedded ? { height: '100%' } : { minHeight: '100svh' }), ...(revealDelay ? { '--gd': `${revealDelay}ms` } : null) } as CSSProperties}
         >
           {rasterCover || coverPhoto || photoCover ? null : (
             <div

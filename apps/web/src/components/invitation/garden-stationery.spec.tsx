@@ -31,7 +31,8 @@ describe('Serambi Botani — approved botanical stationery', () => {
   it('handles long names, missing photos, two uploaded portraits and static thumbnails', () => {
     expect(render({ names: 'Alexandra Putri & Muhammad Rasyid' })).toContain('data-long="true"');
     expect(render({ photo: undefined })).toContain('data-photo="false"');
-    expect((render({ kind: 'berdua', groom: '/groom.webp', bride: '/bride.webp' }).match(/<figure/g) || []).length).toBe(2);
+    const two = render({ kind: 'berdua', groom: '/groom.webp', bride: '/bride.webp' });
+    expect(two).toContain('src="/groom.webp"'); expect(two).toContain('src="/bride.webp"');
     expect(render({ thumbnail: true, decorative: true })).not.toContain('<button');
     const view = readFileSync(new URL('./invitation-view.tsx', import.meta.url), 'utf8');
     // The custom cover owns live copy even without a photo; do not mount the generic cover too.
