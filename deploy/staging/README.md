@@ -1,5 +1,10 @@
 # Staging — `staging.weddingletter.id`
 
+> Jika staging dan production berbagi VPS, ikuti `deploy/production/README.md` untuk
+> cutover ke shared edge. Mode lama tetap default; override hanya aktif bila `.env`
+> server berisi `COMPOSE_FILE=docker-compose.yml:docker-compose.shared.yml`.
+> Workflow staging terbaru mendukung kedua mode. Jangan memakai workflow lama setelah cutover.
+
 Satu VPS (Docker Compose: Postgres + API + Web + Nginx) di belakang Cloudflare. Image dibangun GitHub Actions
 (`.github/workflows/staging.yml`) dan disimpan di GHCR; VPS hanya menarik image, tidak membangun.
 

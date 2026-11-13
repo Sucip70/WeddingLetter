@@ -15,15 +15,17 @@ import { parseCatalogTemplate, resolveCatalog } from '../src/admin/catalog.js';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { ARTWORK_SLOTS, artworkSourceSchema } from '../src/templates/artwork.js';
+import { assertPublisherApi, assertPublisherBucket, publisherTarget, PUBLISHER_TARGETS } from '../src/admin/publisher-target.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
 const publicDir = path.join(root, 'apps/web/public');
-config({ path: path.join(root, '.env.publisher'), quiet: true });
 const args = process.argv.slice(2);
 const command = args[0];
 const option = (name: string, fallback = '') => args[args.indexOf(name) + 1] && args.includes(name) ? args[args.indexOf(name) + 1]! : fallback;
 const output = path.resolve(option('--file', path.join(root, 'output/catalog.json')));
 const apply = args.includes('--apply');
+config({ path: path.resolve(root, option('--env-file', '.env.publisher')), quiet: true });
+const targetName = publisherTarget(option('--target', 'staging'), apply, option('--confirm-production'));
 const assetSchema = z.object({ key: catalogKey, file: z.string().optional(), sourceKey: catalogKey.optional(), sizeBytes: z.number().int().positive(), contentType: z.string(), sha256: z.string().regex(/^[a-f0-9]{64}$/) }).refine((a) => !!a.file !== !!a.sourceKey, 'Each asset needs exactly one source');
 const packageSchema = z.object({ schemaVersion: z.literal(1), assets: z.array(assetSchema), entries: z.array(catalogEntrySchema), localFiles: z.array(z.object({ file: z.string(), sha256: z.string() })).default([]) });
 type Asset = z.infer<typeof assetSchema>;
@@ -180,16 +182,15 @@ async function exportCatalog() {
 function targetStorage() {
   const required = ['TARGET_R2_ACCOUNT_ID', 'TARGET_R2_ACCESS_KEY_ID', 'TARGET_R2_SECRET_ACCESS_KEY', 'TARGET_R2_PUBLIC_URL'] as const;
   for (const key of required) if (!process.env[key]) throw new Error(`Missing ${key}`);
-  if (process.env.TARGET_R2_BUCKET_NAME !== 'weddingletter-staging') throw new Error('Target bucket must explicitly be weddingletter-staging');
-  if (!/^https:\/\//.test(process.env.TARGET_R2_PUBLIC_URL!)) throw new Error('TARGET_R2_PUBLIC_URL must use HTTPS');
+  assertPublisherBucket(process.env.TARGET_R2_BUCKET_NAME, process.env.TARGET_R2_PUBLIC_URL!, targetName);
   if (process.env.R2_BUCKET_NAME === process.env.TARGET_R2_BUCKET_NAME && process.env.R2_ACCOUNT_ID === process.env.TARGET_R2_ACCOUNT_ID) throw new Error('Source and target buckets must differ');
-  return new R2Driver(process.env.TARGET_R2_ACCOUNT_ID!, process.env.TARGET_R2_ACCESS_KEY_ID!, process.env.TARGET_R2_SECRET_ACCESS_KEY!, process.env.TARGET_R2_BUCKET_NAME, process.env.TARGET_R2_PUBLIC_URL!);
+  return new R2Driver(process.env.TARGET_R2_ACCOUNT_ID!, process.env.TARGET_R2_ACCESS_KEY_ID!, process.env.TARGET_R2_SECRET_ACCESS_KEY!, process.env.TARGET_R2_BUCKET_NAME!, process.env.TARGET_R2_PUBLIC_URL!);
 }
 
 async function sync(packet: z.infer<typeof packageSchema>, verifyOnly = false) {
   if (!apply) {
     for (const asset of packet.assets) console.log(`Would verify/copy ${asset.key}`);
-    console.log(`Planned ${packet.assets.length} objects to weddingletter-staging`);
+    console.log(`Planned ${packet.assets.length} objects to ${PUBLISHER_TARGETS[targetName].bucket}`);
     return;
   }
   const target = targetStorage();
@@ -213,14 +214,12 @@ async function sync(packet: z.infer<typeof packageSchema>, verifyOnly = false) {
     if (!verified || hash(verified) !== asset.sha256) throw new Error(`Destination verification failed: ${asset.key}`);
     console.log(`Verified ${asset.key}`);
   }
-  console.log(`${apply ? 'Synced and verified' : 'Planned'} ${packet.assets.length} objects to weddingletter-staging`);
+  console.log(`${apply ? 'Synced and verified' : 'Planned'} ${packet.assets.length} objects to ${PUBLISHER_TARGETS[targetName].bucket}`);
 }
 
 async function publish(packet: z.infer<typeof packageSchema>, verifyOnly = false) {
-  const base = option('--api', 'https://staging.weddingletter.id').replace(/\/$/, '');
-  const url = new URL(base);
-  if (url.hostname !== 'staging.weddingletter.id' && !['localhost', '127.0.0.1'].includes(url.hostname)) throw new Error('Publisher target must be staging or localhost');
-  if (url.hostname === 'staging.weddingletter.id' && url.protocol !== 'https:') throw new Error('Staging requires HTTPS');
+  const base = option('--api', PUBLISHER_TARGETS[targetName].api).replace(/\/$/, '');
+  assertPublisherApi(base, targetName);
   if (apply && !process.env.PUBLISHER_TOKEN) throw new Error('Set PUBLISHER_TOKEN to an admin bearer token');
   // Shared media first, so templates never reference absent music IDs.
   const entries = [...packet.entries].sort((a, b) => Number(a.kind === 'template') - Number(b.kind === 'template'));
@@ -272,6 +271,6 @@ async function main() {
     console.log('Media files untracked. Local copies retained. Review and commit the staged removals.');
     return;
   }
-  throw new Error('Usage: catalog.ts export|sync|publish [--file path] [--apply] [--api URL]');
+  throw new Error('Usage: catalog.ts export|check|sync|publish|verify [--file path] [--env-file path] [--target staging|production] [--apply] [--confirm-production weddingletter.id] [--api URL]');
 }
 main().catch((error: unknown) => { console.error(error instanceof Error ? error.message : error); process.exitCode = 1; });
