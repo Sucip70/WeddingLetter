@@ -1,0 +1,61 @@
+{
+  "designId": "vivaha-rani",
+  "visualRevision": "gate-content-01",
+  "cultureScope": "Contemporary North Indian Hindu wedding stationery",
+  "gateName": "Rani Toran",
+  "formatPolicy": "raster-only-no-svg",
+  "canvas": { "width": 1024, "height": 1536, "aspectRatio": "2:3" },
+  "assets": {
+    "gateBackground": "gate-background.png",
+    "leftPanel": "left-panel.png",
+    "rightPanel": "right-panel.png",
+    "interactiveObject": "interactive-genda-rosette.png",
+    "closedPreview": "closed-preview.png",
+    "openingPreview": "opening-preview.png",
+    "reducedMotionPreview": "reduced-motion-preview.png",
+    "motionSpec": "motion-spec.md",
+    "editableRasterSources": "source-renders/"
+  },
+  "presentation": {
+    "backgroundFit": "cover",
+    "backgroundPosition": "center",
+    "panelMotion": "silk-folio-part",
+    "interactiveObjectMotion": "soft-bounce-lift-fade",
+    "primaryDurationMs": 1500,
+    "reducedMotionDurationMs": 240
+  },
+  "palette": {
+    "raniPink": "#C2185B",
+    "sindoorRed": "#A41425",
+    "marigoldSaffron": "#F39A16",
+    "warmIvory": "#F5E9D5",
+    "antiqueGold": "#B58A36",
+    "deepLeafGreen": "#244D2C",
+    "charcoal": "#332722"
+  },
+  "safeArea": {
+    "normalizedLeft": 0.23,
+    "normalizedRight": 0.77,
+    "normalizedTop": 0.20,
+    "normalizedBottom": 0.67,
+    "notes": "Keep live names, guest text and CTA on the ivory corridor; CTA stays above the genda rosette."
+  },
+  "rules": {
+    "productionTextBakedIn": false,
+    "movableAssetsTransparent": true,
+    "interactiveMotif": "nonreligious-genda-zari-rosette",
+    "sacredSymbolsUsed": false,
+    "databaseArtworkVersionAssignedByEngineering": true,
+    "neverStackWith": [
+      "deity-images",
+      "om-or-swastika",
+      "mantra-or-sacred-script",
+      "kalash-or-diya-as-button",
+      "literal-temple-or-palace-scenery",
+      "south-indian-regional-ornaments",
+      "elephants-or-peacocks",
+      "flower-wall",
+      "particle-explosion"
+    ]
+  }
+}

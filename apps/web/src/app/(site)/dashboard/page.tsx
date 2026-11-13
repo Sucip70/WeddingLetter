@@ -6,6 +6,7 @@ import { Alert, Card, EmptyState, LinkButton, PageHeader } from '@/components/ui
 import { daysLeft, formatDate, rupiah } from '@/lib/format';
 import { authedFetch, requireUser } from '@/lib/session';
 import type { InvitationListItem, OrderSummary } from '@/lib/types';
+import { ChangePaymentButton } from './change-payment-button';
 
 export const metadata: Metadata = { title: 'Undangan saya' };
 
@@ -47,7 +48,10 @@ export default async function DashboardPage() {
         ))}
         {pending.map((o) => (
           <Alert key={o.id} tone="warn">
-            Pesanan {o.templateName} ({rupiah(o.totalAmount)}) menunggu pembayaran. <Link className="font-medium underline" href={`/checkout/${o.id}`}>Lanjutkan →</Link>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span>Pesanan {o.templateName} ({rupiah(o.totalAmount)}) menunggu pembayaran. <Link className="font-medium underline" href={`/checkout/${o.id}`}>Lanjutkan →</Link></span>
+              {o.paymentProvider === 'MIDTRANS' && <ChangePaymentButton orderId={o.id} />}
+            </div>
           </Alert>
         ))}
       </div>
@@ -92,6 +96,7 @@ export default async function DashboardPage() {
                     <th className="px-5 py-3 font-medium">Pesanan</th>
                     <th className="px-5 py-3 text-right font-medium">Total</th>
                     <th className="px-5 py-3 font-medium">Status</th>
+                    <th className="px-5 py-3 font-medium">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -103,6 +108,14 @@ export default async function DashboardPage() {
                       </td>
                       <td className="px-5 py-3.5 text-right tabular-nums">{rupiah(o.totalAmount)}</td>
                       <td className="px-5 py-3.5"><OrderStatusBadge status={o.status} /></td>
+                      <td className="px-5 py-3.5">
+                        {o.status === 'PENDING' ? (
+                          <div className="flex items-center gap-2">
+                            <Link className="font-medium text-rose hover:underline" href={`/checkout/${o.id}`}>Bayar</Link>
+                            {o.paymentProvider === 'MIDTRANS' && <ChangePaymentButton orderId={o.id} compact />}
+                          </div>
+                        ) : '—'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

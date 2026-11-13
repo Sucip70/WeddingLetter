@@ -1,0 +1,66 @@
+{
+  "designId": "pawiwahan-agung",
+  "visualRevision": "content-concept-01",
+  "cultureScope": "Bali — architectural and prada material vocabulary; no regional bridal-attire variant depicted",
+  "formatPolicy": "raster-only-no-svg",
+  "canvas": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": "2:3"
+  },
+  "assets": {
+    "pageBackground": "page-background.png",
+    "cornerTopLeft": "corner-ornament-top-left.png",
+    "cornerBottomRight": "corner-ornament-bottom-right.png",
+    "sectionAccent": "section-accent-prada.png",
+    "divider": "divider-prada.png",
+    "infoCard": "info-card.png",
+    "photoFrame": "photo-frame.png",
+    "reviewPreview": "content-system-preview.png"
+  },
+  "layerSets": {
+    "standard": [
+      "pageBackground",
+      "divider"
+    ],
+    "premiumEventCard": [
+      "pageBackground",
+      "infoCard",
+      "sectionAccent",
+      "divider"
+    ],
+    "photoSection": [
+      "pageBackground",
+      "photoFrame"
+    ],
+    "quietEditorialSection": [
+      "pageBackground",
+      "cornerTopLeft",
+      "cornerBottomRight"
+    ]
+  },
+  "neverStack": [
+    ["infoCard", "cornerTopLeft", "cornerBottomRight"],
+    ["photoFrame", "infoCard"],
+    ["photoFrame", "cornerTopLeft", "cornerBottomRight"],
+    ["sectionAccent", "cornerTopLeft", "cornerBottomRight"],
+    ["sectionAccent", "sectionAccent"]
+  ],
+  "palette": {
+    "ceremonialIvory": "#EEE0C7",
+    "warmParas": "#C9AB82",
+    "antiquePrada": "#A77A38",
+    "brickRed": "#873E32",
+    "leafGreen": "#536149",
+    "softCharcoal": "#332923"
+  },
+  "rules": {
+    "productionTextBakedIn": false,
+    "previewTextAllowed": true,
+    "transparentDecorationLayers": true,
+    "maxPrimaryDecorationsPerSection": 2,
+    "contentQuieterThanGate": true,
+    "bridalFigureIncluded": false,
+    "sacredObjectsUsedAsDecoration": false
+  }
+}

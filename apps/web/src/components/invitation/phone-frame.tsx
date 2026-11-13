@@ -10,8 +10,8 @@ const watermarkSvg = encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="150"><text x="20" y="90" font-family="sans-serif" font-size="20" font-weight="700" fill="#000" fill-opacity=".09" transform="rotate(-24 110 75)" letter-spacing="3">PRATINJAU</text></svg>`,
 );
 
-export function PhoneFrame({ children, size = 'md', watermark, className = '' }: { children: ReactNode; size?: keyof typeof SCALE; watermark?: boolean; className?: string }) {
-  const k = SCALE[size];
+export function PhoneFrame({ children, size = 'md', scale, watermark, className = '' }: { children: ReactNode; size?: keyof typeof SCALE; scale?: number; watermark?: boolean; className?: string }) {
+  const k = scale ?? SCALE[size];
   return (
     <div className={`relative mx-auto w-fit rounded-[2.4rem] bg-[#1d1815] p-2.5 shadow-[0_24px_60px_-12px_rgba(43,36,32,0.45)] ${className}`}>
       <div className="absolute left-1/2 top-3.5 z-30 h-4 w-16 -translate-x-1/2 rounded-full bg-[#1d1815]" aria-hidden />

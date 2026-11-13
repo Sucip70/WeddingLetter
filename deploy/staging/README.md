@@ -1,5 +1,10 @@
 # Staging — `staging.weddingletter.id`
 
+> Jika staging dan production berbagi VPS, ikuti `deploy/production/README.md` untuk
+> cutover ke shared edge. Mode lama tetap default; override hanya aktif bila `.env`
+> server berisi `COMPOSE_FILE=docker-compose.yml:docker-compose.shared.yml`.
+> Workflow staging terbaru mendukung kedua mode. Jangan memakai workflow lama setelah cutover.
+
 Satu VPS (Docker Compose: Postgres + API + Web + Nginx) di belakang Cloudflare. Image dibangun GitHub Actions
 (`.github/workflows/staging.yml`) dan disimpan di GHCR; VPS hanya menarik image, tidak membangun.
 
@@ -74,8 +79,8 @@ mati), email OTP lewat Resend sungguhan, file di bucket R2 khusus staging.
    | `STAGING_SSH_KEY` | private key SSH khusus deploy (`ssh-keygen -t ed25519 -f wl-staging -N ""`; public key-nya ke `~deploy/.ssh/authorized_keys`) |
    | `STAGING_SSH_KNOWN_HOSTS` | hasil `ssh-keyscan -t ed25519 <IP VPS>` |
 3. Environment variables (ditanam ke image web saat build):
-   `NEXT_PUBLIC_APP_URL=https://staging.weddingletter.id`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (opsional),
-   `NEXT_PUBLIC_SUPPORT_WHATSAPP` (opsional, format `62812…`).
+   `NEXT_PUBLIC_APP_URL=https://staging.weddingletter.id`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (opsional).
+   Nomor WhatsApp bantuan tidak lagi lewat env: admin mengisinya di Admin → Pengaturan (kosong = halaman "segera hadir").
 
 ## Deploy
 
@@ -83,15 +88,17 @@ mati), email OTP lewat Resend sungguhan, file di bucket R2 khusus staging.
 git push origin master:staging     # atau: Actions → Staging → Run workflow
 ```
 
-Deploy pertama: setelah workflow hijau, isi data awal (template, desain, foto demo) dan akun admin pertama:
+Deploy pertama: setelah workflow hijau, buat akun admin awal:
 
 ```bash
 cd ~/weddingletter-staging
-docker compose run --rm -e ADMIN_EMAIL=email-anda@contoh.com api npm run prisma:seed
+docker compose run --rm -e ADMIN_EMAIL=email-anda@contoh.com api npm run staging:bootstrap
 ```
 
 Lalu buka `https://staging.weddingletter.id` (login basic auth dulu), masuk dengan email admin tadi (OTP via Resend),
-dan tambahkan lagu di Admin → Musik.
+dan gunakan publisher lokal untuk memasang katalog template beserta aset dan musik.
+Panduan ekspor, sinkronisasi bucket `weddingletter-staging`, fresh reset, publish, dan pelepasan
+gambar dari Git ada di [PUBLISHER.md](PUBLISHER.md).
 
 ## Operasional
 

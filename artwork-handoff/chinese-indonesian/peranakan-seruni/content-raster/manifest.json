@@ -1,0 +1,89 @@
+{
+  "designId": "peranakan-seruni",
+  "visualRevision": "content-celebration-02",
+  "cultureScope": "Modern Chinese Indonesian wedding celebration, without batik or regional bridal-attire claims",
+  "formatPolicy": "raster-only-no-svg",
+  "canvas": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": "2:3"
+  },
+  "assets": {
+    "pageBackground": "page-background-v2.png",
+    "infoCard": "info-card-v2.png",
+    "lanternPair": "ornament-lantern-pair-v2.png",
+    "koiBottom": "ornament-koi-bottom-v2.png",
+    "fanDivider": "divider-fan-v2.png",
+    "doubleHappinessMarker": "section-marker-double-happiness-v2.png",
+    "firecrackerCoins": "ornament-firecracker-coins-v2.png",
+    "photoFrame": "photo-frame-v2.png",
+    "reviewPreview": "revision-v2-celebration-preview.png",
+    "editableRasterSources": "source-renders-v2/"
+  },
+  "dimensions": {
+    "pageBackground": "1024x1536 opaque",
+    "infoCard": "1024x1536 transparent",
+    "lanternPair": "1024x1536 transparent",
+    "koiBottom": "1024x1536 transparent",
+    "fanDivider": "2172x724 transparent",
+    "doubleHappinessMarker": "1254x1254 transparent",
+    "firecrackerCoins": "1024x1536 transparent",
+    "photoFrame": "1024x1536 transparent"
+  },
+  "layerSets": {
+    "eventPremium": [
+      "pageBackground",
+      "infoCard",
+      "lanternPair",
+      "doubleHappinessMarker",
+      "fanDivider"
+    ],
+    "storyOrGallery": [
+      "pageBackground",
+      "photoFrame"
+    ],
+    "giftOrRsvp": [
+      "pageBackground",
+      "infoCard",
+      "firecrackerCoins"
+    ],
+    "closing": [
+      "pageBackground",
+      "infoCard",
+      "koiBottom"
+    ],
+    "quietSection": [
+      "pageBackground",
+      "infoCard",
+      "fanDivider"
+    ]
+  },
+  "neverStack": [
+    ["lanternPair", "koiBottom"],
+    ["lanternPair", "firecrackerCoins"],
+    ["koiBottom", "firecrackerCoins"],
+    ["photoFrame", "infoCard"],
+    ["photoFrame", "lanternPair"],
+    ["doubleHappinessMarker", "firecrackerCoins"],
+    ["doubleHappinessMarker", "koiBottom"]
+  ],
+  "palette": {
+    "auspiciousCinnabar": "#C71919",
+    "deepLacquerRed": "#8D1015",
+    "ceremonialGold": "#D7A84A",
+    "antiqueGoldShadow": "#9B6A24",
+    "warmIvory": "#F5E9D3",
+    "inkCharcoal": "#2E2522"
+  },
+  "rules": {
+    "productionTextBakedIn": false,
+    "previewTextAllowed": true,
+    "transparentDecorationLayers": true,
+    "batikUsed": false,
+    "maxMajorMotifFamiliesPerViewport": 2,
+    "centralTextCorridorMustRemainClear": true,
+    "contentQuieterThanGate": true,
+    "chineseCharacter": "囍",
+    "databaseArtworkVersionAssignedByEngineering": true
+  }
+}

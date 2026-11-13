@@ -33,6 +33,9 @@ export function toListTemplate(t: Template, library: MusicPreset[]) {
       palettes: layout.palettes,
       coverLayouts: layout.coverLayouts,
       coverDefault: layout.coverDefault,
+      samplePhotos: layout.samplePhotos,
+      // All artwork-backed thumbnails need their published URLs, not only cultural designs.
+      ...(layout.artwork ? { artwork: layout.artwork } : {}),
     },
   };
 }

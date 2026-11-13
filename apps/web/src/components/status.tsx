@@ -16,10 +16,11 @@ export function InvitationStatusBadge({ status }: { status: InvitationStatus }) 
 }
 
 // Teks sisa masa aktif yang ramah: "Aktif sampai 12 Des 2026 · 45 hari lagi".
-export function expiryText(status: InvitationStatus, expiresAt: string | null, remainingDays: number | null) {
+// `now`: lihat catatan di daysLeft() — kirim nilai tetap dari parent saat dipakai di komponen client.
+export function expiryText(status: InvitationStatus, expiresAt: string | null, remainingDays: number | null, now?: number) {
   if (status === 'PAUSED') return `Dijeda · sisa ${remainingDays ?? 0} hari (hitung mundur berhenti)`;
   if (!expiresAt) return status === 'DRAFT' ? 'Masa aktif mulai dihitung saat dipublikasikan' : '';
-  const d = daysLeft(expiresAt);
+  const d = daysLeft(expiresAt, now);
   if (status === 'EXPIRED_GRACE') return `Berakhir ${formatDate(expiresAt)} · data disimpan 30 hari`;
   if (d === null) return '';
   return `Aktif sampai ${formatDate(expiresAt)} · ${d > 0 ? `${d} hari lagi` : 'berakhir hari ini'}`;

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "designId": "semi",
+  "visualRevision": "v2-final",
+  "productionTextEmbedded": false,
+  "assets": {
+    "coverStandard": "cover-standard.webp",
+    "coverPremium": "cover-premium.webp",
+    "catalogThumbnailStandard": "catalog-thumbnail-standard.webp",
+    "catalogThumbnailPremium": "catalog-thumbnail-premium.webp",
+    "longNamePreview": "long-name-preview.webp",
+    "safeAreaGuide": "safe-area-guide.webp"
+  },
+  "safeArea": { "left": 110, "right": 914, "top": 305, "bottom": 1190 },
+  "neverStack": ["coverForeground", "proceduralCorners", "coverEffect", "closedCoverParticles"]
+}

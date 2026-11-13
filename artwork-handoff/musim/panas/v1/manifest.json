@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "designId": "panas",
+  "artworkVersion": 1,
+  "title": "Sea-Glass Summer",
+  "assets": {
+    "coverBackground": "cover-background.webp",
+    "coverForeground": "cover-foreground.webp",
+    "gateBackground": "gate-background.webp",
+    "gateForeground": "gate-foreground.webp",
+    "pageBackground": "page-background.webp",
+    "sectionBackground": "section-background.webp",
+    "bottomDecoration": "bottom-decoration.webp",
+    "divider": "divider.webp",
+    "photoFrame": "photo-frame.webp",
+    "thumbnail": "thumbnail.webp",
+    "preview": "production-preview.webp"
+  },
+  "presentation": {
+    "backgroundFit": "cover",
+    "backgroundPosition": "center-top",
+    "gateBackgroundPosition": "center",
+    "foregroundPosition": "bottom-center",
+    "foregroundMotion": "drift",
+    "contentDecorationDensity": "quiet",
+    "showOnPhotoCover": false
+  },
+  "fallback": {
+    "ornament": "sparkle",
+    "coverEffect": "rays",
+    "particle": "bubble"
+  },
+  "palette": ["#0d9488", "#f59e0b", "#f0fbfa", "#0f3d3a"]
+}
+

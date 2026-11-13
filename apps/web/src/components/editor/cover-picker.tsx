@@ -47,14 +47,6 @@ const ICONS: Record<CoverKind, ReactNode> = {
       {button(46)}
     </>
   ),
-  jendela: (
-    <>
-      <path d="M11 34V21a9 9 0 0 1 18 0v13Z" {...STROKE} />
-      <path d="M13 32V21a7 7 0 0 1 14 0v11Z" {...SOFT} />
-      {text(39, 18)}
-      {button(46)}
-    </>
-  ),
   medali: (
     <>
       <circle cx={20} cy={22} r={11} {...STROKE} strokeDasharray="1.5 2.5" />
@@ -95,12 +87,25 @@ const ICONS: Record<CoverKind, ReactNode> = {
       {button(47)}
     </>
   ),
-  hati: (
+  orbit: (
     <>
-      <path d="M20 34C7 24 6 14 13 11c4-1.500 6 .5 7 3 1-2.500 3-4.500 7-3 7 3 6 13-7 23Z" {...STROKE} />
-      <path d="M20 31C10 23 9 15 14 13.500c3-1 5 1 6 3.500 1-2.500 3-4.500 6-3.500 5 1.500 4 9.500-6 17.500Z" {...SOFT} />
-      {text(40, 18)}
-      {button(47)}
+      <rect x={4} y={4} width={32} height={52} rx={2} {...SOLID} opacity={0.85} />
+      <circle cx={20} cy={24} r={9} fill="#fff" opacity={0.4} />
+      <ellipse cx={20} cy={24} rx={15} ry={4.5} fill="none" stroke="#fff" strokeWidth={1.3} transform="rotate(-18 20 24)" />
+      <circle cx={32} cy={19} r={1.6} fill="#fff" />
+      <rect x={11} y={41} width={18} height={2.4} rx={1.2} fill="#fff" />
+      <rect x={13} y={47} width={14} height={4.5} rx={2.2} fill="#fff" />
+    </>
+  ),
+  menara: (
+    <>
+      <rect x={4} y={4} width={32} height={52} rx={2} {...SOLID} opacity={0.85} />
+      <path d="M13 36V22a7 7 0 0 1 14 0v14Z" fill="#fff" opacity={0.4} />
+      <path d="M13 36V22a7 7 0 0 1 14 0v14Z" fill="none" stroke="#fff" strokeWidth={1.3} />
+      <path d="M31 9a4 4 0 1 0 3 6 3.200 3.200 0 0 1-3-6Z" fill="#fff" />
+      <path d="M8 30v4M32 30v4" stroke="#fff" strokeWidth={1.8} strokeLinecap="round" />
+      <rect x={11} y={41} width={18} height={2.4} rx={1.2} fill="#fff" />
+      <rect x={13} y={47} width={14} height={4.5} rx={2.2} fill="#fff" />
     </>
   ),
   portal: (
@@ -112,14 +117,6 @@ const ICONS: Record<CoverKind, ReactNode> = {
       <rect x={13} y={47} width={14} height={4.5} rx={2.2} fill="#fff" />
     </>
   ),
-  kristal: (
-    <>
-      <path d="M20 8l9 4 5 9v10l-5 8-9 4-9-4-5-8V21l5-9Z" {...STROKE} />
-      <path d="M20 12l7 3 3 7v8l-4 6-6 3-6-3-4-6v-8l3-7Z" {...SOFT} />
-      {text(46, 18)}
-      {button(50)}
-    </>
-  ),
   karakter: (
     <>
       <rect x={4} y={4} width={32} height={52} rx={2} {...SOLID} opacity={0.85} />
@@ -127,6 +124,35 @@ const ICONS: Record<CoverKind, ReactNode> = {
       <rect x={21} y={14} width={12} height={17} fill="#fff" opacity={0.45} />
       <rect x={9} y={36} width={22} height={2.4} fill="#fff" />
       <rect x={13} y={45} width={14} height={4.5} fill="#fff" />
+    </>
+  ),
+  bunga: (
+    <>
+      <path d="M10 36V22a10 10 0 0 1 20 0v14Z" {...STROKE} />
+      <path d="M12.5 34V22a7.500 7.500 0 0 1 15 0v12Z" {...SOFT} />
+      <circle cx={20} cy={10.500} r={2.200} {...SOLID} />
+      <circle cx={11} cy={15} r={1.800} {...SOLID} opacity={0.7} />
+      <circle cx={29} cy={15} r={1.800} {...SOLID} opacity={0.7} />
+      {text(41, 18)}
+      {button(47)}
+    </>
+  ),
+  merpati: (
+    <>
+      <ellipse cx={20} cy={25} rx={9} ry={11} {...STROKE} />
+      <ellipse cx={20} cy={25} rx={6.800} ry={8.800} {...SOFT} />
+      <path d="M8 13l5 2.500-3.500 3zM32 13l-5 2.500 3.500 3z" {...SOLID} />
+      {text(41, 18)}
+      {button(47)}
+    </>
+  ),
+  emas: (
+    <>
+      <path d="M9 36V21a11 11 0 0 1 22 0v15Z" {...STROKE} />
+      <path d="M12 34V21a8 8 0 0 1 16 0v13Z" {...SOFT} />
+      <path d="M20 7.500l2.200 2.200-2.200 2.200-2.200-2.200z" {...SOLID} />
+      {text(41, 18)}
+      {button(47)}
     </>
   ),
   poster: (

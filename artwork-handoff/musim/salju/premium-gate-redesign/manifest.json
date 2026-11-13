@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "designId": "salju",
+  "tier": "premium",
+  "visualRevision": "premium-gate-redesign",
+  "artboard": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": "2:3"
+  },
+  "productionTextEmbedded": false,
+  "interaction": {
+    "instruction": "Touch to clear the frost",
+    "durationMs": 1400,
+    "easing": "cubic-bezier(0.22, 1, 0.36, 1)",
+    "waitingMotion": "interactive-object-only"
+  },
+  "safeArea": {
+    "left": 150,
+    "right": 874,
+    "top": 300,
+    "bottom": 1125
+  },
+  "cropSafeArea": {
+    "left": 110,
+    "right": 914,
+    "top": 190,
+    "bottom": 1320
+  },
+  "assets": {
+    "gateBackground": "gate-background.webp",
+    "interactiveObject": "interactive-object.png",
+    "transitionLayer": "transition-layer.png",
+    "closedPreview": "closed-preview.webp",
+    "openingPreview": "opening-preview.webp",
+    "openedTransitionPreview": "opened-transition-preview.webp",
+    "reducedMotionPreview": "reduced-motion-preview.webp",
+    "motionSpec": "motion-spec.md"
+  }
+}

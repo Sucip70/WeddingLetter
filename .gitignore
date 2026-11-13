@@ -6,11 +6,46 @@ generated/
 *.tsbuildinfo
 .env
 .env.local
+.env.publisher
+.env.publisher.*
 *.log
 .DS_Store
 .next-*/
+.tmp
 
 # Rahasia di server deploy (contoh: deploy/*/api.env.example)
 deploy/**/api.env
 deploy/**/certs/
 deploy/**/htpasswd
+deploy/**/backups/
+deploy/**/.previous-tag
+deploy/**/.deploy.lock
+
+# Keluaran review & file kerja sementara
+artifacts/
+tmp/
+output/
+
+# Aset mentah The Artist (besar; simpan di storage terpisah). Dokumen aturan (*.md) tetap dilacak.
+artwork-handoff/**/*.png
+artwork-handoff/**/*.webp
+artwork-handoff/**/*.jpg
+artwork-handoff/**/*.zip
+artwork-handoff/**/*.psd
+artwork-handoff/**/*.kra
+
+# Published template media. Local publisher reads these files directly.
+apps/web/public/themes/**/*.webp
+apps/web/public/themes/**/*.png
+apps/web/public/themes/**/*.jpg
+apps/web/public/themes/**/*.avif
+apps/web/public/samples/**/*.webp
+apps/web/public/samples/**/*.png
+apps/web/public/samples/**/*.jpg
+# Bundled fallback photographs required by the Pusako catalog preview.
+!apps/web/public/samples/pusako-minang/cover.webp
+!apps/web/public/samples/pusako-minang/groom.webp
+!apps/web/public/samples/pusako-minang/bride.webp
+!apps/web/public/samples/pusako-minang/gallery-romantic.webp
+!apps/web/public/samples/pusako-minang/gallery-walking.webp
+apps/web/public/audio/*.mp3

@@ -1,0 +1,55 @@
+{
+  "designId": "vivaha-rani",
+  "samplePhotos": {
+    "cover": "/samples/vivaha-rani/cover.webp",
+    "groom": "/samples/vivaha-rani/groom.webp",
+    "bride": "/samples/vivaha-rani/bride.webp",
+    "gallery1": "/samples/vivaha-rani/gallery-walking.webp",
+    "gallery2": "/samples/vivaha-rani/gallery-romantic.webp"
+  },
+  "assetType": "opaque-sample-prewedding-photography",
+  "cultureScope": "contemporary North Indian Hindu wedding",
+  "palette": [
+    "#c2185b",
+    "#b58a36",
+    "#f5e9d5",
+    "#332722"
+  ],
+  "assets": {
+    "cover": {
+      "file": "cover.webp",
+      "source": "sources/cover.png",
+      "dimensions": "1024x1536",
+      "ratio": "2:3"
+    },
+    "groom": {
+      "file": "groom.webp",
+      "source": "sources/groom.png",
+      "dimensions": "1024x1280",
+      "ratio": "4:5"
+    },
+    "bride": {
+      "file": "bride.webp",
+      "source": "sources/bride.png",
+      "dimensions": "1024x1280",
+      "ratio": "4:5"
+    },
+    "galleryRomantic": {
+      "file": "gallery-romantic.webp",
+      "source": "sources/gallery-romantic.png",
+      "dimensions": "1024x1280",
+      "ratio": "4:5"
+    },
+    "galleryWalking": {
+      "file": "gallery-walking.webp",
+      "source": "sources/gallery-walking.png",
+      "dimensions": "1536x960",
+      "ratio": "8:5"
+    }
+  },
+  "generation": {
+    "mode": "imagegen-new-image-with-reference-derived-variants",
+    "background": "opaque realistic North Indian haveli veranda",
+    "style": "natural photorealistic editorial pre-wedding photography"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "designId": "salju",
+  "artworkVersion": 1,
+  "title": "Crystal Winter",
+  "assets": {
+    "coverBackground": "cover-background.webp",
+    "coverForeground": "cover-foreground.webp",
+    "gateBackground": "gate-background.webp",
+    "gateForeground": "gate-foreground.webp",
+    "pageBackground": "page-background.webp",
+    "sectionBackground": "section-background.webp",
+    "bottomDecoration": "bottom-decoration.webp",
+    "divider": "divider.webp",
+    "photoFrame": "photo-frame.webp",
+    "thumbnail": "thumbnail.webp",
+    "preview": "production-preview.webp"
+  },
+  "presentation": {
+    "backgroundFit": "cover",
+    "backgroundPosition": "center-top",
+    "gateBackgroundPosition": "center",
+    "foregroundPosition": "bottom-center",
+    "foregroundMotion": "breathe",
+    "contentDecorationDensity": "quiet",
+    "showOnPhotoCover": false
+  },
+  "fallback": {
+    "ornament": "snowflake",
+    "coverEffect": "aurora",
+    "particle": "snow"
+  },
+  "palette": ["#4b7bb5", "#8fb4de", "#f4f9ff", "#1c2f4a"]
+}

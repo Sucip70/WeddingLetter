@@ -7,10 +7,13 @@ import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { Alert, Badge, Button, Card, Field, Input, Select, Toggle, cn } from '@/components/ui';
 import { api, errorMessage, uploadWithProgress } from '@/lib/client-api';
 import { COVER_LAYOUTS, coverLayoutsFor, defaultCoverLayout } from '@/lib/cover-layouts';
+import { TierPanel } from './tier-panel';
+import { ArtworkManager } from './artwork-manager';
+import type { TierRow } from './tier-panel';
 import { sampleView } from '@/lib/sample';
 import type { DemoPhotos } from '@/lib/sample';
 import { FX_LABEL } from '@/lib/catalog';
-import type { FieldType, FxLevel, GateSetting, Palette, Theme, ThemeGroup } from '@/lib/types';
+import type { ArtworkManifest, FieldType, FxLevel, GateSetting, Layout, Palette, Theme, ThemeGroup } from '@/lib/types';
 
 export interface AuthField { key: string; type: FieldType; label: string; required: boolean; enabled: boolean }
 export interface AuthSection { id: string; title: string; enabled: boolean; fields: AuthField[] }
@@ -22,6 +25,8 @@ export interface Authoring {
   palettes: Palette[];
   // Tata letak sampul bawaan (kosong = otomatis). Lihat coverDefault di apps/api/src/templates/layout.ts.
   coverDefault?: string;
+  artwork?: ArtworkManifest;
+  samplePhotos?: Layout['samplePhotos'];
 }
 export interface TemplateForm {
   id?: string;
@@ -30,6 +35,8 @@ export interface TemplateForm {
   tier: 'BASIC' | 'STANDARD' | 'PREMIUM';
   price: number;
   includedWeeks: number;
+  showOnHome?: boolean;
+  homeOrder?: number;
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
   thumbnailUrl: string | null;
   layout: Authoring;
@@ -39,7 +46,6 @@ export interface DesignMeta {
   id: string;
   name: string;
   group: ThemeGroup;
-  blurb: string;
   primary: string;
   secondary: string;
   background: string;
@@ -64,10 +70,19 @@ const FONT_LABEL: Record<string, string> = {
   cinzel: 'Kapital klasik (Cinzel)',
   pixel: 'Pixel retro',
   round: 'Bulat ceria',
+  libre: 'Editorial klasik (Libre Baskerville)',
 };
-const BODY_LABEL: Record<string, string> = { sans: 'Sans modern', serif: 'Serif klasik', round: 'Bulat ceria' };
+const BODY_LABEL: Record<string, string> = { sans: 'Sans modern', serif: 'Serif klasik', round: 'Bulat ceria', source: 'Editorial bersih (Source Sans 3)' };
 const FX_ORDER: FxLevel[] = ['none', 'standard', 'premium'];
 const HEX = /^#[0-9a-fA-F]{6}$/;
+const SEASONAL_PREMIUM_GATE_LABEL: Record<string, string> = {
+  semi: 'Vellum Blossom',
+  panas: 'Golden Tide',
+  gugur: 'Letter in the Wind',
+  salju: 'Frosted Monogram',
+};
+type SamplePhotoSlot = 'groom' | 'bride';
+const SAMPLE_PHOTO_LABEL: Record<SamplePhotoSlot, string> = { groom: 'Ilustrasi mempelai pria', bride: 'Ilustrasi mempelai wanita' };
 
 const themeOf = (d: DesignMeta, fx: FxLevel, gate: GateSetting): Theme => ({ preset: d.id, motif: d.id, fx, gate, primary: d.primary, secondary: d.secondary, background: d.background, text: d.text, headingFont: d.headingFont, bodyFont: d.bodyFont });
 
@@ -86,6 +101,8 @@ function blank(meta: BuilderMeta): TemplateForm {
     price: 20000,
     includedWeeks: 4,
     status: 'DRAFT',
+    showOnHome: false,
+    homeOrder: 0,
     thumbnailUrl: null,
     layout: { theme: themeOf(rustic, 'none', 'none'), sections, galeri: { maxPhotos: 4, maxVideos: 0 }, musik: { allowed: false, presets: [] }, palettes: rustic.palettes },
   };
@@ -97,10 +114,13 @@ function toPreviewLayout(l: Authoring) {
     theme: l.theme,
     sections: l.sections.filter((s) => s.enabled).map((s) => ({ id: s.id, title: s.title, fields: s.fields.filter((f) => f.enabled).map((f) => ({ key: f.key, label: f.label, type: f.type, required: f.required })) })),
     musik: l.musik,
+    artwork: l.artwork,
+    samplePhotos: l.samplePhotos,
   };
 }
 
-export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderMeta; initial: TemplateForm | null; photos?: DemoPhotos }) {
+// `siblings` = semua paket (baris template) dari tema yang sama, termasuk yang sedang dibuka; dipakai panel harga & ketersediaan.
+export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: { meta: BuilderMeta; initial: TemplateForm | null; photos?: DemoPhotos; siblings?: TierRow[] }) {
   const router = useRouter();
   const [form, setForm] = useState<TemplateForm>(() => initial ?? blank(meta));
   const [openSection, setOpenSection] = useState<string | null>(null);
@@ -108,8 +128,11 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
   const [error, setError] = useState('');
   const [saved, setSaved] = useState('');
   const [uploading, setUploading] = useState('');
+  const [artworkPreview, setArtworkPreview] = useState<ArtworkManifest | undefined>();
   const thumbInput = useRef<HTMLInputElement>(null);
   const songInput = useRef<HTMLInputElement>(null);
+  const sampleInput = useRef<HTMLInputElement>(null);
+  const sampleTarget = useRef<SamplePhotoSlot>('groom');
 
   const layout = form.layout;
   const setLayout = (patch: Partial<Authoring>) => setForm((f) => ({ ...f, layout: { ...f.layout, ...patch } }));
@@ -130,19 +153,15 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
   // Bawaan yang tersimpan tapi tidak lagi tersedia (paket/desain diganti) diperlakukan sebagai "Otomatis".
   const coverDefault = layout.coverDefault && coverKinds.some((k) => k === layout.coverDefault) ? layout.coverDefault : undefined;
   const view = useMemo(
-    () => sampleView({ ...toPreviewLayout(layout), galeri: layout.galeri, coverLayouts: coverKinds, coverDefault }, { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }, photos),
-    [layout, photos, coverKinds, coverDefault],
+    () => sampleView({ ...toPreviewLayout(layout), artwork: artworkPreview ?? layout.artwork, galeri: layout.galeri, coverLayouts: coverKinds, coverDefault }, { rsvpEnabled: layout.sections.some((s) => s.id === 'rsvp' && s.enabled) }, photos),
+    [layout, artworkPreview, photos, coverKinds, coverDefault],
   );
 
   const design = meta.designs.find((d) => d.id === layout.theme.motif) ?? meta.designs.find((d) => d.id === layout.theme.preset);
-  // Ganti desain: warna, font, motif, dan usulan palet ikut berganti.
-  function applyDesign(id: string) {
-    const d = meta.designs.find((x) => x.id === id);
-    if (!d) return;
-    // Gerbang bawaan desain hanya dipasang untuk paket Premium.
-    setForm((f) => ({ ...f, category: d.group, layout: { ...f.layout, theme: themeOf(d, f.layout.theme.fx, f.tier === 'PREMIUM' ? d.gate : 'none'), palettes: d.palettes } }));
-  }
-
+  const seasonalGateLabel = form.tier === 'PREMIUM' && design?.group === 'musim' ? SEASONAL_PREMIUM_GATE_LABEL[design.id] : undefined;
+  const gateValue = seasonalGateLabel && design
+    ? (layout.theme.gate ?? 'none') === 'none' ? 'none' : design.gate
+    : layout.theme.gate ?? 'none';
   // Pindah ke Premium: pasang gerbang bawaan desain bila belum ada gerbang.
   function changeTier(tier: TemplateForm['tier']) {
     setForm((f) => {
@@ -154,8 +173,23 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
 
   const setPalette = (i: number, patch: Partial<Palette>) => setLayout({ palettes: layout.palettes.map((p, j) => (j === i ? { ...p, ...patch } : p)) });
 
-  async function uploadAsset(file: File, kind: 'image' | 'audio') {
-    const target = await api<{ uploadUrl: string; method: string; headers: Record<string, string>; publicUrl: string }>('admin/assets/presign', { body: { kind, contentType: file.type, sizeBytes: file.size } });
+  async function uploadAsset(
+    file: File,
+    kind: 'image' | 'audio',
+    purpose: 'template-thumbnail' | 'template-sample' | 'template-audio',
+    context: { slot?: string } = {},
+  ) {
+    const target = await api<{ uploadUrl: string; method: string; headers: Record<string, string>; publicUrl: string }>('admin/assets/presign', {
+      body: {
+        kind,
+        purpose,
+        contentType: file.type,
+        sizeBytes: file.size,
+        templateId: form.id || undefined,
+        designId: layout.theme.motif || layout.theme.preset,
+        slot: context.slot,
+      },
+    });
     await uploadWithProgress(target, file, () => undefined);
     return target.publicUrl;
   }
@@ -165,7 +199,7 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
     setUploading('thumb');
     setError('');
     try {
-      const url = await uploadAsset(file, 'image');
+      const url = await uploadAsset(file, 'image', 'template-thumbnail');
       setForm((f) => ({ ...f, thumbnailUrl: url }));
     } catch (e) {
       setError(errorMessage(e));
@@ -179,13 +213,33 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
     setUploading('song');
     setError('');
     try {
-      const url = await uploadAsset(file, 'audio');
+      const url = await uploadAsset(file, 'audio', 'template-audio');
       setLayout({ musik: { ...layout.musik, presets: [...layout.musik.presets, { name: file.name.replace(/\.[^.]+$/, '').slice(0, 80), url }] } });
     } catch (e) {
       setError(errorMessage(e));
     } finally {
       setUploading('');
     }
+  }
+
+  async function onSamplePhoto(slot: SamplePhotoSlot, file?: File) {
+    if (!file) return;
+    setUploading(`sample:${slot}`);
+    setError('');
+    try {
+      const url = await uploadAsset(file, 'image', 'template-sample', { slot });
+      setLayout({ samplePhotos: { ...layout.samplePhotos, [slot]: url } });
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setUploading('');
+    }
+  }
+
+  function clearSamplePhoto(slot: SamplePhotoSlot) {
+    const next = { ...layout.samplePhotos };
+    delete next[slot];
+    setLayout({ samplePhotos: Object.values(next).some(Boolean) ? next : undefined });
   }
 
   async function save(status?: TemplateForm['status']) {
@@ -199,6 +253,8 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
       price: Number(form.price),
       includedWeeks: Number(form.includedWeeks),
       status: status ?? form.status,
+      showOnHome: form.showOnHome ?? false,
+      homeOrder: Number(form.homeOrder ?? 0),
       thumbnailUrl: form.thumbnailUrl || null,
       layoutSchema: {
         theme: layout.theme,
@@ -206,7 +262,9 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
         galeri: { maxPhotos: Number(layout.galeri.maxPhotos), maxVideos: Number(layout.galeri.maxVideos) },
         musik: layout.musik,
         palettes: layout.palettes,
+        artwork: layout.artwork,
         coverDefault,
+        samplePhotos: layout.samplePhotos,
       },
     };
     try {
@@ -257,19 +315,27 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
 
       <div className="mt-6 grid gap-8 xl:grid-cols-[minmax(0,1fr)_330px]">
         <div className="space-y-5">
+          {form.id && siblings.length > 0 && (
+            <TierPanel rows={siblings} currentId={form.id} current={{ price: form.price, status: form.status }} onCurrentSaved={(price, status) => setForm((f) => ({ ...f, price, status }))} />
+          )}
           <Card className="p-5">
             <h2 className="font-semibold text-ink">Informasi dasar</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <Field label="Nama template" required><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={80} /></Field>
-              <Field label="Kelompok tema" hint="Dipakai untuk filter katalog. Otomatis mengikuti desain yang dipilih.">
+              <Field label="Kelompok tema" hint="Dipakai untuk filter katalog.">
                 <Select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
                   {[...new Set([...meta.groups.map((g) => g.id as string), form.category])].map((c) => <option key={c} value={c}>{meta.groups.find((g) => g.id === c)?.label ?? c}</option>)}
                 </Select>
               </Field>
-              <Field label="Paket (tier)"><Select value={form.tier} onChange={(e) => changeTier(e.target.value as TemplateForm['tier'])}><option value="BASIC">Basic</option><option value="STANDARD">Standard</option><option value="PREMIUM">Premium</option></Select></Field>
-              <Field label="Harga (Rp)"><Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} /></Field>
+              {!form.id && <Field label="Paket (tier)"><Select value={form.tier} onChange={(e) => changeTier(e.target.value as TemplateForm['tier'])}><option value="BASIC">Basic</option><option value="STANDARD">Standard</option><option value="PREMIUM">Premium</option></Select></Field>}
+              {!form.id && <Field label="Harga (Rp)" hint="Setelah dibuat, harga & ketersediaan diatur di panel Paket & ketersediaan."><Input type="number" min={0} value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} /></Field>}
               <Field label="Masa aktif termasuk (minggu)" hint="Lama tayang yang sudah termasuk di harga template."><Input type="number" min={1} max={52} value={form.includedWeeks} onChange={(e) => setForm({ ...form, includedWeeks: Number(e.target.value) })} /></Field>
-              <Field label="Status"><Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TemplateForm['status'] })}><option value="DRAFT">Draf (tidak tampil)</option><option value="PUBLISHED">Dipublikasikan</option><option value="ARCHIVED">Diarsipkan</option></Select></Field>
+              <div className="space-y-3 rounded-xl border border-line p-4">
+                <Toggle checked={form.showOnHome ?? false} onChange={(showOnHome) => setForm({ ...form, showOnHome })} label="Tampilkan di Home" />
+                <p className="text-xs text-ink-soft">Tema tampil jika paket ini dipublikasikan. Cukup aktifkan pada satu paket per tema; katalog lengkap tidak terpengaruh.</p>
+                <Field label="Urutan di Home" hint="Angka lebih kecil tampil lebih dulu. Jika beberapa paket dipilih, urutan terkecil digunakan."><Input type="number" min={0} max={9999} step={1} disabled={!form.showOnHome} value={form.homeOrder ?? 0} onChange={(e) => setForm({ ...form, homeOrder: Number(e.target.value) })} /></Field>
+              </div>
+              {!form.id && <Field label="Status"><Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TemplateForm['status'] })}><option value="DRAFT">Draf (tidak tampil)</option><option value="PUBLISHED">Dipublikasikan</option><option value="ARCHIVED">Diarsipkan</option></Select></Field>}
               <Field label="Gambar thumbnail (opsional)" className="sm:col-span-2" hint="Kosongkan untuk memakai miniatur otomatis dari tema.">
                 <div className="flex gap-2">
                   <Input value={form.thumbnailUrl ?? ''} onChange={(e) => setForm({ ...form, thumbnailUrl: e.target.value })} placeholder="https://…" />
@@ -281,25 +347,78 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
           </Card>
 
           <Card className="p-5">
+            <h2 className="font-semibold text-ink">Ilustrasi pasangan untuk demo</h2>
+            <p className="mt-1 text-sm text-ink-soft">Khusus untuk template ini di katalog dan pratinjau. Jika belum diunggah, template tetap memakai foto demo global. Foto pembeli pada undangan asli tidak terpengaruh.</p>
+            <input
+              ref={sampleInput}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              aria-label="Unggah ilustrasi pasangan"
+              onChange={(e) => {
+                void onSamplePhoto(sampleTarget.current, e.target.files?.[0]);
+                e.target.value = '';
+              }}
+            />
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              {(['groom', 'bride'] as const).map((slot) => {
+                const custom = layout.samplePhotos?.[slot];
+                const preview = custom ?? photos[slot];
+                return (
+                  <div key={slot} className="overflow-hidden rounded-xl border border-line bg-ivory">
+                    <div className="aspect-[4/5] bg-ivory">
+                      {preview ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={preview} alt={SAMPLE_PHOTO_LABEL[slot]} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full items-center justify-center p-5 text-center text-xs text-ink-soft">Belum ada foto demo global maupun khusus template.</div>
+                      )}
+                    </div>
+                    <div className="p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-medium text-ink">{SAMPLE_PHOTO_LABEL[slot]}</p>
+                        <Badge tone={custom ? 'sage' : 'neutral'}>{custom ? 'Khusus' : 'Global'}</Badge>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          loading={uploading === `sample:${slot}`}
+                          disabled={!!uploading && uploading !== `sample:${slot}`}
+                          onClick={() => {
+                            sampleTarget.current = slot;
+                            sampleInput.current?.click();
+                          }}
+                        >
+                          {custom ? 'Ganti' : 'Unggah khusus'}
+                        </Button>
+                        {custom && <Button type="button" variant="ghost" size="sm" disabled={!!uploading} onClick={() => clearSamplePhoto(slot)}>Pakai global</Button>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          <Card className="p-5">
             <h2 className="font-semibold text-ink">Tema tampilan</h2>
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <Field label="Desain" hint={design?.blurb ?? 'Desain kustom: motif mengikuti desain terdekat.'}>
-                <Select value={design?.id ?? ''} onChange={(e) => applyDesign(e.target.value)}>
-                  {!design && <option value="">(kustom)</option>}
-                  {meta.groups.map((g) => (
-                    <optgroup key={g.id} label={g.label}>
-                      {meta.designs.filter((d) => d.group === g.id).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </optgroup>
-                  ))}
-                </Select>
-              </Field>
               <Field label="Level animasi" hint="Tanpa = tampilan statis (Basic). Standar = animasi masuk & partikel di sampul. Penuh = partikel di seluruh halaman, kilau, dan gerak tambahan.">
                 <Select value={layout.theme.fx} onChange={(e) => setTheme({ fx: e.target.value as FxLevel })}>{FX_ORDER.map((v) => <option key={v} value={v}>{FX_LABEL[v]}</option>)}</Select>
               </Field>
-              <Field label="Gerbang pembuka" hint="Halaman pertama undangan: adegan animasi yang harus diketuk sebelum sampul terlihat. Dirancang untuk Premium. Di pratinjau kanan, gunakan tombol Putar ulang gerbang.">
-                <Select value={layout.theme.gate ?? 'none'} onChange={(e) => setTheme({ gate: e.target.value as GateSetting })}>
+              <Field
+                label="Gerbang pembuka"
+                hint={seasonalGateLabel
+                  ? `${seasonalGateLabel} adalah gerbang khusus desain Seasonal Premium ini. Di pratinjau kanan, gunakan tombol Putar ulang gerbang.`
+                  : 'Halaman pertama undangan: adegan animasi yang harus diketuk sebelum sampul terlihat. Dirancang untuk Premium. Di pratinjau kanan, gunakan tombol Putar ulang gerbang.'}
+              >
+                <Select value={gateValue} onChange={(e) => setTheme({ gate: e.target.value as GateSetting })}>
                   <option value="none">Tanpa gerbang</option>
-                  {meta.gates.map((g) => <option key={g.id} value={g.id}>{g.label}{design?.gate === g.id ? ' (bawaan desain)' : ''}</option>)}
+                  {seasonalGateLabel && design
+                    ? <option value={design.gate}>{seasonalGateLabel} (bawaan Seasonal Premium)</option>
+                    : meta.gates.map((g) => <option key={g.id} value={g.id}>{g.label}{design?.gate === g.id ? ' (bawaan desain)' : ''}</option>)}
                 </Select>
               </Field>
               <Field
@@ -402,6 +521,15 @@ export function TemplateBuilder({ meta, initial, photos = {} }: { meta: BuilderM
               <Field label="Video gratis (≤ 20 MB)" hint="Video di atas kuota dihitung sewa ukuran × minggu."><Input type="number" min={0} max={10} value={layout.galeri.maxVideos} onChange={(e) => setLayout({ galeri: { ...layout.galeri, maxVideos: Number(e.target.value) } })} /></Field>
             </div>
           </Card>
+
+          {form.id && (
+            <ArtworkManager
+              templateId={form.id}
+              current={layout.artwork}
+              onPreview={setArtworkPreview}
+              onPublished={(artwork) => setLayout({ artwork })}
+            />
+          )}
 
           <Card className="p-5">
             <div className="flex items-center justify-between gap-4">

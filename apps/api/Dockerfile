@@ -11,9 +11,14 @@ COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 RUN npm ci --workspace apps/api --no-audit --no-fund
 COPY apps/api apps/api
+COPY artwork-handoff artwork-handoff
 WORKDIR /repo/apps/api
 # Client Prisma digenerate ke src/generated (di-ignore git & .dockerignore), lalu dikompilasi ke dist/.
 RUN npm run prisma:generate && npm run build
+# Runtime membutuhkan Prisma CLI untuk migrate deploy dan tsx untuk seed, tetapi keduanya sudah
+# menjadi dependencies eksplisit. Buang compiler, test runner, linter, dan CLI dev lain dari image.
+WORKDIR /repo
+RUN npm prune --omit=dev --workspace apps/api --no-audit --no-fund
 
 FROM node:24-slim
 ENV NODE_ENV=production

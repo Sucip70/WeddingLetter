@@ -1,0 +1,101 @@
+{
+  "designId": "jawa-sekar-keraton",
+  "visualRevision": "pendopo-emas-approved",
+  "databaseArtworkVersion": null,
+  "layout": "foto-berbingkai-names-below",
+  "assets": {
+    "background": {
+      "png": "cover-paper-background.png",
+      "webp": "cover-paper-background.webp",
+      "dimensions": [1024, 1536],
+      "transparent": false
+    },
+    "topCanopy": {
+      "png": "cover-golden-canopy.png",
+      "webp": "cover-golden-canopy.webp",
+      "dimensions": [1600, 500],
+      "transparent": true
+    },
+    "photoFrame": {
+      "png": "photo-frame-gold.png",
+      "webp": "photo-frame-gold.webp",
+      "dimensions": [1200, 1600],
+      "transparent": true
+    },
+    "divider": {
+      "png": "divider-kawung-gold.png",
+      "webp": "divider-kawung-gold.webp",
+      "dimensions": [800, 160],
+      "transparent": true
+    },
+    "bottomFooter": {
+      "png": "cover-golden-footer.png",
+      "webp": "cover-golden-footer.webp",
+      "dimensions": [1600, 360],
+      "transparent": true
+    },
+    "approvedPreview": {
+      "file": "approved-preview.png",
+      "dimensions": [390, 844],
+      "containsPreviewTextAndPhoto": true
+    }
+  },
+  "mobilePlacement": {
+    "background": {
+      "fit": "cover",
+      "position": "center"
+    },
+    "topCanopy": {
+      "anchor": "top-center",
+      "width": "100%",
+      "maxVisibleHeight": "13vh",
+      "zIndex": 1
+    },
+    "photoFrame": {
+      "anchor": "top-center",
+      "displayWidth": "61-64vw",
+      "recommendedTop": "11-13vh",
+      "zIndex": 3
+    },
+    "divider": {
+      "anchor": "center",
+      "displayWidth": "28-34vw",
+      "zIndex": 3
+    },
+    "bottomFooter": {
+      "anchor": "bottom-center",
+      "width": "100%",
+      "maxVisibleHeight": "8vh",
+      "zIndex": 2
+    }
+  },
+  "contentOrder": [
+    "topCanopy",
+    "photo",
+    "kicker",
+    "coupleNames",
+    "date",
+    "divider",
+    "guestName",
+    "cta",
+    "bottomFooter"
+  ],
+  "layeringRules": {
+    "allowedTogether": [
+      "background + topCanopy + photoFrame + divider + bottomFooter"
+    ],
+    "neverStackWith": [
+      "photo-crown",
+      "cover-top-corners",
+      "mini-kayon",
+      "gate-background",
+      "other full-page borders"
+    ],
+    "notes": [
+      "Keep all production typography live in the application.",
+      "Place the user photo below photo-frame-gold, never bake it into the frame.",
+      "Reserve clear space above the footer for the CTA.",
+      "Do not repeat the divider more than once on the cover."
+    ]
+  }
+}

@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "designs": {
+  "lavender": {
+    "stationeryBackground": {
+      "url": "/themes/lavender/stationery-01/lavender-cover.webp",
+      "storageKey": "templates/catalog-local/v1/b314d186b5d39e428cef56bc63327a293fb0704e02b91520fc7f05460a98a300.webp",
+      "contentType": "image/webp",
+      "width": 851,
+      "height": 1849,
+      "sizeBytes": 238150
+    },
+    "gateDoors": {
+      "url": "/themes/lavender/stationery-01/lavender-gate.webp",
+      "storageKey": "templates/catalog-local/v1/4d251ac7f31462abcac363dcd10d89e3ed0ff10b8462a67fcbd50081acd935a5.webp",
+      "contentType": "image/webp",
+      "width": 850,
+      "height": 1850,
+      "sizeBytes": 396668
+    }
+  },
+  "hortensia": {
+    "stationeryBackground": {
+      "url": "/themes/hortensia/stationery-01/hortensia-cover.webp",
+      "storageKey": "templates/catalog-local/v1/4e315815aaea7d61828c1d146cd4011e415f4085d134e8892a4e4916a2975c13.webp",
+      "contentType": "image/webp",
+      "width": 880,
+      "height": 1912,
+      "sizeBytes": 200346
+    },
+    "gateDoors": {
+      "url": "/themes/hortensia/stationery-01/hortensia-gate.webp",
+      "storageKey": "templates/catalog-local/v1/e0c897df09a68f53ac8832cb69593b320ff7b0ac5ac0938d814cef95b61396a8.webp",
+      "contentType": "image/webp",
+      "width": 880,
+      "height": 1912,
+      "sizeBytes": 295514
+    }
+  },
+  "marigold": {
+    "stationeryBackground": {
+      "url": "/themes/marigold/stationery-01/marigold-cover.webp",
+      "storageKey": "templates/catalog-local/v1/210045a2c84276bed4a3e888eb80cfb530aeac7d35c6fd31ca2cba4fa1deda82.webp",
+      "contentType": "image/webp",
+      "width": 851,
+      "height": 1849,
+      "sizeBytes": 224064
+    },
+    "gateDoors": {
+      "url": "/themes/marigold/stationery-01/marigold-gate.webp",
+      "storageKey": "templates/catalog-local/v1/2579da432f4c4edc458581832aae8aa95942913cfddb151edea36b4934096281.webp",
+      "contentType": "image/webp",
+      "width": 851,
+      "height": 1849,
+      "sizeBytes": 310282
+    }
+  },
+  "wisteria": {
+    "stationeryBackground": {
+      "url": "/themes/wisteria/stationery-01/wisteria-cover.webp",
+      "storageKey": "templates/catalog-local/v1/5141bdd03e6efbdc04eed02c2d6e57d8702af19ea07013b3617771c898203c7b.webp",
+      "contentType": "image/webp",
+      "width": 850,
+      "height": 1850,
+      "sizeBytes": 265512
+    },
+    "gateDoors": {
+      "url": "/themes/wisteria/stationery-01/wisteria-gate.webp",
+      "storageKey": "templates/catalog-local/v1/7a98ee999299e32f83a9e33c5e97a880ed20aa1ae1999b9ee7af61d4255a8175.webp",
+      "contentType": "image/webp",
+      "width": 850,
+      "height": 1850,
+      "sizeBytes": 272220
+    }
+  },
+  "garden": {
+    "stationeryBackground": {
+      "url": "/themes/garden/stationery-01/garden-cover.webp",
+      "storageKey": "templates/catalog-local/v1/c64c801d06be87f24478acbc3c8bba384b01e61fa5698be2a7ab6394133931fa.webp",
+      "contentType": "image/webp",
+      "width": 1000,
+      "height": 2176,
+      "sizeBytes": 336832
+    },
+    "gateDoors": {
+      "url": "/themes/garden/stationery-01/garden-gate.webp",
+      "storageKey": "templates/catalog-local/v1/f7cf5ed4ecf7eb79de4e38bdb7d149cb689e7aae2dcc8524de700f5687104cae.webp",
+      "contentType": "image/webp",
+      "width": 1000,
+      "height": 2176,
+      "sizeBytes": 335556
+    }
+  },
+    "jawa-sekar-keraton": {
+      "stationeryBackground": {
+        "url": "/themes/sekar-keraton/stationery-01/sekar-cover-paper.webp",
+        "storageKey": "templates/catalog-local/v1/0473b70ab433f5a9376733ec52418f40141c1239d73310dc7e692c6e322a2107.webp",
+        "contentType": "image/webp",
+        "width": 850,
+        "height": 1850,
+        "sizeBytes": 386364
+      },
+      "stationeryDivider": {
+        "url": "/themes/sekar-keraton/stationery-01/sekar-cover-divider.webp",
+        "storageKey": "templates/catalog-local/v1/fc80ce55c9c4a76656631691ff92d319094aa7f0e2c6cb4379383793ada71b15.webp",
+        "contentType": "image/webp",
+        "width": 700,
+        "height": 92,
+        "sizeBytes": 8040
+      }
+    },
+    "pusako-minang": {
+      "stationeryBackground": {
+        "url": "/themes/pusako-minang/stationery-01/pusako-cover-paper.webp",
+        "storageKey": "templates/catalog-local/v1/8c1bb8869c591a2a3802f3f8c30b19f13c9e9762ca97c3dab29ccafb06d962de.webp",
+        "contentType": "image/webp",
+        "width": 918,
+        "height": 1714,
+        "sizeBytes": 484330
+      },
+      "stationeryDivider": {
+        "url": "/themes/pusako-minang/stationery-01/pusako-cover-divider.webp",
+        "storageKey": "templates/catalog-local/v1/53b7763ef10ad49e5fd4b89d0d88ea524e8f3d322bc45736bb57d8e74471331c.webp",
+        "contentType": "image/webp",
+        "width": 1996,
+        "height": 274,
+        "sizeBytes": 83716
+      }
+    },
+    "hong-xi": {
+      "gateCta": {
+        "url": "/themes/hong-xi/stationery-01/hong-xi-cloud.webp",
+        "storageKey": "templates/catalog-local/v1/c72931e8f42e6cce6b00fb9831de6267d62ffc3bad3502c173cab78e6fce80ea.webp",
+        "contentType": "image/webp",
+        "width": 1962,
+        "height": 259,
+        "sizeBytes": 187508
+      }
+    },
+    "noor-e-nikah": {
+      "stationeryBackground": {
+        "url": "/themes/noor-e-nikah/stationery-01/noor-cover-paper.webp",
+        "storageKey": "templates/catalog-local/v1/6866ca580b2eeec329a59c169d8fef11542dac085ebfd026a68f7278b9ca56c9.webp",
+        "contentType": "image/webp",
+        "width": 851,
+        "height": 1848,
+        "sizeBytes": 326186
+      },
+      "gateCloth": {
+        "url": "/themes/noor-e-nikah/stationery-01/noor-gate-cloth.webp",
+        "storageKey": "templates/catalog-local/v1/8a6d2fc686e9d4b49b8e51c7cb79cb04ae76a1e121f0b5917b656b3838a5e2a1.webp",
+        "contentType": "image/webp",
+        "width": 100,
+        "height": 280,
+        "sizeBytes": 8970
+      },
+      "gateLattice": {
+        "url": "/themes/noor-e-nikah/stationery-01/noor-gate-jali.webp",
+        "storageKey": "templates/catalog-local/v1/04a4eeeb76b869ca4f2d93b4ca2eff1f6f43d6670baeb1ef9d51326621526b98.webp",
+        "contentType": "image/webp",
+        "width": 140,
+        "height": 1470,
+        "sizeBytes": 80456
+      }
+    },
+    "vivaha-rani": {
+      "stationeryBackground": {
+        "url": "/themes/vivaha-rani/stationery-01/vivaha-cover-paper.webp",
+        "storageKey": "templates/catalog-local/v1/50aea79b15f28745434fcbd0dd37e88a720aec15b80a32d3c60f745e65986f5f.webp",
+        "contentType": "image/webp",
+        "width": 851,
+        "height": 1849,
+        "sizeBytes": 427962
+      },
+      "gateDoors": {
+        "url": "/themes/vivaha-rani/stationery-01/vivaha-gate-doors.webp",
+        "storageKey": "templates/catalog-local/v1/68bc6b40fcc3c1a28ea45618526dbb8817640614465a379d04d112f781387a55.webp",
+        "contentType": "image/webp",
+        "width": 851,
+        "height": 1847,
+        "sizeBytes": 591152
+      }
+    }
+  }
+}

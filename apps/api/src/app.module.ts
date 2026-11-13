@@ -12,6 +12,7 @@ import { OrdersModule } from './orders/orders.module.js';
 import { PaymentsModule } from './payments/payments.module.js';
 import { PricingModule } from './pricing/pricing.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { SettingsModule } from './settings/settings.module.js';
 import { StorageModule } from './storage/storage.module.js';
 import { TemplatesModule } from './templates/templates.module.js';
 
@@ -28,6 +29,7 @@ import { TemplatesModule } from './templates/templates.module.js';
     PaymentsModule,
     MediaModule,
     DemoPhotosModule,
+    SettingsModule,
     MusicModule,
     AdminModule,
   ],

@@ -9,7 +9,7 @@ on:
 
 # Satu deploy staging berjalan pada satu waktu; deploy berikutnya menunggu (tidak membatalkan yang sedang jalan).
 concurrency:
-  group: staging
+  group: weddingletter-vps
   cancel-in-progress: false
 
 permissions:
@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Validasi konfigurasi deployment
+        run: node --test deploy/config.test.cjs && bash deploy/check-config.sh
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -108,15 +110,32 @@ jobs:
         run: |
           ssh "$SSH_TARGET" "mkdir -p $REMOTE_DIR/nginx"
           scp deploy/staging/docker-compose.yml "$SSH_TARGET:$REMOTE_DIR/docker-compose.yml"
+          scp deploy/staging/docker-compose.shared.yml "$SSH_TARGET:$REMOTE_DIR/docker-compose.shared.yml"
+          scp deploy/staging/deploy.sh "$SSH_TARGET:$REMOTE_DIR/deploy.sh"
+          scp deploy/staging/reset-database.sh "$SSH_TARGET:$REMOTE_DIR/reset-database.sh"
           scp -r deploy/staging/nginx/templates deploy/staging/nginx/cloudflare-realip.conf "$SSH_TARGET:$REMOTE_DIR/nginx/"
       - name: Tarik image & jalankan
         run: |
-          ssh "$SSH_TARGET" "cd $REMOTE_DIR && export TAG=staging-${{ github.sha }} \
-            && docker compose pull api web \
-            && docker compose up -d --remove-orphans \
-            && docker image prune -f"
+          ssh "$SSH_TARGET" "cd $REMOTE_DIR && bash deploy.sh staging-${{ github.sha }}"
       - name: Cek kesehatan
         run: |
           ssh "$SSH_TARGET" "cd $REMOTE_DIR && for i in \$(seq 1 30); do \
             [ \"\$(docker inspect -f '{{.State.Health.Status}}' \$(docker compose ps -q api))\" = healthy ] && exit 0; sleep 5; done; \
             docker compose logs --tail=80 api; exit 1"
+      - name: Cek batas akses staging
+        env:
+          STAGING_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
+        run: |
+          base="${STAGING_URL%/}"
+          for attempt in $(seq 1 20); do
+            manifest_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$base/manifest.webmanifest")"
+            root_status="$(curl --silent --output /dev/null --write-out '%{http_code}' "$base/")"
+            if [ "$manifest_status" = 200 ] && [ "$root_status" = 401 ]; then
+              echo "Batas akses staging benar: manifest=200, root=401"
+              exit 0
+            fi
+            echo "Percobaan $attempt/20: manifest=$manifest_status, root=$root_status; menunggu Nginx/Cloudflare..."
+            sleep 3
+          done
+          echo "Batas akses staging salah setelah 20 percobaan: manifest=$manifest_status, root=$root_status"
+          exit 1

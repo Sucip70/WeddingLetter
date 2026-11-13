@@ -30,7 +30,7 @@ const trackBase = z.object({
 
 // `key` = hasil POST /admin/assets/presign (kind "audio") setelah file selesai diunggah.
 export const trackCreateSchema = trackBase.extend({
-  key: z.string().regex(/^assets\/[A-Za-z0-9_-]+\.(mp3|m4a|aac|ogg)$/, 'Kunci file tidak valid'),
+  key: z.string().regex(/^(?:assets\/[A-Za-z0-9_-]+|music\/library\/[A-Za-z0-9_-]+)\.(mp3|m4a|aac|ogg)$/, 'Kunci file tidak valid'),
 });
 export const trackUpdateSchema = trackBase.partial().extend({ status: z.enum(['ACTIVE', 'ARCHIVED']).optional() });
 

@@ -1,5 +1,7 @@
 // Bentuk data dari API (lihat apps/api). Hanya field yang dipakai UI.
 
+import type { TemplateSamplePhotos } from './template-sample-photos';
+
 export type FieldType = 'text' | 'textarea' | 'datetime' | 'url' | 'image' | 'gallery' | 'videos' | 'song' | 'coverlayout';
 
 export interface FieldDef {
@@ -20,32 +22,26 @@ export interface SectionDef {
 export type FxLevel = 'none' | 'standard' | 'premium';
 // Gerbang pembuka undangan Premium (apps/web/.../gates.tsx). Sama dengan GATE_LABEL di API.
 export const GATE_LABEL = {
-  door: 'Pintu',
-  glass: 'Jendela kaca patri',
-  curtain: 'Tirai',
-  cloth: 'Kain ditarik',
-  envelope: 'Amplop',
   portal: 'Portal sihir',
-  ring: 'Cincin',
-  bloom: 'Bunga bermekaran',
+  ring: 'Kotak cincin',
   leaves: 'Surat daun gugur',
-  balloons: 'Balon',
-  waves: 'Ombak',
-  gift: 'Kado',
-  lantern: 'Lentera',
-  fireworks: 'Kembang api',
+  taman: 'Surat daun hijau',
   frost: 'Surat kristal es',
-  book: 'Buku dongeng',
-  pressstart: 'Press Start',
-  loading: 'Loading',
-  neon: 'Papan neon',
   sakura: 'Surat kelopak sakura',
-  kayon: 'Kayon wayang',
+  twine: 'Surat bertali goni',
+  bouquet: 'Lempar buket',
+  kayon: 'Kayon Sekar Keraton',
+  gonjong: 'Gonjong Pusako Minang',
+  ulos: 'Simpul ulos Horas Nauli',
+  paras: 'Kembar Bentar Pawiwahan Agung',
+  lentera: 'Lentera Hong Xi',
+  jali: 'Jali Noor-e-Nikah',
+  toran: 'Toran Vivaha Rani',
 } as const;
 export type GateKind = keyof typeof GATE_LABEL;
 export type GateSetting = GateKind | 'none';
-export type HeadingFont = 'script' | 'serif' | 'sans' | 'display' | 'cinzel' | 'pixel' | 'round';
-export type BodyFont = 'serif' | 'sans' | 'round';
+export type HeadingFont = 'script' | 'serif' | 'sans' | 'display' | 'cinzel' | 'pixel' | 'round' | 'playfair' | 'libre';
+export type BodyFont = 'serif' | 'sans' | 'round' | 'montserrat' | 'source';
 
 export interface Theme {
   preset: string;
@@ -71,7 +67,30 @@ export interface Palette {
   text: string;
 }
 
-export type ThemeGroup = 'klasik' | 'suku' | 'agama' | 'perayaan' | 'kartun' | 'game' | 'film' | 'musim';
+export type ArtworkSlot = 'coverBackground' | 'coverForeground' | 'pageBackground' | 'sectionBackground' | 'topDecoration' | 'bottomDecoration' | 'cornerTopLeft' | 'cornerTopRight' | 'cornerBottomLeft' | 'cornerBottomRight' | 'divider' | 'photoFrame' | 'texture' | 'thumbnail' | 'gateBackground' | 'gateForeground' | 'gateTransition' | 'gateInteractive' | 'cardFrame' | 'coverPaper' | 'coverCanopy' | 'coverFooter' | 'coverFrame' | 'coverDivider' | 'stationeryBackground' | 'stationeryDivider' | 'gateCloth' | 'gateLattice' | 'gateDoors' | 'gateCta';
+export interface ArtworkSource { url: string; storageKey?: string; contentType: 'image/webp' | 'image/png' | 'image/avif'; width: number; height: number; sizeBytes: number }
+export interface ArtworkLayer { default?: ArtworkSource; mobile?: ArtworkSource; desktop?: ArtworkSource }
+export interface ArtworkManifest {
+  schemaVersion: 1;
+  designId: string;
+  artworkVersion: number;
+  assets: Partial<Record<ArtworkSlot, ArtworkLayer>>;
+  presentation: {
+    backgroundFit: 'cover' | 'contain' | 'fill';
+    backgroundPosition: 'center' | 'center-top' | 'center-bottom' | 'left-top' | 'right-top' | 'left-bottom' | 'right-bottom';
+    foregroundPosition: 'top-center' | 'bottom-center' | 'center' | 'left-center' | 'right-center';
+    foregroundMotion: 'none' | 'breathe' | 'float';
+    opacity: number; scale: number; backgroundLayer: number; decorationLayer: number; foregroundLayer: number;
+    showOnOrnamentCover: boolean; showOnPhotoCover: boolean;
+  };
+  fallback: {
+    ornament?: 'vine' | 'geo' | 'star8' | 'lotus' | 'sparkle' | 'snow' | 'twig' | 'deco' | 'lily' | 'flora' | 'romantic' | 'botani' | 'keraton' | 'sakura' | 'autumn' | 'winter' | 'lavender' | 'hortensia' | 'marigold';
+    coverEffect?: 'none' | 'aurora' | 'rays' | 'curtain' | 'scanlines' | 'spotlight' | 'clouds' | 'halo' | 'sky' | 'bloom';
+    particle?: 'petal' | 'leaf' | 'maple' | 'snow' | 'heart' | 'star' | 'sparkle' | 'confetti' | 'bubble' | 'firefly' | 'pixel' | 'lantern' | 'bat' | 'coin' | 'dust' | 'feather' | 'blossom' | 'bloomflower';
+  };
+}
+
+export type ThemeGroup = 'klasik' | 'suku' | 'film' | 'musim';
 
 export interface DesignInfo {
   id: string;
@@ -99,11 +118,16 @@ export interface Layout {
   coverLayouts?: string[];
   // Tata letak sampul bawaan pilihan admin (kosong = otomatis: khusus tema / Foto berbingkai).
   coverDefault?: string;
+  artwork?: ArtworkManifest;
+  // Foto contoh khusus template; slot kosong jatuh ke foto demo global.
+  samplePhotos?: TemplateSamplePhotos;
 }
 
 export type Tier = 'BASIC' | 'STANDARD' | 'PREMIUM';
 
 export interface Template {
+  showOnHome?: boolean;
+  homeOrder?: number;
   id: string;
   name: string;
   category: string;
@@ -149,7 +173,7 @@ export interface InvitationViewData {
   slug: string;
   status?: string;
   templateName?: string;
-  layout: { theme: Theme; sections: SectionDef[]; musik: { presets: MusicPreset[] }; coverLayouts?: string[] };
+  layout: { theme: Theme; sections: SectionDef[]; musik: { presets: MusicPreset[] }; coverLayouts?: string[]; artwork?: ArtworkManifest };
   features: InvitationFeatures;
   data: InvitationData;
   media: Record<string, MediaRef>;

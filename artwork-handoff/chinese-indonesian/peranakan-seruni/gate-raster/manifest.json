@@ -1,0 +1,65 @@
+{
+  "designId": "peranakan-seruni",
+  "visualRevision": "concept-gate-01",
+  "cultureScope": "Modern Chinese Indonesian — restrained Peranakan memory, no regional bridal-attire claim",
+  "gateName": "Folio Seruni Ceremony",
+  "formatPolicy": "raster-only-no-svg",
+  "canvas": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": "2:3"
+  },
+  "assets": {
+    "gateBackground": "gate-background.png",
+    "leftPanel": "left-lacquer-panel.png",
+    "rightPanel": "right-lacquer-panel.png",
+    "interactiveObject": "interactive-seruni-seal.png",
+    "closedPreview": "closed-preview.png",
+    "openingPreview": "opening-preview.png",
+    "motionSpec": "motion-spec.md"
+  },
+  "presentation": {
+    "backgroundFit": "cover",
+    "backgroundPosition": "center",
+    "panelMotion": "lacquer-folio-part-outward",
+    "interactiveObjectMotion": "press-lift-fade",
+    "primaryDurationMs": 1520,
+    "reducedMotionDurationMs": 300
+  },
+  "palette": {
+    "porcelainIvory": "#F1E6D3",
+    "deepGarnet": "#7E1F2D",
+    "dustyRose": "#B77A82",
+    "antiqueGold": "#A98546",
+    "jadeGray": "#718177",
+    "inkCharcoal": "#2E2927"
+  },
+  "safeArea": {
+    "normalizedLeft": 0.23,
+    "normalizedRight": 0.77,
+    "normalizedTop": 0.15,
+    "normalizedBottom": 0.69,
+    "notes": "Keep live names, guest text, and CTA inside the calm red corridor. Place CTA clearly above the porcelain seal."
+  },
+  "rules": {
+    "productionTextBakedIn": false,
+    "movableAssetsTransparent": true,
+    "batikUsed": false,
+    "primaryStructure": "modern-stationery-folio",
+    "interactiveMotif": "single-chrysanthemum-porcelain-seal",
+    "neverStackWith": [
+      "batik-pattern",
+      "double-happiness-symbol",
+      "chinese-characters",
+      "dragon-or-phoenix",
+      "lanterns",
+      "coins-or-red-envelopes",
+      "pagoda-or-temple-scenery",
+      "singapore-or-malacca-tile-aesthetic",
+      "large-floral-bouquet",
+      "bright-yellow-gold",
+      "particle-effects",
+      "other-indonesian-regional-ornaments"
+    ]
+  }
+}

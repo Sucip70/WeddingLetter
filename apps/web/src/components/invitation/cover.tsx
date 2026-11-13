@@ -6,7 +6,10 @@
 import { Fragment, useId } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import type { CoverKind } from '@/lib/cover-layouts';
-import { Particles, PatternLayer, PhotoFrame } from './effects';
+import { FloralArch } from './bloom-parts';
+import { GardenFrame } from './garden-parts';
+import { Dove, LilyBloom } from './dove-art';
+import { DecoArch, Particles, PatternLayer, PhotoFrame } from './effects';
 import type { FrameKind } from './motifs';
 import type { OrnamentSet } from './ornaments';
 
@@ -38,6 +41,8 @@ export interface CoverProps {
   buttonRadius: string;
   letterFont: string;
   layerHeight: number | string;
+  // Elegan: nama berlapis emas, kicker & tanggal bergaya Cinzel.
+  gilded?: boolean;
   // Pratinjau statis dalam kartu terbuka (mis. grid katalog di dalam <Link>): tombol "buka" dirender sebagai
   // <span> (bukan <button>) supaya tidak ada kontrol interaktif bersarang, dan tidak menerima klik.
   decorative?: boolean;
@@ -48,8 +53,6 @@ const PIXEL_CLIP = 'polygon(0 6%, 4% 6%, 4% 3%, 8% 3%, 8% 0, 92% 0, 92% 3%, 96% 
 // Bentuk foto berupa path SVG (foto dipotong lewat clipPath, lalu diberi pita warna tema).
 const SHAPES = {
   gapura: { box: [100, 130] as const, path: 'M6 130V62C6 42 28 36 37 23C43 15 47 8 50 0C53 8 57 15 63 23C72 36 94 42 94 62V130Z', inset: 0.9 },
-  hati: { box: [100, 90] as const, path: 'M50 86C8 54-2 22 18 8C34-2 48 8 50 20C52 8 66-2 82 8C102 22 92 54 50 86Z', inset: 0.92 },
-  kristal: { box: [100, 110] as const, path: 'M50 0L80 14L96 40L96 70L80 96L50 110L20 96L4 70L4 40L20 14Z', inset: 0.9 },
 };
 
 function ShapedPhoto({ uid, src, shape, className, extra }: { uid: string; src: string; shape: keyof typeof SHAPES; className?: string; extra?: ReactNode }) {
@@ -76,8 +79,7 @@ function ShapedPhoto({ uid, src, shape, className, extra }: { uid: string; src: 
   );
 }
 
-const sparkle = (cx: number, cy: number, r: number) => `M${cx} ${cy - r}Q${cx} ${cy} ${cx + r} ${cy}Q${cx} ${cy} ${cx} ${cy + r}Q${cx} ${cy} ${cx - r} ${cy}Q${cx} ${cy} ${cx} ${cy - r}Z`;
-const LIGHT_KINDS: Partial<Record<CoverProps['kind'], true>> = { penuh: true, 'penuh-atas': true, 'bingkai-penuh': true, portal: true, karakter: true, poster: true };
+const LIGHT_KINDS: Partial<Record<CoverProps['kind'], true>> = { penuh: true, 'penuh-atas': true, 'bingkai-penuh': true, portal: true, orbit: true, menara: true, karakter: true, poster: true };
 export const isLightCover = (kind: CoverProps['kind']) => !!LIGHT_KINDS[kind];
 
 export function CoverLayout(p: CoverProps) {
@@ -90,13 +92,13 @@ export function CoverLayout(p: CoverProps) {
   const ink = (l: boolean) => (l ? '#fff' : 'var(--tx)');
   const kickerEl = (l = light) => {
     const e = enter(100);
-    return <p className={`text-xs uppercase tracking-[0.35em] opacity-85 ${e.className}`} style={{ ...e.style, color: ink(l) }}>{p.kicker}</p>;
+    return <p className={`text-xs uppercase tracking-[0.35em] opacity-85 ${e.className}`} style={{ ...e.style, color: ink(l), ...(p.gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 11, letterSpacing: '0.44em' } : null) }}>{p.kicker}</p>;
   };
   const namesEl = (scale = 1, l = light) => {
     const e = enter(250);
     return (
       <h1
-        className={`mt-3 ${e.className} ${p.premium && !l ? 'wl-shimmer' : ''}`}
+        className={`wl-name-text mt-3 ${e.className} ${p.premium && !l ? 'wl-shimmer' : p.gilded && !l ? 'wl-foil' : ''}`}
         style={{
           ...e.style,
           fontFamily: p.heading.family,
@@ -104,7 +106,7 @@ export function CoverLayout(p: CoverProps) {
           letterSpacing: p.heading.tracking,
           textTransform: p.heading.upper ? 'uppercase' : undefined,
           fontSize: `calc(${p.heading.size} * ${scale})`,
-          lineHeight: 1.1,
+          lineHeight: 1.3,
           color: l ? '#fff' : 'var(--p)',
           textShadow: l ? '0 2px 16px rgba(0,0,0,.5)' : undefined,
         }}
@@ -115,7 +117,7 @@ export function CoverLayout(p: CoverProps) {
   };
   const dateEl = (l = light) => {
     const e = enter(450);
-    return p.dateText ? <p className={`mt-3 text-sm tracking-[0.3em] ${e.className}`} style={{ ...e.style, color: ink(l) }}>{p.dateText}</p> : null;
+    return p.dateText ? <p className={`mt-3 text-sm tracking-[0.3em] ${e.className}`} style={{ ...e.style, color: ink(l), ...(p.gilded ? { fontFamily: 'var(--font-cinzel), serif', fontSize: 13, letterSpacing: '0.34em' } : null) }}>{p.dateText}</p> : null;
   };
   const guestEl = (l = light) => {
     if (!p.guest) return null;
@@ -133,7 +135,7 @@ export function CoverLayout(p: CoverProps) {
     return (
       <Tag
         {...(p.decorative ? {} : { onClick: p.onOpen })}
-        className={`${cls} px-7 py-3 text-sm font-medium tracking-wide shadow-lg transition-transform hover:scale-[1.03] ${p.premium ? 'wl-pulse' : ''} ${e.className}`}
+        className={`wl-btn ${cls} px-7 py-3 text-sm font-medium tracking-wide shadow-lg transition-transform hover:scale-[1.03] ${p.premium ? 'wl-pulse' : ''} ${e.className}`}
         style={{ ...e.style, borderRadius: p.buttonRadius, background: l ? 'rgba(255,255,255,.92)' : 'var(--p)', color: l ? '#222' : '#fff' }}
       >
         {p.openLabel}
@@ -196,43 +198,22 @@ export function CoverLayout(p: CoverProps) {
             {kickerEl()}
             <div className={`mt-5 ${p.premium ? 'wl-float' : ''}`}>
               <div className={e.className} style={e.style}>
+                {p.frame === 'garden' ? (
+                  <div style={{ width: '15rem' }}>
+                    <GardenFrame><img src={photoOf.cover} alt="" className="aspect-[4/5] w-full object-cover" /></GardenFrame>
+                  </div>
+                ) : (
                 <div className="relative bg-white p-2.5 pb-11 shadow-[0_16px_34px_-12px_rgba(0,0,0,.45)]" style={{ width: '15rem', transform: 'rotate(-2deg)' }}>
                   <img src={photoOf.cover} alt="" className="aspect-[4/5] w-full object-cover" />
                   <p className="absolute inset-x-0 bottom-3 text-center text-[13px] tracking-[0.2em]" style={{ fontFamily: p.heading.family, color: '#4a4038' }}>{p.dateText || p.names}</p>
                   <span className="absolute -top-2.5 left-1/2 h-5 w-14 -translate-x-1/2 -rotate-3" style={{ background: 'color-mix(in srgb, var(--s) 55%, #fff)', opacity: 0.85 }} aria-hidden />
                 </div>
+                )}
               </div>
             </div>
             {namesEl(0.85, false)}
             {guestEl(false)}
             {buttonEl(false)}
-          </div>
-        </>
-      );
-    }
-
-    // ---------- jendela lengkung ----------
-    case 'jendela': {
-      const e = enter(300);
-      return (
-        <>
-          {backdrop}
-          <div className={column}>
-            {kickerEl()}
-            <div className={`relative mt-5 w-[14.5rem] ${e.className}`} style={e.style}>
-              <div className="overflow-hidden rounded-b-md rounded-t-[999px] border-[7px]" style={{ borderColor: 'var(--bg)', outline: '2px solid var(--p)', boxShadow: '0 18px 30px -14px rgba(0,0,0,.4)' }}>
-                <div className="relative aspect-[3/4.1]">
-                  <img src={photoOf.cover} alt="" className="absolute inset-0 h-full w-full object-cover" />
-                  <span className="absolute inset-y-0 left-1/2 w-[3px] -translate-x-1/2" style={{ background: 'var(--bg)', opacity: 0.85 }} aria-hidden />
-                  <span className="absolute inset-x-0 top-[44%] h-[3px]" style={{ background: 'var(--bg)', opacity: 0.85 }} aria-hidden />
-                </div>
-              </div>
-              <div className="-mx-2 mt-1 h-3 rounded-sm" style={{ background: 'var(--p)' }} aria-hidden />
-            </div>
-            {namesEl(0.85, false)}
-            {dateEl(false)}
-            {guestEl(false)}
-            {buttonEl(false, 'mt-5')}
           </div>
         </>
       );
@@ -276,9 +257,16 @@ export function CoverLayout(p: CoverProps) {
             <img src={photoOf.cover} alt="" className="h-full w-full object-cover" style={{ maskImage: mask, WebkitMaskImage: mask }} />
           </div>
           <Fragment key="decor">{p.decor}</Fragment>
+          {/* Set ornamen bergambar besar (mawar): karangan di dua sudut atas, menimpa tepi foto; kartu tulisan (z-[4]) tetap di atasnya. */}
+          {p.orn.cardCorner && (
+            <>
+              <div className="pointer-events-none absolute left-0 top-0 z-[3] w-36" style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className="w-36" rotate={0} /></div>
+              <div className="pointer-events-none absolute right-0 top-0 z-[3] w-36" style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className="w-36" rotate={90} /></div>
+            </>
+          )}
           <div className="absolute inset-x-[7%] bottom-[5%] top-[49%] z-[4] flex flex-col items-center justify-center overflow-hidden border px-6 text-center" style={{ borderColor: 'color-mix(in srgb, var(--s) 75%, transparent)', background: 'color-mix(in srgb, var(--bg) 93%, transparent)', borderRadius: 'var(--r)', color: 'var(--tx)' }}>
-            <div className="pointer-events-none absolute left-0 top-0 w-16" style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className="w-16" rotate={0} /></div>
-            <div className="pointer-events-none absolute bottom-0 right-0 w-16" style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className="w-16" rotate={180} /></div>
+            <div className={`pointer-events-none absolute left-0 top-0 ${p.orn.cardCorner ?? 'w-16'}`} style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className={p.orn.cardCorner ?? 'w-16'} rotate={0} /></div>
+            <div className={`pointer-events-none absolute bottom-0 right-0 ${p.orn.cardCorner ?? 'w-16'}`} style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className={p.orn.cardCorner ?? 'w-16'} rotate={180} /></div>
             {kickerEl(false)}
             {namesEl(0.9, false)}
             {dateEl(false)}
@@ -310,31 +298,17 @@ export function CoverLayout(p: CoverProps) {
       );
     }
 
-    // ---------- khusus tema: gapura / hati / kristal ----------
-    case 'gapura':
-    case 'hati':
-    case 'kristal': {
+    // ---------- khusus tema: gapura ----------
+    case 'gapura': {
       const e = enter(300);
       const shape = p.kind;
-      const width = shape === 'hati' ? 'w-[17rem]' : shape === 'kristal' ? 'w-[14.5rem]' : 'w-[13.5rem]';
-      const extra =
-        shape === 'gapura' ? (
-          <>
-            <path d="M50 -9l4 7-4 7-4-7z" fill="var(--s)" />
-            {[20, 35, 65, 80].map((x, i) => <circle key={i} cx={x} cy={i % 2 ? 44 : 50} r="1.6" fill="var(--s)" opacity=".8" />)}
-          </>
-        ) : shape === 'kristal' ? (
-          <>
-            <path d="M50 8L50 102M14 30L86 80M86 30L14 80" stroke="#fff" strokeWidth=".8" opacity=".45" />
-            <path d={sparkle(84, 16, 6)} fill="#fff" opacity=".9" />
-            <path d={sparkle(14, 96, 4)} fill="#fff" opacity=".8" />
-          </>
-        ) : (
-          <>
-            <path d={sparkle(92, 12, 5)} fill="var(--s)" />
-            <path d={sparkle(8, 70, 4)} fill="var(--s)" opacity=".8" />
-          </>
-        );
+      const width = 'w-[13.5rem]';
+      const extra = (
+        <>
+          <path d="M50 -9l4 7-4 7-4-7z" fill="var(--s)" />
+          {[20, 35, 65, 80].map((x, i) => <circle key={i} cx={x} cy={i % 2 ? 44 : 50} r="1.6" fill="var(--s)" opacity=".8" />)}
+        </>
+      );
       return (
         <>
           {backdrop}
@@ -383,6 +357,116 @@ export function CoverLayout(p: CoverProps) {
       );
     }
 
+    // ---------- planet bercincin (Galaksi Cinta): foto = planet, cincin orbit miring, bulan, nebula & bintang ----------
+    case 'orbit': {
+      const e = enter(300);
+      const spin = p.animated ? 'wl-rays' : '';
+      // Setengah elips atas = di belakang planet, bawah = di depannya (sapuan 1 = lewat atas).
+      const ringBack = 'M-78 0A78 20 0 0 1 78 0';
+      const ring = 'M-78 0A78 20 0 0 0 78 0';
+      return (
+        <>
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 18% 12%, color-mix(in srgb, var(--p) 55%, transparent) 0, transparent 52%), radial-gradient(ellipse at 88% 70%, color-mix(in srgb, var(--s) 38%, transparent) 0, transparent 50%), #060818' }} />
+          <Particles kind="star" count={34} mode="twinkle" height={p.layerHeight} />
+          {/* galaksi spiral samar di sudut bawah */}
+          <svg className={`pointer-events-none absolute -bottom-20 -left-24 w-72 opacity-40 ${spin}`} viewBox="-100 -100 200 200" aria-hidden>
+            {[0, 120, 240].map((r) => <path key={r} d="M0 0C20 -10 50 -8 70 -40C45 -30 25 -28 0 0Z" fill="var(--s)" opacity=".5" transform={`rotate(${r})`} />)}
+            <circle r="9" fill="#fff" opacity=".7" />
+          </svg>
+          <div className={column}>
+            {kickerEl()}
+            <div className={`relative mt-6 h-[15.5rem] w-[15.5rem] ${e.className}`} style={e.style}>
+              <div className={`absolute inset-0 ${p.premium ? 'wl-float' : ''}`}>
+                {/* belahan cincin di belakang planet */}
+                <svg className="absolute -inset-6 overflow-visible" viewBox="-100 -100 200 200" aria-hidden style={{ transform: 'rotate(-16deg)' }}>
+                  <path d={ringBack} transform="scale(1.12)" fill="none" stroke="var(--s)" strokeWidth="2.4" opacity=".55" />
+                </svg>
+                <div className="absolute inset-[1.1rem] overflow-hidden rounded-full" style={{ boxShadow: '0 0 34px 4px color-mix(in srgb, var(--s) 55%, transparent), inset -16px -12px 28px rgba(0,0,40,.55)' }}>
+                  <img src={photoOf.cover} alt="" className="h-full w-full object-cover" />
+                </div>
+                {/* belahan cincin di depan planet + satelit mengorbit */}
+                <svg className="absolute -inset-6 overflow-visible" viewBox="-100 -100 200 200" aria-hidden style={{ transform: 'rotate(-16deg)' }}>
+                  <g transform="scale(1.12)">
+                    <path d={ring} fill="none" stroke="var(--s)" strokeWidth="3" />
+                    <path d={ring} fill="none" stroke="#fff" strokeWidth=".8" opacity=".7" />
+                    <circle cx="-78" cy="0" r="3.2" fill="#fff" />
+                    <circle cx="78" cy="0" r="2.2" fill="var(--p)" />
+                  </g>
+                </svg>
+                <svg className={`absolute -inset-10 overflow-visible ${spin}`} viewBox="-100 -100 200 200" aria-hidden style={{ animationDuration: '22s' }}>
+                  <circle r="94" fill="none" stroke="var(--s)" strokeWidth=".6" strokeDasharray="1 5" opacity=".7" />
+                  <circle cy="-94" r="4.5" fill="#fff" style={{ filter: 'drop-shadow(0 0 5px var(--s))' }} />
+                </svg>
+                {/* hati kecil sebagai bintang cinta */}
+                <svg className="absolute -right-5 top-2 w-7" viewBox="0 0 24 24" aria-hidden style={{ color: 'var(--s)', filter: 'drop-shadow(0 0 6px var(--s))' }}>
+                  <path d="M12 21C5 15.500 2.500 12 2.500 8.500a5 5 0 0 1 9.500-2 5 5 0 0 1 9.500 2C21.500 12 19 15.500 12 21Z" fill="currentColor" />
+                </svg>
+              </div>
+            </div>
+            {namesEl(0.85)}
+            {dateEl()}
+            {guestEl()}
+            {buttonEl(true, 'mt-5')}
+          </div>
+        </>
+      );
+    }
+
+    // ---------- jendela menara (Akademi Sihir): foto di jendela lengkung, bulan sabit, lilin melayang, siluet kastil ----------
+    case 'menara': {
+      const e = enter(300);
+      const candles = [
+        { l: '4%', t: '17%', d: '0s', s: 1 },
+        { l: '86%', t: '23%', d: '-1.3s', s: 0.85 },
+        { l: '9%', t: '50%', d: '-2.1s', s: 0.75 },
+        { l: '84%', t: '56%', d: '-0.7s', s: 1 },
+      ];
+      return (
+        <>
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #120a24 0%, color-mix(in srgb, var(--p) 22%, #1d1238) 62%, #2a1b3f 100%)' }} />
+          <Particles kind="firefly" count={16} mode="drift" height={p.layerHeight} />
+          {/* bulan sabit */}
+          <svg className="pointer-events-none absolute right-[9%] top-[5%] w-12" viewBox="0 0 40 40" aria-hidden style={{ filter: 'drop-shadow(0 0 10px var(--s))' }}>
+            <path d="M26 4a16 16 0 1 0 10 24 13 13 0 0 1-10-24Z" fill="var(--s)" />
+          </svg>
+          {/* siluet kastil di dasar */}
+          <svg className="pointer-events-none absolute inset-x-0 bottom-0 w-full" viewBox="0 0 390 120" preserveAspectRatio="xMidYMax slice" aria-hidden>
+            <path d="M0 120V84h22V62l10-18 10 18v22h20V70h14V52l9-16 9 16v18h14v14h26V92h20V40l11-24 11 24v52h22V76h20V58h12l-0 18h26v-8l10-14 10 14v16h22V60l10-16 10 16v40h20V80h24v40Z" fill="#07030f" opacity=".92" />
+            {[[95, 60], [189, 42], [189, 58], [271, 74], [330, 62]].map(([x, y], i) => <rect key={i} x={x} y={y} width="5" height="8" rx="2.500" fill="var(--s)" opacity=".85" />)}
+          </svg>
+          <div className={column}>
+            {kickerEl()}
+            <div className={`relative mt-7 w-[12.4rem] ${p.premium ? 'wl-float' : ''}`}>
+              <div className={e.className} style={e.style}>
+                <div className="rounded-t-full p-[5px]" style={{ background: 'linear-gradient(180deg, var(--s), color-mix(in srgb, var(--s) 45%, #3a2410))', boxShadow: '0 0 30px 2px color-mix(in srgb, var(--p) 60%, transparent)' }}>
+                  <div className="relative overflow-hidden rounded-t-full" style={{ boxShadow: 'inset 0 0 0 2px #1a0f2e' }}>
+                    <img src={photoOf.cover} alt="" className="aspect-[3/4.2] w-full object-cover" />
+                    {/* kisi jendela */}
+                    <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(90deg, transparent calc(50% - 1px), rgba(26,15,46,.8) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)), linear-gradient(180deg, transparent 62%, rgba(26,15,46,.8) 62% calc(62% + 2px), transparent calc(62% + 2px))' }} aria-hidden />
+                  </div>
+                </div>
+                <div className="absolute -bottom-1 left-1/2 h-2 w-[112%] -translate-x-1/2 rounded-sm" style={{ background: 'linear-gradient(180deg, var(--s), color-mix(in srgb, var(--s) 40%, #3a2410))' }} aria-hidden />
+              </div>
+            </div>
+            {namesEl(0.85)}
+            {dateEl()}
+            {guestEl()}
+            {buttonEl(true, 'mt-5')}
+          </div>
+          {/* lilin melayang (di atas kolom supaya tidak tertutup, tidak menangkap klik) */}
+          {candles.map((c, i) => (
+            <svg key={i} className={`pointer-events-none absolute z-[3] w-5 ${p.animated ? 'wl-float' : ''}`} viewBox="0 0 20 44" aria-hidden style={{ left: c.l, top: c.t, transform: `scale(${c.s})`, animationDelay: c.d }}>
+              <ellipse cx="10" cy="9" rx="7" ry="9" fill="var(--s)" opacity=".3" />
+              <path d="M10 1C14 7 14 11 10 14C6 11 6 7 10 1Z" fill="#ffd978" />
+              <path d="M10 6C12 9 12 11 10 13C8 11 8 9 10 6Z" fill="#fff6d8" />
+              <rect x="6" y="15" width="8" height="26" rx="1.500" fill="#f3e6c4" />
+              <path d="M6 20h8" stroke="#d8c696" strokeWidth="1" />
+            </svg>
+          ))}
+        </>
+      );
+    }
+
     // ---------- pilih karakter (game) ----------
     case 'karakter': {
       const cards = [
@@ -410,10 +494,95 @@ export function CoverLayout(p: CoverProps) {
                 </div>
               ))}
             </div>
-            <h1 className="mt-5 text-lg uppercase leading-snug text-white" style={{ textShadow: '0 0 12px var(--p)' }}>{p.names}</h1>
+            <h1 className="wl-name-text mt-5 text-lg uppercase leading-snug text-white" style={{ textShadow: '0 0 12px var(--p)' }}>{p.names}</h1>
             {p.dateText && <p className="mt-3 text-[10px] tracking-[0.2em] text-white/80">{p.dateText}</p>}
             {guestEl(true)}
             {buttonEl(true, 'mt-5')}
+          </div>
+        </>
+      );
+    }
+
+    // ---------- bingkai emas (Elegan): foto di lengkungan berukir ----------
+    case 'emas': {
+      const e = enter(300);
+      return (
+        <>
+          {backdrop}
+          <div className={column}>
+            {kickerEl(false)}
+            <div className={`relative mt-5 w-[13rem] ${p.premium ? 'wl-float' : ''}`}>
+              <div className={e.className} style={e.style}>
+                <DecoArch>
+                  <div className="aspect-[3/4.1]">
+                    <img src={photoOf.cover} alt="" className="h-full w-full object-cover" />
+                  </div>
+                </DecoArch>
+              </div>
+            </div>
+            {namesEl(0.74, false)}
+            {dateEl(false)}
+            {guestEl(false)}
+            {buttonEl(false, 'mt-5')}
+          </div>
+        </>
+      );
+    }
+
+    // ---------- lengkung bunga (Buket Pengantin): foto di lengkungan putih bermahkota bunga ----------
+    case 'bunga': {
+      const e = enter(300);
+      return (
+        <>
+          {backdrop}
+          <div className={column}>
+            {kickerEl(false)}
+            <div className={`${p.decorative ? 'mt-6' : 'mt-12'} ${p.premium ? 'wl-float' : ''}`}>
+              <div className={e.className} style={e.style}>
+                <FloralArch w={p.decorative ? 148 : 196} h={p.decorative ? 190 : 252}>
+                  <img src={photoOf.cover} alt="" className="h-full w-full object-cover" />
+                </FloralArch>
+              </div>
+            </div>
+            {namesEl(p.decorative ? 0.6 : 0.78, false)}
+            {dateEl(false)}
+            {guestEl(false)}
+            {buttonEl(false, 'mt-5')}
+          </div>
+        </>
+      );
+    }
+
+    // ---------- sepasang merpati: foto oval, dua merpati terbang masuk, lily di kaki ----------
+    case 'merpati': {
+      const e = enter(300);
+      return (
+        <>
+          {backdrop}
+          <div className={column}>
+            {kickerEl(false)}
+            <div className={`relative mt-12 w-[11.6rem] ${p.premium ? 'wl-float' : ''}`}>
+              <div className={e.className} style={e.style}>
+                <div
+                  className="rounded-[50%] p-[7px]"
+                  style={{ background: 'linear-gradient(160deg, #fff, color-mix(in srgb, var(--p) 12%, #fff))', boxShadow: '0 26px 40px -24px color-mix(in srgb, var(--p) 72%, transparent), 0 0 0 1px color-mix(in srgb, var(--p) 24%, transparent)' }}
+                >
+                  <img src={photoOf.cover} alt="" className="aspect-[4/5] w-full rounded-[50%] object-cover" />
+                </div>
+                <Dove className="absolute -left-12 -top-9 w-[4.8rem] rotate-6" speed={1.5} />
+                <Dove className="absolute -right-12 -top-9 w-[4.8rem] -rotate-6 -scale-x-100" speed={1.5} style={{ '--flap-delay': '-0.45s' } as CSSProperties} />
+                <div className="absolute -bottom-3 -left-7 w-14" style={{ color: 'var(--p)' }}>
+                  <LilyBloom rotate={-20} />
+                </div>
+                <div className="absolute -bottom-1 -right-6 w-11" style={{ color: 'var(--p)' }}>
+                  <LilyBloom rotate={25} />
+                </div>
+              </div>
+            </div>
+            {namesEl(0.78, false)}
+            {dateEl(false)}
+            {guestEl(false)}
+            {buttonEl(false, 'mt-5')}
           </div>
         </>
       );
@@ -436,8 +605,8 @@ export function CoverLayout(p: CoverProps) {
           </div>
           <div className="absolute inset-x-0 bottom-0 z-[4] flex flex-col items-center px-8 pb-[6%] text-center">
             <h1
-              className="uppercase"
-              style={{ fontFamily: p.heading.family, fontWeight: p.heading.weight, fontSize: `calc(${p.heading.size} * 0.82)`, letterSpacing: '0.08em', lineHeight: 1.1, color: '#f4ecd8', textShadow: '0 2px 14px rgba(0,0,0,.6)' }}
+              className="wl-name-text uppercase"
+              style={{ fontFamily: p.heading.family, fontWeight: p.heading.weight, fontSize: `calc(${p.heading.size} * 0.82)`, letterSpacing: '0.08em', lineHeight: 1.3, color: '#f4ecd8', textShadow: '0 2px 14px rgba(0,0,0,.6)' }}
             >
               {p.names}
             </h1>

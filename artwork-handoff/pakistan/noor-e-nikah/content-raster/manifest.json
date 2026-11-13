@@ -1,0 +1,55 @@
+{
+  "designId": "noor-e-nikah",
+  "visualRevision": "gate-content-01",
+  "cultureScope": "Contemporary Pakistani Muslim wedding with restrained Lahore architectural craftsmanship",
+  "formatPolicy": "raster-only-no-svg",
+  "canvas": {
+    "width": 1024,
+    "height": 1536,
+    "aspectRatio": "2:3"
+  },
+  "assets": {
+    "pageBackground": "page-background.png",
+    "infoCard": "info-card.png",
+    "photoFrame": "photo-frame.png",
+    "divider": "divider-jali.png",
+    "sectionMarker": "section-marker-jali.png",
+    "bottomDecoration": "bottom-inlay.png",
+    "reviewPreview": "content-system-preview.png",
+    "editableRasterSources": "source-renders/"
+  },
+  "layerSets": {
+    "quietTextSection": ["pageBackground", "divider"],
+    "eventCard": ["pageBackground", "infoCard", "divider"],
+    "photoSection": ["pageBackground", "photoFrame"],
+    "closingSection": ["pageBackground", "bottomDecoration"],
+    "minimalSection": ["pageBackground", "sectionMarker"]
+  },
+  "neverStack": [
+    ["infoCard", "photoFrame"],
+    ["photoFrame", "bottomDecoration"],
+    ["divider", "sectionMarker"],
+    ["infoCard", "bottomDecoration"],
+    ["sectionMarker", "bottomDecoration"]
+  ],
+  "palette": {
+    "deepEmerald": "#063F32",
+    "warmIvory": "#F4E7CB",
+    "antiqueGold": "#B98A38",
+    "lahoreSandstone": "#9F513D",
+    "mutedLapis": "#174B83",
+    "mutedTurquoise": "#2E8B8A",
+    "pomegranate": "#8C2431",
+    "charcoal": "#28231F"
+  },
+  "rules": {
+    "productionTextBakedIn": false,
+    "previewTextAllowed": true,
+    "transparentDecorationLayers": true,
+    "maxProminentOrnamentFamiliesPerViewport": 2,
+    "centralTextCorridorMustRemainClear": true,
+    "contentQuieterThanGate": true,
+    "sacredCalligraphyUsed": false,
+    "databaseArtworkVersionAssignedByEngineering": true
+  }
+}

@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { applyPalette, validateInvitationData } from '../templates/layout.js';
 import type { InvitationFeatures, SectionDef, TemplateLayout } from '../templates/layout.js';
+import { withLegacyBotanicalArtwork } from '../templates/artwork-snapshot.js';
 import { LifecycleService } from './lifecycle.service.js';
 
 export const rsvpSchema = z.object({
@@ -17,6 +18,10 @@ export const rsvpSchema = z.object({
   message: z.string().trim().max(500).optional(),
 });
 export type RsvpInput = z.infer<typeof rsvpSchema>;
+export const wishSchema = z.object({
+  name: z.string().trim().min(1, 'Nama wajib diisi').max(80),
+  message: z.string().trim().min(1, 'Ucapan wajib diisi').max(500),
+});
 
 // Snapshot skema yang disimpan di undangan (tema, section efektif, kuota, lagu bawaan).
 type LayoutSnapshot = TemplateLayout;
@@ -29,7 +34,7 @@ export interface InvitationView {
   slug: string;
   status: string;
   templateName: string;
-  layout: { theme: TemplateLayout['theme']; sections: SectionDef[]; musik: { presets: { name: string; url: string }[] }; coverLayouts: string[] };
+  layout: { theme: TemplateLayout['theme']; sections: SectionDef[]; musik: { presets: { name: string; url: string }[] }; coverLayouts: string[]; artwork?: TemplateLayout['artwork'] };
   features: InvitationFeatures;
   data: Invitation['data'];
   media: Record<string, { url: string; type: string }>;
@@ -46,14 +51,14 @@ export class InvitationsService {
     private readonly storage: StorageService,
   ) {}
 
-  private snapshot(inv: { layout: unknown }): LayoutSnapshot {
-    return inv.layout as LayoutSnapshot;
+  private snapshot(inv: { layout: unknown; template?: { layoutSchema?: unknown } }): LayoutSnapshot {
+    return withLegacyBotanicalArtwork(inv.layout as LayoutSnapshot, inv.template?.layoutSchema);
   }
 
   private async owned(userId: string, id: string) {
     const inv = await this.prisma.invitation.findFirst({
       where: { id, order: { userId } },
-      include: { order: true, template: { select: { name: true, category: true } }, mediaFiles: true },
+      include: { order: true, template: { select: { name: true, category: true, layoutSchema: true } }, mediaFiles: true },
     });
     if (!inv || inv.status === 'DELETED') throw new NotFoundException('Undangan tidak ditemukan');
     return inv;
@@ -92,7 +97,7 @@ export class InvitationsService {
       templateName: inv.template.name,
       data: inv.data,
       features: inv.features as InvitationFeatures,
-      layout: { theme: layout.theme, sections: layout.sections, galeri: layout.galeri, musik: layout.musik, palettes: layout.palettes ?? [], coverLayouts: layout.coverLayouts ?? [] },
+      layout: { theme: layout.theme, sections: layout.sections, galeri: layout.galeri, musik: layout.musik, palettes: layout.palettes ?? [], coverLayouts: layout.coverLayouts ?? [], artwork: layout.artwork },
       publishedAt: inv.publishedAt,
       expiresAt: inv.expiresAt,
       pausedAt: inv.pausedAt,
@@ -188,7 +193,7 @@ export class InvitationsService {
   async publicView(slug: string): Promise<InvitationView> {
     const inv = await this.prisma.invitation.findUnique({
       where: { slug },
-      include: { template: { select: { name: true } }, mediaFiles: true },
+      include: { template: { select: { name: true, layoutSchema: true } }, mediaFiles: true },
     });
     if (!inv || inv.status === 'DRAFT' || inv.status === 'DELETED') throw new NotFoundException('Undangan tidak ditemukan');
     if (inv.status !== 'ACTIVE') throw new GoneException({ statusCode: 410, message: 'Undangan ini sedang tidak aktif', status: inv.status });
@@ -217,11 +222,25 @@ export class InvitationsService {
         message: input.message || null,
       },
     });
-    return { ok: true };
+    return { ok: true, name: input.name, attending: input.attending, guestCount: input.attending ? input.guestCount : 0, message: input.message ?? '' };
+  }
+
+  async submitWish(slug: string, input: z.infer<typeof wishSchema>, ip: string) {
+    const inv = await this.prisma.invitation.findUnique({ where: { slug }, select: { id: true, status: true, layout: true } });
+    if (!inv || inv.status !== 'ACTIVE') throw new NotFoundException('Undangan tidak ditemukan');
+    if (!this.snapshot(inv).sections.some((s) => s.id === 'buku_tamu')) throw new ForbiddenException('Buku tamu tidak aktif untuk undangan ini');
+    // Both public forms share one quota.
+    const key = `${ip}:${slug}`;
+    const now = Date.now();
+    const recent = (rsvpHits.get(key) ?? []).filter((t) => now - t < 3600_000);
+    if (recent.length >= RSVP_LIMIT) throw new HttpException('Terlalu banyak pengiriman, coba lagi nanti', HttpStatus.TOO_MANY_REQUESTS);
+    rsvpHits.set(key, [...recent, now]);
+    const wish = await this.prisma.rsvpGuest.create({ data: { invitationId: inv.id, name: input.name, message: input.message, attending: null, guestCount: 0 } });
+    return { ok: true, name: wish.name, message: wish.message, attending: null, guestCount: 0, createdAt: wish.createdAt };
   }
 
   private async buildView(
-    inv: Invitation & { template: { name: string } },
+    inv: Invitation & { template: { name: string; layoutSchema?: unknown } },
     media: MediaFile[],
   ): Promise<InvitationView> {
     const layout = this.snapshot(inv);
@@ -239,7 +258,7 @@ export class InvitationsService {
       slug: inv.slug,
       status: inv.status,
       templateName: inv.template.name,
-      layout: { theme: layout.theme, sections: layout.sections, musik: { presets: layout.musik?.presets ?? [] }, coverLayouts: layout.coverLayouts ?? [] },
+      layout: { theme: layout.theme, sections: layout.sections, musik: { presets: layout.musik?.presets ?? [] }, coverLayouts: layout.coverLayouts ?? [], artwork: layout.artwork },
       features: inv.features as InvitationFeatures,
       data: inv.data,
       media: Object.fromEntries(media.map((m) => [m.id, { url: this.storage.publicUrl(m.storageKey), type: m.type }])),

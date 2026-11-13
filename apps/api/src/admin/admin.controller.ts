@@ -5,6 +5,10 @@ import type { AuthUser } from '../auth/auth.guard.js';
 import { MaintenanceService } from '../jobs/maintenance.service.js';
 import {
   addOnUpdateSchema,
+  artworkConfirmSchema,
+  artworkDraftSchema,
+  artworkPublishSchema,
+  artworkUploadSchema,
   assetPresignSchema,
   couponCreateSchema,
   couponUpdateSchema,
@@ -19,6 +23,7 @@ import {
   userRoleSchema,
 } from './admin.dto.js';
 import { AdminService } from './admin.service.js';
+import { catalogEntrySchema } from './catalog.js';
 
 @Controller('admin')
 @UseGuards(AuthGuard)
@@ -35,6 +40,18 @@ export class AdminController {
   }
 
   // ----- Template builder -----
+
+  @Post('catalog/entries')
+  @HttpCode(200)
+  installCatalog(@Body() body: unknown) {
+    return this.admin.installCatalog(parseBody(catalogEntrySchema, body));
+  }
+
+  @Post('catalog/verify')
+  @HttpCode(200)
+  verifyCatalog(@Body() body: unknown) {
+    return this.admin.verifyCatalog(parseBody(catalogEntrySchema, body));
+  }
   @Get('builder-meta')
   builderMeta() {
     return this.admin.builderMeta();
@@ -69,6 +86,34 @@ export class AdminController {
   @HttpCode(200)
   presignAsset(@Body() body: unknown) {
     return this.admin.presignAsset(parseBody(assetPresignSchema, body));
+  }
+
+  @Get('templates/:id/artwork')
+  artworkVersions(@Param('id') id: string) {
+    return this.admin.artworkVersions(id);
+  }
+
+  @Post('templates/:id/artwork/drafts')
+  createArtworkDraft(@Param('id') id: string, @Body() body: unknown) {
+    return this.admin.createArtworkDraft(id, parseBody(artworkDraftSchema, body ?? {}));
+  }
+
+  @Post('templates/:id/artwork/:versionId/presign')
+  @HttpCode(200)
+  presignArtwork(@Param('id') id: string, @Param('versionId') versionId: string, @Body() body: unknown) {
+    return this.admin.presignArtwork(id, versionId, parseBody(artworkUploadSchema, body));
+  }
+
+  @Post('templates/:id/artwork/:versionId/confirm')
+  @HttpCode(200)
+  confirmArtwork(@Param('id') id: string, @Param('versionId') versionId: string, @Body() body: unknown) {
+    return this.admin.confirmArtwork(id, versionId, parseBody(artworkConfirmSchema, body));
+  }
+
+  @Post('templates/:id/artwork/:versionId/publish')
+  @HttpCode(200)
+  publishArtwork(@Param('id') id: string, @Param('versionId') versionId: string, @Body() body: unknown) {
+    return this.admin.publishArtwork(id, versionId, parseBody(artworkPublishSchema, body ?? {}));
   }
 
   // ----- Harga per komponen -----

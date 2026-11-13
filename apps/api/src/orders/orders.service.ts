@@ -8,6 +8,7 @@ import type { PreparedNewOrder } from '../pricing/pricing.service.js';
 import type { ExtensionOrderInput, OrderInput } from '../pricing/pricing.dto.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
+import { invitationMediaKey } from '../storage/storage-keys.js';
 import type { InvitationData, SectionDef } from '../templates/layout.js';
 
 export const EXT_BY_TYPE: Record<string, string> = {
@@ -103,7 +104,7 @@ export class OrdersService {
 
       for (const m of prepared.media) {
         const id = mediaIds.get(m.clientId)!;
-        const key = `${invitationId}/${id}.${EXT_BY_TYPE[m.contentType] ?? 'bin'}`;
+        const key = invitationMediaKey({ invitationId, mediaId: id, type: m.type, extension: EXT_BY_TYPE[m.contentType] ?? 'bin' });
         await tx.mediaFile.create({
           data: {
             id,
@@ -127,7 +128,7 @@ export class OrdersService {
     const uploads = await Promise.all(
       prepared.media.map(async (m) => {
         const id = mediaIds.get(m.clientId)!;
-        const key = `${invitationId}/${id}.${EXT_BY_TYPE[m.contentType] ?? 'bin'}`;
+        const key = invitationMediaKey({ invitationId, mediaId: id, type: m.type, extension: EXT_BY_TYPE[m.contentType] ?? 'bin' });
         const presigned = await this.storage.presignUpload({ key, contentType: m.contentType, sizeBytes: m.sizeBytes });
         return { clientId: m.clientId, mediaId: id, ...presigned };
       }),
@@ -216,7 +217,16 @@ export class OrdersService {
   }
 
   async expireStale(olderThan: Date) {
-    const stale = await this.prisma.order.findMany({ where: { status: 'PENDING', createdAt: { lt: olderThan } }, select: { id: true } });
+    const stale = await this.prisma.order.findMany({
+      where: {
+        status: 'PENDING',
+        createdAt: { lt: olderThan },
+        // Pergantian metode membuat kode pembayaran baru dengan masa berlaku baru. Jangan hapus
+        // draft hanya karena order induknya lama selama masih ada attempt yang dibuat dalam TTL.
+        paymentAttempts: { none: { createdAt: { gte: olderThan } } },
+      },
+      select: { id: true },
+    });
     for (const o of stale) await this.closeUnpaid(o.id, 'EXPIRED');
     return stale.length;
   }

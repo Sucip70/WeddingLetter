@@ -1,0 +1,36 @@
+{
+  "designId": "pawiwahan-agung",
+  "visualRevision": "prada-terpusat-01",
+  "packageKind": "renderer-supplement",
+  "productionText": false,
+  "assets": {
+    "letterCloth": {
+      "url": "/themes/pawiwahan-agung/prada-terpusat-01/letter-cloth.webp",
+      "width": 420,
+      "height": 790,
+      "sizeBytes": 36636,
+      "transparent": false
+    }
+  },
+  "reuse": {
+    "background": "gateBackground",
+    "bothPanels": "gateTransition",
+    "prada": "gateInteractive",
+    "divider": "divider"
+  },
+  "symmetry": {
+    "background": "left-half mirrored about center",
+    "panels": "same left source mirrored; original right panel intentionally not stacked"
+  },
+  "portal": {
+    "sideInsetPercent": 23.65,
+    "bottomInsetPercent": 11.65
+  },
+  "motion": {
+    "lifecycleMs": 1650,
+    "panelMs": 950,
+    "panelDelayMs": 280,
+    "reducedMotion": "fade-only"
+  },
+  "note": "Visual revision only; no database artwork version is assigned or changed."
+}

@@ -6,6 +6,7 @@ import {
   parseBody,
   registerSchema,
   requestOtpSchema,
+  resetPasswordSchema,
   verifyOtpSchema,
 } from './auth.dto.js';
 import { AuthGuard, CurrentUser } from './auth.guard.js';
@@ -28,8 +29,21 @@ export class AuthController {
   @Post('otp/verify')
   @HttpCode(200)
   verifyOtp(@Body() body: unknown) {
-    const { email, code, name } = parseBody(verifyOtpSchema, body);
-    return this.auth.verifyOtp(email, code, name);
+    const { email, code, name, password } = parseBody(verifyOtpSchema, body);
+    return this.auth.verifyOtp(email, code, name, password);
+  }
+
+  @Post('password/forgot')
+  @HttpCode(200)
+  forgotPassword(@Body() body: unknown) {
+    return this.auth.forgotPassword(parseBody(requestOtpSchema, body).email);
+  }
+
+  @Post('password/reset')
+  @HttpCode(200)
+  resetPassword(@Body() body: unknown) {
+    const { email, code, password } = parseBody(resetPasswordSchema, body);
+    return this.auth.resetPassword(email, code, password);
   }
 
   @Post('google')

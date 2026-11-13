@@ -1,9 +1,9 @@
 import { defaultCoverLayout } from './cover-layouts';
+import { resolveTemplateSamplePhotos } from './template-sample-photos';
 import type { InvitationViewData, Layout } from './types';
 
 // Isi contoh per key field, dipakai untuk demo template, hero, dan pratinjau builder admin.
 const SAMPLE_TEXT: Record<string, string> = {
-  pembuka: 'Dengan penuh syukur, kami mengundang Anda untuk hadir dan berbagi kebahagiaan di hari pernikahan kami.',
   pria_nama: 'Andi',
   pria_lengkap: 'Andi Pratama Wijaya',
   pria_ortu: 'Putra dari Bapak Hendra Wijaya & Ibu Ratna Sari',
@@ -45,8 +45,9 @@ const GALLERY_SLOTS = ['gallery1', 'gallery2', 'gallery3', 'gallery4', 'gallery5
 // `coverLayout`: tata letak sampul yang diperagakan (bawaan: layout.coverDefault pilihan admin, lalu yang khusus
 // tema / Foto berbingkai). Hanya untuk template yang punya pilihan tata letak (Standard & Premium); Basic tetap
 // berornamen walau slot foto sampul terisi.
-export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'> & { galeri?: Layout['galeri']; coverLayouts?: string[]; coverDefault?: string }, extra: Partial<InvitationViewData> = {}, photos: DemoPhotos = {}, coverLayout?: string): InvitationViewData {
+export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'> & { galeri?: Layout['galeri']; coverLayouts?: string[]; coverDefault?: string; artwork?: Layout['artwork']; samplePhotos?: Layout['samplePhotos'] }, extra: Partial<InvitationViewData> = {}, globalPhotos: DemoPhotos = {}, coverLayout?: string): InvitationViewData {
   const dates = sampleDates();
+  const photos = resolveTemplateSamplePhotos(layout, globalPhotos);
   const data: InvitationViewData['data'] = {};
   for (const section of layout.sections) {
     const values: Record<string, string> = {};
@@ -83,7 +84,7 @@ export function sampleView(layout: Pick<Layout, 'theme' | 'sections' | 'musik'> 
   return {
     slug: 'contoh',
     templateName: 'Contoh',
-    layout: { theme: layout.theme, sections: layout.sections, musik: { presets: layout.musik?.presets ?? [] }, coverLayouts },
+    layout: { theme: layout.theme, sections: layout.sections, musik: { presets: layout.musik?.presets ?? [] }, coverLayouts, artwork: layout.artwork },
     features: {},
     data,
     media,

@@ -1,0 +1,54 @@
+{
+  "designId": "pusako-minang",
+  "visualRevision": "content-concept-01",
+  "cultureScope": "Minangkabau — Padang/Pariaman",
+  "formatPolicy": "raster-only-no-svg",
+  "assets": {
+    "pageBackground": "page-background.png",
+    "cornerTopLeft": "corner-ornament-top-left.png",
+    "cornerBottomRight": "corner-ornament-bottom-right.png",
+    "sectionMarker": "mini-gonjong.png",
+    "divider": "divider-pucuak-rabuang.png",
+    "infoCard": "info-card.png",
+    "photoFrame": "photo-frame.png",
+    "footerOrnament": "footer-ornament.png",
+    "reviewPreview": "content-system-preview.png"
+  },
+  "layerSets": {
+    "standard": [
+      "pageBackground",
+      "divider"
+    ],
+    "premiumEventCard": [
+      "pageBackground",
+      "infoCard",
+      "sectionMarker",
+      "divider"
+    ],
+    "photoSection": [
+      "pageBackground",
+      "photoFrame"
+    ],
+    "quietEditorialSection": [
+      "pageBackground",
+      "cornerTopLeft",
+      "cornerBottomRight"
+    ],
+    "closingSection": [
+      "pageBackground",
+      "footerOrnament"
+    ]
+  },
+  "neverStack": [
+    ["infoCard", "cornerTopLeft", "cornerBottomRight"],
+    ["photoFrame", "infoCard"],
+    ["footerOrnament", "divider"],
+    ["sectionMarker", "footerOrnament"]
+  ],
+  "rules": {
+    "productionTextBakedIn": false,
+    "previewTextAllowed": true,
+    "transparentDecorationLayers": true,
+    "maxPrimaryDecorationsPerSection": 2
+  }
+}

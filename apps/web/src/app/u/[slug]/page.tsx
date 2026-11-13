@@ -4,6 +4,7 @@ import { InvitationView } from '@/components/invitation/invitation-view';
 import { LogoMark } from '@/components/logo';
 import { ApiError, apiFetch } from '@/lib/api';
 import type { InvitationViewData } from '@/lib/types';
+import { GuestTicket } from '@/components/guest-ticket';
 
 type Loaded = { view: InvitationViewData } | { inactive: true };
 
@@ -37,9 +38,17 @@ export async function generateMetadata({ params }: PageProps<'/u/[slug]'>): Prom
   };
 }
 
-export default async function PublicInvitationPage({ params }: PageProps<'/u/[slug]'>) {
+export default async function PublicInvitationPage({ params, searchParams }: PageProps<'/u/[slug]'>) {
   const { slug } = await params;
   const loaded = await load(slug);
+  const query = await searchParams;
+  const token = typeof query.guest === 'string' ? query.guest : undefined;
+  let personalGuest: { name: string } | undefined;
+  if (token && !('inactive' in loaded)) {
+    if (!/^[a-f0-9]{64}$/.test(token)) notFound();
+    try { personalGuest = await apiFetch<{ name: string }>(`/public/invitations/${encodeURIComponent(slug)}/guest/${token}`); }
+    catch (error) { if (error instanceof ApiError && error.status === 404) notFound(); throw error; }
+  }
 
   if ('inactive' in loaded) {
     return (
@@ -53,7 +62,12 @@ export default async function PublicInvitationPage({ params }: PageProps<'/u/[sl
 
   return (
     <div className="min-h-screen" style={{ background: `color-mix(in srgb, ${loaded.view.layout.theme.primary} 10%, #ece7e0)` }}>
-      <InvitationView view={loaded.view} mode="live" />
+      <InvitationView
+        view={loaded.view}
+        mode="live"
+        personalGuestName={personalGuest?.name}
+        afterClosing={personalGuest && token ? <GuestTicket name={personalGuest.name} token={token} slug={slug} /> : undefined}
+      />
     </div>
   );
 }

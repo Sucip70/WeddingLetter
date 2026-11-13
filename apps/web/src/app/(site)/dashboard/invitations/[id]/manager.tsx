@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FieldInput } from '@/components/editor/fields';
+import { GuestManager } from '@/components/guest-manager';
 import { ACCEPT, compressImage, fileProblem } from '@/components/editor/model';
 import type { FieldCtx } from '@/components/editor/fields';
 import { InvitationView } from '@/components/invitation/invitation-view';
@@ -10,14 +11,18 @@ import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { InvitationStatusBadge, expiryText } from '@/components/status';
 import { Alert, Badge, Button, Card, Field, Input, Modal, Select, Spinner, cn } from '@/components/ui';
 import { api, errorMessage, uploadWithProgress } from '@/lib/client-api';
+import Link from 'next/link';
 import { daysLeft, formatDate, formatDateTime, mb, rupiah, whatsappLink } from '@/lib/format';
 import { presetToken } from '@/lib/presets';
+import { purchasedInvitationPreview } from '@/lib/purchased-invitation-preview';
 import type { InvitationData, InvitationDetail, InvitationMedia, InvitationViewData, MusicPreset, QuoteLine, RsvpSummary, Upload } from '@/lib/types';
 
-type Tab = 'overview' | 'edit' | 'rsvp' | 'extend';
+type Tab = 'overview' | 'edit' | 'guests' | 'checkin' | 'rsvp' | 'extend';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Ringkasan' },
   { id: 'edit', label: 'Isi undangan' },
+  { id: 'guests', label: 'Daftar tamu' },
+  { id: 'checkin', label: 'Check-in kehadiran' },
   { id: 'rsvp', label: 'RSVP' },
   { id: 'extend', label: 'Perpanjang' },
 ];
@@ -34,7 +39,17 @@ const NOOP_CTX: Omit<FieldCtx, 'data' | 'errors' | 'onChange' | 'coverLayouts'> 
   setFileWeeks: () => undefined,
 };
 
-export function InvitationManager({ initial, initialTab, baseUrl }: { initial: InvitationDetail; initialTab: string; baseUrl: string }) {
+// Tautan bantuan: WhatsApp bila admin sudah mengisi nomornya, kalau belum ke halaman /kontak ("segera hadir").
+function SupportLink({ number, message, children }: { number: string; message: string; children: React.ReactNode }) {
+  const cls = 'font-medium text-rose underline';
+  return number ? (
+    <a href={whatsappLink(message, number)} target="_blank" rel="noopener noreferrer" className={cls}>{children}</a>
+  ) : (
+    <Link href="/kontak" className={cls}>{children}</Link>
+  );
+}
+
+export function InvitationManager({ initial, initialTab, baseUrl, now, supportWhatsapp }: { initial: InvitationDetail; initialTab: string; baseUrl: string; now: number; supportWhatsapp: string }) {
   const [inv, setInv] = useState(initial);
   const [tab, setTab] = useState<Tab>((TABS.find((t) => t.id === initialTab)?.id ?? 'overview') as Tab);
 
@@ -66,10 +81,12 @@ export function InvitationManager({ initial, initialTab, baseUrl }: { initial: I
       </div>
 
       <div className="mt-8">
-        {tab === 'overview' && <Overview inv={inv} link={link} reload={reload} goto={setTab} />}
-        {tab === 'edit' && <EditTab inv={inv} setInv={setInv} />}
+        {tab === 'overview' && <Overview inv={inv} link={link} reload={reload} goto={setTab} now={now} supportWhatsapp={supportWhatsapp} />}
+        {tab === 'edit' && <EditTab inv={inv} setInv={setInv} supportWhatsapp={supportWhatsapp} />}
         {tab === 'rsvp' && <RsvpTab inv={inv} />}
-        {tab === 'extend' && <ExtendTab inv={inv} />}
+        {tab === 'guests' && <GuestManager key="guests" invitationId={inv.id} link={link} active={inv.status === 'ACTIVE'} />}
+        {tab === 'checkin' && <GuestManager key="checkin" invitationId={inv.id} link={link} checkin active={inv.status === 'ACTIVE'} />}
+        {tab === 'extend' && <ExtendTab inv={inv} now={now} />}
       </div>
     </div>
   );
@@ -77,7 +94,7 @@ export function InvitationManager({ initial, initialTab, baseUrl }: { initial: I
 
 // ================= Ringkasan =================
 
-function Overview({ inv, link, reload, goto }: { inv: InvitationDetail; link: string; reload: () => Promise<void>; goto: (t: Tab) => void }) {
+function Overview({ inv, link, reload, goto, now, supportWhatsapp }: { inv: InvitationDetail; link: string; reload: () => Promise<void>; goto: (t: Tab) => void; now: number; supportWhatsapp: string }) {
   const [publishing, setPublishing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [error, setError] = useState('');
@@ -114,7 +131,7 @@ function Overview({ inv, link, reload, goto }: { inv: InvitationDetail; link: st
   };
 
   const live = inv.status === 'ACTIVE';
-  const d = daysLeft(inv.expiresAt);
+  const d = daysLeft(inv.expiresAt, now);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
@@ -143,7 +160,7 @@ function Overview({ inv, link, reload, goto }: { inv: InvitationDetail; link: st
 
         <Card className="p-6">
           <h2 className="font-semibold text-ink">Link undangan</h2>
-          <p className="mt-1 text-sm text-ink-soft">{expiryText(inv.status, inv.expiresAt, inv.remainingDays)}</p>
+          <p className="mt-1 text-sm text-ink-soft">{expiryText(inv.status, inv.expiresAt, inv.remainingDays, now)}</p>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <code className="min-w-0 flex-1 truncate rounded-xl bg-ivory px-3 py-2.5 text-sm text-ink">{link}</code>
             <Button variant="secondary" size="sm" onClick={() => copy(link, 'link')}>{copied === 'link' ? 'Tersalin ✓' : 'Salin'}</Button>
@@ -152,7 +169,8 @@ function Overview({ inv, link, reload, goto }: { inv: InvitationDetail; link: st
           {!live && <p className="mt-3 text-xs text-ink-soft">Link baru bisa dibuka tamu saat status <strong>Aktif</strong>.</p>}
 
           <div className="mt-6 border-t border-line pt-5">
-            <Field label="Link personal per tamu" hint="Tamu akan disapa dengan namanya di sampul undangan.">
+            <Button variant="secondary" size="sm" className="mb-3" onClick={() => goto('guests')}>Kelola daftar tamu, status berbagi & QR</Button>
+            <Field label="Link personal cepat (tidak tersimpan)" hint="Untuk menyimpan nama, melacak pengiriman dan membuat QR, gunakan tab Daftar tamu.">
               <Input value={guest} onChange={(e) => setGuest(e.target.value)} placeholder="Nama tamu, mis. Bapak Budi & Keluarga" maxLength={60} />
             </Field>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -202,7 +220,7 @@ function Overview({ inv, link, reload, goto }: { inv: InvitationDetail; link: st
           {inv.refundEligible && (
             <p className="mt-3 text-sm text-ink-soft">
               Masih memenuhi syarat refund penuh (belum dipublikasikan, &lt; 48 jam).{' '}
-              <a href={whatsappLink(`Halo WeddingLetter, saya ingin mengajukan refund untuk pesanan ${inv.order.id}.`)} target="_blank" rel="noopener noreferrer" className="font-medium text-rose underline">Ajukan via WhatsApp</a>
+              <SupportLink number={supportWhatsapp} message={`Halo WeddingLetter, saya ingin mengajukan refund untuk pesanan ${inv.order.id}.`}>{supportWhatsapp ? 'Ajukan via WhatsApp' : 'Cara mengajukan refund'}</SupportLink>
             </p>
           )}
         </Card>
@@ -226,7 +244,7 @@ function Overview({ inv, link, reload, goto }: { inv: InvitationDetail; link: st
 
 const TEXT_TYPES = ['text', 'textarea', 'datetime', 'url', 'coverlayout'];
 
-function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: InvitationDetail) => void }) {
+function EditTab({ inv, setInv, supportWhatsapp }: { inv: InvitationDetail; setInv: (i: InvitationDetail) => void; supportWhatsapp: string }) {
   const [data, setData] = useState<InvitationData>(inv.data);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
@@ -268,16 +286,7 @@ function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: Invitatio
   }, [inv.layout.theme, palettes, paletteId]);
 
   const view: InvitationViewData = useMemo(
-    () => ({
-      slug: inv.slug,
-      templateName: inv.templateName,
-      layout: { theme, sections: inv.layout.sections, musik: { presets: inv.layout.musik.presets }, coverLayouts: inv.layout.coverLayouts ?? [] },
-      features: inv.features,
-      data,
-      media: Object.fromEntries(inv.media.filter((m) => ['UPLOADED', 'ACTIVE', 'PAUSED', 'EXPIRED_GRACE'].includes(m.status)).map((m) => [m.id, { url: m.url, type: m.type }])),
-      rsvpEnabled: inv.layout.sections.some((s) => s.id === 'rsvp'),
-      guestbook: [],
-    }),
+    () => purchasedInvitationPreview(inv, data, theme),
     [inv, data, theme],
   );
 
@@ -381,7 +390,7 @@ function EditTab({ inv, setInv }: { inv: InvitationDetail; setInv: (i: Invitatio
             </div>
           </Card>
         ))}
-        <p className="text-xs text-ink-soft">Anda bisa <strong>mengganti</strong> file yang sudah ada tanpa biaya (ukuran harus sama atau lebih kecil dari yang dibayar). Menambah file baru atau mengubah jumlahnya perlu pesanan baru. <a href={whatsappLink(`Halo WeddingLetter, saya butuh bantuan mengubah file pada undangan /${inv.slug}.`)} target="_blank" rel="noopener noreferrer" className="font-medium text-rose underline">Butuh bantuan? Hubungi CS</a>.</p>
+        <p className="text-xs text-ink-soft">Anda bisa <strong>mengganti</strong> file yang sudah ada tanpa biaya (ukuran harus sama atau lebih kecil dari yang dibayar). Menambah file baru atau mengubah jumlahnya perlu pesanan baru. <SupportLink number={supportWhatsapp} message={`Halo WeddingLetter, saya butuh bantuan mengubah file pada undangan /${inv.slug}.`}>Butuh bantuan? Hubungi CS</SupportLink>.</p>
 
         <div className="sticky bottom-4 z-10 flex items-center gap-3 rounded-2xl border border-line bg-paper/95 p-3 shadow-lg backdrop-blur">
           <Button onClick={save} loading={saving} disabled={!editable || !dirty}>Simpan perubahan</Button>
@@ -570,7 +579,7 @@ function RsvpTab({ inv }: { inv: InvitationDetail }) {
 
 // ================= Perpanjang =================
 
-function ExtendTab({ inv }: { inv: InvitationDetail }) {
+function ExtendTab({ inv, now }: { inv: InvitationDetail; now: number }) {
   const [weeks, setWeeks] = useState(4);
   const [coupon, setCoupon] = useState('');
   const [quote, setQuote] = useState<{ lines: QuoteLine[]; discount: number; total: number; coupon: { valid: boolean; reason?: string; code: string } | null } | null>(null);
@@ -609,7 +618,7 @@ function ExtendTab({ inv }: { inv: InvitationDetail }) {
     <div className="mx-auto max-w-xl space-y-6">
       <div>
         <h2 className="font-display text-2xl text-ink">{revives ? 'Aktifkan kembali undangan' : 'Perpanjang masa aktif'}</h2>
-        <p className="mt-2 text-sm text-ink-soft">{expiryText(inv.status, inv.expiresAt, inv.remainingDays)}. {revives ? 'Setelah dibayar, link langsung bisa dibuka lagi.' : 'Tambahan masa aktif dihitung dari tanggal berakhir saat ini.'}</p>
+        <p className="mt-2 text-sm text-ink-soft">{expiryText(inv.status, inv.expiresAt, inv.remainingDays, now)}. {revives ? 'Setelah dibayar, link langsung bisa dibuka lagi.' : 'Tambahan masa aktif dihitung dari tanggal berakhir saat ini.'}</p>
       </div>
       <Card className="space-y-5 p-6">
         <Field label="Tambah masa aktif" group>

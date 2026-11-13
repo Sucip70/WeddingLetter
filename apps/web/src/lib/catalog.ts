@@ -5,15 +5,11 @@ import type { AddOn, DesignInfo, FxLevel, Palette, Template, TemplateDetail, The
 export const TIER_LABEL: Record<Tier, string> = { BASIC: 'Basic', STANDARD: 'Standard', PREMIUM: 'Premium' };
 
 // Urutan & nama grup tema (sama dengan apps/api/src/templates/themes.ts).
-export const GROUP_ORDER: ThemeGroup[] = ['klasik', 'suku', 'agama', 'perayaan', 'kartun', 'game', 'film', 'musim'];
+export const GROUP_ORDER: ThemeGroup[] = ['klasik', 'suku', 'film', 'musim'];
 export const GROUP_LABEL: Record<ThemeGroup, string> = {
   klasik: 'Klasik',
   suku: 'Suku & Budaya',
-  agama: 'Religi',
-  perayaan: 'Perayaan',
-  kartun: 'Kartun',
-  game: 'Video Game',
-  film: 'Film',
+  film: 'Fantasi',
   musim: 'Musim',
 };
 export const FX_LABEL: Record<FxLevel, string> = { none: 'Tanpa animasi', standard: 'Animasi standar', premium: 'Animasi penuh' };
@@ -49,6 +45,17 @@ export function groupByDesign(all: Template[]): DesignEntry[] {
     .sort((a, b) => groupRank(a.group) - groupRank(b.group));
 }
 
+// One card per selected design; preserve all its published tiers and starting price.
+export function homeShowcase(all: Template[]): DesignEntry[] {
+  const ranked = groupByDesign(all.filter((t) => t.status === 'PUBLISHED'))
+    .flatMap((entry) => {
+      const selected = entry.rows.filter((t) => t.showOnHome);
+      return selected.length ? [{ entry, order: Math.min(...selected.map((t) => t.homeOrder ?? 0)) }] : [];
+    });
+  return ranked.sort((a, b) => a.order - b.order || a.entry.key.localeCompare(b.entry.key))
+    .map(({ entry }) => entry);
+}
+
 export const getTemplates = (query: { category?: string; tier?: string } = {}) => {
   const q = new URLSearchParams();
   if (query.category) q.set('category', query.category);
@@ -78,7 +85,7 @@ export function templateFeatures(t: Pick<Template, 'layout' | 'includedWeeks'>) 
   const tracks = layout.musik.count ?? layout.musik.presets.length;
   if (layout.musik.allowed) features.push(tracks > 1 ? `Musik latar (${tracks} pilihan lagu)` : 'Musik latar');
   if (layout.theme.fx !== 'none') features.push(FX_LABEL[layout.theme.fx]);
-  if (layout.theme.gate && layout.theme.gate !== 'none') features.push(`Gerbang pembuka: ${GATE_LABEL[layout.theme.gate]}`);
+  if (layout.theme.gate && layout.theme.gate !== 'none') features.push(`Gerbang pembuka: ${(layout.theme.motif ?? layout.theme.preset) === 'garden' ? 'Serambi Botani' : (layout.theme.motif ?? layout.theme.preset) === 'hortensia' ? 'Hortensia Atelier' : (layout.theme.motif ?? layout.theme.preset) === 'marigold' ? 'Pita Senja' : (layout.theme.motif ?? layout.theme.preset) === 'wisteria' ? 'Porselen Wisteria' : (layout.theme.motif ?? layout.theme.preset) === 'lavender' ? 'Surat Herbarium Lavender' : GATE_LABEL[layout.theme.gate]}`);
   if ((layout.palettes?.length ?? 0) > 1) features.push(`${layout.palettes.length} pilihan warna`);
   for (const id of ['rsvp', 'amplop_digital', 'buku_tamu', 'countdown', 'cerita']) if (ids.includes(id)) features.push(SECTION_LABEL[id]!);
   features.push(`Masa aktif ${t.includedWeeks} minggu`);

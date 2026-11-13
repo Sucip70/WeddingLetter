@@ -70,7 +70,7 @@ const premiumFull = (await call('GET', `/templates/${premium.id}`, { expect: 200
 ok(premiumFull.layout.musik.allowed && basic.layout.musik.allowed && premiumFull.layout.musik.presets.length === 0, 'semua paket boleh musik; pustaka lagu awalnya kosong (diisi admin)');
 eq(premiumFull.layout.palettes.map((p) => p.id), ['bawaan', 'hangat', 'sejuk'], 'desain non-Basic punya palet bawaan + 2 varian otomatis');
 const standardJawa = templates.find((t) => t.name === 'Standard Batik Jawa');
-eq([premium.layout.theme.gate, standardJawa.layout.theme.gate, basic.layout.theme.gate], ['door', 'none', 'none'], 'gerbang pembuka hanya di Premium (Batik Jawa = pintu)');
+eq([premium.layout.theme.gate, standardJawa.layout.theme.gate, basic.layout.theme.gate], ['kayon', 'none', 'none'], 'gerbang pembuka hanya di Premium (Batik Jawa = kayon wayang)');
 eq(templates.filter((t) => t.tier === 'PREMIUM' && t.layout.theme.gate === 'none').length, 0, 'semua template Premium punya gerbang');
 eq(standardJawa.layout.theme.fx, 'standard', 'Standard = animasi standar');
 const rusticTiers = templates.filter((t) => t.design?.id === 'rustic').map((t) => t.tier).sort();
@@ -115,7 +115,7 @@ await call('POST', '/orders', { token: user, body: { ...orderBody, data: { ...or
 ok(true, 'order menolak field wajib yang kosong (400)');
 
 step('Tata letak sampul: Basic tanpa pilihan; Standard = 9 umum; Premium = 9 umum + 1 khusus tema');
-eq([basic.layout.coverLayouts.length, standardJawa.layout.coverLayouts.length, premium.layout.coverLayouts.length], [0, 9, 10], 'katalog memuat daftar tata letak sesuai paket');
+eq([basic.layout.coverLayouts.length, standardJawa.layout.coverLayouts.length, premium.layout.coverLayouts.length], [0, 8, 9], 'katalog memuat daftar tata letak sesuai paket');
 ok(premium.layout.coverLayouts.includes('gapura') && !standardJawa.layout.coverLayouts.includes('gapura'), 'layout khusus tema (gapura) hanya di Premium Batik Jawa');
 // Kalkulator bersifat lenient (tidak menolak isi keliru), jadi validasi dicek lewat order sungguhan.
 const coverOrder = (templateId, tata_letak) =>

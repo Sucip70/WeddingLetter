@@ -1,50 +1,74 @@
 'use client';
 
-// Gerbang pembuka undangan Premium: adegan animasi tematik (pintu, amplop, tirai, ...) yang menutupi sampul
+// Gerbang pembuka undangan Premium: adegan animasi tematik yang menutupi sampul
 // sampai diketuk. Semua gerak memakai CSS transform/opacity (ringan di ponsel); warna mengikuti tema lewat
 // variabel --p/--s/--bg/--tx. Fase dikendalikan InvitationView: 'closed' -> 'opening' -> (dilepas).
-import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
-import type { GateKind } from '@/lib/types';
-import { PatternLayer } from './effects';
+import dynamic from 'next/dynamic';
+import type { KeyboardEvent, ReactNode } from 'react';
+import type { ArtworkManifest, GateKind } from '@/lib/types';
 import type { PatternKind } from './motifs';
-import { LetterGust } from './letter-gust';
-import { MagicPortal } from './magic-portal';
-import { WayangKayon } from './wayang-kayon';
+import { TemplateArtwork } from './template-artwork';
+import { hasSeasonalGate, SeasonalGate } from './seasonal-gate';
+import type { SeasonalGateDesign } from './seasonal-gate';
+import { hasSekarKeratonGate, SekarKeratonGate } from './sekar-keraton-gate';
+import { hasPusakoGate, PusakoGate } from './pusako-gate';
+import { hasUlosGate, UlosGate } from './ulos-gate';
+import { CandiGate, hasCandiGate } from './candi-gate';
+import { LenteraGate, hasLenteraGate } from './lentera-gate';
+import { JaliGate, hasJaliGate } from './jali-gate';
+import { ToranGate, hasToranGate } from './toran-gate';
+import { LavenderGate } from './lavender-stationery';
+import { HortensiaGate } from './hortensia-stationery';
+
+// Gerbang berat (Motion / CSS 3D / seni SVG) dimuat per jenis: undangan hanya mengunduh kode gerbangnya sendiri,
+// bukan keenam-enamnya. Tetap di-render di server (ssr bawaan), jadi tidak ada kedipan saat halaman dibuka.
+// Gerbang baru yang besar sebaiknya mengikuti pola ini; gerbang CSS kecil boleh tetap di berkas ini.
+const LetterGust = dynamic(() => import('./letter-gust').then((m) => m.LetterGust));
+const BouquetGate = dynamic(() => import('./bouquet-gate').then((m) => m.BouquetGate));
+const MagicPortal = dynamic(() => import('./magic-portal').then((m) => m.MagicPortal));
+const RingBox = dynamic(() => import('./ring-box').then((m) => m.RingBox));
 
 export type GatePhase = 'closed' | 'opening';
 
 // Lama animasi buka (ms) sampai gerbang dilepas. Dengan "kurangi gerakan" dipersingkat jadi fade.
 export const GATE_MS: Record<GateKind, number> = {
-  door: 2300, glass: 2300, curtain: 2200, cloth: 2400, envelope: 2900, portal: 2500, ring: 2700, bloom: 2800,
-  balloons: 2800, waves: 2700, gift: 2500, lantern: 2700, fireworks: 2900, book: 2900, pressstart: 1400, loading: 2700, neon: 2600,
-  // surat + embusan (letter-gust.tsx): waktu sama untuk semua variannya
-  sakura: 2700, frost: 2700, leaves: 2700,
-  kayon: 2300,
+  portal: 2500, ring: 3550,
+  sakura: 2700, frost: 2700, leaves: 2700, taman: 2700,
+  twine: 2700,
+  bouquet: 3300,
+  kayon: 1850,
+  gonjong: 1650,
+  ulos: 1700,
+  paras: 1650,
+  lentera: 1700,
+  jali: 1650,
+  toran: 1600,
 };
 
 // Gerbang yang menyingkap sampul sedikit demi sedikit selama fase 'opening' (latarnya menghilang di bawah
 // animasi, bukan sekaligus di akhir). InvitationView memutar animasi masuk sampul saat gerbang diketuk.
-export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, portal: true, kayon: true };
+export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, taman: true, portal: true, twine: true, ring: true, bouquet: true, kayon: true, gonjong: true, ulos: true, paras: true, lentera: true, jali: true, toran: true };
+
+// Gerbang yang baru menyingkap sampul setelah jeda (ms sejak ketukan): animasi masuk sampul ditunda sebesar itu.
+export const REVEAL_DELAY_MS: Partial<Record<GateKind, number>> = { ring: 1750, bouquet: 1200 };
 
 const CTA: Record<GateKind, string> = {
-  door: 'Ketuk untuk membuka pintu', glass: 'Ketuk untuk membuka jendela', curtain: 'Ketuk untuk membuka tirai', cloth: 'Ketuk untuk membuka kain',
-  envelope: 'Ketuk untuk membuka amplop', portal: 'Ketuk untuk mengaktifkan portal', ring: 'Ketuk untuk memasangkan cincin', bloom: 'Ketuk agar bunga mekar',
-  balloons: 'Ketuk untuk melepas balon', waves: 'Ketuk untuk memanggil ombak', gift: 'Ketuk untuk membuka kado',
-  lantern: 'Ketuk untuk menyalakan lentera', fireworks: 'Ketuk untuk menyalakan kembang api', book: 'Ketuk untuk membuka buku',
-  pressstart: 'Ketuk untuk mulai', loading: 'Ketuk untuk mulai', neon: 'Ketuk untuk menyalakan',
-  sakura: 'Ketuk untuk membuka surat', frost: 'Ketuk untuk membuka surat', leaves: 'Ketuk untuk membuka surat',
-  kayon: 'Ketuk untuk memulai lakon',
+  portal: 'Ketuk untuk mengaktifkan portal', ring: 'Ketuk untuk membuka',
+  sakura: 'Ketuk untuk membuka surat', frost: 'Ketuk untuk membuka surat', leaves: 'Ketuk untuk membuka surat', taman: 'Ketuk untuk membuka surat',
+  twine: 'Ketuk untuk membuka surat', bouquet: 'Ketuk untuk melempar buket',
+  kayon: 'Ketuk kayon untuk membuka',
+  gonjong: 'Ketuk gonjong untuk membuka',
+  ulos: 'Ketuk simpul untuk membuka',
+  paras: 'Ketuk prada untuk membuka',
+  lentera: 'Ketuk medali untuk membuka',
+  jali: 'Buka Undangan',
+  toran: 'Buka Undangan',
 };
 
 // Adegan gelap memakai teks putih; adegan terang memakai warna teks tema.
-const DARK: Partial<Record<GateKind, true>> = { door: true, glass: true, curtain: true, cloth: true, portal: true, lantern: true, fireworks: true, pressstart: true, loading: true, neon: true };
+const DARK: Partial<Record<GateKind, true>> = { portal: true, ring: true, kayon: true, gonjong: true, ulos: true, paras: true };
 // Adegan yang punya teks sendiri (tanpa judul umum di atas).
-const OWN_TITLE: Partial<Record<GateKind, true>> = { envelope: true, book: true, pressstart: true, loading: true, neon: true, sakura: true, frost: true, leaves: true, portal: true, kayon: true };
-
-const rand = (i: number, salt: number) => {
-  const x = Math.sin((i + 1) * 12.9898 + salt * 78.233) * 43758.5453;
-  return x - Math.floor(x);
-};
+const OWN_TITLE: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, taman: true, portal: true, twine: true, ring: true, bouquet: true, kayon: true, gonjong: true, ulos: true, paras: true, lentera: true, jali: true, toran: true };
 
 interface SceneProps {
   names: string;
@@ -61,383 +85,20 @@ interface SceneProps {
   phase: GatePhase;
 }
 
-// ---------- pintu / jendela kaca patri ----------
-
-function Door({ pattern, glass }: { pattern: PatternKind; glass?: boolean }) {
-  const leaf = (side: 'l' | 'r') => (
-    <div className={`g-leaf g-${side} ${glass ? 'g-glassleaf' : 'g-wood'}`}>
-      {glass ? (
-        <div className="g-panes">
-          {Array.from({ length: 8 }, (_, i) => (
-            <span key={i} className="g-pane" style={{ '--c': ['var(--p)', 'var(--s)', 'color-mix(in srgb, var(--p) 55%, #2b5cff)', 'color-mix(in srgb, var(--s) 60%, #ff9f1a)'][(i + (side === 'r' ? 1 : 0)) % 4] } as CSSProperties} />
-          ))}
-        </div>
-      ) : (
-        <>
-          <PatternLayer kind={pattern} opacity={0.28} color="var(--s)" />
-          <span className="g-panel" style={{ top: '7%', height: '38%' }} />
-          <span className="g-panel" style={{ top: '52%', height: '41%' }} />
-          <span className="g-handle" />
-        </>
-      )}
-    </div>
-  );
-  return (
-    <div className="g-door">
-      <div className="g-doorbg" />
-      <div className="g-glow" />
-      {leaf('l')}
-      {leaf('r')}
-    </div>
-  );
-}
-
-// ---------- tirai / kain ----------
-
-function Curtain({ cloth, pattern }: { cloth?: boolean; pattern: PatternKind }) {
-  return (
-    <div className="g-cwrap">
-      <div className="g-stage" />
-      <div className={`g-cur g-cl ${cloth ? 'g-ulos' : 'g-velvet'}`}>{cloth && <PatternLayer kind={pattern === 'none' ? 'zigzag' : pattern} opacity={0.3} color="#fff" />}</div>
-      <div className={`g-cur g-cr ${cloth ? 'g-ulos' : 'g-velvet'}`}>{cloth && <PatternLayer kind={pattern === 'none' ? 'zigzag' : pattern} opacity={0.3} color="#fff" />}</div>
-      {!cloth && <div className="g-valance" />}
-    </div>
-  );
-}
-
-// ---------- amplop ----------
-
-function Envelope({ names, kicker, guest, headingFamily }: SceneProps) {
-  return (
-    <div className="g-envscene">
-      <div className="g-envbg" />
-      <div className="g-envwrap">
-        <div className="g-envback" />
-        <div className="g-card">
-          <small>{kicker}</small>
-          <b style={{ fontFamily: headingFamily }}>{names}</b>
-          <i />
-          {guest && <em>Kepada Yth.<br />{guest}</em>}
-        </div>
-        <div className="g-front" />
-        <div className="g-flap" />
-        <div className="g-seal">
-          <svg viewBox="0 0 24 24" width="46%" fill="currentColor" aria-hidden><path d="M12 21C5 15 2 11.5 2 8a5 5 0 0 1 10-1 5 5 0 0 1 10 1c0 3.5-3 7-10 13Z" /></svg>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ---------- cincin ----------
-
-const sparkle = (cx: number, cy: number, r: number) => `M${cx} ${cy - r}Q${cx} ${cy} ${cx + r} ${cy}Q${cx} ${cy} ${cx} ${cy + r}Q${cx} ${cy} ${cx - r} ${cy}Q${cx} ${cy} ${cx} ${cy - r}Z`;
-function Rings() {
-  return (
-    <div className="g-ringscene">
-      <div className="g-ringbg" />
-      <div className="g-ringswrap">
-        <svg viewBox="0 0 200 120" aria-hidden>
-          <defs>
-            <linearGradient id="g-gold" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" style={{ stopColor: 'color-mix(in srgb, var(--s) 70%, #fff)' }} />
-              <stop offset="0.5" style={{ stopColor: 'var(--p)' }} />
-              <stop offset="1" style={{ stopColor: 'color-mix(in srgb, var(--s) 80%, #000)' }} />
-            </linearGradient>
-          </defs>
-          <g className="g-rA">
-            <circle cx="68" cy="66" r="36" fill="none" stroke="url(#g-gold)" strokeWidth="8" />
-            <path d="M68 24 L75 31 L68 38 L61 31Z" fill="#fff" stroke="var(--s)" strokeWidth="1.2" />
-          </g>
-          <g className="g-rB">
-            <circle cx="132" cy="66" r="36" fill="none" stroke="url(#g-gold)" strokeWidth="8" />
-          </g>
-          {[[100, 30, 9], [72, 86, 6], [128, 92, 7], [100, 66, 12], [52, 44, 5], [150, 46, 5]].map(([x, y, r], i) => (
-            <path key={i} className="g-sp" style={{ animationDelay: `${0.9 + i * 0.12}s` }} d={sparkle(x!, y!, r!)} fill="#fff" stroke="var(--s)" strokeWidth=".8" />
-          ))}
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-// ---------- bunga ----------
-
-function Bloom() {
-  return (
-    <div className="g-bloomscene">
-      <div className="g-bloombg" />
-      <div className="g-flower">
-        <svg viewBox="-100 -100 200 200" aria-hidden>
-          <ellipse cx="-22" cy="70" rx="32" ry="9" fill="var(--s)" opacity=".7" transform="rotate(-25 -22 70)" />
-          <ellipse cx="24" cy="74" rx="32" ry="9" fill="var(--s)" opacity=".7" transform="rotate(20 24 74)" />
-          {Array.from({ length: 12 }, (_, i) => (
-            <g key={i} transform={`rotate(${i * 30})`}>
-              <ellipse className="g-petal" style={{ '--i': i } as CSSProperties} cx="0" cy="-42" rx="17" ry="44" fill="var(--p)" opacity=".92" />
-            </g>
-          ))}
-          {Array.from({ length: 8 }, (_, i) => (
-            <g key={i} transform={`rotate(${i * 45 + 15})`}>
-              <ellipse className="g-petal g-inner" style={{ '--i': i + 4 } as CSSProperties} cx="0" cy="-28" rx="11" ry="28" fill="color-mix(in srgb, var(--p) 45%, #fff)" />
-            </g>
-          ))}
-          <circle r="12" fill="var(--s)" />
-          {Array.from({ length: 7 }, (_, i) => (
-            <circle key={i} cx={Math.cos((i / 7) * 6.283) * 6} cy={Math.sin((i / 7) * 6.283) * 6} r="1.8" fill="#fff" opacity=".8" />
-          ))}
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-// ---------- balon ----------
-
-const BALLOON_COLORS = ['var(--p)', 'var(--s)', '#ff6b8b', '#4db3ff', '#ffd23f', '#7be08c', '#b18cff'];
-
-function Balloons() {
-  const cols = 5;
-  const rows = 6;
-  const items = Array.from({ length: cols * rows }, (_, n) => {
-    const c = n % cols;
-    const r = Math.floor(n / cols);
-    return {
-      left: ((c + 0.5 + (rand(n, 1) - 0.5) * 0.9) / cols) * 100,
-      top: ((r + 0.5 + (rand(n, 2) - 0.5) * 0.9) / rows) * 100,
-      size: 96 + rand(n, 3) * 44,
-      rot: Math.round((rand(n, 4) - 0.5) * 140),
-      delay: ((1 - r / rows) * 0.5 + rand(n, 5) * 0.4).toFixed(2),
-      sway: Math.round((rand(n, 6) - 0.5) * 140),
-      color: BALLOON_COLORS[n % BALLOON_COLORS.length],
-    };
-  });
-  return (
-    <div className="g-scatter">
-      <div className="g-scbg" />
-      {items.map((it, i) => (
-        <span
-          key={i}
-          className="g-item"
-          style={{ left: `${it.left}%`, top: `${it.top}%`, width: it.size, color: it.color, '--r': `${it.rot}deg`, '--d': `${it.delay}s`, '--sw': `${it.sway}px`, zIndex: i % 5 } as CSSProperties}
-        >
-          <svg viewBox="0 0 40 90" fill="currentColor" aria-hidden>
-            <ellipse cx="20" cy="26" rx="18" ry="24" />
-            <ellipse cx="13" cy="16" rx="4" ry="7" fill="rgba(255,255,255,.4)" />
-            <path d="M17 50h6l-3 5z" />
-            <path d="M20 55c-6 10 6 16 0 34" fill="none" stroke="rgba(0,0,0,.35)" strokeWidth="1" />
-          </svg>
-        </span>
-      ))}
-    </div>
-  );
-}
-
-// ---------- ombak ----------
-
-function Waves() {
-  const layers = [
-    { y0: '74%', delay: 0, color: 'color-mix(in srgb, var(--p) 78%, #fff)' },
-    { y0: '68%', delay: 0.16, color: 'var(--p)' },
-    { y0: '62%', delay: 0.32, color: 'color-mix(in srgb, var(--p) 70%, #002b45)' },
-    { y0: '56%', delay: 0.48, color: 'color-mix(in srgb, var(--s) 50%, var(--p))' },
-  ];
-  return (
-    <div className="g-wavescene">
-      <div className="g-sky">
-        <span className="g-sun" />
-      </div>
-      {layers.map((l, i) => (
-        <div key={i} className="g-wv" style={{ '--y0': l.y0, '--wd': `${l.delay}s`, background: l.color, color: l.color } as CSSProperties}>
-          <svg className="g-crest" viewBox="0 0 400 30" preserveAspectRatio="none" aria-hidden>
-            <path d="M0 30V14C30 2 60 2 100 14S170 26 200 14 270 2 300 14 370 26 400 14V30Z" fill="currentColor" />
-          </svg>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ---------- kado ----------
-
-function Gift() {
-  return (
-    <div className="g-giftscene">
-      <div className="g-giftbg" />
-      <div className="g-giftwrap">
-        {Array.from({ length: 16 }, (_, i) => (
-          <span key={i} className="g-conf" style={{ '--dx': `${Math.round(Math.cos((i / 16) * 6.283) * (90 + rand(i, 1) * 70))}px`, '--dy': `${Math.round(Math.sin((i / 16) * 6.283) * (90 + rand(i, 2) * 70) - 40)}px`, background: ['var(--p)', 'var(--s)', '#fff', '#ffd23f'][i % 4], animationDelay: `${0.2 + rand(i, 3) * 0.15}s` } as CSSProperties} />
-        ))}
-        <svg viewBox="0 0 120 120" aria-hidden>
-          <g className="g-gbody">
-            <rect x="10" y="54" width="100" height="60" rx="3" fill="var(--p)" />
-            <rect x="54" y="54" width="12" height="60" fill="var(--s)" />
-            <rect x="10" y="54" width="100" height="7" fill="rgba(0,0,0,.15)" />
-          </g>
-          <g className="g-glid">
-            <rect x="4" y="38" width="112" height="19" rx="3" fill="color-mix(in srgb, var(--p) 82%, #000)" />
-            <rect x="54" y="38" width="12" height="19" fill="var(--s)" />
-            <ellipse cx="44" cy="31" rx="17" ry="9" fill="var(--s)" transform="rotate(-24 44 31)" />
-            <ellipse cx="76" cy="31" rx="17" ry="9" fill="var(--s)" transform="rotate(24 76 31)" />
-            <circle cx="60" cy="35" r="6" fill="color-mix(in srgb, var(--s) 70%, #000)" />
-          </g>
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-// ---------- lentera ----------
-
-function Lanterns() {
-  const spots = [
-    { x: 24, y: 40, s: 1.05, d: 0 },
-    { x: 74, y: 34, s: 1.15, d: 0.12 },
-    { x: 49, y: 58, s: 0.8, d: 0.25 },
-    { x: 12, y: 68, s: 0.62, d: 0.35 },
-    { x: 88, y: 66, s: 0.7, d: 0.2 },
-  ];
-  return (
-    <div className="g-lanscene">
-      <div className="g-lanbg" />
-      {spots.map((p, i) => (
-        <div key={i} className="g-lan" style={{ left: `${p.x}%`, top: `${p.y}%`, width: `${26 * p.s}%`, '--d': `${p.d}s`, animationDelay: `-${i * 0.7}s` } as CSSProperties}>
-          <svg viewBox="0 0 60 130" aria-hidden>
-            <path d="M30 0v22" stroke="var(--s)" strokeWidth="1.5" />
-            <rect x="18" y="22" width="24" height="7" rx="2" fill="var(--s)" />
-            <ellipse cx="30" cy="56" rx="26" ry="30" fill="var(--p)" />
-            <ellipse cx="30" cy="56" rx="26" ry="30" fill="url(#g-lanshine)" />
-            <path d="M30 26c-14 12-14 48 0 60M30 26c14 12 14 48 0 60M30 26v60" stroke="rgba(0,0,0,.18)" strokeWidth="1.2" fill="none" />
-            <rect x="18" y="84" width="24" height="7" rx="2" fill="var(--s)" />
-            <path d="M30 91v12M25 91l-3 22M35 91l3 22" stroke="var(--s)" strokeWidth="2" strokeLinecap="round" />
-            <defs>
-              <radialGradient id="g-lanshine" cx="50%" cy="45%" r="55%">
-                <stop offset="0" stopColor="#ffd98a" stopOpacity=".95" />
-                <stop offset="1" stopColor="#ff9a3a" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-          </svg>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ---------- kembang api ----------
-
-const BURSTS = [
-  { x: 50, y: 34, color: 'var(--s)', delay: 0.2 },
-  { x: 24, y: 50, color: '#ff6b8b', delay: 0.65 },
-  { x: 76, y: 44, color: 'color-mix(in srgb, var(--p) 55%, #8ad4ff)', delay: 1.05 },
-];
-function Fireworks() {
-  return (
-    <div className="g-fwscene">
-      <div className="g-fwbg">
-        {Array.from({ length: 26 }, (_, i) => (
-          <span key={i} className="g-star" style={{ left: `${rand(i, 1) * 100}%`, top: `${rand(i, 2) * 70}%`, animationDelay: `${(rand(i, 3) * 3).toFixed(2)}s` }} />
-        ))}
-        <div className="g-city" />
-      </div>
-      {BURSTS.map((b, bi) => (
-        <div key={bi} className="g-burst" style={{ left: `${b.x}%`, top: `${b.y}%`, color: b.color }}>
-          <span className="g-rocket" style={{ animationDelay: `${b.delay - 0.2}s`, height: `${100 - b.y}cqh` }} />
-          {Array.from({ length: 22 }, (_, i) => {
-            const ang = (i / 22) * 6.283;
-            const dist = 70 + (i % 3) * 22;
-            return <span key={i} className="g-spark" style={{ '--dx': `${Math.round(Math.cos(ang) * dist)}px`, '--dy': `${Math.round(Math.sin(ang) * dist)}px`, animationDelay: `${b.delay}s` } as CSSProperties} />;
-          })}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ---------- buku ----------
-
-function Book({ names, kicker, headingFamily }: SceneProps) {
-  return (
-    <div className="g-bookscene">
-      <div className="g-bookbg" />
-      <div className="g-book">
-        <div className="g-bkpages" />
-        <div className="g-bkcover">
-          <div className="g-bkfront">
-            <small>{kicker}</small>
-            <b style={{ fontFamily: headingFamily }}>{names}</b>
-            <i />
-          </div>
-          <div className="g-bkback" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ---------- game ----------
-
-function PressStart({ names }: SceneProps) {
-  return (
-    <div className="g-crt">
-      <div className="g-scan" />
-      <small className="g-pxs">{names}</small>
-      <b className="g-blink">PRESS START</b>
-      <small className="g-pxs">1 PLAYER</small>
-    </div>
-  );
-}
-
-function Loading({ names }: SceneProps) {
-  return (
-    <div className="g-load">
-      <PatternLayer kind="grid" opacity={0.22} color="var(--s)" />
-      <small className="g-pxs">{names}</small>
-      <div className="g-bar"><div className="g-barfill" /></div>
-      <span className="g-lt g-lt1">SIAP MAIN?</span>
-      <span className="g-lt g-lt2">READY!</span>
-    </div>
-  );
-}
-
-function Neon({ names, headingFamily }: SceneProps) {
-  return (
-    <div className="g-neonscene">
-      <div className="g-neonbg g-holed" />
-      <div className="g-neonwrap">
-        <div className="g-neonframe">
-          <span className="g-neontxt" style={{ fontFamily: headingFamily }}>{names}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
   switch (kind) {
-    case 'door': return <Door pattern={p.pattern} />;
-    case 'glass': return <Door pattern={p.pattern} glass />;
-    case 'curtain': return <Curtain pattern={p.pattern} />;
-    case 'cloth': return <Curtain cloth pattern={p.pattern} />;
-    case 'envelope': return <Envelope {...p} />;
     case 'portal': return <MagicPortal look={p.motif === 'galaksi' ? 'orbit' : 'rune'} phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
-    case 'ring': return <Rings />;
-    case 'bloom': return <Bloom />;
+    case 'bouquet': return <BouquetGate phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
+    case 'ring': return <RingBox phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'leaves': return <LetterGust kind="leaves" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
-    case 'balloons': return <Balloons />;
-    case 'waves': return <Waves />;
-    case 'gift': return <Gift />;
-    case 'lantern': return <Lanterns />;
-    case 'fireworks': return <Fireworks />;
+    case 'taman': return <LetterGust kind="taman" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'frost': return <LetterGust kind="frost" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
-    case 'book': return <Book {...p} />;
-    case 'pressstart': return <PressStart {...p} />;
-    case 'loading': return <Loading {...p} />;
-    case 'neon': return <Neon {...p} />;
+    case 'twine': return <LetterGust kind="rustic" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'sakura': return <LetterGust kind="sakura" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
-    case 'kayon': return <WayangKayon phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
   }
 }
 
-export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, motif, headingFamily, onOpen }: {
+export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, motif, headingFamily, artwork, onOpen, dateText }: {
   kind: GateKind;
   phase: GatePhase;
   embedded: boolean;
@@ -447,8 +108,23 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
   pattern: PatternKind;
   motif: string;
   headingFamily: string;
+  artwork?: ArtworkManifest;
   onOpen: () => void;
+  dateText?: string;
 }) {
+  const seasonal = hasSeasonalGate(artwork, motif);
+  const lavender = motif === 'lavender';
+  const wisteria = motif === 'wisteria';
+  const marigold = motif === 'marigold';
+  const serambi = motif === 'garden';
+  const hortensia = motif === 'hortensia';
+  const sekarKeraton = hasSekarKeratonGate(artwork, motif);
+  const pusako = hasPusakoGate(artwork, motif);
+  const ulos = hasUlosGate(artwork, motif);
+  const candi = hasCandiGate(artwork, motif);
+  const lentera = hasLenteraGate(artwork, motif);
+  const jali = hasJaliGate(artwork, motif);
+  const toran = hasToranGate(artwork, motif);
   const onKey = (e: KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
@@ -456,18 +132,46 @@ export function Gate({ kind, phase, embedded, names, kicker, guest, pattern, mot
     }
   };
   return (
-    <div className={embedded ? 'absolute inset-x-0 top-0 z-[60] h-[810px]' : 'fixed inset-y-0 left-1/2 z-[60] w-full max-w-[480px] -translate-x-1/2'}>
+    <div className={`wl-gate-host ${embedded ? 'absolute inset-x-0 top-0 z-[60] h-full' : 'fixed inset-y-0 left-1/2 z-[60] w-full max-w-[480px] -translate-x-1/2'}`}>
       <style>{GATE_CSS}</style>
-      <div className="wl-gate" data-kind={kind} data-phase={phase} data-tone={DARK[kind] ? 'dark' : 'light'} role="button" tabIndex={0} aria-label={`Buka undangan. ${CTA[kind]}`} onClick={onOpen} onKeyDown={onKey}>
-        <Scene kind={kind} names={names} kicker={kicker} guest={guest} pattern={pattern} motif={motif} headingFamily={headingFamily} phase={phase} />
-        {!OWN_TITLE[kind] && (
-          <div className="wl-gate-title">
-            <small>{kicker}</small>
-            <b style={{ fontFamily: headingFamily }}>{names}</b>
-            {guest && <em>Kepada Yth. {guest}</em>}
-          </div>
+      <div
+        className="wl-gate"
+        data-kind={kind}
+        data-phase={phase}
+        data-tone={DARK[kind] ? 'dark' : 'light'}
+        data-seasonal={seasonal ? 'true' : undefined}
+        {...(hortensia || lavender || wisteria || marigold || serambi || seasonal || pusako || candi || lentera || jali || toran ? {} : { role: 'button', tabIndex: 0, 'aria-label': `Buka undangan. ${CTA[kind]}`, onClick: onOpen, onKeyDown: onKey })}
+      >
+        {hortensia ? <HortensiaGate artwork={artwork} names={names} kicker={kicker} dateText={dateText} guest={guest} phase={phase} onOpen={onOpen} /> : lavender || wisteria || marigold || serambi ? <LavenderGate artwork={artwork} design={serambi ? 'garden' : marigold ? 'marigold' : wisteria ? 'wisteria' : 'lavender'} names={names} kicker={kicker} dateText={dateText} guest={guest} phase={phase} onOpen={onOpen} /> : seasonal ? (
+          <SeasonalGate designId={artwork.designId as SeasonalGateDesign} phase={phase} artwork={artwork} names={names} kicker={kicker} guest={guest} headingFamily={headingFamily} onOpen={onOpen} />
+        ) : toran && artwork ? (
+          <ToranGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} onOpen={onOpen} />
+        ) : jali && artwork ? (
+          <JaliGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta="Buka undangan" dateText={dateText} onOpen={onOpen} />
+        ) : lentera && artwork ? (
+          <LenteraGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta="Buka undangan" dateText={dateText} onOpen={onOpen} />
+        ) : candi && artwork ? (
+          <CandiGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta="Buka undangan" dateText={dateText} onOpen={onOpen} />
+        ) : ulos && artwork ? (
+          <UlosGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} dateText={dateText} />
+        ) : pusako && artwork ? (
+          <PusakoGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} dateText={dateText} onOpen={onOpen} />
+        ) : sekarKeraton && artwork ? (
+          <SekarKeratonGate artwork={artwork} phase={phase} names={names} kicker={kicker} guest={guest} cta={CTA[kind]} />
+        ) : (
+          <>
+            <TemplateArtwork artwork={artwork} context="gate" />
+            <Scene kind={kind} names={names} kicker={kicker} guest={guest} pattern={pattern} motif={motif} headingFamily={headingFamily} phase={phase} />
+            {!OWN_TITLE[kind] && (
+              <div className="wl-gate-title">
+                <small>{kicker}</small>
+                <b style={{ fontFamily: headingFamily }}>{names}</b>
+                {guest && <em>Kepada Yth. {guest}</em>}
+              </div>
+            )}
+            <div className="wl-gate-cta">{CTA[kind]}</div>
+          </>
         )}
-        <div className="wl-gate-cta">{CTA[kind]}</div>
       </div>
     </div>
   );
@@ -479,8 +183,14 @@ const GATE_CSS = `
 .wl-gate[data-tone=dark]{color:#fff}
 .wl-gate *{box-sizing:border-box}
 .wl-gate svg{display:block}
-.wl-gate-cta{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);z-index:30;white-space:nowrap;padding:.75em 1.6em;border-radius:var(--rb);background:var(--p);color:#fff;font-size:13.5px;font-weight:500;letter-spacing:.04em;box-shadow:0 10px 26px -8px rgba(0,0,0,.5);animation:wl-pulse 2.4s ease-in-out infinite;transition:opacity .3s}
+.wl-gate-cta{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);z-index:30;white-space:nowrap;padding:.75em 1.6em;border-radius:var(--rb);background:var(--p);color:#fff;font-size:13.5px;font-weight:500;letter-spacing:.04em;box-shadow:0 10px 26px -8px rgba(0,0,0,.5);transition:opacity .3s}
+/* denyut tombol = cincin yang membesar & memudar (transform + opacity, jalan di compositor). Jangan menganimasikan box-shadow di sini: dicat ulang di thread utama tiap frame dan membuat gerbang lag di ponsel. */
+.wl-gate-cta::before{content:'';position:absolute;inset:0;border-radius:inherit;border:2px solid color-mix(in srgb,var(--p) 60%,transparent);opacity:0;pointer-events:none;animation:wl-cta-ring 2.4s ease-out infinite}
+@keyframes wl-cta-ring{0%{transform:scale(1);opacity:.7}70%,100%{transform:scale(1.2,1.5);opacity:0}}
 .wl-gate:focus-visible .wl-gate-cta{outline:2px solid #fff;outline-offset:3px}
+.wl-gate[data-kind=ring]{--vel:color-mix(in oklch,var(--tx) 84%,white);--rb-lit:color-mix(in oklch,var(--tx) 78%,white);--rb-mid:color-mix(in oklch,var(--tx) 88%,black);--rb-dark:color-mix(in oklch,var(--tx) 38%,black)}
+@supports (color:oklch(from red l c h)){.wl-gate[data-kind=ring]{--vel:oklch(from var(--tx) calc(l + .15) calc(c * 1.6) h);--rb-lit:oklch(from var(--tx) calc(l + .13) calc(c * 1.5) h);--rb-mid:oklch(from var(--tx) calc(l - .02) calc(c * 1.2) h);--rb-dark:oklch(from var(--tx) calc(l * .45) calc(c * .9) h)}}
+.wl-gate[data-kind=ring] .wl-gate-cta{background:var(--foil);color:color-mix(in srgb,var(--tx) 92%,#000);border:1px solid color-mix(in srgb,var(--p) 55%,#3a2600);border-radius:2px;font-family:var(--font-cinzel),serif;font-size:11.5px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;text-shadow:0 1px 0 rgba(255,255,255,.35)}
 .wl-gate-title{position:absolute;left:0;right:0;top:8%;z-index:30;text-align:center;padding:0 8%;pointer-events:none;transition:opacity .35s;text-shadow:0 2px 14px rgba(0,0,0,.28)}
 .wl-gate[data-tone=light] .wl-gate-title{text-shadow:none}
 .wl-gate[data-kind=door] .wl-gate-title,.wl-gate[data-kind=glass] .wl-gate-title,.wl-gate[data-kind=cloth] .wl-gate-title,.wl-gate[data-kind=curtain] .wl-gate-title{top:0;padding-top:8%;padding-bottom:14%;background:linear-gradient(rgba(0,0,0,.62),rgba(0,0,0,0))}
@@ -497,11 +207,50 @@ const GATE_CSS = `
 @keyframes g-bob{0%,100%{translate:0 0}50%{translate:0 -6px}}
 @keyframes g-blink{50%{opacity:0}}
 @keyframes g-twinkle{0%,100%{opacity:.15}50%{opacity:1}}
-/* api & cahaya blencong (wayang-kayon.tsx) */
-.g-flame{transform-box:fill-box;transform-origin:50% 100%;animation:g-flame 1.3s ease-in-out infinite}
-@keyframes g-flame{0%,100%{transform:scale(1,1)}30%{transform:scale(.9,1.1)}60%{transform:scale(1.06,.94)}}
-.g-flicker{animation:g-flicker 2.6s ease-in-out infinite}
-@keyframes g-flicker{0%,100%{opacity:1}40%{opacity:.8}55%{opacity:.95}70%{opacity:.85}}
+/* gerbang kayon (wayang-kayon.tsx): dua daun kelir bergeser, gunungan bergoyang lalu naik; hanya transform & opacity. Waktu = KAYON_T. */
+.kg-scene{position:absolute;inset:0;overflow:hidden;color:var(--bg)}
+.kg-panel{position:absolute;top:0;bottom:0;width:50.4%;overflow:hidden;z-index:2;background:var(--kr-kawung-dark,none),linear-gradient(180deg,color-mix(in srgb,var(--p) 60%,#000),color-mix(in srgb,var(--p) 84%,#000) 46%,color-mix(in srgb,var(--p) 54%,#000));will-change:transform;transition:transform 1.15s cubic-bezier(.7,0,.25,1) .8s}
+.kg-pl{left:0}
+.kg-pr{right:0;background-position:calc(-49.6cqw) 0,0 0}
+.kg-parang{position:absolute;top:0;bottom:0;width:22px;background:var(--kr-parang,none) 0 0/22px 22px repeat-y}
+.kg-pl .kg-parang{left:0;border-right:2px solid var(--s)}
+.kg-pr .kg-parang{right:0;border-left:2px solid var(--s)}
+.kg-band{position:absolute;left:0;right:0;height:14px;background:var(--kr-band,none) repeat-x 0 0/auto 14px}
+.kg-pr .kg-band{background-position:calc(-49.6cqw) 0}
+.kg-bt{top:0}.kg-bb{bottom:0}
+.kg-seam{position:absolute;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--s),color-mix(in srgb,var(--s) 55%,#3d2a00) 50%,var(--s))}
+.kg-pl .kg-seam{right:0}.kg-pr .kg-seam{left:0}
+.wl-gate[data-phase=opening] .kg-pl{transform:translateX(-101%)}
+.wl-gate[data-phase=opening] .kg-pr{transform:translateX(101%)}
+.kg-dust{position:absolute;inset:0;z-index:3;color:var(--s);pointer-events:none;transition:opacity .6s ease .5s}
+.wl-gate[data-phase=opening] .kg-dust{opacity:0}
+.kg-fade{transition:opacity .35s ease}
+.wl-gate[data-phase=opening] .kg-fade{opacity:0}
+.kg-head{position:absolute;left:0;right:0;top:6cqh;z-index:5;text-align:center;padding:0 8%}
+.kg-aksara{font-family:var(--font-javanese),serif;font-size:1.65rem;line-height:1.45;padding:0 .1em .6em;margin-bottom:-.5em}
+.kg-kicker{margin-top:.35em;font-family:var(--font-montserrat),sans-serif;font-size:10.5px;font-weight:500;letter-spacing:.36em;text-transform:uppercase;color:color-mix(in srgb,var(--bg) 82%,transparent)}
+.kg-stage{position:absolute;left:0;right:0;top:19cqh;height:44cqh;z-index:4;display:flex;justify-content:center}
+.kg-glow{position:absolute;left:50%;top:50%;width:120cqw;height:120cqw;margin:-60cqw 0 0 -60cqw;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--s) 46%,transparent) 0,color-mix(in srgb,var(--s) 14%,transparent) 38%,transparent 66%);opacity:.6;animation:kg-breathe 3.6s ease-in-out infinite alternate;will-change:transform,opacity}
+@keyframes kg-breathe{from{opacity:.42;transform:scale(.94)}to{opacity:.78;transform:scale(1.06)}}
+.wl-gate[data-phase=opening] .kg-glow{animation:kg-flash 1.3s ease-out .5s both}
+@keyframes kg-flash{0%{opacity:.6;transform:scale(1)}35%{opacity:1;transform:scale(1.5)}100%{opacity:0;transform:scale(2.6)}}
+.kg-mark{position:relative;height:100%;aspect-ratio:200/272;transform-origin:50% 92%}
+.kg-float{height:100%;width:100%;animation:kg-float 4.2s ease-in-out infinite alternate}
+@keyframes kg-float{from{transform:translateY(0)}to{transform:translateY(-6px)}}
+.wl-gate[data-phase=opening] .kg-mark{animation:kg-wobble .7s ease-in-out both;will-change:transform}
+.wl-gate[data-phase=opening] .kg-float{animation:kg-lift 1.1s cubic-bezier(.5,0,.8,.5) .6s both;will-change:transform,opacity}
+@keyframes kg-wobble{0%{transform:rotate(0)}22%{transform:rotate(-6deg)}50%{transform:rotate(5deg)}76%{transform:rotate(-2.5deg)}100%{transform:rotate(0)}}
+@keyframes kg-lift{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-16cqh) scale(1.14);opacity:0}}
+.kg-names{position:absolute;left:0;right:0;top:65cqh;z-index:5;text-align:center;padding:0 9%}
+.kg-names b{display:block;font-weight:500;font-size:2.05rem;line-height:1.12;color:var(--bg);text-shadow:0 2px 14px rgba(0,0,0,.35)}
+.kg-names b.kg-long{font-size:1.6rem}
+.kg-rule{display:block;position:relative;width:120px;height:9px;margin:.7em auto .55em}
+.kg-rule::before{content:'';position:absolute;left:0;right:0;top:4px;height:1px;background:linear-gradient(90deg,transparent,var(--s) 30%,var(--s) 70%,transparent)}
+.kg-rule i{position:absolute;left:50%;top:0;width:8px;height:8px;margin-left:-4px;transform:rotate(45deg);background:var(--s)}
+.kg-names small{display:block;font-family:var(--font-montserrat),sans-serif;font-size:9.5px;letter-spacing:.3em;text-transform:uppercase;color:color-mix(in srgb,var(--bg) 78%,transparent)}
+.kg-names em{display:block;margin-top:.25em;font-style:normal;font-family:var(--font-playfair),serif;font-size:1.15rem;font-weight:600;color:var(--bg)}
+.wl-gate[data-kind=kayon] .wl-gate-cta{background:var(--p);color:var(--bg);border:1px solid var(--s);border-radius:2px;font-family:var(--font-montserrat),sans-serif;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;box-shadow:inset 0 0 0 2px var(--p),inset 0 0 0 3px color-mix(in srgb,var(--s) 70%,transparent),0 12px 24px -10px rgba(0,0,0,.6)}
+.wl-gate[data-kind=kayon] .wl-gate-cta::before{border-color:color-mix(in srgb,var(--s) 75%,transparent);border-radius:2px}
 
 /* pintu & jendela kaca patri */
 .g-door{position:absolute;inset:0;perspective:1400px}
@@ -536,50 +285,6 @@ const GATE_CSS = `
 .wl-gate[data-phase=opening] .g-valance{transform:translateY(-110%)}
 .wl-gate[data-phase=opening] .g-stage{opacity:0;transition:opacity .7s ease 1.5s}
 
-/* amplop */
-.g-envscene{position:absolute;inset:0}
-.g-envbg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb,var(--s) 40%,var(--bg)),var(--bg) 72%);transition:opacity 1s ease 1.6s}
-.g-envwrap{position:absolute;left:50%;top:50%;width:82%;aspect-ratio:1.45;transform:translate(-50%,-44%);transition:transform 1.2s cubic-bezier(.6,0,.2,1) 1.7s,opacity .9s ease 1.9s}
-.g-envback{position:absolute;inset:0;background:color-mix(in srgb,var(--s) 62%,var(--bg));border-radius:4px;box-shadow:0 24px 44px -18px rgba(0,0,0,.45)}
-.g-card{position:absolute;left:7%;right:7%;top:9%;bottom:9%;z-index:2;background:#fffdf8;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#3b2a20;padding:5%;transition:transform 1.05s cubic-bezier(.4,0,.2,1) .75s;box-shadow:0 2px 10px rgba(0,0,0,.15)}
-.g-card small{font-size:9px;letter-spacing:.3em;text-transform:uppercase;opacity:.7}
-.g-card b{margin-top:.5em;font-size:1.45rem;line-height:1.15;color:var(--p);font-weight:600}
-.g-card i{display:block;width:34%;height:1px;margin-top:.9em;background:var(--s)}
-.g-card em{display:block;margin-top:.85em;font-size:11px;font-style:normal;line-height:1.5;opacity:.75}
-.g-front{position:absolute;inset:0;z-index:3;background:color-mix(in srgb,var(--s) 78%,var(--bg));clip-path:polygon(0 0,50% 54%,100% 0,100% 100%,0 100%);filter:drop-shadow(0 -2px 3px rgba(0,0,0,.18))}
-.g-flap{position:absolute;left:0;right:0;top:0;height:57%;z-index:4;transform-origin:50% 0;background:color-mix(in srgb,var(--s) 55%,var(--p));clip-path:polygon(0 0,100% 0,50% 100%);transition:transform .9s cubic-bezier(.5,0,.2,1) .05s,z-index 0s .45s}
-.g-seal{position:absolute;left:50%;top:54%;width:17%;aspect-ratio:1;transform:translate(-50%,-50%);z-index:5;border-radius:50%;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--p) 60%,#fff),var(--p) 60%,color-mix(in srgb,var(--p) 60%,#000));color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(0,0,0,.35);animation:g-bob 3s ease-in-out infinite}
-.wl-gate[data-phase=opening] .g-flap{transform:rotateX(180deg);z-index:1}
-.wl-gate[data-phase=opening] .g-seal{opacity:0;transform:translate(-50%,-50%) scale(1.5);transition:opacity .3s,transform .3s;animation:none}
-.wl-gate[data-phase=opening] .g-card{transform:translateY(-52%)}
-.wl-gate[data-phase=opening] .g-envwrap{transform:translate(-50%,130%) scale(.9);opacity:0}
-.wl-gate[data-phase=opening] .g-envbg{opacity:0}
-
-/* cincin */
-.g-ringscene{position:absolute;inset:0}
-.g-ringbg{position:absolute;inset:0;background:radial-gradient(circle at 50% 44%,color-mix(in srgb,var(--s) 38%,var(--bg)),var(--bg) 72%);transition:opacity 1s ease 1.7s}
-.g-ringswrap{position:absolute;left:50%;top:44%;width:88%;aspect-ratio:5/3;transform:translate(-50%,-50%);filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));transition:opacity .9s ease 1.8s,transform 1.2s ease 1.6s}
-.g-ringswrap svg{width:100%;height:100%;overflow:visible}
-.g-rA,.g-rB{transition:transform 1.3s cubic-bezier(.5,0,.2,1) .1s;transform-box:fill-box;transform-origin:center;animation:g-bob 3.4s ease-in-out infinite}
-.g-rB{animation-delay:-1.7s}
-.g-sp{opacity:0;transform-box:fill-box;transform-origin:center}
-.wl-gate[data-phase=opening] .g-rA{transform:translateX(17%) rotate(24deg);animation:none}
-.wl-gate[data-phase=opening] .g-rB{transform:translateX(-17%) rotate(-24deg);animation:none}
-.wl-gate[data-phase=opening] .g-sp{animation:g-pop 1.1s ease-out forwards}
-@keyframes g-pop{0%{opacity:0;transform:scale(.2)}35%{opacity:1;transform:scale(1.5)}100%{opacity:0;transform:scale(.8)}}
-.wl-gate[data-phase=opening] .g-ringswrap{opacity:0;transform:translate(-50%,-50%) scale(1.3)}
-.wl-gate[data-phase=opening] .g-ringbg{opacity:0}
-
-/* bunga */
-.g-bloomscene{position:absolute;inset:0}
-.g-bloombg{position:absolute;inset:0;background:radial-gradient(circle at 50% 46%,color-mix(in srgb,var(--p) 14%,var(--bg)),var(--bg) 72%);transition:opacity 1s ease 1.7s}
-.g-flower{position:absolute;left:50%;top:46%;width:86%;aspect-ratio:1;transform:translate(-50%,-50%);transition:transform 1.5s cubic-bezier(.5,0,.3,1) 1.5s,opacity .9s ease 2s;animation:g-bob 4s ease-in-out infinite}
-.g-flower svg{width:100%;height:100%;overflow:visible}
-.g-petal{transform-box:fill-box;transform-origin:50% 100%;transform:scale(.28);transition:transform 1.5s cubic-bezier(.3,1.35,.4,1) calc(var(--i) * 45ms + .1s)}
-.wl-gate[data-phase=opening] .g-petal{transform:scale(1)}
-.wl-gate[data-phase=opening] .g-flower{transform:translate(-50%,-50%) scale(5.5);opacity:0;animation:none}
-.wl-gate[data-phase=opening] .g-bloombg{opacity:0}
-
 /* balon */
 .g-scatter{position:absolute;inset:0}
 .g-scbg{position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--p) 16%,var(--bg)),var(--bg) 75%);transition:opacity 1s ease .55s}
@@ -588,16 +293,6 @@ const GATE_CSS = `
 .wl-gate[data-phase=opening] .g-scbg{opacity:0}
 .wl-gate[data-phase=opening] .g-item{animation:g-rise 2.2s cubic-bezier(.4,0,.6,1) var(--d) forwards}
 @keyframes g-rise{to{transform:translate(calc(-50% + var(--sw)),-150cqh) rotate(calc(var(--r) * -1))}}
-
-/* ombak */
-.g-wavescene{position:absolute;inset:0;overflow:hidden}
-.g-sky{position:absolute;inset:0;background:linear-gradient(#ffe9c2,#bfe6ff 62%,color-mix(in srgb,var(--p) 30%,#bfe6ff));transition:opacity .8s ease 1.8s}
-.g-sun{position:absolute;left:50%;top:26%;width:26%;aspect-ratio:1;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,#fff6d6,#ffd166 60%,transparent 72%)}
-.g-wv{position:absolute;left:0;right:0;top:0;height:112%;transform:translateY(var(--y0))}
-.g-crest{position:absolute;left:0;top:-29px;width:100%;height:30px;animation:g-bob 3.2s ease-in-out infinite}
-.wl-gate[data-phase=opening] .g-wv{animation:g-sweep 2.3s cubic-bezier(.45,0,.3,1) var(--wd) forwards}
-.wl-gate[data-phase=opening] .g-sky{opacity:0}
-@keyframes g-sweep{0%{transform:translateY(var(--y0))}42%{transform:translateY(-8%)}100%{transform:translateY(115%)}}
 
 /* kado */
 .g-giftscene{position:absolute;inset:0}
@@ -681,9 +376,29 @@ const GATE_CSS = `
 .wl-gate[data-phase=opening] .g-neontxt{animation:none;text-shadow:0 0 10px #fff,0 0 30px var(--s),0 0 70px var(--p)}
 .wl-gate[data-phase=opening] .g-neonbg{animation:g-hole 1.5s cubic-bezier(.5,0,.3,1) .6s forwards;opacity:0}
 
+/* lempar buket (bouquet-gate.tsx): hanya animasi CSS pada transform/opacity (jalan di compositor, tanpa JS per frame); waktu sama dengan BOUQUET_T.
+   Jangan memakai mask / filter / properti kustom beranimasi di sini: berat di ponsel (dulu ada dinding bunga bermask yang menyapu layar). */
+.bq-scene{position:absolute;inset:0;transform-origin:50% 40%}
+.bq-fade{transition:opacity .35s ease}
+.wl-gate[data-phase=opening] .bq-fade{opacity:0}
+.wl-gate[data-phase=opening] .bq-scene{opacity:0;transform:scale(1.06);transition:opacity .8s ease 1.15s,transform 1.1s ease-in 1.15s}
+.bq-squash{transform-origin:50% 100%}
+.wl-gate[data-phase=opening] .bq-squash{animation:bq-squash .65s ease-out both}
+@keyframes bq-squash{0%{transform:translateY(0) scale(1,1)}45%{transform:translateY(6px) scale(1.05,.92)}80%{transform:translateY(-4px) scale(.97,1.05)}100%{transform:translateY(0) scale(1,1)}}
+.wl-gate[data-phase=opening] .bq-toss{animation:bq-toss .95s cubic-bezier(.22,.6,.3,1) .3s both;will-change:transform,opacity}
+@keyframes bq-toss{0%{transform:translate3d(0,0,0) rotate(0deg) scale(1);opacity:1}82%{opacity:1}100%{transform:translate3d(12cqw,-26cqh,0) rotate(-300deg) scale(.72);opacity:0}}
+.bq-flash,.bq-bit,.bq-trail{opacity:0}
+.bq-bit,.bq-trail{position:absolute}
+.wl-gate[data-phase=opening] .bq-flash{animation:bq-flash .75s ease-out 1.15s both;will-change:transform,opacity}
+@keyframes bq-flash{0%{opacity:0;transform:scale(.2)}30%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.5)}}
+.wl-gate[data-phase=opening] .bq-bit{animation-name:bq-pop;animation-timing-function:linear;animation-fill-mode:both;will-change:transform,opacity}
+.wl-gate[data-phase=opening] .bq-trail{animation-name:bq-trail;animation-timing-function:ease-in;animation-fill-mode:both;will-change:transform,opacity}
+@keyframes bq-pop{0%{transform:translate3d(0,0,0) scale(.2) rotate(0deg);opacity:0;animation-timing-function:cubic-bezier(.2,.7,.3,1)}10%{opacity:1}34%{transform:translate3d(var(--x1),var(--y1),0) scale(1) rotate(calc(var(--spin) * .34));animation-timing-function:cubic-bezier(.5,0,.9,.6)}72%{opacity:1}100%{transform:translate3d(var(--x2),var(--y2),0) scale(1) rotate(var(--spin));opacity:0}}
+@keyframes bq-trail{0%{transform:translate3d(0,0,0) scale(.4) rotate(0deg);opacity:0}10%{opacity:1}70%{opacity:1}100%{transform:translate3d(var(--dx),var(--dy),0) scale(1) rotate(var(--spin));opacity:0}}
+
 /* kurangi gerakan: tanpa gerak, hanya memudar */
 @media (prefers-reduced-motion:reduce){
-  .wl-gate *{animation:none!important;transition:none!important}
+  .wl-gate *,.wl-gate *::before,.wl-gate *::after{animation:none!important;transition:none!important}
   .wl-gate{transition:opacity .3s ease!important}
   .wl-gate[data-phase=opening]{opacity:0}
 }

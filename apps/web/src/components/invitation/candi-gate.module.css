@@ -1,0 +1,56 @@
+.gate {
+  --cg-ivory: #f6e9ce;
+  --cg-gold: #dfbd7b;
+  position: absolute; inset: 0; isolation: isolate; overflow: hidden; container-type: size;
+  background: #813428; color: var(--cg-ivory); font-family: var(--font-cormorant), Georgia, serif;
+  pointer-events: none; transition: opacity .5s ease .8s;
+}
+.gate * { box-sizing: border-box; }
+.gate p, .gate h1 { margin: 0; padding: 0; }
+.stage { position: absolute; isolation: isolate; left: 50%; bottom: 0; width: 66.667cqh; aspect-ratio: 2/3; transform: translateX(-50%); }
+.stage::before, .stage::after { content: ''; position: absolute; inset-block: 0; width: 50%; z-index: -1; background: var(--cg-background) left top/200% 100% no-repeat; }
+.stage::before { left: 0; }
+.stage::after { right: 0; transform: scaleX(-1); }
+.portal { position: absolute; inset: 0 23.65% 11.65%; overflow: hidden; }
+.panel { position: absolute; inset-block: 0; width: 50%; overflow: hidden; transition: transform .95s cubic-bezier(.24,.74,.2,1) .28s; }
+.panel img { display: block; width: 113.5%; height: 100%; max-width: none; }
+.panel::after { content: ''; position: absolute; inset: 0; background: #541f191a; border-inline-end: 1px solid #bc94587d; }
+.left { left: 0; }
+.right { right: 0; }
+.right img { transform: scaleX(-1); transform-origin: 44.053% center; }
+.right::after { transform: scaleX(-1); }
+.assembly { position: absolute; inset: 11% 16% 12%; display: grid; align-content: center; gap: 20px; justify-items: center; text-align: center; transition: opacity .23s ease .1s; }
+.letter { display: grid; gap: 13px; justify-items: center; width: 100%; padding: 25px 14px 26px; color: var(--cg-ivory); background: linear-gradient(145deg,#52201830,#431a17a8),var(--cg-background) center 48%/226.55% auto,#62291f; border: 1px solid #c49a61a0; box-shadow: 0 10px 28px #220a0766,inset 0 0 0 5px #501f18,inset 0 0 0 6px #dcb37745; }
+.kicker { font: 500 clamp(11px,2.8cqw,12px)/1.35 var(--font-source),sans-serif; letter-spacing: .18em; text-transform: uppercase; color: var(--cg-gold); }
+.gate .names { max-width: 100%; font: 600 clamp(34px,11cqw,46px)/1.04 var(--font-cormorant),Georgia,serif; color: var(--cg-ivory); text-wrap: balance; overflow-wrap: anywhere; }
+.gate[data-long=true] .names { font-size: clamp(27px,8.6cqw,34px); }
+.date { font: 500 15px/1.25 var(--font-cormorant),Georgia,serif; letter-spacing: .025em; }
+.divider { display: block; width: 69%; height: auto; margin: 3px 0; }
+.dear { font: 500 12px/1.3 var(--font-source),sans-serif; letter-spacing: .05em; }
+.gate .recipient { margin-top: 5px; font: 600 clamp(16px,4.9cqw,20px)/1.15 var(--font-cormorant),Georgia,serif; text-wrap: balance; overflow-wrap: anywhere; }
+.seal { display: grid; justify-items: center; gap: 10px; padding: 0 7px; border: 0; border-radius: 2px; background: transparent; color: #fff0cf; font: 500 15px/1.3 var(--font-cormorant),Georgia,serif; min-width: 44px; min-height: 44px; pointer-events: auto; cursor: pointer; transition: transform .25s,opacity .28s; -webkit-tap-highlight-color: transparent; }
+.seal img { display: block; width: clamp(47px,15cqw,64px); height: auto; pointer-events: none; filter: drop-shadow(0 5px 9px #230b06a0); }
+.seal span { padding: 6px 12px; background: #481e17; border: 1px solid #c599626e; }
+.seal:focus-visible { outline: 2px solid var(--cg-ivory); outline-offset: 6px; }
+.seal:active { transform: scale(.97); }
+.seal:disabled { cursor: default; pointer-events: none; }
+.gate[data-phase=opening], .gate[data-preview=open] { opacity: 0; }
+.gate[data-phase=opening] .assembly, .gate[data-preview=open] .assembly { opacity: 0; pointer-events: none; }
+.gate[data-phase=opening] .seal, .gate[data-preview=open] .seal { transform: translateY(-14px); opacity: 0; }
+.gate[data-phase=opening] .left, .gate[data-preview=open] .left { transform: translateX(-101%); }
+.gate[data-phase=opening] .right, .gate[data-preview=open] .right { transform: translateX(101%); }
+.gate[data-preview=open], .gate[data-preview=open] * { transition: none; }
+@container (max-height: 560px) {
+  .assembly { inset-block: 5%; gap: 12px; }
+  .letter { gap: 9px; padding-block: 16px; }
+  .gate .names { font-size: clamp(28px,9cqw,38px); }
+  .gate[data-long=true] .names { font-size: clamp(23px,7.6cqw,30px); }
+  .seal { gap: 6px; }
+  .seal img { width: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gate { transition: opacity .18s ease; }
+  .panel, .assembly, .seal { transition: none; }
+  .gate[data-phase=opening] .panel, .gate[data-preview=open] .panel,
+  .gate[data-phase=opening] .seal, .gate[data-preview=open] .seal { transform: none; }
+}

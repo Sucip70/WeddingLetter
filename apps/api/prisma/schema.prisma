@@ -57,6 +57,15 @@ enum OrderKind {
   EXTENSION
 }
 
+enum PaymentAttemptStatus {
+  CREATING
+  PENDING
+  PAID
+  CANCELLED
+  EXPIRED
+  FAILED
+}
+
 enum InvitationStatus {
   DRAFT
   ACTIVE
@@ -80,6 +89,11 @@ enum MediaStatus {
   PAUSED
   EXPIRED_GRACE
   DELETED
+}
+
+enum ArtworkStatus {
+  DRAFT
+  PUBLISHED
 }
 
 model User {
@@ -122,16 +136,60 @@ model Template {
   // Berapa minggu masa aktif yang sudah termasuk di harga dasar template (perpanjangan: add-on EXTEND_ACTIVE_WEEK).
   includedWeeks Int            @default(4)
   status        TemplateStatus @default(DRAFT)
+  showOnHome    Boolean        @default(false)
+  homeOrder     Int            @default(0)
   layoutSchema  Json
   thumbnailUrl  String?
   createdById   String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
+  // Versi artwork aktif. Manifest teresolusi juga disalin ke layoutSchema.artwork agar transaksi
+  // order yang sudah ada otomatis menyimpannya di snapshot undangan.
+  artworkVersionId String?
+  artworkVersion   TemplateArtworkVersion? @relation(fields: [artworkVersionId], references: [id])
+
   invitations Invitation[]
   orders      Order[]
 
   @@map("templates")
+}
+
+// Paket artwork immutable per design. Objek yang sudah PUBLISHED tidak pernah ditimpa; perubahan
+// berikutnya selalu mendapat nomor version baru dan object key templates/<design>/v<version>/...
+model TemplateArtworkVersion {
+  id          String        @id @default(cuid())
+  designId    String
+  version     Int
+  status      ArtworkStatus @default(DRAFT)
+  manifest    Json          @default("{}")
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  templates Template[]
+  assets    TemplateArtworkAsset[]
+
+  @@unique([designId, version])
+  @@map("template_artwork_versions")
+}
+
+model TemplateArtworkAsset {
+  id          String   @id @default(cuid())
+  versionId   String
+  slot        String
+  variant     String   @default("default")
+  storageKey  String   @unique
+  contentType String
+  sizeBytes   Int
+  width       Int
+  height      Int
+  createdAt   DateTime @default(now())
+
+  version TemplateArtworkVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
+
+  @@unique([versionId, slot, variant])
+  @@map("template_artwork_assets")
 }
 
 model AddOn {
@@ -196,10 +254,34 @@ model Order {
   extendsInvitation Invitation?  @relation("InvitationExtensions", fields: [extendsInvitationId], references: [id])
   addOns            OrderAddOn[]
   invitation        Invitation?  @relation("InvitationOrigin")
+  paymentAttempts   PaymentAttempt[]
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
   @@map("orders")
+}
+
+model PaymentAttempt {
+  id              String               @id @default(cuid())
+  orderId         String
+  sequence        Int
+  provider        String
+  providerOrderId String               @unique
+  providerRef     String?
+  token           String?
+  redirectUrl     String?
+  status          PaymentAttemptStatus @default(CREATING)
+  cancelledAt     DateTime?
+  paidAt          DateTime?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, sequence])
+  @@index([orderId, createdAt])
+  @@index([status, createdAt])
+  @@map("payment_attempts")
 }
 
 model OrderAddOn {
@@ -243,6 +325,7 @@ model Invitation {
   extensionOrders Order[]     @relation("InvitationExtensions")
   mediaFiles      MediaFile[]
   guests          RsvpGuest[]
+  invitedGuests   InvitationGuest[]
 
   @@index([status, expiresAt])
   @@map("invitations")
@@ -290,6 +373,28 @@ model RsvpGuest {
 
   @@index([invitationId, createdAt])
   @@map("rsvp_guests")
+}
+
+model InvitationGuest {
+  id                   String    @id @default(cuid())
+  invitationId         String
+  name                 String
+  phone                String?
+  partySize            Int       @default(1)
+  token                String    @unique
+  sharedAt             DateTime?
+  lastCopiedAt         DateTime?
+  lastWhatsappOpenedAt DateTime?
+  checkedInAt          DateTime?
+  checkedInCount       Int       @default(0)
+  checkedInById        String?
+  deletedAt            DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  invitation           Invitation @relation(fields: [invitationId], references: [id])
+
+  @@index([invitationId, deletedAt, createdAt])
+  @@map("invitation_guests")
 }
 
 // Pustaka lagu bawaan yang dikelola admin (Admin -> Musik). Tersedia untuk pembeli sesuai `minTier`:
@@ -340,4 +445,13 @@ model DemoPhoto {
   updatedAt  DateTime @updatedAt
 
   @@map("demo_photos")
+}
+
+// Pengaturan situs yang bisa diubah admin lewat UI (key-value). Saat ini: support_whatsapp (nomor bantuan, kosong = belum ada).
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
 }

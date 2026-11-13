@@ -76,7 +76,8 @@ export class AuthService {
     return { ok: true, expiresInSeconds: OTP_TTL_MINUTES * 60 };
   }
 
-  async verifyOtp(email: string, code: string, name?: string) {
+  // Memeriksa & menghabiskan kode OTP (sekali pakai). Melempar 401 bila salah, kedaluwarsa, atau percobaan habis.
+  private async consumeOtp(email: string, code: string) {
     const invalid = new UnauthorizedException('Kode salah atau sudah kedaluwarsa');
 
     const otp = await this.prisma.otpCode.findFirst({
@@ -101,18 +102,46 @@ export class AuthService {
       data: { consumedAt: new Date() },
     });
     if (consumed.count === 0) throw invalid;
+  }
+
+  async verifyOtp(email: string, code: string, name?: string, password?: string) {
+    await this.consumeOtp(email, code);
+    // A password is only installed after proving ownership of this email.
+    const passwordHash = password === undefined ? undefined : await hashPassword(password);
 
     const existing = await this.prisma.user.findUnique({ where: { email } });
     const user = existing
       ? await this.prisma.user.update({
           where: { id: existing.id },
-          data: { emailVerifiedAt: existing.emailVerifiedAt ?? new Date() },
+          data: {
+            emailVerifiedAt: existing.emailVerifiedAt ?? new Date(),
+            ...(passwordHash ? { passwordHash } : !existing.emailVerifiedAt ? { passwordHash: null } : {}),
+          },
         })
       : await this.prisma.user.create({
-          data: { email, name: name ?? email.split('@')[0], emailVerifiedAt: new Date() },
+          data: { email, name: name ?? email.split('@')[0], emailVerifiedAt: new Date(), ...(passwordHash ? { passwordHash } : {}) },
         });
 
     return this.session(user);
+  }
+
+  // Lupa kata sandi: kirim kode ke email bila akunnya ada. Respons sama untuk email yang tidak terdaftar (tidak membocorkan akun).
+  async forgotPassword(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email }, select: { id: true } });
+    if (!user) return { ok: true, expiresInSeconds: OTP_TTL_MINUTES * 60 };
+    return this.requestOtp(email);
+  }
+
+  // Atur kata sandi baru dengan kode dari email. Kode membuktikan kepemilikan email, jadi akun sekaligus terverifikasi & langsung masuk.
+  async resetPassword(email: string, code: string, password: string) {
+    await this.consumeOtp(email, code);
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) throw new UnauthorizedException('Kode salah atau sudah kedaluwarsa');
+    const updated = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: await hashPassword(password), emailVerifiedAt: user.emailVerifiedAt ?? new Date() },
+    });
+    return this.session(updated);
   }
 
   async loginWithGoogle(idToken: string) {
@@ -141,7 +170,9 @@ export class AuthService {
     const user = existing
       ? await this.prisma.user.update({
           where: { id: existing.id },
-          data: { googleId, emailVerifiedAt: existing.emailVerifiedAt ?? new Date() },
+          // Legacy unverified signups may contain a password chosen by someone
+          // who did not own the email. Never retain it when Google verifies ownership.
+          data: { googleId, emailVerifiedAt: existing.emailVerifiedAt ?? new Date(), ...(!existing.emailVerifiedAt ? { passwordHash: null } : {}) },
         })
       : await this.prisma.user.create({
           data: {
@@ -155,22 +186,12 @@ export class AuthService {
     return this.session(user);
   }
 
-  // Daftar akun baru dengan kata sandi. Email harus diverifikasi lewat kode (endpoint otp/verify yang sama
-  // dipakai login tanpa kata sandi) sebelum akun bisa dipakai — kecuali sudah terverifikasi lewat Google.
-  async registerWithPassword(email: string, password: string, name: string) {
+  // Start registration without storing credentials. The client submits its chosen
+  // password again together with the OTP, which must be verified first.
+  async registerWithPassword(email: string, _password: string, _name: string) {
     const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing?.passwordHash) {
-      throw new ConflictException('Email ini sudah terdaftar. Silakan masuk.');
-    }
-
-    const passwordHash = await hashPassword(password);
-    const user = existing
-      ? await this.prisma.user.update({ where: { id: existing.id }, data: { passwordHash, name } })
-      : await this.prisma.user.create({ data: { email, name, passwordHash } });
-
-    // Akun lama yang sudah terverifikasi (misalnya pernah masuk lewat Google) tidak perlu verifikasi ulang.
-    if (user.emailVerifiedAt) {
-      return this.session(user);
+    if (existing) {
+      throw new ConflictException('Email ini sudah terdaftar. Masuk dengan Google/kode email, atau gunakan Lupa kata sandi untuk mengatur kata sandi.');
     }
 
     const otp = await this.requestOtp(email);
@@ -182,7 +203,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user || !(await verifyPassword(password, user.passwordHash))) throw invalid;
     if (!user.emailVerifiedAt) {
-      throw new UnauthorizedException('Email belum diverifikasi. Minta kode verifikasi baru lewat halaman daftar.');
+      throw new UnauthorizedException('Email belum diverifikasi. Masuk dengan kode email atau gunakan Lupa kata sandi.');
     }
     return this.session(user);
   }

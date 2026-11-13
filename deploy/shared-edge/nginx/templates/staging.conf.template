@@ -1,0 +1,92 @@
+# Shared edge: staging stays protected by Basic Auth and noindex.
+# Seluruh situs dikunci basic auth + noindex, kecuali webhook Midtrans (server Midtrans tidak bisa login)
+# dan robots.txt.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${STAGING_DOMAIN};
+    if ($host != ${STAGING_DOMAIN}) { return 444; }
+    return 301 https://${STAGING_DOMAIN}$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name ${STAGING_DOMAIN};
+
+    # Jangan biarkan origin menjadi default virtual host untuk Host yang tidak dikenal.
+    if ($host != ${STAGING_DOMAIN}) { return 444; }
+
+    # Cloudflare Origin CA (SSL/TLS mode "Full (strict)" di Cloudflare).
+    ssl_certificate     /etc/nginx/certs/staging/origin.pem;
+    ssl_certificate_key /etc/nginx/certs/staging/origin.key;
+
+    include /etc/nginx/snippets/cloudflare-realip.conf;
+
+    # Foto/video/lagu diunggah langsung dari browser ke R2 (presigned URL), bukan lewat server ini.
+    client_max_body_size 2m;
+
+    add_header X-Robots-Tag "noindex, nofollow" always;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(self), geolocation=(), microphone=()" always;
+    proxy_hide_header X-Powered-By;
+
+    # Nama container di-resolve ulang lewat DNS Docker (proxy_pass dengan variabel). Tanpa ini Nginx menyimpan
+    # IP lama dan membalas 502 setelah deploy membuat ulang container web/api.
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    set $web_upstream http://staging-web:3000;
+    set $api_upstream http://staging-api:4000;
+
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    # Ditimpa (bukan ditambah) supaya tamu tidak bisa memalsukan IP; $remote_addr sudah IP asli dari Cloudflare.
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-Proto https;
+
+    location = /robots.txt {
+        limit_except GET HEAD { deny all; }
+        default_type text/plain;
+        return 200 "User-agent: *\nDisallow: /\n";
+    }
+
+    # Browser mengambil web app manifest tanpa kredensial Basic Auth. Bila rute ini ikut dikunci,
+    # halaman staging yang sudah login tetap mencatat 401 untuk manifest. Buka hanya manifest dan
+    # ikon yang dirujuknya; semua rute aplikasi lain tetap berada di balik auth staging.
+    location ~ ^/(?:manifest\.webmanifest|icon-192\.png|icon-512\.png|icon-maskable-512\.png|apple-icon\.png|icon\.svg)$ {
+        auth_basic off;
+        limit_except GET HEAD { deny all; }
+        proxy_pass $web_upstream;
+    }
+
+    # Notifikasi pembayaran Midtrans -> API (tanda tangan diverifikasi di PaymentsService).
+    location = /payments/midtrans/notification {
+        limit_except POST { deny all; }
+        client_max_body_size 64k;
+        proxy_pass $api_upstream;
+    }
+
+    location / {
+        auth_basic "WeddingLetter staging";
+        auth_basic_user_file /etc/nginx/htpasswd;
+        proxy_pass $web_upstream;
+    }
+
+    # Publisher uses admin bearer authentication, validated by the API.
+    location = /admin/catalog/entries {
+        auth_basic off;
+        limit_except POST { deny all; }
+        client_max_body_size 100k;
+        proxy_pass $api_upstream;
+    }
+    location = /admin/catalog/verify {
+        auth_basic off;
+        limit_except POST { deny all; }
+        client_max_body_size 100k;
+        proxy_pass $api_upstream;
+    }
+}

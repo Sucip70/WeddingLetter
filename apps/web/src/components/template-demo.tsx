@@ -7,6 +7,7 @@ import { sampleView } from '@/lib/sample';
 import type { DemoPhotos } from '@/lib/sample';
 import type { TemplateDetail } from '@/lib/types';
 import { CoverIcon } from './editor/cover-picker';
+import { FullscreenInvitationPreview } from './invitation/fullscreen-preview';
 import { InvitationView } from './invitation/invitation-view';
 import { PhoneFrame } from './invitation/phone-frame';
 import { PauseIcon, PlayIcon } from './invitation/ornaments';
@@ -23,6 +24,7 @@ export function TemplateDemo({ template, header, children, photos }: { template:
   const [paletteId, setPaletteId] = useState(palettes[0]?.id ?? '');
   const [track, setTrack] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const palette = palettes.find((p) => p.id === paletteId);
@@ -49,10 +51,22 @@ export function TemplateDemo({ template, header, children, photos }: { template:
   return (
     <div className="mt-6 grid gap-12 lg:grid-cols-[auto_1fr] lg:gap-16">
       <div className="lg:sticky lg:top-24 lg:self-start">
-        <PhoneFrame size="lg">
-          <InvitationView key={`${coverKind}:${picked}`} view={view} mode="preview" embedded placeholders gate={picked ? 'skip' : 'show'} />
-        </PhoneFrame>
-        <p className="mt-4 text-center text-xs text-ink-soft">Demo interaktif · gulir di dalam layar ponsel</p>
+        <div className="relative mx-auto w-fit">
+          <div className="pointer-events-none" aria-hidden="true" inert>
+            <PhoneFrame size="sm">
+              <InvitationView key={`${coverKind}:teaser`} view={view} mode="preview" embedded placeholders gate="skip" />
+            </PhoneFrame>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPreviewOpen(true)}
+            className="absolute inset-0 flex items-end justify-center rounded-[2.4rem] bg-gradient-to-t from-black/70 via-transparent to-transparent p-5 text-white outline-none ring-rose transition hover:from-black/80 focus-visible:ring-4"
+            aria-haspopup="dialog"
+          >
+            <span className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-ink shadow-lg">Buka pratinjau penuh</span>
+          </button>
+        </div>
+        <p className="mt-4 text-center text-xs text-ink-soft">Pratinjau interaktif dibuka dalam layar penuh</p>
 
         {coverKinds.length > 0 && (
           <div className="mt-5 text-center">
@@ -137,6 +151,12 @@ export function TemplateDemo({ template, header, children, photos }: { template:
 
         {children}
       </div>
+
+      {previewOpen && (
+        <FullscreenInvitationPreview onClose={() => setPreviewOpen(false)}>
+          <InvitationView key={`${coverKind}:${picked}:fullscreen`} view={view} mode="preview" embedded placeholders gate={picked ? 'skip' : 'show'} />
+        </FullscreenInvitationPreview>
+      )}
     </div>
   );
 }

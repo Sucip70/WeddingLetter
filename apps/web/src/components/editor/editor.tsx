@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FullscreenInvitationPreview } from '@/components/invitation/fullscreen-preview';
 import { InvitationView } from '@/components/invitation/invitation-view';
 import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { LoginPanel } from '@/components/login-panel';
@@ -10,10 +11,13 @@ import { Alert, Badge, Button, Card, Field, Input, Modal, Spinner, Toggle, cn } 
 import { api, errorMessage } from '@/lib/client-api';
 import { defaultCoverLayout } from '@/lib/cover-layouts';
 import { rupiah } from '@/lib/format';
+import { sampleView } from '@/lib/sample';
+import type { DemoPhotos } from '@/lib/sample';
 import type { AddOn, InvitationData, InvitationViewData, OrderDetail, Quote, SessionUser, TemplateDetail, Upload } from '@/lib/types';
 import { runCheckout } from './checkout';
 import type { CheckoutProgress } from './checkout';
 import { FieldInput } from './fields';
+import { initialInvitationContent } from '@/lib/invitation-content';
 import type { FieldCtx } from './fields';
 import {
   LIMITS,
@@ -46,13 +50,13 @@ function useDebounced<T>(value: T, ms: number) {
   return v;
 }
 
-export function Editor({ template, addOns, initialUser, initialPalette }: { template: TemplateDetail; addOns: AddOn[]; initialUser: SessionUser | null; initialPalette?: string }) {
+export function Editor({ template, addOns, initialUser, initialPalette, demoPhotos }: { template: TemplateDetail; addOns: AddOn[]; initialUser: SessionUser | null; initialPalette?: string; demoPhotos: DemoPhotos }) {
   const router = useRouter();
   const draftKey = `wl:draft:${template.id}`;
   const price = useMemo(() => Object.fromEntries(addOns.map((a) => [a.code, a.price])) as Record<string, number>, [addOns]);
 
   const [user, setUser] = useState(initialUser);
-  const [data, setData] = useState<InvitationData>({});
+  const [data, setData] = useState<InvitationData>(() => initialInvitationContent(template.layout.sections));
   const [weeks, setWeeks] = useState(template.includedWeeks);
   const [selected, setSelected] = useState<Selectable[]>([]);
   const [couponCode, setCouponCode] = useState('');
@@ -230,19 +234,27 @@ export function Editor({ template, addOns, initialUser, initialPalette }: { temp
     const p = palettes.find((x) => x.id === paletteId);
     return p ? { ...template.layout.theme, primary: p.primary, secondary: p.secondary, background: p.background, text: p.text } : template.layout.theme;
   }, [template, palettes, paletteId]);
-  const view: InvitationViewData = useMemo(
-    () => ({
+  const view: InvitationViewData = useMemo(() => {
+    // Preview editor memakai contoh yang sama dengan halaman detail sebagai fallback visual. Nilai dan file yang
+    // sudah diisi pembeli selalu menang, sedangkan data contoh tidak pernah masuk ke draft maupun checkout.
+    const selectedCover = typeof data.cover?.tata_letak === 'string' ? data.cover.tata_letak : undefined;
+    const demo = sampleView({ ...template.layout, theme: paletteTheme, sections }, {}, demoPhotos, selectedCover);
+    const previewData: InvitationData = { ...demo.data };
+    for (const [section, values] of Object.entries(data)) {
+      previewData[section] = { ...(previewData[section] ?? {}), ...values };
+    }
+    return {
+      ...demo,
       slug: 'pratinjau',
       templateName: template.name,
-      layout: { theme: paletteTheme, sections, musik: { presets: template.layout.musik.presets }, coverLayouts },
+      layout: { ...demo.layout, theme: paletteTheme, sections, musik: { presets: template.layout.musik.presets }, coverLayouts, artwork: template.layout.artwork },
       features: { english: selected.includes('TRANSLATION_EN') },
-      data,
-      media: Object.fromEntries(Object.values(files).map((f) => [f.clientId, { url: f.url, type: f.type }])),
+      data: previewData,
+      media: { ...demo.media, ...Object.fromEntries(Object.values(files).map((f) => [f.clientId, { url: f.url, type: f.type }])) },
       rsvpEnabled: sections.some((s) => s.id === 'rsvp'),
       guestbook: [],
-    }),
-    [template, sections, selected, data, files, paletteTheme, coverLayouts],
-  );
+    };
+  }, [template, sections, selected, data, files, paletteTheme, coverLayouts, demoPhotos]);
 
   // ----- Checkout -----
   const total = quote?.total;
@@ -450,6 +462,7 @@ export function Editor({ template, addOns, initialUser, initialPalette }: { temp
             <PhoneFrame size="md" watermark>
               <InvitationView view={view} mode="preview" embedded placeholders />
             </PhoneFrame>
+            <Button variant="secondary" onClick={() => setPreviewOpen(true)} className="mt-4 w-full">Buka pratinjau layar penuh</Button>
             <div className="mt-5 rounded-2xl border border-line bg-paper p-4 text-center">
               <p className="text-xs uppercase tracking-wider text-ink-soft">Total sementara</p>
               <p className={cn('font-display text-3xl text-ink transition-opacity', quoting && 'opacity-50')}>{total === undefined ? '—' : rupiah(total)}</p>
@@ -470,13 +483,11 @@ export function Editor({ template, addOns, initialUser, initialPalette }: { temp
         </div>
       </div>
 
-      <Modal open={previewOpen} onClose={() => setPreviewOpen(false)} title="Pratinjau undangan">
-        <div className="flex justify-center">
-          <PhoneFrame size="md" watermark>
-            <InvitationView view={view} mode="preview" embedded placeholders />
-          </PhoneFrame>
-        </div>
-      </Modal>
+      {previewOpen && (
+        <FullscreenInvitationPreview onClose={() => setPreviewOpen(false)} watermark>
+          <InvitationView view={view} mode="preview" embedded placeholders gate="show" />
+        </FullscreenInvitationPreview>
+      )}
 
       <Modal open={loginOpen} onClose={() => setLoginOpen(false)} title="Masuk untuk melanjutkan">
         <p className="mb-5 text-sm text-ink-soft">Akun diperlukan agar Anda bisa kembali mengedit, memperpanjang, dan melihat RSVP. Isi undangan & file yang sudah Anda pilih tidak hilang.</p>

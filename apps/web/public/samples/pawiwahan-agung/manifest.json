@@ -1,0 +1,15 @@
+{
+  "designId": "pawiwahan-agung",
+  "purpose": "Existing Bali demo portraits and gallery crops for template previews only.",
+  "sourcePackage": ".tmp/pawiwahan-agung-assets-upgrade-2026-11-05/demo-media",
+  "note": "Recovered existing illustrated storyboard crops. These are demo media, separate from production decorations and customer photos.",
+  "samplePhotos": {
+    "cover": "/samples/pawiwahan-agung/cover.webp",
+    "groom": "/samples/pawiwahan-agung/groom.webp",
+    "bride": "/samples/pawiwahan-agung/bride.webp",
+    "gallery1": "/samples/pawiwahan-agung/gallery-01.webp",
+    "gallery2": "/samples/pawiwahan-agung/gallery-02.webp",
+    "gallery3": "/samples/pawiwahan-agung/gallery-03.webp",
+    "gallery4": "/samples/pawiwahan-agung/gallery-04.webp"
+  }
+}

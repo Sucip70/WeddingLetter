@@ -65,8 +65,17 @@ export async function POST(request: NextRequest, ctx: RouteContext<'/api/auth/[a
       const { res, json } = await callApi('/auth/otp/request', { email: body.email });
       return res.ok ? NextResponse.json(json) : fail(res.status, json, 'Gagal mengirim kode');
     }
+    case 'forgot': {
+      if (otpRateLimited(request)) return NextResponse.json({ message: 'Terlalu banyak permintaan kode dari jaringan ini. Coba lagi nanti.' }, { status: 429 });
+      const { res, json } = await callApi('/auth/password/forgot', { email: body.email });
+      return res.ok ? NextResponse.json(json) : fail(res.status, json, 'Gagal mengirim kode');
+    }
+    case 'reset': {
+      const { res, json } = await callApi('/auth/password/reset', { email: body.email, code: body.code, password: body.password });
+      return res.ok ? withSession(json.user, json.accessToken) : fail(res.status, json, 'Kode salah atau kedaluwarsa');
+    }
     case 'otp-verify': {
-      const { res, json } = await callApi('/auth/otp/verify', { email: body.email, code: body.code, name: body.name || undefined });
+      const { res, json } = await callApi('/auth/otp/verify', { email: body.email, code: body.code, name: body.name || undefined, password: body.password });
       return res.ok ? withSession(json.user, json.accessToken) : fail(res.status, json, 'Kode salah atau kedaluwarsa');
     }
     case 'google': {
@@ -77,8 +86,8 @@ export async function POST(request: NextRequest, ctx: RouteContext<'/api/auth/[a
       if (otpRateLimited(request)) return NextResponse.json({ message: 'Terlalu banyak permintaan dari jaringan ini. Coba lagi nanti atau masuk dengan Google.' }, { status: 429 });
       const { res, json } = await callApi('/auth/register', { email: body.email, password: body.password, name: body.name });
       if (!res.ok) return fail(res.status, json, 'Gagal mendaftar');
-      // Akun yang sudah terverifikasi (misal pernah masuk via Google) langsung dapat sesi; selain itu menunggu kode.
-      return json.accessToken ? withSession(json.user, json.accessToken) : NextResponse.json(json);
+      // Registration only starts email verification; it must never create a session.
+      return NextResponse.json(json);
     }
     case 'login': {
       const { res, json } = await callApi('/auth/login', { email: body.email, password: body.password });
