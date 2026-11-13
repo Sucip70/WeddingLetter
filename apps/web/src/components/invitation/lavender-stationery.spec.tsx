@@ -45,7 +45,7 @@ describe('Herbarium Lavender stationery', () => {
     expect(renderToStaticMarkup(createElement(LavenderCover, { ...props, names: 'Alexandra Putri & Muhammad Rasyid' }))).toContain('data-long="true"');
     expect(renderToStaticMarkup(createElement(LavenderCover, { ...props, photo: undefined }))).toContain('data-photo="false"');
     const two = renderToStaticMarkup(createElement(LavenderCover, { ...props, kind: 'berdua', groom: '/groom.webp', bride: '/bride.webp' }));
-    expect((two.match(/<figure/g) || []).length).toBe(2);
+    expect(two).toContain('src="/groom.webp"'); expect(two).toContain('src="/bride.webp"');
     expect(renderToStaticMarkup(createElement(LavenderCover, { ...props, decorative: true, thumbnail: true }))).not.toContain('<button');
     expect(renderToStaticMarkup(createElement(LavenderPortrait, { label: 'Andi' }))).toBe('');
   });

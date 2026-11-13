@@ -29,7 +29,8 @@ describe('Hortensia Atelier', () => {
   it('supports long names, no photo and separately uploaded Berdua portraits', () => {
     expect(renderToStaticMarkup(createElement(HortensiaCover, { ...props, names: 'Alexandra Putri & Muhammad Rasyid' }))).toContain('data-long="true"');
     expect(renderToStaticMarkup(createElement(HortensiaCover, { ...props, photo: undefined }))).toContain('data-photo="false"');
-    expect((renderToStaticMarkup(createElement(HortensiaCover, { ...props, kind: 'berdua', groom: '/groom.webp', bride: '/bride.webp' })).match(/<figure/g) || []).length).toBe(2);
+    const two = renderToStaticMarkup(createElement(HortensiaCover, { ...props, kind: 'berdua', groom: '/groom.webp', bride: '/bride.webp' }));
+    expect(two).toContain('src="/groom.webp"'); expect(two).toContain('src="/bride.webp"');
     expect(renderToStaticMarkup(createElement(HortensiaCover, { ...props, decorative: true }))).not.toContain('<button');
   });
   it('routes the correct closed gate with one native accessible clasp', () => {

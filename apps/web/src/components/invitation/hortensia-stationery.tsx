@@ -2,6 +2,7 @@
 
 import type { ArtworkManifest } from '@/lib/types';
 import { stationeryArtworkVars } from './cultural-artwork';
+import { BotanicalCover } from './botanical-cover';
 
 /* eslint-disable @next/next/no-img-element */
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
@@ -47,18 +48,7 @@ export function HortensiaPortrait({ src, label }: { src?: string; label: string 
 }
 type Props = Omit<CoverProps, 'kind' | 'artwork'> & { kind: CoverKind; artwork?: ArtworkManifest; thumbnail?: boolean; design?: string };
 export function HortensiaCover(p: Props) {
-  const [failed, setFailed] = useState<Set<string>>(() => new Set());
-  const candidates = p.kind === 'berdua' && (p.groom || p.bride) ? [p.groom, p.bride] : [p.photo || p.groom || p.bride];
-  const photos = candidates.filter((src): src is string => !!src && !failed.has(src));
-  const withPhoto = p.kind !== 'ornamen' && photos.length > 0;
-  const Tag = p.decorative ? 'span' : 'button';
-  return <Canvas artwork={p.artwork} thumbnail={p.thumbnail} data-kind={p.kind} data-photo={String(withPhoto)} data-long={String(p.names.length > 24)}><div className={styles.stack}>
-    <p className={styles.kicker}>{p.kicker}</p>
-    {withPhoto && <div className={styles.portraits}>{photos.map((src, i) => <figure className={styles.portrait} key={`${i}-${src}`}><img src={src} alt={p.kind === 'berdua' ? `Foto mempelai ${i + 1}` : 'Foto pasangan'} ref={image => { if (image?.complete && image.naturalWidth === 0) setFailed(current => new Set(current).add(src)); }} onError={() => setFailed(current => new Set(current).add(src))} /></figure>)}</div>}
-    <div className={styles.copy}><h1 className={styles.names}>{p.names}</h1>{p.dateText && <p className={styles.date}>{p.dateText}</p>}<HortensiaDivider />
-      {p.guest && <div className={styles.recipient}><p>{p.guest.dear}</p><strong>{p.guest.name}</strong></div>}
-      <Tag className={styles.action} {...(p.decorative ? {} : { type: 'button' as const, onClick: p.onOpen })}>{p.openLabel}</Tag>
-    </div></div></Canvas>;
+  return <BotanicalCover {...p} design="hortensia" />;
 }
 export function HortensiaGate({ names, kicker, dateText, guest, phase, onOpen, artwork }: {
   names: string; kicker: string; dateText?: string; guest: string | null; phase: GatePhase; onOpen: () => void; artwork?: ArtworkManifest;
