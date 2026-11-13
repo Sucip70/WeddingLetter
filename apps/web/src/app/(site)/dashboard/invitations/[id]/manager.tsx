@@ -14,6 +14,7 @@ import { api, errorMessage, uploadWithProgress } from '@/lib/client-api';
 import Link from 'next/link';
 import { daysLeft, formatDate, formatDateTime, mb, rupiah, whatsappLink } from '@/lib/format';
 import { presetToken } from '@/lib/presets';
+import { purchasedInvitationPreview } from '@/lib/purchased-invitation-preview';
 import type { InvitationData, InvitationDetail, InvitationMedia, InvitationViewData, MusicPreset, QuoteLine, RsvpSummary, Upload } from '@/lib/types';
 
 type Tab = 'overview' | 'edit' | 'guests' | 'checkin' | 'rsvp' | 'extend';
@@ -285,16 +286,7 @@ function EditTab({ inv, setInv, supportWhatsapp }: { inv: InvitationDetail; setI
   }, [inv.layout.theme, palettes, paletteId]);
 
   const view: InvitationViewData = useMemo(
-    () => ({
-      slug: inv.slug,
-      templateName: inv.templateName,
-      layout: { theme, sections: inv.layout.sections, musik: { presets: inv.layout.musik.presets }, coverLayouts: inv.layout.coverLayouts ?? [] },
-      features: inv.features,
-      data,
-      media: Object.fromEntries(inv.media.filter((m) => ['UPLOADED', 'ACTIVE', 'PAUSED', 'EXPIRED_GRACE'].includes(m.status)).map((m) => [m.id, { url: m.url, type: m.type }])),
-      rsvpEnabled: inv.layout.sections.some((s) => s.id === 'rsvp'),
-      guestbook: [],
-    }),
+    () => purchasedInvitationPreview(inv, data, theme),
     [inv, data, theme],
   );
 
