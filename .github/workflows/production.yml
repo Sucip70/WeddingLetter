@@ -1,0 +1,145 @@
+# Manual ONLY. Merge this workflow into the default branch, then select production when running it.
+name: Production
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Ketik DEPLOY PRODUCTION untuk meluncurkan branch production'
+        type: string
+        required: true
+concurrency:
+  group: weddingletter-vps
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  check:
+    name: Tes & tipe
+    runs-on: ubuntu-latest
+    steps:
+      - name: Konfirmasi branch dan peluncuran
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          test "$GITHUB_REF" = refs/heads/production || { echo "Pilih branch production"; exit 1; }
+          test "$CONFIRM" = "DEPLOY PRODUCTION" || { echo "Konfirmasi tidak cocok"; exit 1; }
+      - uses: actions/checkout@v4
+      - name: Validasi konfigurasi deployment
+        run: node --test deploy/config.test.cjs && bash deploy/check-config.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # npm workspaces: satu lockfile di root untuk API & Web.
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: API — prisma generate
+        working-directory: apps/api
+        run: npm run prisma:generate
+      - name: API — tipe
+        working-directory: apps/api
+        run: npx tsc --noEmit -p tsconfig.build.json
+      - name: API — unit test
+        working-directory: apps/api
+        run: npm test
+
+      # Tipe rute (PageProps<'/…'>) biasanya dibuat next dev/build di .next/; di CI dibuat tanpa build penuh.
+      - name: Web — tipe
+        working-directory: apps/web
+        run: npx next typegen && npx tsc --noEmit
+      - name: Web — lint
+        working-directory: apps/web
+        run: npx eslint src
+
+      - name: Web — unit test
+        working-directory: apps/web
+        run: npm test
+
+  build:
+    name: Image ${{ matrix.app }}
+    needs: check
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        app: [api, web]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validasi URL build production
+        env:
+          PUBLIC_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
+        run: test "$PUBLIC_URL" = https://weddingletter.id
+      # Nama image GHCR wajib huruf kecil.
+      - name: Nama image
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/weddingletter-${{ matrix.app }}" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          # Konteks = root repo (lockfile workspaces); .dockerignore root membatasi isinya.
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:production
+            ${{ env.IMAGE }}:production-${{ github.sha }}
+          # Hanya dipakai image web (NEXT_PUBLIC_* ditanam saat build); diabaikan image API.
+          build-args: |
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ vars.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+            NEXT_PUBLIC_SUPPORT_WHATSAPP=${{ vars.NEXT_PUBLIC_SUPPORT_WHATSAPP }}
+          cache-from: type=gha,scope=production-${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=production-${{ matrix.app }}
+
+  deploy:
+    name: Deploy production ke VPS
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SSH_HOST: ${{ secrets.PRODUCTION_SSH_HOST }}
+      SSH_USER: ${{ secrets.PRODUCTION_SSH_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.PRODUCTION_SSH_KNOWN_HOSTS }}
+      REMOTE_DIR: weddingletter-production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kunci SSH terverifikasi
+        run: |
+          test -n "$SSH_HOST" && test -n "$SSH_USER" && test -n "$DEPLOY_SSH_KEY" && test -n "$DEPLOY_KNOWN_HOSTS"
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          echo "SSH_TARGET=$SSH_USER@$SSH_HOST" >> "$GITHUB_ENV"
+      # api.env, .env, certificates, databases, and the shared edge are NOT overwritten here.
+      - name: Salin konfigurasi aplikasi
+        run: |
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "$SSH_TARGET" "test -d $REMOTE_DIR && test -f $REMOTE_DIR/api.env && test -f $REMOTE_DIR/.env"
+          scp -o BatchMode=yes -o StrictHostKeyChecking=yes deploy/production/docker-compose.yml deploy/production/deploy.sh "$SSH_TARGET:$REMOTE_DIR/"
+      - name: Backup, migrasi, dan jalankan rilis
+        run: |
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes "$SSH_TARGET" "cd $REMOTE_DIR && bash deploy.sh production-${{ github.sha }}"
+      - name: Periksa domain publik
+        env:
+          PUBLIC_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
+        run: |
+          test "$PUBLIC_URL" = https://weddingletter.id
+          for attempt in $(seq 1 20); do
+            root_status="$(curl --silent --max-time 15 --output /dev/null --write-out '%{http_code}' "$PUBLIC_URL/" || true)"
+            manifest_status="$(curl --silent --max-time 15 --output /dev/null --write-out '%{http_code}' "$PUBLIC_URL/manifest.webmanifest" || true)"
+            if [ "$root_status" = 200 ] && [ "$manifest_status" = 200 ]; then exit 0; fi
+            echo "Menunggu routing production: root=$root_status manifest=$manifest_status"
+            sleep 3
+          done
+          echo "Periksa DNS, shared edge, dan sertifikat production"
+          exit 1

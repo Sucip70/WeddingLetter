@@ -9,7 +9,7 @@ on:
 
 # Satu deploy staging berjalan pada satu waktu; deploy berikutnya menunggu (tidak membatalkan yang sedang jalan).
 concurrency:
-  group: staging
+  group: weddingletter-vps
   cancel-in-progress: false
 
 permissions:
@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Validasi konfigurasi deployment
+        run: node --test deploy/config.test.cjs && bash deploy/check-config.sh
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -108,16 +110,13 @@ jobs:
         run: |
           ssh "$SSH_TARGET" "mkdir -p $REMOTE_DIR/nginx"
           scp deploy/staging/docker-compose.yml "$SSH_TARGET:$REMOTE_DIR/docker-compose.yml"
+          scp deploy/staging/docker-compose.shared.yml "$SSH_TARGET:$REMOTE_DIR/docker-compose.shared.yml"
+          scp deploy/staging/deploy.sh "$SSH_TARGET:$REMOTE_DIR/deploy.sh"
           scp deploy/staging/reset-database.sh "$SSH_TARGET:$REMOTE_DIR/reset-database.sh"
           scp -r deploy/staging/nginx/templates deploy/staging/nginx/cloudflare-realip.conf "$SSH_TARGET:$REMOTE_DIR/nginx/"
       - name: Tarik image & jalankan
         run: |
-          ssh "$SSH_TARGET" "cd $REMOTE_DIR && export TAG=staging-${{ github.sha }} \
-            && docker compose pull api web \
-            && docker compose run --rm --no-deps nginx nginx -t \
-            && docker compose up -d --remove-orphans \
-            && docker compose up -d --no-deps --force-recreate nginx \
-            && docker image prune -f"
+          ssh "$SSH_TARGET" "cd $REMOTE_DIR && bash deploy.sh staging-${{ github.sha }}"
       - name: Cek kesehatan
         run: |
           ssh "$SSH_TARGET" "cd $REMOTE_DIR && for i in \$(seq 1 30); do \

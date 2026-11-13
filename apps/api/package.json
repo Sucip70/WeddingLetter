@@ -35,7 +35,8 @@
     "catalog:publish": "tsx scripts/catalog.ts publish",
     "catalog:verify": "tsx scripts/catalog.ts verify",
     "catalog:retire-local": "tsx scripts/catalog.ts retire-local",
-    "staging:bootstrap": "prisma migrate deploy && tsx scripts/bootstrap-staging.ts"
+    "staging:bootstrap": "prisma migrate deploy && tsx scripts/bootstrap-staging.ts",
+    "production:bootstrap": "tsx scripts/bootstrap-production.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1136.0",

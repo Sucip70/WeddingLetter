@@ -1,0 +1,34 @@
+# The ONLY stack binding host ports 80/443 after the manual cutover.
+name: weddingletter-edge
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    mem_limit: 64m
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      STAGING_DOMAIN: staging.weddingletter.id
+      PRODUCTION_DOMAIN: weddingletter.id
+      NGINX_ENVSUBST_FILTER: ^(STAGING_DOMAIN|PRODUCTION_DOMAIN)$$
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./nginx/cloudflare-realip.conf:/etc/nginx/snippets/cloudflare-realip.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+      - ./htpasswd:/etc/nginx/htpasswd:ro
+    networks:
+      - staging_ingress
+      - production_ingress
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  staging_ingress:
+    external: true
+    name: weddingletter-staging-ingress
+  production_ingress:
+    external: true
+    name: weddingletter-production-ingress

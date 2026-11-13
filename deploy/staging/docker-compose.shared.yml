@@ -1,0 +1,35 @@
+# Opt-in override, used ONLY after the shared-ingress cutover.
+# docker compose -f docker-compose.yml -f docker-compose.shared.yml ...
+services:
+  api:
+    mem_limit: 256m
+    environment:
+      NODE_OPTIONS: --max-old-space-size=160
+    networks:
+      default:
+      ingress:
+        aliases: [staging-api]
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  web:
+    mem_limit: 256m
+    environment:
+      NODE_OPTIONS: --max-old-space-size=160
+    networks:
+      default:
+      ingress:
+        aliases: [staging-web]
+    logging: *logging
+  postgres:
+    mem_limit: 128m
+    command: ["postgres", "-c", "shared_buffers=16MB", "-c", "max_connections=20", "-c", "work_mem=2MB"]
+    logging: *logging
+  nginx:
+    profiles: [legacy-ingress]
+networks:
+  ingress:
+    external: true
+    name: weddingletter-staging-ingress
