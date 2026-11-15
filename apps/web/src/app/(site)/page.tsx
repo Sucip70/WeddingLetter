@@ -3,6 +3,7 @@ import { InvitationView } from '@/components/invitation/invitation-view';
 import { PhoneFrame } from '@/components/invitation/phone-frame';
 import { HeroPhones } from '@/components/hero-phones';
 import { TemplateThumb } from '@/components/template-thumb';
+import { HomeTemplatePreview } from '@/components/home-template-preview';
 import { Badge, LinkButton } from '@/components/ui';
 import { GROUP_LABEL, TIER_LABEL, getAddOns, getDemoPhotos, getTemplate, getTemplates, homeShowcase, templateFeatures } from '@/lib/catalog';
 import { contactHref, getSupportWhatsapp } from '@/lib/contact';
@@ -142,20 +143,18 @@ export default async function HomePage() {
             </div>
             <LinkButton href="/templates" variant="secondary">Semua template →</LinkButton>
           </div>
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {showcase.map((e) => {
               const first = e.rows[0]!;
               return (
-                <Link key={e.key} href={`/templates/${first.id}`} className="group overflow-hidden rounded-3xl border border-line bg-paper transition-shadow hover:shadow-xl hover:shadow-ink/5">
-                  <div className="aspect-[4/5] overflow-hidden">
-                    <TemplateThumb theme={first.layout.theme} imageUrl={first.thumbnailUrl} coverLayouts={first.layout.coverLayouts} coverDefault={first.layout.coverDefault} photos={photos} samplePhotos={first.layout.samplePhotos} artwork={first.layout.artwork} className="transition-transform duration-500 group-hover:scale-[1.03]" />
-                  </div>
-                  <div className="flex items-center justify-between gap-3 p-5">
-                    <div>
-                      <p className="font-semibold text-ink">{e.name}</p>
-                      <p className="text-sm text-ink-soft">{GROUP_LABEL[e.group as ThemeGroup] ?? e.group} · {e.rows.map((r) => TIER_LABEL[r.tier]).join(' / ')}</p>
-                    </div>
-                    <p className="text-right text-sm text-ink-soft">mulai<br /><span className="font-display text-xl text-rose">{rupiah(first.price)}</span></p>
+                <Link key={e.key} href={`/templates/${first.id}`} className="group flex flex-col overflow-hidden rounded-3xl border border-line bg-paper transition-shadow hover:shadow-xl hover:shadow-ink/5">
+                  <HomeTemplatePreview>
+                    <TemplateThumb phone theme={first.layout.theme} imageUrl={first.thumbnailUrl} coverLayouts={first.layout.coverLayouts} coverDefault={first.layout.coverDefault} photos={photos} samplePhotos={first.layout.samplePhotos} artwork={first.layout.artwork} />
+                  </HomeTemplatePreview>
+                  <div data-home-template-label className="grid grid-rows-[3rem_2.5rem_auto] gap-2 border-t border-line p-4">
+                    <p className="line-clamp-2 min-w-0 font-semibold leading-6 text-ink" title={e.name}>{e.name}</p>
+                    <p className="line-clamp-2 text-sm leading-5 text-ink-soft">{GROUP_LABEL[e.group as ThemeGroup] ?? e.group} · {e.rows.map((r) => TIER_LABEL[r.tier]).join(' / ')}</p>
+                    <p className="whitespace-nowrap text-sm text-ink-soft">Mulai <span className="font-display text-xl text-rose">{rupiah(first.price)}</span></p>
                   </div>
                 </Link>
               );
