@@ -333,7 +333,7 @@ export function TemplateBuilder({ meta, initial, photos = {}, siblings = [] }: {
               <div className="space-y-3 rounded-xl border border-line p-4">
                 <Toggle checked={form.showOnHome ?? false} onChange={(showOnHome) => setForm({ ...form, showOnHome })} label="Tampilkan di Home" />
                 <p className="text-xs text-ink-soft">Tema tampil jika paket ini dipublikasikan. Cukup aktifkan pada satu paket per tema; katalog lengkap tidak terpengaruh.</p>
-                <Field label="Urutan di Home" hint="Angka lebih kecil tampil lebih dulu. Jika beberapa paket dipilih, urutan terkecil digunakan."><Input type="number" min={0} max={9999} step={1} disabled={!form.showOnHome} value={form.homeOrder ?? 0} onChange={(e) => setForm({ ...form, homeOrder: Number(e.target.value) })} /></Field>
+                <Field label="Urutan di Home" hint="Hanya paket yang dipilih tampil di Home. Jika beberapa paket dalam satu tema dipilih, pratinjau memakai paket terpilih termurah dan urutan terkecil."><Input type="number" min={0} max={9999} step={1} disabled={!form.showOnHome} value={form.homeOrder ?? 0} onChange={(e) => setForm({ ...form, homeOrder: Number(e.target.value) })} /></Field>
               </div>
               {!form.id && <Field label="Status"><Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as TemplateForm['status'] })}><option value="DRAFT">Draf (tidak tampil)</option><option value="PUBLISHED">Dipublikasikan</option><option value="ARCHIVED">Diarsipkan</option></Select></Field>}
               <Field label="Gambar thumbnail (opsional)" className="sm:col-span-2" hint="Kosongkan untuk memakai miniatur otomatis dari tema.">
