@@ -1,3 +1,23 @@
+import path from 'node:path';
+
+// Publisher destinations take precedence over workspace defaults, but must not
+// replace the database or storage configuration used to read source assets.
+export function applyPublisherEnv(values: Record<string, string>, environment: NodeJS.ProcessEnv = process.env) {
+  for (const [key, value] of Object.entries(values)) {
+    if (key.startsWith('TARGET_R2_') || key === 'PUBLISHER_TOKEN') environment[key] = value;
+  }
+}
+
+// Do not use --env-file: Node/tsx may consume that reserved option before the
+// publisher starts, relative to the workspace cwd instead of the repository root.
+export function publisherEnvPath(args: string[], repositoryRoot: string): string {
+  const index = args.indexOf('--publisher-env');
+  if (index === -1) return path.join(repositoryRoot, '.env.publisher');
+  const file = args[index + 1];
+  if (!file || file.startsWith('--')) throw new Error('--publisher-env requires a file path');
+  return path.resolve(repositoryRoot, file);
+}
+
 export const PUBLISHER_TARGETS = {
   staging: { api: 'https://staging.weddingletter.id', bucket: 'weddingletter-staging' },
   production: { api: 'https://weddingletter.id', bucket: 'weddingletter-production' },

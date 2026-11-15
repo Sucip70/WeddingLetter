@@ -1,5 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { assertPublisherApi, assertPublisherBucket, publisherTarget } from './publisher-target.js';
+import path from 'node:path';
+import { applyPublisherEnv, assertPublisherApi, assertPublisherBucket, publisherEnvPath, publisherTarget } from './publisher-target.js';
+
+describe('publisher environment file argument', () => {
+  it('overrides staging destination defaults without changing source configuration', () => {
+    const environment = { TARGET_R2_BUCKET_NAME: 'weddingletter-staging', PUBLISHER_TOKEN: 'old', DATABASE_URL: 'local-db', R2_BUCKET_NAME: 'source' };
+    applyPublisherEnv({ TARGET_R2_BUCKET_NAME: 'weddingletter-production', PUBLISHER_TOKEN: 'new', DATABASE_URL: 'other-db', R2_BUCKET_NAME: 'other' }, environment);
+    expect(environment).toEqual({ TARGET_R2_BUCKET_NAME: 'weddingletter-production', PUBLISHER_TOKEN: 'new', DATABASE_URL: 'local-db', R2_BUCKET_NAME: 'source' });
+  });
+  const root = path.resolve('repository');
+  it('resolves the production env file from the repository root, not workspace cwd', () => {
+    expect(publisherEnvPath(['sync', '--publisher-env', '.env.publisher.production', '--target', 'production'], root)).toBe(path.join(root, '.env.publisher.production'));
+    expect(publisherEnvPath(['sync'], root)).toBe(path.join(root, '.env.publisher'));
+  });
+  it('supports absolute paths and refuses missing option values', () => {
+    const file = path.resolve('folder with spaces', 'publisher.env');
+    expect(publisherEnvPath(['check', '--publisher-env', file], root)).toBe(file);
+    expect(() => publisherEnvPath(['sync', '--publisher-env'], root)).toThrow('requires a file path');
+    expect(() => publisherEnvPath(['sync', '--publisher-env', '--apply'], root)).toThrow('requires a file path');
+  });
+});
 
 describe('explicit production catalog target', () => {
   it('keeps staging as an independent target and requires confirmation for production apply', () => {
