@@ -33,9 +33,9 @@ export type GatePhase = 'closed' | 'opening';
 // Lama animasi buka (ms) sampai gerbang dilepas. Dengan "kurangi gerakan" dipersingkat jadi fade.
 export const GATE_MS: Record<GateKind, number> = {
   portal: 2500, ring: 3550,
-  sakura: 2700, frost: 2700, leaves: 2700, taman: 2700,
-  twine: 2700,
-  bouquet: 3300,
+  sakura: 1850, frost: 2700, leaves: 2700, taman: 2700,
+  twine: 1850,
+  bouquet: 2000,
   kayon: 1850,
   gonjong: 1650,
   ulos: 1700,
@@ -50,7 +50,7 @@ export const GATE_MS: Record<GateKind, number> = {
 export const REVEALS_COVER: Partial<Record<GateKind, true>> = { sakura: true, frost: true, leaves: true, taman: true, portal: true, twine: true, ring: true, bouquet: true, kayon: true, gonjong: true, ulos: true, paras: true, lentera: true, jali: true, toran: true };
 
 // Gerbang yang baru menyingkap sampul setelah jeda (ms sejak ketukan): animasi masuk sampul ditunda sebesar itu.
-export const REVEAL_DELAY_MS: Partial<Record<GateKind, number>> = { ring: 1750, bouquet: 1200 };
+export const REVEAL_DELAY_MS: Partial<Record<GateKind, number>> = { ring: 1750, bouquet: 850, twine: 650, sakura: 650 };
 
 const CTA: Record<GateKind, string> = {
   portal: 'Ketuk untuk mengaktifkan portal', ring: 'Ketuk untuk membuka',
@@ -88,7 +88,7 @@ interface SceneProps {
 function Scene({ kind, ...p }: { kind: GateKind } & SceneProps): ReactNode {
   switch (kind) {
     case 'portal': return <MagicPortal look={p.motif === 'galaksi' ? 'orbit' : 'rune'} phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
-    case 'bouquet': return <BouquetGate phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
+    case 'bouquet': return <BouquetGate names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'ring': return <RingBox phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'leaves': return <LetterGust kind="leaves" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
     case 'taman': return <LetterGust kind="taman" phase={p.phase} names={p.names} kicker={p.kicker} guest={p.guest} headingFamily={p.headingFamily} />;
@@ -381,15 +381,15 @@ const GATE_CSS = `
 .bq-scene{position:absolute;inset:0;transform-origin:50% 40%}
 .bq-fade{transition:opacity .35s ease}
 .wl-gate[data-phase=opening] .bq-fade{opacity:0}
-.wl-gate[data-phase=opening] .bq-scene{opacity:0;transform:scale(1.06);transition:opacity .8s ease 1.15s,transform 1.1s ease-in 1.15s}
+.wl-gate[data-phase=opening] .bq-scene{opacity:0;transition:opacity .55s ease .75s}
 .bq-squash{transform-origin:50% 100%}
-.wl-gate[data-phase=opening] .bq-squash{animation:bq-squash .65s ease-out both}
+.wl-gate[data-phase=opening] .bq-squash{animation:bq-squash .4s ease-out both}
 @keyframes bq-squash{0%{transform:translateY(0) scale(1,1)}45%{transform:translateY(6px) scale(1.05,.92)}80%{transform:translateY(-4px) scale(.97,1.05)}100%{transform:translateY(0) scale(1,1)}}
-.wl-gate[data-phase=opening] .bq-toss{animation:bq-toss .95s cubic-bezier(.22,.6,.3,1) .3s both;will-change:transform,opacity}
+.wl-gate[data-phase=opening] .bq-toss{animation:bq-toss .65s cubic-bezier(.22,.6,.3,1) .15s both;will-change:transform,opacity}
 @keyframes bq-toss{0%{transform:translate3d(0,0,0) rotate(0deg) scale(1);opacity:1}82%{opacity:1}100%{transform:translate3d(12cqw,-26cqh,0) rotate(-300deg) scale(.72);opacity:0}}
 .bq-flash,.bq-bit,.bq-trail{opacity:0}
 .bq-bit,.bq-trail{position:absolute}
-.wl-gate[data-phase=opening] .bq-flash{animation:bq-flash .75s ease-out 1.15s both;will-change:transform,opacity}
+.wl-gate[data-phase=opening] .bq-flash{animation:bq-flash .5s ease-out .75s both;will-change:transform,opacity}
 @keyframes bq-flash{0%{opacity:0;transform:scale(.2)}30%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.5)}}
 .wl-gate[data-phase=opening] .bq-bit{animation-name:bq-pop;animation-timing-function:linear;animation-fill-mode:both;will-change:transform,opacity}
 .wl-gate[data-phase=opening] .bq-trail{animation-name:bq-trail;animation-timing-function:ease-in;animation-fill-mode:both;will-change:transform,opacity}
