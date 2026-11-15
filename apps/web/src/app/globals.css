@@ -149,6 +149,17 @@ body {
   box-decoration-break: clone;
 }
 
+/* Split-cover typography follows the card, not the viewport/rem size. Keep
+   script swashes padded while reserving room for the guest and open button. */
+.wl-split-content { padding-block: 4cqh; }
+.wl-split-content > * { flex-shrink: 0; max-width: 100%; }
+.wl-split-content > p:first-child { font-size: min(12px, 4cqh); letter-spacing: .24em; }
+.wl-split-content .wl-name-text { margin-top: 2cqh; line-height: 1.15 !important; text-wrap: balance; }
+.wl-split-content > .wl-name-text + p { margin-top: 2cqh; font-size: min(14px, 4.5cqh); }
+.wl-split-content > div { margin-top: 4cqh; font-size: min(14px, 4.5cqh); overflow-wrap: anywhere; }
+.wl-split-content > div p + p { font-size: min(18px, 5.5cqh); }
+.wl-split-content > .wl-btn { margin-top: 4cqh; padding: 2.5cqh 6cqw; font-size: min(14px, 4.5cqh); }
+
 /* Kilau pada nama (premium) */
 .wl-shimmer {
   background-image: linear-gradient(100deg, var(--p) 20%, color-mix(in srgb, var(--s) 70%, #fff) 45%, var(--p) 70%);

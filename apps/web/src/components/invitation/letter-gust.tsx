@@ -3,9 +3,10 @@
 // Gerbang "surat di atas tumpukan kepingan": surat kecil beristirahat di atas tumpukan kelopak sakura (`sakura`),
 // kepingan kristal es (`frost`), atau daun musim gugur yang lebih besar (`leaves`). Ketukan pada `.wl-gate` (gates.tsx) mengubah `phase` ke 'opening': embusan
 // angin menyapu diagonal dari kiri-bawah ke kanan-atas, membawa kepingan & surat, dan latar gerbang terhapus
-// tepat di belakang muka angin sehingga sampul asli tersingkap mengikuti kepingan (REVEALS_COVER). Satu-satunya
+// tepat di belakang muka angin sehingga sampul asli tersingkap mengikuti kepingan (REVEALS_COVER).
+// Rustic dan sakura memakai fade tanpa mask, partikel lebih sedikit, dan waktu lebih pendek untuk mobile. Satu-satunya
 // gerbang yang memakai Motion (dipilih pembuat produk untuk animasi bertahap seperti ini); gerbang lain tetap CSS
-// murni, jangan pindahkan tanpa alasan. Varian hanya beda rupa (bentuk, warna, surat); gerak & waktu sama.
+// murni, jangan pindahkan tanpa alasan.
 import { motion, useReducedMotion } from 'motion/react';
 import type { CSSProperties } from 'react';
 import type { GatePhase } from './gates';
@@ -92,8 +93,8 @@ const LOOKS: Record<GustKind, Look> = {
     tintScale: 0.4,
     fillOpacity: 1,
     sizeScale: 0.85,
-    pile: { kind: 'mound', count: 40, reach: 40, minTop: 52, bias: 1, taper: 0.45 },
-    pileShadow: 'drop-shadow-[0_2px_2px_rgba(40,20,5,0.4)]',
+    pile: { kind: 'mound', count: 16, reach: 40, minTop: 52, bias: 1, taper: 0.45 },
+    pileShadow: '',
     letter: { background: 'linear-gradient(#f6ecd8, #efe1c5)', color: '#4a3322', border: '1px solid rgba(120,85,50,.35)' },
     rustic: { lead: 0 },
   },
@@ -101,7 +102,8 @@ const LOOKS: Record<GustKind, Look> = {
     shapes: [PETAL_PATH],
     tintScale: 1,
     fillOpacity: 1,
-    pileShadow: 'drop-shadow-[0_1px_1px_rgba(0,0,0,0.12)]',
+    pile: { kind: 'mound', count: 18, reach: 34, minTop: 48, bias: 1, taper: 0.6 },
+    pileShadow: '',
     letter: { background: '#fffdf8', color: '#3b2a20' },
   },
   frost: {
@@ -293,7 +295,7 @@ function Shape({ look, id, tint, shade }: { look: Look; id: number; tint: 'p' | 
   );
 }
 
-function PileBitView({ bit, look, blowing, reduced }: { bit: PileBit; look: Look; blowing: boolean; reduced: boolean }) {
+function PileBitView({ bit, look, blowing, reduced, speed = 1 }: { bit: PileBit; look: Look; blowing: boolean; reduced: boolean; speed?: number }) {
   const lead = look.rustic?.lead ?? 0;
   return (
     <motion.svg
@@ -314,7 +316,7 @@ function PileBitView({ bit, look, blowing, reduced }: { bit: PileBit; look: Look
         blowing
           ? reduced
             ? { duration: 0.25 }
-            : { duration: bit.duration, delay: bit.delay + lead, ease: [0.45, 0, 0.75, 0.55], opacity: { duration: bit.duration, delay: bit.delay + lead, times: [0, 0.8, 1] } }
+            : { duration: bit.duration * speed, delay: (bit.delay + lead) * speed, ease: [0.45, 0, 0.75, 0.55], opacity: { duration: bit.duration * speed, delay: (bit.delay + lead) * speed, times: [0, 0.8, 1] } }
           : { duration: 0.3 }
       }
     >
@@ -323,7 +325,7 @@ function PileBitView({ bit, look, blowing, reduced }: { bit: PileBit; look: Look
   );
 }
 
-function GustBitView({ bit, look }: { bit: GustBit; look: Look }) {
+function GustBitView({ bit, look, speed = 1 }: { bit: GustBit; look: Look; speed?: number }) {
   const lead = look.rustic?.lead ?? 0;
   return (
     <motion.svg
@@ -334,7 +336,7 @@ function GustBitView({ bit, look }: { bit: GustBit; look: Look }) {
       style={{ transformPerspective: 500 }}
       initial={{ x: bit.x0, y: bit.y0, rotate: 0, rotateY: 0, opacity: 0 }}
       animate={{ x: bit.x1, y: bit.y1, rotate: bit.spin, rotateY: bit.flip, opacity: [0, 1, 1, 0] }}
-      transition={{ duration: bit.duration, delay: bit.delay + lead, ease: 'linear', opacity: { duration: bit.duration, delay: bit.delay + lead, times: [0, 0.08, 0.85, 1] } }}
+      transition={{ duration: bit.duration * speed, delay: (bit.delay + lead) * speed, ease: 'linear', opacity: { duration: bit.duration * speed, delay: (bit.delay + lead) * speed, times: [0, 0.08, 0.85, 1] } }}
       aria-hidden
     >
       <Shape look={look} id={bit.id} tint={bit.tint} shade={bit.shade} />
@@ -343,31 +345,10 @@ function GustBitView({ bit, look }: { bit: GustBit; look: Look }) {
 }
 
 // ----- rustik: meja kayu, tali goni & segel lilin -----
-// Papan kayu dari derau memanjang (feTurbulence) diwarnai cokelat, dengan sambungan papan & vinyet.
+// Static grain and plank seams: no procedural SVG filter or new storage asset.
 function WoodTable() {
   return (
-    <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 800" preserveAspectRatio="none" aria-hidden>
-      <defs>
-        <filter id="wl-wood" x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
-          <feTurbulence type="fractalNoise" baseFrequency=".004 .16" numOctaves="4" seed="5" result="g" />
-          <feColorMatrix in="g" type="matrix" values="0 0 0 0 .36  0 0 0 0 .24  0 0 0 0 .13  .9 .9 0 0 -.38" result="dark" />
-          <feFlood floodColor="#b98d5c" result="base" />
-          <feComposite in="dark" in2="base" operator="over" />
-        </filter>
-        <radialGradient id="wl-woodvig" cx=".5" cy=".42" r=".75">
-          <stop offset=".45" stopColor="#000" stopOpacity="0" />
-          <stop offset="1" stopColor="#2a1608" stopOpacity=".55" />
-        </radialGradient>
-      </defs>
-      <rect width="400" height="800" filter="url(#wl-wood)" />
-      {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-        <g key={i}>
-          <rect y={i * 114 - 1} width="400" height="2.4" fill="#2b1809" opacity=".55" />
-          <rect y={i * 114 + 1.4} width="400" height="1.2" fill="#e8c797" opacity=".3" />
-        </g>
-      ))}
-      <rect width="400" height="800" fill="url(#wl-woodvig)" />
-    </svg>
+    <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 42%, transparent 35%, #2a160888), repeating-linear-gradient(0deg, #2b180966 0 2px, transparent 2px 112px, #e8c79755 112px 114px), repeating-linear-gradient(2deg, #b98d5c 0 3px, #b08656 3px 5px, #bd9464 5px 9px)' }} aria-hidden />
   );
 }
 
@@ -415,6 +396,8 @@ export function LetterGust({ kind, phase, names, kicker, guest, headingFamily }:
   const reduced = !!useReducedMotion();
   const blowing = phase === 'opening';
   const look = LOOKS[kind];
+  const lightweight = kind === 'rustic' || kind === 'sakura';
+  const speed = lightweight ? 0.65 : 1;
   const lead = look.rustic?.lead ?? 0;
   // Latar terhapus di belakang muka angin: mask gradien diagonal yang batasnya (--wipe) digeser Motion.
   const mask = 'linear-gradient(45deg, transparent calc(var(--wipe) - 22%), #000 var(--wipe))';
@@ -423,10 +406,10 @@ export function LetterGust({ kind, phase, names, kicker, guest, headingFamily }:
     <div className="absolute inset-0 overflow-hidden">
       <motion.div
         className="absolute inset-0"
-        style={{ '--wipe': '0%', WebkitMaskImage: mask, maskImage: mask } as CSSProperties}
+        style={lightweight ? undefined : { '--wipe': '0%', WebkitMaskImage: mask, maskImage: mask } as CSSProperties}
         initial={false}
-        animate={{ '--wipe': blowing ? '122%' : '0%' } as Record<string, string>}
-        transition={blowing ? { duration: reduced ? 0.25 : WIPE.duration, delay: reduced ? 0 : WIPE.delay + lead, ease: [0.5, 0, 0.35, 1] } : { duration: 0 }}
+        animate={lightweight ? { opacity: blowing ? 0 : 1 } : { '--wipe': blowing ? '122%' : '0%' } as Record<string, string>}
+        transition={blowing ? { duration: reduced ? 0.25 : lightweight ? 0.65 : WIPE.duration, delay: reduced ? 0 : lightweight ? 0.45 : WIPE.delay + lead, ease: [0.5, 0, 0.35, 1] } : { duration: 0 }}
         aria-hidden
       >
         {look.rustic ? (
@@ -439,7 +422,7 @@ export function LetterGust({ kind, phase, names, kicker, guest, headingFamily }:
       </motion.div>
 
       {PILES[kind].map((bit) => (
-        <PileBitView key={bit.id} bit={bit} look={look} blowing={blowing} reduced={reduced} />
+        <PileBitView key={bit.id} bit={bit} look={look} blowing={blowing} reduced={reduced} speed={speed} />
       ))}
 
       <motion.div
@@ -455,7 +438,7 @@ export function LetterGust({ kind, phase, names, kicker, guest, headingFamily }:
         }
         transition={
           blowing
-            ? { duration: reduced ? 0.25 : 1.3, delay: reduced ? 0 : 0.35 + lead, times: [0, 0.18, 1], ease: 'easeIn' }
+            ? { duration: reduced ? 0.25 : 1.3 * speed, delay: reduced ? 0 : (0.35 + lead) * speed, times: [0, 0.18, 1], ease: 'easeIn' }
             : { duration: 4, repeat: reduced ? 0 : Infinity, ease: 'easeInOut' }
         }
       >
@@ -475,7 +458,7 @@ export function LetterGust({ kind, phase, names, kicker, guest, headingFamily }:
       </motion.div>
 
       {/* embusan: hanya dipasang saat membuka (tidak ikut SSR / tidak membebani saat diam) */}
-      {blowing && !reduced && GUST.map((bit) => <GustBitView key={bit.id} bit={bit} look={look} />)}
+      {blowing && !reduced && (lightweight ? GUST.slice(0, 8) : GUST).map((bit) => <GustBitView key={bit.id} bit={bit} look={look} speed={speed} />)}
     </div>
   );
 }

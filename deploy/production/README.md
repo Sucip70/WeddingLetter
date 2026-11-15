@@ -195,14 +195,15 @@ npm.cmd run catalog:export --workspace apps/api
 # 2. Validasi manifest
 npm.cmd run catalog:check --workspace apps/api
 # 3. Sinkronkan dan verifikasi hash aset ke bucket production
-npm.cmd run catalog:sync --workspace apps/api -- --env-file .env.publisher.production --target production --apply --confirm-production weddingletter.id
+npm.cmd run catalog:sync --workspace apps/api -- --publisher-env .env.publisher.production --target production --apply --confirm-production weddingletter.id
 # 4. Publish metadata melalui API admin production
-npm.cmd run catalog:publish --workspace apps/api -- --env-file .env.publisher.production --target production --apply --confirm-production weddingletter.id
+npm.cmd run catalog:publish --workspace apps/api -- --publisher-env .env.publisher.production --target production --apply --confirm-production weddingletter.id
 # 5. Verifikasi ulang metadata dan objek tujuan (read-only)
-npm.cmd run catalog:verify --workspace apps/api -- --env-file .env.publisher.production --target production --apply --confirm-production weddingletter.id
+npm.cmd run catalog:verify --workspace apps/api -- --publisher-env .env.publisher.production --target production --apply --confirm-production weddingletter.id
 ```
 
 Untuk simulasi sync/publish tanpa menulis, hilangkan `--apply` dan `--confirm-production ...`.
+Gunakan `--publisher-env`, bukan `--env-file` (opsi tersebut dapat ditangkap Node/tsx sebelum publisher berjalan).
 Perintah staging lama tetap default staging. Jangan jalankan `retire-local` sebagai bagian peluncuran.
 Publisher adalah upsert katalog; perubahan katalog lokal dapat menimpa pengaturan katalog tujuan,
 termasuk pilihan Home. Ekspor ulang bila sumber berubah; simpan manifest rilis untuk audit.

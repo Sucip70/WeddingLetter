@@ -12,6 +12,7 @@ import { Dove, LilyBloom } from './dove-art';
 import { DecoArch, Particles, PatternLayer, PhotoFrame } from './effects';
 import type { FrameKind } from './motifs';
 import type { OrnamentSet } from './ornaments';
+import { ORNAMENTS } from './ornaments';
 
 export interface CoverProps {
   kind: Exclude<CoverKind, 'ornamen'>;
@@ -83,6 +84,7 @@ const LIGHT_KINDS: Partial<Record<CoverProps['kind'], true>> = { penuh: true, 'p
 export const isLightCover = (kind: CoverProps['kind']) => !!LIGHT_KINDS[kind];
 
 export function CoverLayout(p: CoverProps) {
+  const fitSplitCard = p.kind === 'terbagi' && p.orn === ORNAMENTS.romantic;
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const light = isLightCover(p.kind);
   const enter = (ms: number, cls = ''): { className: string; style?: CSSProperties } =>
@@ -105,7 +107,9 @@ export function CoverLayout(p: CoverProps) {
           fontWeight: p.heading.weight,
           letterSpacing: p.heading.tracking,
           textTransform: p.heading.upper ? 'uppercase' : undefined,
-          fontSize: `calc(${p.heading.size} * ${scale})`,
+          fontSize: fitSplitCard
+            ? `min(calc(${p.heading.size} * ${scale}), ${p.names.length > 28 ? 11 : 14}cqw, ${p.names.length > 28 ? 11 : 14}cqh)`
+            : `calc(${p.heading.size} * ${scale})`,
           lineHeight: 1.3,
           color: l ? '#fff' : 'var(--p)',
           textShadow: l ? '0 2px 16px rgba(0,0,0,.5)' : undefined,
@@ -250,6 +254,7 @@ export function CoverLayout(p: CoverProps) {
     // ---------- terbagi: foto memudar + kartu tulisan ----------
     case 'terbagi': {
       const mask = 'linear-gradient(#000 60%, transparent)';
+      const content = <>{kickerEl(false)}{namesEl(0.9, false)}{dateEl(false)}{guestEl(false)}{buttonEl(false, 'mt-4')}</>;
       return (
         <>
           <Fragment key="base">{p.base}</Fragment>
@@ -264,14 +269,10 @@ export function CoverLayout(p: CoverProps) {
               <div className="pointer-events-none absolute right-0 top-0 z-[3] w-36" style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className="w-36" rotate={90} /></div>
             </>
           )}
-          <div className="absolute inset-x-[7%] bottom-[5%] top-[49%] z-[4] flex flex-col items-center justify-center overflow-hidden border px-6 text-center" style={{ borderColor: 'color-mix(in srgb, var(--s) 75%, transparent)', background: 'color-mix(in srgb, var(--bg) 93%, transparent)', borderRadius: 'var(--r)', color: 'var(--tx)' }}>
+          <div className={`${fitSplitCard ? 'wl-split-card' : 'flex flex-col items-center justify-center'} absolute inset-x-[7%] bottom-[5%] top-[49%] z-[4] overflow-hidden border px-6 text-center`} style={{ ...(fitSplitCard ? { containerType: 'size' } : {}), borderColor: 'color-mix(in srgb, var(--s) 75%, transparent)', background: 'color-mix(in srgb, var(--bg) 93%, transparent)', borderRadius: 'var(--r)', color: 'var(--tx)' }}>
             <div className={`pointer-events-none absolute left-0 top-0 ${p.orn.cardCorner ?? 'w-16'}`} style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className={p.orn.cardCorner ?? 'w-16'} rotate={0} /></div>
             <div className={`pointer-events-none absolute bottom-0 right-0 ${p.orn.cardCorner ?? 'w-16'}`} style={{ color: 'var(--p)' }} aria-hidden><p.orn.Corner className={p.orn.cardCorner ?? 'w-16'} rotate={180} /></div>
-            {kickerEl(false)}
-            {namesEl(0.9, false)}
-            {dateEl(false)}
-            {guestEl(false)}
-            {buttonEl(false, 'mt-4')}
+            {fitSplitCard ? <div className="wl-split-content relative flex h-full min-w-0 flex-col items-center justify-center">{content}</div> : content}
           </div>
         </>
       );
