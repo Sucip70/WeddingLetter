@@ -9,10 +9,10 @@
 // di ponsel, jadi dihapus (jangan dikembalikan). Komponen ini tidak punya state: semua perubahan lewat selector
 // `.wl-gate[data-phase=opening]`, jadi aman untuk SSR dan "kurangi gerakan" (GATE_CSS mematikan semua animasi lalu gerbang memudar).
 import type { CSSProperties } from 'react';
+import { memo } from 'react';
 import { BloomCorner, BloomDivider, PETAL_COLORS } from './bloom-parts';
 import { Particles } from './effects';
 import { bouquetHead, bouquetStems, paperLeft, paperRight, ribbonBand, ribbonBow } from './flora-comp';
-import type { GatePhase } from './gates';
 import { STRINGS } from './i18n';
 
 const rand = (i: number, salt: number) => {
@@ -22,8 +22,8 @@ const rand = (i: number, salt: number) => {
 const r3 = (n: number) => Math.round(n * 1000) / 1000;
 
 // ----- waktu (detik sejak ketukan); harus sama dengan aturan .bq-* di GATE_CSS. GATE_MS.bouquet & REVEAL_DELAY_MS.bouquet ikut. -----
-// ancang-ancang 0-0,65 | lempar 0,3-1,25 | kilatan & hamburan mulai 1,15 | latar memudar 1,15-1,95 | kelopak terakhir selesai ±3,2
-export const BOUQUET_T = { toss: 0.3, tossDur: 0.95, pop: 1.2, fade: 1.15 };
+// ancang-ancang 0–0.4 | lempar 0.15–0.8 | hamburan 0.8–1.97 | fade 0.75–1.3.
+export const BOUQUET_T = { toss: 0.15, tossDur: 0.65, pop: 0.8, fade: 0.75 };
 
 // Titik puncak lemparan relatif terhadap pusat buket (cqw/cqh = persen lebar/tinggi gerbang); sama dengan keyframes bq-toss.
 const APEX = { x: 12, y: -26 };
@@ -34,8 +34,8 @@ const PETAL = 'M12 1.5C17.500 6 18 14 12 22.500C6 14 6.500 6 12 1.500Z';
 const INK = 'color-mix(in srgb, var(--tx) 90%, var(--p))';
 
 // Kelopak yang lepas sepanjang lintasan lemparan (posisi awal = titik di lintasan pada saat itu).
-const TRAIL = Array.from({ length: 10 }, (_, i) => {
-  const u = 0.12 + (i / 10) * 0.8;
+const TRAIL = Array.from({ length: 5 }, (_, i) => {
+  const u = 0.12 + (i / 5) * 0.8;
   const e = 1 - (1 - u) * (1 - u);
   return {
     id: i,
@@ -47,12 +47,12 @@ const TRAIL = Array.from({ length: 10 }, (_, i) => {
     size: r3(12 + rand(i, 3) * 11),
     spin: r3((rand(i, 4) - 0.5) * 540),
     color: PETAL_COLORS[i % PETAL_COLORS.length]!,
-    duration: r3(1.2 + rand(i, 5) * 0.7),
+    duration: r3(0.65 + rand(i, 5) * 0.3),
   };
 });
 
 // Hamburan di puncak: kelopak, bunga kecil, dan hati menyebar ke segala arah lalu jatuh.
-const BURST = Array.from({ length: 36 }, (_, i) => {
+const BURST = Array.from({ length: 14 }, (_, i) => {
   const a = rand(i, 6) * Math.PI * 2;
   const d = 80 + rand(i, 7) * 230;
   const flower = i % 3 === 0;
@@ -68,7 +68,7 @@ const BURST = Array.from({ length: 36 }, (_, i) => {
     size: r3(flower ? 22 + rand(i, 10) * 14 : heart ? 18 + rand(i, 10) * 10 : 18 + rand(i, 10) * 18),
     spin: r3((rand(i, 11) - 0.5) * 620),
     delay: r3(BOUQUET_T.pop + rand(i, 12) * 0.22),
-    duration: r3(1.1 + rand(i, 13) * 0.7),
+    duration: r3(0.65 + rand(i, 13) * 0.3),
     color: PETAL_COLORS[(i * 3) % PETAL_COLORS.length]!,
   };
 });
@@ -84,8 +84,8 @@ function MiniBlossom({ color }: { color: string }) {
   );
 }
 
-// `phase` tidak dipakai di sini: CSS membaca fase dari atribut data-phase pada .wl-gate (lihat catatan di atas).
-export function BouquetGate({ names, kicker, guest, headingFamily }: { phase: GatePhase; names: string; kicker: string; guest: string | null; headingFamily: string }) {
+// CSS reads data-phase on the parent; avoid reconciling the detailed SVG art on tap.
+export const BouquetGate = memo(function BouquetGate({ names, kicker, guest, headingFamily }: { names: string; kicker: string; guest: string | null; headingFamily: string }) {
   const apexPos = { left: `calc(50cqw + ${APEX.x}cqw)`, top: `calc(var(--cy) + ${APEX.y}cqh)` };
   return (
     <div className="absolute inset-0 overflow-hidden" style={{ '--bw': 'min(62cqw, calc(51cqh - 112px))', '--cy': 'calc(46.5cqh + 25px)' } as CSSProperties}>
@@ -98,7 +98,7 @@ export function BouquetGate({ names, kicker, guest, headingFamily }: { phase: Ga
               'radial-gradient(ellipse 70% 26% at 6% 0%, rgba(246,179,195,.42), transparent 72%), radial-gradient(ellipse 64% 24% at 98% 4%, rgba(192,166,238,.36), transparent 72%), radial-gradient(ellipse 60% 22% at 0% 100%, rgba(156,199,238,.34), transparent 72%), radial-gradient(ellipse 66% 24% at 100% 96%, rgba(248,216,110,.32), transparent 72%), radial-gradient(ellipse 54% 30% at 50% 56%, rgba(255,255,255,1), transparent 78%), #fffdfc',
           }}
         />
-        <Particles kind="blossom" count={11} mode="fall" height="100cqh" />
+        <Particles kind="blossom" count={5} mode="fall" height="100cqh" />
 
         {/* karangan sudut */}
         <div className="pointer-events-none absolute left-[-1cqw] top-[-1cqw] w-[30cqw]"><BloomCorner className="w-full" rotate={0} /></div>
@@ -180,4 +180,4 @@ export function BouquetGate({ names, kicker, guest, headingFamily }: { phase: Ga
       </div>
     </div>
   );
-}
+});

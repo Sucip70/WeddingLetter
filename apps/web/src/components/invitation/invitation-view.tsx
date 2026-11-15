@@ -412,7 +412,8 @@ export function InvitationView({ view, mode = 'live', embedded = false, placehol
   const finalParticleCount = artwork?.designId === 'semi' ? 8 : artwork?.designId === 'gugur' ? 6 : artwork?.designId === 'salju' ? 8 : 0;
   // Salju baru mulai setelah embun benar-benar selesai mencair; jangan biarkan salju bergerak di balik
   // lapisan frost saat gerbang masih dalam fase opening.
-  const particlesReady = !gateKind || (artwork?.designId === 'salju' ? gatePhase === 'open' : coverKey === 'open');
+  // Classic gates also finish their own particles before starting cover ambience.
+  const particlesReady = !gateKind || (artwork?.designId === 'salju' || gateKind === 'twine' || gateKind === 'sakura' || gateKind === 'bouquet' ? gatePhase === 'open' : coverKey === 'open');
   const coverInk = coverPhoto ? '#fff' : 'var(--p)';
   const cornerBase = `absolute ${fx === 'premium' ? 'wl-breathe' : ''}`;
   const cornerTop = `${cornerBase} ${motif.cornerSize?.top ?? 'w-24'}`;
