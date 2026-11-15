@@ -45,9 +45,10 @@ export function groupByDesign(all: Template[]): DesignEntry[] {
     .sort((a, b) => groupRank(a.group) - groupRank(b.group));
 }
 
-// One card per selected design; preserve all its published tiers and starting price.
+// Home previews and links must use selected tiers only. The full catalog still
+// groups every published tier through groupByDesign without this filtering.
 export function homeShowcase(all: Template[]): DesignEntry[] {
-  const ranked = groupByDesign(all.filter((t) => t.status === 'PUBLISHED'))
+  const ranked = groupByDesign(all.filter((t) => t.status === 'PUBLISHED' && t.showOnHome))
     .flatMap((entry) => {
       const selected = entry.rows.filter((t) => t.showOnHome);
       return selected.length ? [{ entry, order: Math.min(...selected.map((t) => t.homeOrder ?? 0)) }] : [];
