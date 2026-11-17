@@ -113,19 +113,20 @@ export class PaymentsService {
     if (active?.status === 'PENDING') {
       if (active.provider === 'MIDTRANS') {
         const midtrans = this.midtrans();
-        const status = await midtrans.getStatus(active.providerOrderId);
+        const status = await midtrans.getStatus(active.providerRef ?? active.providerOrderId);
         if (!status) {
-          // Belum ada kanal yang dikonfirmasi di Snap. Meminta token baru dengan order_id
-          // yang sama membatalkan token lama tanpa membuka dua kode pembayaran aktif.
-          return this.replaceUnstartedAttempt(order, active.id, active.providerOrderId);
+          // A BI-SNAP charge can be invisible to an order_id lookup. Do not
+          // replace its token and risk opening a second payable transaction.
+          throw new ConflictException('Status pembayaran lama belum dapat dipastikan. Sinkronkan Transaction ID Midtrans sebelum mengganti metode');
         }
         await this.applyMidtransStatus(active.providerOrderId, status);
         const refreshed = await this.prisma.order.findUnique({ where: { id: order.id }, select: { status: true } });
         if (refreshed?.status === 'PAID') return { status: 'PAID' as const };
         if (status.transaction_status === 'pending' || (status.transaction_status === 'capture' && status.fraud_status !== 'accept')) {
-          const cancelled = await midtrans.cancelPayment(active.providerOrderId);
+          const reference = status.transaction_id ?? active.providerRef ?? active.providerOrderId;
+          const cancelled = await midtrans.cancelPayment(reference);
           if (!cancelled) {
-            const latest = await midtrans.getStatus(active.providerOrderId);
+            const latest = await midtrans.getStatus(reference);
             if (latest) await this.applyMidtransStatus(active.providerOrderId, latest);
             const afterRace = await this.prisma.order.findUnique({ where: { id: order.id }, select: { status: true } });
             if (afterRace?.status === 'PAID') return { status: 'PAID' as const };
@@ -219,21 +220,6 @@ export class PaymentsService {
     }
   }
 
-  private async replaceUnstartedAttempt(order: PayableOrder, attemptId: string, providerOrderId: string) {
-    const init = await this.provider().createPayment(this.paymentRequest(order, providerOrderId));
-    await this.prisma.$transaction([
-      this.prisma.paymentAttempt.update({
-        where: { id: attemptId },
-        data: { provider: init.provider, token: init.token ?? null, redirectUrl: init.redirectUrl, status: 'PENDING' },
-      }),
-      this.prisma.order.update({
-        where: { id: order.id },
-        data: { paymentProvider: init.provider, paymentToken: init.token ?? null, paymentUrl: init.redirectUrl },
-      }),
-    ]);
-    return { status: 'PENDING' as const, provider: init.provider, redirectUrl: init.redirectUrl };
-  }
-
   // Menandai lunas. Atomik & idempotent (notifikasi berulang dari gateway aman).
   async markPaid(orderId: string, info: { provider: string; ref?: string }) {
     const order = await this.prisma.order.findUnique({ where: { id: orderId }, include: { user: true, invitation: { select: { id: true } } } });
@@ -280,7 +266,8 @@ export class PaymentsService {
       try {
         if (attempt.provider === 'MIDTRANS') {
           const midtrans = this.midtrans();
-          const status = await midtrans.getStatus(attempt.providerOrderId);
+          const status = await midtrans.getStatus(attempt.providerRef ?? attempt.providerOrderId);
+          if (status && (status.order_id !== attempt.providerOrderId || Number(status.gross_amount) !== order.totalAmount)) throw new Error('Referensi/nominal attempt tidak cocok');
           const settled = status?.transaction_status === 'settlement' || (status?.transaction_status === 'capture' && status.fraud_status === 'accept');
           if (settled) {
             await this.prisma.paymentAttempt.update({
@@ -290,11 +277,8 @@ export class PaymentsService {
             this.logger.error(`PAYMENT ATTEMPT GANDA sudah lunas untuk ${orderId}: ${attempt.providerOrderId} — periksa & refund manual`);
             continue;
           }
-          if (status) await midtrans.cancelPayment(attempt.providerOrderId);
-          else {
-            // Belum ada charge, tetapi URL Snap lama masih dapat dibuka. Token baru dengan order_id
-            // yang sama membuat token yang pernah diberikan tidak berlaku; token pengganti dibuang.
-            await midtrans.createPayment(this.paymentRequest(order, attempt.providerOrderId));
+          if (!status || !await midtrans.cancelPayment(status.transaction_id ?? attempt.providerOrderId)) {
+            throw new Error('Status/pembatalan attempt belum terverifikasi; tidak ditandai CANCELLED');
           }
         }
         await this.prisma.paymentAttempt.updateMany({
@@ -325,17 +309,29 @@ export class PaymentsService {
   // Dipanggil dari server kita sendiri (otentikasi via server key di request GET, bukan signature publik),
   // jadi tidak perlu diverifikasi seperti webhook. Jaring pengaman kalau notifikasi Midtrans tidak pernah sampai
   // (localhost saat dev, atau gagal terkirim di production) — dipanggil saat user kembali ke halaman checkout.
-  async syncWithMidtrans(userId: string, orderId: string) {
+  async syncWithMidtrans(userId: string, orderId: string, transactionId?: unknown) {
     const order = await this.prisma.order.findFirst({ where: { id: orderId, userId } });
     if (!order) throw new NotFoundException('Pesanan tidak ditemukan');
+    if (transactionId !== undefined && (typeof transactionId !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(transactionId))) {
+      throw new BadRequestException('Transaction ID Midtrans tidak valid');
+    }
     if (order.status !== 'PENDING' || order.paymentProvider !== 'MIDTRANS') return { status: order.status };
 
     const serverKey = process.env.MIDTRANS_SERVER_KEY;
     if (!serverKey) return { status: order.status };
     const attempt = await this.prisma.paymentAttempt.findFirst({ where: { orderId }, orderBy: { sequence: 'desc' } });
     const providerOrderId = attempt?.providerOrderId ?? orderId;
-    const status = await new MidtransProvider(serverKey).getStatus(providerOrderId);
-    if (!status) return { status: order.status };
+    const lookupId = (transactionId as string | undefined) ?? attempt?.providerRef ?? providerOrderId;
+    const status = await new MidtransProvider(serverKey).getStatus(lookupId);
+    if (!status) return { status: order.status, needsTransactionId: true };
+    // Browser-supplied IDs are lookup hints only. Never trust a callback status
+    // or let another order's paid transaction settle this order.
+    if (status.order_id !== providerOrderId || Number(status.gross_amount) !== order.totalAmount) {
+      throw new BadRequestException('Transaksi Midtrans tidak cocok dengan pesanan ini');
+    }
+    if (attempt && status.transaction_id) {
+      await this.prisma.paymentAttempt.update({ where: { id: attempt.id }, data: { providerRef: status.transaction_id } });
+    }
 
     await this.applyMidtransStatus(providerOrderId, status);
     const refreshed = await this.prisma.order.findUnique({ where: { id: orderId }, select: { status: true } });
@@ -344,6 +340,7 @@ export class PaymentsService {
 
   private async applyMidtransStatus(providerOrderId: string, status: MidtransNotification | MidtransStatus) {
     const { gross_amount, transaction_status, fraud_status, transaction_id } = status;
+    if (status.order_id !== providerOrderId) throw new BadRequestException('Referensi pesanan Midtrans tidak cocok');
     const attempt = await this.prisma.paymentAttempt.findUnique({ where: { providerOrderId } });
     const orderId = attempt?.orderId ?? providerOrderId;
     const order = await this.prisma.order.findUnique({ where: { id: orderId } });

@@ -102,7 +102,7 @@ describe('sinkron status (jaring pengaman kalau webhook tidak sampai)', () => {
     vi.restoreAllMocks();
   });
 
-  function setupSync(order: Record<string, unknown> | null) {
+  function setupSync(order: Record<string, unknown> | null, attempt: { id: string; orderId: string; providerOrderId: string; providerRef?: string } | null = null) {
     const rows = [order].filter(Boolean) as Record<string, unknown>[];
     const prisma = {
       order: {
@@ -111,8 +111,9 @@ describe('sinkron status (jaring pengaman kalau webhook tidak sampai)', () => {
         findUnique: async () => rows[0] ?? null,
       },
       paymentAttempt: {
-        findFirst: async () => null,
-        findUnique: async () => null,
+        findFirst: async () => attempt,
+        findUnique: async () => attempt,
+        update: vi.fn(async () => attempt),
         findMany: async () => [],
       },
     };
@@ -121,7 +122,7 @@ describe('sinkron status (jaring pengaman kalau webhook tidak sampai)', () => {
       if (rows[0]) rows[0].status = 'PAID';
       return { alreadyPaid: false };
     });
-    return { service, markPaid, rows };
+    return { service, markPaid, rows, paymentAttempt: prisma.paymentAttempt };
   }
 
   it('settlement di Midtrans tapi webhook belum sampai -> ditandai lunas saat disinkronkan', async () => {
@@ -163,6 +164,54 @@ describe('sinkron status (jaring pengaman kalau webhook tidak sampai)', () => {
   it('pesanan orang lain tidak bisa disinkronkan', async () => {
     const { service } = setupSync({ id: 'ord1', userId: 'lain', totalAmount: 53_120, status: 'PENDING', paymentProvider: 'MIDTRANS' });
     await expect(service.syncWithMidtrans('u1', 'ord1')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('recovers BSI using a verified Transaction ID and persists it for subsequent polls', async () => {
+    const { service, markPaid, paymentAttempt } = setupSync(
+      { id: 'ord1', userId: 'u1', totalAmount: 53120, status: 'PENDING', paymentProvider: 'MIDTRANS' },
+      { id: 'att1', orderId: 'ord1', providerOrderId: 'ord1-p1' },
+    );
+    const get = vi.spyOn(MidtransProvider.prototype, 'getStatus').mockResolvedValue({ order_id: 'ord1-p1', status_code: '200', gross_amount: '53120.00', transaction_status: 'settlement', transaction_id: 'A1-BSI' });
+    await expect(service.syncWithMidtrans('u1', 'ord1', 'A1-BSI')).resolves.toEqual({ status: 'PAID' });
+    expect(get).toHaveBeenCalledWith('A1-BSI');
+    expect(paymentAttempt.update).toHaveBeenCalledWith({ where: { id: 'att1' }, data: { providerRef: 'A1-BSI' } });
+    expect(markPaid).toHaveBeenCalledOnce();
+  });
+
+  it('uses a previously verified Transaction ID automatically', async () => {
+    const { service } = setupSync(
+      { id: 'ord1', userId: 'u1', totalAmount: 53120, status: 'PENDING', paymentProvider: 'MIDTRANS' },
+      { id: 'att1', orderId: 'ord1', providerOrderId: 'ord1-p1', providerRef: 'A1-BSI' },
+    );
+    const get = vi.spyOn(MidtransProvider.prototype, 'getStatus').mockResolvedValue(null);
+    await expect(service.syncWithMidtrans('u1', 'ord1')).resolves.toEqual({ status: 'PENDING', needsTransactionId: true });
+    expect(get).toHaveBeenCalledWith('A1-BSI');
+  });
+
+  it.each(['bsi', 'cimb', 'bni', 'bri', 'mandiri', 'permata', 'qris', 'gopay'])('reconciles a verified %s settlement to the owned order', async (method) => {
+    const transactionId = `tx-${method}`;
+    const { service, markPaid } = setupSync(
+      { id: 'ord1', userId: 'u1', totalAmount: 53120, status: 'PENDING', paymentProvider: 'MIDTRANS' },
+      { id: 'att1', orderId: 'ord1', providerOrderId: 'ord1-p1', providerRef: transactionId },
+    );
+    vi.spyOn(MidtransProvider.prototype, 'getStatus').mockResolvedValue({ order_id: 'ord1-p1', status_code: '200', gross_amount: '53120.00', transaction_status: 'settlement', transaction_id: transactionId });
+    await expect(service.syncWithMidtrans('u1', 'ord1')).resolves.toEqual({ status: 'PAID' });
+    expect(markPaid).toHaveBeenCalledWith('ord1', { provider: 'MIDTRANS', ref: transactionId });
+  });
+
+  it.each([{ order_id: 'another-order', gross_amount: '53120.00' }, { order_id: 'ord1', gross_amount: '1.00' }])('rejects another order or mismatched amount before marking paid', async (patch) => {
+    const { service, markPaid, paymentAttempt } = setupSync({ id: 'ord1', userId: 'u1', totalAmount: 53120, status: 'PENDING', paymentProvider: 'MIDTRANS' });
+    vi.spyOn(MidtransProvider.prototype, 'getStatus').mockResolvedValue({ status_code: '200', transaction_status: 'settlement', transaction_id: 'tx', ...patch });
+    await expect(service.syncWithMidtrans('u1', 'ord1', 'tx')).rejects.toBeInstanceOf(BadRequestException);
+    expect(markPaid).not.toHaveBeenCalled();
+    expect(paymentAttempt.update).not.toHaveBeenCalled();
+  });
+
+  it.each(['', '../status', 'a'.repeat(129), { id: 'tx' }])('rejects invalid ID hints', async (id) => {
+    const { service } = setupSync({ id: 'ord1', userId: 'u1', status: 'PENDING', paymentProvider: 'MIDTRANS' });
+    const get = vi.spyOn(MidtransProvider.prototype, 'getStatus');
+    await expect(service.syncWithMidtrans('u1', 'ord1', id)).rejects.toBeInstanceOf(BadRequestException);
+    expect(get).not.toHaveBeenCalled();
   });
 });
 
@@ -245,7 +294,7 @@ describe('ganti metode pembayaran', () => {
     const create = vi.spyOn(MidtransProvider.prototype, 'createPayment').mockResolvedValue({ provider: 'MIDTRANS', token: 'new-token', redirectUrl: 'https://pay/new' });
 
     await expect(service.changeMethod('u1', 'ord1')).resolves.toEqual({ status: 'PENDING', provider: 'MIDTRANS', redirectUrl: 'https://pay/new' });
-    expect(cancel).toHaveBeenCalledWith('ord1-p1');
+    expect(cancel).toHaveBeenCalledWith('tx-old');
     expect(paymentAttempt.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ providerOrderId: 'ord1-p2', sequence: 2 }) }));
     expect(create).toHaveBeenCalledWith(expect.objectContaining({ orderId: 'ord1-p2', amount: 50_000 }));
   });
@@ -281,5 +330,14 @@ describe('ganti metode pembayaran', () => {
     prisma.order.findFirst.mockResolvedValue(null);
     await expect(service.changeMethod('user-lain', 'ord1')).rejects.toBeInstanceOf(NotFoundException);
     expect(paymentAttempt.count).not.toHaveBeenCalled();
+  });
+
+  it('does not replace an unknown charge or create duplicate payable attempts', async () => {
+    const { service, paymentAttempt } = setupChange();
+    vi.spyOn(MidtransProvider.prototype, 'getStatus').mockResolvedValue(null);
+    const create = vi.spyOn(MidtransProvider.prototype, 'createPayment');
+    await expect(service.changeMethod('u1', 'ord1')).rejects.toBeInstanceOf(ConflictException);
+    expect(create).not.toHaveBeenCalled();
+    expect(paymentAttempt.create).not.toHaveBeenCalled();
   });
 });

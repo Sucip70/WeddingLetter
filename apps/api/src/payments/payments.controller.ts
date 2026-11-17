@@ -26,8 +26,8 @@ export class PaymentsController {
   @Post(':orderId/sync')
   @HttpCode(200)
   @UseGuards(AuthGuard)
-  sync(@CurrentUser() user: AuthUser, @Param('orderId') orderId: string) {
-    return this.payments.syncWithMidtrans(user.id, orderId);
+  sync(@CurrentUser() user: AuthUser, @Param('orderId') orderId: string, @Body() body?: { transactionId?: unknown }) {
+    return this.payments.syncWithMidtrans(user.id, orderId, body?.transactionId);
   }
 
   // Webhook dari Midtrans (tanpa login; keabsahan dicek lewat signature).
