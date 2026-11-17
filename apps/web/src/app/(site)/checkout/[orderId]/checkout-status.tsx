@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { OrderLines, OrderStatusBadge } from '@/components/order-summary';
-import { Alert, Button, Card, Field, Input, LinkButton } from '@/components/ui';
+import { Alert, Button, Card, LinkButton } from '@/components/ui';
 import { api, errorMessage } from '@/lib/client-api';
 import type { OrderDetail } from '@/lib/types';
 
@@ -11,9 +11,7 @@ export function CheckoutStatus({ initial }: { initial: OrderDetail }) {
   const [order, setOrder] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [syncError, setSyncError] = useState('');
-  const [needsTransactionId, setNeedsTransactionId] = useState(false);
-  const [transactionId, setTransactionId] = useState('');
+  const [syncError, setSyncError] = useState(false);
 
   // Setelah kembali dari halaman bayar, webhook bisa tiba beberapa detik kemudian: pantau statusnya.
   // `payments/.../sync` juga menanyakan langsung ke Midtrans (jaring pengaman kalau webhook tidak pernah
@@ -26,15 +24,14 @@ export function CheckoutStatus({ initial }: { initial: OrderDetail }) {
       if (running) return;
       running = true;
       try {
-        const result = await api<{ needsTransactionId?: boolean }>(`payments/${order.id}/sync`, { method: 'POST', body: {} });
+        await api(`payments/${order.id}/sync`, { method: 'POST', body: {} });
         const refreshed = await api<OrderDetail>(`orders/${order.id}`);
         if (!disposed) {
-          setNeedsTransactionId(!!result.needsTransactionId);
-          setSyncError('');
+          setSyncError(false);
           setOrder(refreshed);
         }
-      } catch (error) {
-        if (!disposed) setSyncError(errorMessage(error));
+      } catch {
+        if (!disposed) setSyncError(true);
       } finally {
         running = false;
       }
@@ -46,21 +43,6 @@ export function CheckoutStatus({ initial }: { initial: OrderDetail }) {
 
   const unuploaded = order.media.some((m) => m.status === 'PENDING');
   const invitationId = order.invitation?.id;
-
-  async function reconcile() {
-    setBusy(true);
-    setError('');
-    try {
-      const result = await api<{ needsTransactionId?: boolean }>(`payments/${order.id}/sync`, { method: 'POST', body: { transactionId: transactionId.trim() } });
-      setNeedsTransactionId(!!result.needsTransactionId);
-      setOrder(await api<OrderDetail>(`orders/${order.id}`));
-      if (result.needsTransactionId) setError('Transaksi belum ditemukan. Periksa Transaction ID Midtrans atau hubungi bantuan.');
-    } catch (error) {
-      setError(errorMessage(error));
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function pay() {
     setBusy(true);
@@ -116,16 +98,7 @@ export function CheckoutStatus({ initial }: { initial: OrderDetail }) {
 
       {order.status === 'PENDING' && (
         <div className="space-y-3">
-          {syncError && <Alert tone="warn">Sinkronisasi pembayaran belum berhasil: {syncError}</Alert>}
-          {needsTransactionId && <Card className="space-y-3 p-5">
-            <p className="text-sm text-ink-soft">Status belum ditemukan melalui nomor pesanan. Untuk BSI/BI-SNAP, mintalah bantuan penjual untuk memeriksa Transaction ID Midtrans. Jangan membayar ulang sebelum status dipastikan.</p>
-            <form className="space-y-3" onSubmit={(event) => { event.preventDefault(); void reconcile(); }}>
-              <Field label="Transaction ID Midtrans" hint="Bukan Order ID atau nomor virtual account. Status dan nominal tetap diverifikasi langsung ke Midtrans.">
-                <Input value={transactionId} onChange={(event) => setTransactionId(event.target.value)} maxLength={128} autoComplete="off" />
-              </Field>
-              <Button type="submit" variant="secondary" loading={busy} disabled={!transactionId.trim()}>Periksa status pembayaran</Button>
-            </form>
-          </Card>}
+          {syncError && <Alert tone="warn">Status pembayaran belum dapat dipastikan. Jika Anda sudah membayar, jangan lakukan pembayaran ulang. Coba periksa kembali beberapa saat lagi atau <Link href="/kontak" className="underline">hubungi bantuan</Link>.</Alert>}
           {unuploaded ? (
             <Alert tone="warn">Ada file yang belum selesai terunggah (mungkin halaman sempat tertutup). Batalkan pesanan ini lalu buat ulang dari editor: isian teks Anda tersimpan otomatis.</Alert>
           ) : (

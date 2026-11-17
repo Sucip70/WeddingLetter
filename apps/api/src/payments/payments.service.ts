@@ -117,7 +117,7 @@ export class PaymentsService {
         if (!status) {
           // A BI-SNAP charge can be invisible to an order_id lookup. Do not
           // replace its token and risk opening a second payable transaction.
-          throw new ConflictException('Status pembayaran lama belum dapat dipastikan. Sinkronkan Transaction ID Midtrans sebelum mengganti metode');
+          throw new ConflictException('Status pembayaran sebelumnya belum dapat dipastikan. Jangan membayar ulang atau mengganti metode sebelum status dipastikan. Coba lagi beberapa saat lagi atau hubungi bantuan');
         }
         await this.applyMidtransStatus(active.providerOrderId, status);
         const refreshed = await this.prisma.order.findUnique({ where: { id: order.id }, select: { status: true } });
