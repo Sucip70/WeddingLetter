@@ -59,31 +59,49 @@ export class MidtransProvider implements PaymentProvider {
   // GET status transaksi (Core API). Otentikasi lewat server key yang sama, bukan signature — dipanggil
   // dari server kita sendiri, bukan webhook publik, jadi tidak perlu diverifikasi seperti notification.
   async getStatus(orderId: string): Promise<MidtransStatus | null> {
-    const res = await fetch(`${midtransApiBase()}/v2/${encodeURIComponent(orderId)}/status`, {
-      headers: { Accept: 'application/json', Authorization: `Basic ${Buffer.from(`${this.serverKey}:`).toString('base64')}` },
-    });
-    if (res.status === 404) return null; // transaksi belum pernah dibuat di Midtrans
-    if (!res.ok) {
-      this.logger.error(`Midtrans get status gagal (${res.status}): ${await res.text()}`);
-      throw new ServiceUnavailableException('Gagal mengecek status pembayaran, coba lagi sebentar');
+    // Legacy banks/GoPay keep their original route. BI-SNAP banks (e.g. BSI)
+    // require transaction_id plus transaction-source; retry only a true miss.
+    for (const snap of [false, true]) {
+      const { response, data } = await this.operation(orderId, 'status', snap);
+      if (response.status === 404 || String(data.status_code) === '404') continue;
+      if (!response.ok || typeof data.status_code !== 'string' ||
+          typeof data.order_id !== 'string' || !data.order_id ||
+          typeof data.transaction_status !== 'string' || !data.transaction_status ||
+          typeof data.gross_amount !== 'string' || !data.gross_amount || !Number.isFinite(Number(data.gross_amount)) ||
+          !['200', '201', '202', '407'].includes(String(data.status_code))) {
+        this.logger.error(`Midtrans status rejected: HTTP=${response.status} code=${String(data.status_code)}`);
+        throw new ServiceUnavailableException('Gagal memverifikasi status pembayaran di Midtrans');
+      }
+      return data as unknown as MidtransStatus;
     }
-    return (await res.json()) as MidtransStatus;
+    return null;
+  }
+
+  private async operation(id: string, action: 'status' | 'cancel', snap: boolean) {
+    const response = await fetch(`${midtransApiBase()}/v2/${encodeURIComponent(id)}/${action}`, {
+      method: action === 'cancel' ? 'POST' : 'GET',
+      headers: {
+        Accept: 'application/json', 'Content-Type': 'application/json',
+        Authorization: `Basic ${Buffer.from(`${this.serverKey}:`).toString('base64')}`,
+        ...(snap ? { 'transaction-source': 'SNAP_API' } : {}),
+      },
+      signal: AbortSignal.timeout(15000),
+    });
+    const data = await response.json().catch(() => null) as Record<string, unknown> | null;
+    if (!data) throw new ServiceUnavailableException('Respons Midtrans tidak valid');
+    return { response, data };
   }
 
   async cancelPayment(orderId: string): Promise<boolean> {
-    const res = await fetch(`${midtransApiBase()}/v2/${encodeURIComponent(orderId)}/cancel`, {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-        Authorization: `Basic ${Buffer.from(`${this.serverKey}:`).toString('base64')}`,
-      },
-    });
-    if (res.ok) return true;
-    // Status 404: belum ada metode yang dikonfirmasi. Status 412: transaksi berubah
-    // di antara GET status dan cancel. Pemanggil wajib sinkron ulang sebelum melanjutkan.
-    if (res.status === 404 || res.status === 412) return false;
-    this.logger.error(`Midtrans cancel gagal (${res.status}): ${await res.text()}`);
-    throw new ServiceUnavailableException('Gagal membatalkan metode pembayaran lama, coba lagi sebentar');
+    for (const snap of [false, true]) {
+      const { response, data } = await this.operation(orderId, 'cancel', snap);
+      const code = String(data.status_code);
+      if (response.status === 404 || code === '404') continue;
+      if (response.status === 412 || code === '412') return false;
+      if (response.ok && code === '200') return true;
+      this.logger.error(`Midtrans cancel rejected: HTTP=${response.status} code=${code}`);
+      throw new ServiceUnavailableException('Gagal membatalkan metode pembayaran lama, coba lagi sebentar');
+    }
+    return false;
   }
 }
