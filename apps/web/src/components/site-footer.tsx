@@ -36,6 +36,8 @@ export async function SiteFooter() {
           <ul className="mt-4 space-y-2.5 text-sm text-ink-soft">
             <li>{link('Halo WeddingLetter, saya ingin bertanya tentang undangan digital.', wa ? 'Chat WhatsApp' : 'Hubungi kami')}</li>
             <li>{link('Halo WeddingLetter, saya ingin memesan desain undangan custom.', 'Pesan desain custom')}</li>
+            <li><Link href="/syarat-ketentuan" className="hover:text-ink">Syarat &amp; Ketentuan</Link></li>
+            <li><Link href="/kebijakan-privasi" className="hover:text-ink">Kebijakan Privasi</Link></li>
           </ul>
         </div>
       </div>

@@ -231,6 +231,8 @@ export interface OrderSummary {
 }
 
 export interface OrderDetail extends OrderSummary {
+  agreement?: { acceptedAt: string; version: string; policy: import('./legal').LegalPolicy } | null;
+  draftExpiresAt?: string | null;
   coupon: string | null;
   lines: QuoteLine[];
   media: { id: string; type: string; status: string; sizeBytes: number }[];
@@ -285,7 +287,7 @@ export interface InvitationDetail {
   pausedAt: string | null;
   remainingDays: number | null;
   viewCount: number;
-  order: { id: string; status: OrderStatus; paidAt: string | null; activeWeeks: number; totalAmount: number };
+  order: { id: string; status: OrderStatus; paidAt: string | null; activeWeeks: number; totalAmount: number; draftExpiresAt?: string | null };
   refundEligible: boolean;
   media: InvitationMedia[];
 }

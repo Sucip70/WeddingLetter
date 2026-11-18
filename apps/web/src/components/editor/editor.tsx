@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { TermsConsent, useCheckoutTerms } from '@/components/terms-consent';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FullscreenInvitationPreview } from '@/components/invitation/fullscreen-preview';
@@ -52,6 +53,7 @@ function useDebounced<T>(value: T, ms: number) {
 
 export function Editor({ template, addOns, initialUser, initialPalette, demoPhotos }: { template: TemplateDetail; addOns: AddOn[]; initialUser: SessionUser | null; initialPalette?: string; demoPhotos: DemoPhotos }) {
   const router = useRouter();
+  const terms = useCheckoutTerms();
   const draftKey = `wl:draft:${template.id}`;
   const price = useMemo(() => Object.fromEntries(addOns.map((a) => [a.code, a.price])) as Record<string, number>, [addOns]);
 
@@ -259,6 +261,11 @@ export function Editor({ template, addOns, initialUser, initialPalette, demoPhot
   // ----- Checkout -----
   const total = quote?.total;
   async function begin() {
+    if (!terms.ready) {
+      setNotice('Baca dan setujui Syarat & Ketentuan sebelum melanjutkan.');
+      document.getElementById('checkout-agreement')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     const missing = missingRequired(data, sections);
     if (missing.length) {
       setErrors(Object.fromEntries(missing.map((m) => [`${m.section}.${m.key}`, 'Wajib diisi'])));
@@ -287,7 +294,7 @@ export function Editor({ template, addOns, initialUser, initialPalette, demoPhot
     setCheckout({ progress: { phase: 'creating', files: {}, fileNames: {} } });
     try {
       const result = await runCheckout({
-        body: requestBody,
+        body: { ...requestBody, termsAccepted: terms.accepted, termsVersion: terms.policy?.version },
         files,
         existing: retry ? { order: retry.order, uploads: retry.uploads } : undefined,
         done: retry?.done,
@@ -450,10 +457,11 @@ export function Editor({ template, addOns, initialUser, initialPalette, demoPhot
             </div>
           </Card>
 
+          <TermsConsent terms={terms} />
           <div className="lg:hidden">{summary}</div>
           <div className="hidden lg:block">
             {summary}
-            <CheckoutButton onClick={begin} total={total} loading={!quote || quoting} className="mt-4" />
+            <CheckoutButton onClick={begin} total={total} loading={!quote || quoting} disabled={!terms.ready} className="mt-4" />
           </div>
         </div>
 
@@ -479,7 +487,7 @@ export function Editor({ template, addOns, initialUser, initialPalette, demoPhot
             <p className={cn('font-display text-xl text-ink', quoting && 'opacity-50')}>{total === undefined ? '—' : rupiah(total)}</p>
           </div>
           <Button variant="secondary" onClick={() => setPreviewOpen(true)}>Pratinjau</Button>
-          <Button onClick={begin} loading={!quote || quoting}>Checkout</Button>
+          <Button onClick={begin} loading={!quote || quoting} disabled={!terms.ready}>Checkout</Button>
         </div>
       </div>
 
@@ -556,10 +564,10 @@ function SummaryCard({ quote, loading, error, weeks, includedWeeks }: { quote: Q
   );
 }
 
-function CheckoutButton({ onClick, total, loading, className }: { onClick: () => void; total?: number; loading: boolean; className?: string }) {
+function CheckoutButton({ onClick, total, loading, disabled, className }: { onClick: () => void; total?: number; loading: boolean; disabled?: boolean; className?: string }) {
   return (
     <div className={className}>
-      <Button size="lg" className="w-full" onClick={onClick} loading={loading}>
+      <Button size="lg" className="w-full" onClick={onClick} loading={loading} disabled={disabled}>
         Lanjut ke pembayaran{total !== undefined ? ` · ${rupiah(total)}` : ''}
       </Button>
       <p className="mt-2 text-center text-xs text-ink-soft">Pembayaran via QRIS, virtual account, atau e-wallet. Refund penuh selama belum dipublikasikan (≤48 jam).</p>

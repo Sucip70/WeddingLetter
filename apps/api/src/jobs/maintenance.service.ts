@@ -51,7 +51,9 @@ export class MaintenanceService implements OnModuleInit, OnModuleDestroy {
       const purged = await this.lifecycle.purgeDue(now);
       const replacements = await this.lifecycle.purgeStaleReplacements(now);
       const reminders = await this.sendReminders(now);
-      return { expired, staleOrders, purged, replacements, reminders };
+      const draftReminders = await this.sendDraftReminders(now);
+      const expiredDrafts = await this.lifecycle.purgeExpiredDrafts(now);
+      return { expired, staleOrders, purged, replacements, reminders, draftReminders, expiredDrafts };
     } finally {
       this.running = false;
     }
@@ -73,6 +75,29 @@ export class MaintenanceService implements OnModuleInit, OnModuleDestroy {
       if (claimed.count === 0 || !inv.expiresAt) continue;
       await this.notifications.expiryReminder(inv.order.user, { id: inv.id, slug: inv.slug, expiresAt: inv.expiresAt });
       sent++;
+    }
+    return sent;
+  }
+
+  private async sendDraftReminders(now: Date) {
+    const due = await this.prisma.order.findMany({
+      where: { kind: 'NEW', status: 'PAID', draftExpiresAt: { gt: now, lte: new Date(now.getTime() + 14 * DAY_MS) }, invitation: { status: 'DRAFT', publishedAt: null } },
+      include: { user: true, invitation: true },
+    });
+    let sent = 0;
+    for (const order of due) {
+      if (!order.invitation || !order.draftExpiresAt) continue;
+      const urgent = order.draftExpiresAt.getTime() - now.getTime() <= 3 * DAY_MS;
+      const field = urgent ? 'draftReminder3At' : 'draftReminder14At';
+      if (order[field]) continue;
+      const claimed = await this.prisma.order.updateMany({
+        where: { id: order.id, [field]: null, status: 'PAID', invitation: { status: 'DRAFT', publishedAt: null } },
+        data: { [field]: now },
+      });
+      if (!claimed.count) continue;
+      const ok = await this.notifications.draftExpiryReminder(order.user, order.invitation.id, order.draftExpiresAt);
+      if (ok) sent++;
+      else await this.prisma.order.updateMany({ where: { id: order.id, [field]: now }, data: { [field]: null } });
     }
     return sent;
   }

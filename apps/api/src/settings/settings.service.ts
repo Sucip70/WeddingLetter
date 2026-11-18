@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { buildLegalPolicy, LEGAL_DEFAULTS, legalSettingsSchema, type LegalSettings } from './legal-policy.js';
 
 const WHATSAPP_KEY = 'support_whatsapp';
 
@@ -21,16 +22,35 @@ export class SettingsService {
 
   async supportWhatsapp(): Promise<string> {
     const row = await this.prisma.setting.findUnique({ where: { key: WHATSAPP_KEY } });
-    return row?.value ?? '';
+    return row?.value ?? '6282125622542';
+  }
+
+  async legalSettings(): Promise<LegalSettings> {
+    const row = await this.prisma.setting.findUnique({ where: { key: 'legal_settings' } });
+    if (!row) return { ...LEGAL_DEFAULTS };
+    return legalSettingsSchema.parse(JSON.parse(row.value));
+  }
+
+  async publicSettings() {
+    const [supportWhatsapp, legal] = await Promise.all([this.supportWhatsapp(), this.legalSettings()]);
+    return { supportWhatsapp, legal, policy: buildLegalPolicy(legal, supportWhatsapp) };
+  }
+
+  async update(input: { supportWhatsapp?: string; legal?: LegalSettings }) {
+    const writes = [];
+    if (input.supportWhatsapp !== undefined) {
+      const value = normalizeWhatsapp(input.supportWhatsapp);
+      writes.push(this.prisma.setting.upsert({ where: { key: WHATSAPP_KEY }, create: { key: WHATSAPP_KEY, value }, update: { value } }));
+    }
+    if (input.legal) {
+      const value = JSON.stringify(legalSettingsSchema.parse(input.legal));
+      writes.push(this.prisma.setting.upsert({ where: { key: 'legal_settings' }, create: { key: 'legal_settings', value }, update: { value } }));
+    }
+    await this.prisma.$transaction(writes);
+    return this.publicSettings();
   }
 
   async setSupportWhatsapp(input: string) {
-    const value = normalizeWhatsapp(input);
-    if (!value) {
-      await this.prisma.setting.deleteMany({ where: { key: WHATSAPP_KEY } });
-    } else {
-      await this.prisma.setting.upsert({ where: { key: WHATSAPP_KEY }, create: { key: WHATSAPP_KEY, value }, update: { value } });
-    }
-    return { supportWhatsapp: value };
+    return this.update({ supportWhatsapp: input });
   }
 }

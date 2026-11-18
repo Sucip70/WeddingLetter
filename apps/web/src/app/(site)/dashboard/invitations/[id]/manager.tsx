@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FieldInput } from '@/components/editor/fields';
 import { GuestManager } from '@/components/guest-manager';
+import { TermsConsent, useCheckoutTerms } from '@/components/terms-consent';
 import { ACCEPT, compressImage, fileProblem } from '@/components/editor/model';
 import type { FieldCtx } from '@/components/editor/fields';
 import { InvitationView } from '@/components/invitation/invitation-view';
@@ -143,6 +144,7 @@ function Overview({ inv, link, reload, goto, now, supportWhatsapp }: { inv: Invi
               Periksa isi undangan di tab <button className="font-medium text-rose underline" onClick={() => goto('edit')}>Isi undangan</button>. Masa aktif <strong>{inv.order.activeWeeks} minggu</strong> mulai dihitung setelah Anda menekan tombol publikasi, dan link baru bisa dibuka tamu.
             </p>
             {inv.refundEligible && <p className="mt-2 text-xs text-ink-soft">Setelah dipublikasikan, refund penuh tidak lagi tersedia.</p>}
+            {inv.order.draftExpiresAt && <p className="mt-3 text-sm font-medium text-ink">Publikasikan sebelum {formatDateTime(inv.order.draftExpiresAt)} WIB. Setelah tenggat, draf dan berkas dihapus permanen.</p>}
             {error && <Alert className="mt-4">{error}</Alert>}
             <Button size="lg" className="mt-5" onClick={() => setConfirmOpen(true)}>Publikasikan sekarang</Button>
           </Card>
@@ -580,6 +582,7 @@ function RsvpTab({ inv }: { inv: InvitationDetail }) {
 // ================= Perpanjang =================
 
 function ExtendTab({ inv, now }: { inv: InvitationDetail; now: number }) {
+  const terms = useCheckoutTerms();
   const [weeks, setWeeks] = useState(4);
   const [coupon, setCoupon] = useState('');
   const [quote, setQuote] = useState<{ lines: QuoteLine[]; discount: number; total: number; coupon: { valid: boolean; reason?: string; code: string } | null } | null>(null);
@@ -599,10 +602,11 @@ function ExtendTab({ inv, now }: { inv: InvitationDetail; now: number }) {
   }, [inv.id, weeks, coupon, unpublished]);
 
   async function pay() {
+    if (!terms.ready) { setError('Setujui Syarat & Ketentuan sebelum melanjutkan.'); return; }
     setBusy(true);
     setError('');
     try {
-      const order = await api<{ id: string }>(`invitations/${inv.id}/extension-order`, { body: { weeks, couponCode: coupon.trim() || undefined } });
+      const order = await api<{ id: string }>(`invitations/${inv.id}/extension-order`, { body: { weeks, couponCode: coupon.trim() || undefined, termsAccepted: true, termsVersion: terms.policy?.version } });
       const res = await api<{ status: string; redirectUrl?: string }>(`payments/${order.id}/start`, { method: 'POST', body: {} });
       window.location.assign(res.status === 'PAID' || !res.redirectUrl ? `/checkout/${order.id}` : res.redirectUrl);
     } catch (e) {
@@ -649,7 +653,9 @@ function ExtendTab({ inv, now }: { inv: InvitationDetail; now: number }) {
           </div>
         )}
         {error && <Alert>{error}</Alert>}
-        <Button size="lg" className="w-full" onClick={pay} loading={busy} disabled={!quote}>{revives ? 'Bayar & aktifkan kembali' : 'Bayar perpanjangan'}</Button>
+        <TermsConsent terms={terms} extension />
+        <p className="text-xs leading-relaxed text-ink-soft">Untuk pengajuan refund perpanjangan atau add-on yang belum digunakan, <Link href="/kontak" className="underline">hubungi bantuan</Link>. Tim memeriksa kelayakan secara manual.</p>
+        <Button size="lg" className="w-full" onClick={pay} loading={busy} disabled={!quote || !terms.ready}>{revives ? 'Bayar & aktifkan kembali' : 'Bayar perpanjangan'}</Button>
       </Card>
     </div>
   );

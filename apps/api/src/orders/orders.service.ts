@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { StorageService } from '../storage/storage.service.js';
 import { invitationMediaKey } from '../storage/storage-keys.js';
 import type { InvitationData, SectionDef } from '../templates/layout.js';
+import { SettingsService } from '../settings/settings.service.js';
 
 export const EXT_BY_TYPE: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -63,9 +64,18 @@ export class OrdersService {
     private readonly pricing: PricingService,
     private readonly storage: StorageService,
     private readonly lifecycle: LifecycleService,
+    private readonly settings: SettingsService,
   ) {}
 
+  private async agreement(input: { termsAccepted?: boolean; termsVersion?: string }) {
+    if (input.termsAccepted !== true) throw new BadRequestException('Setujui Syarat & Ketentuan sebelum melanjutkan pembayaran');
+    const { policy } = await this.settings.publicSettings();
+    if (input.termsVersion !== policy.version) throw new ConflictException('Ketentuan telah diperbarui. Muat ulang halaman dan baca kembali sebelum menyetujui');
+    return { termsAcceptedAt: new Date(), termsVersion: policy.version, termsSnapshot: policy };
+  }
+
   async createNew(userId: string, input: OrderInput) {
+    const agreement = await this.agreement(input);
     const prepared = await this.pricing.prepareNewOrder(input, { lenient: false });
     const slug = await this.pickSlug(prepared);
     const invitationId = newId();
@@ -76,6 +86,8 @@ export class OrdersService {
       const created = await tx.order.create({
         data: {
           kind: 'NEW',
+          ...agreement,
+          draftRetentionDays: agreement.termsSnapshot.settings.draftRetentionDays,
           userId,
           templateId: prepared.template.id,
           couponId,
@@ -138,12 +150,14 @@ export class OrdersService {
   }
 
   async createExtension(userId: string, invitationId: string, input: ExtensionOrderInput) {
+    const agreement = await this.agreement(input);
     const prepared = await this.pricing.prepareExtension(invitationId, userId, input);
     const order = await this.prisma.$transaction(async (tx) => {
       const couponId = await this.reserveCoupon(tx, prepared.coupon);
       return tx.order.create({
         data: {
           kind: 'EXTENSION',
+          ...agreement,
           userId,
           templateId: prepared.template.id,
           extendsInvitationId: prepared.invitation.id,
@@ -185,6 +199,8 @@ export class OrdersService {
     return {
       ...this.summary(order),
       coupon: order.coupon?.code ?? null,
+      agreement: order.termsSnapshot ? { acceptedAt: order.termsAcceptedAt, version: order.termsVersion, policy: order.termsSnapshot } : null,
+      draftExpiresAt: order.draftExpiresAt,
       lines: order.addOns.map((l) => ({
         code: l.addOn.code,
         label: l.addOn.name,

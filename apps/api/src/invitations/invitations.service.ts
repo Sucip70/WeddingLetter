@@ -103,7 +103,7 @@ export class InvitationsService {
       pausedAt: inv.pausedAt,
       remainingDays: inv.remainingDays,
       viewCount: inv.viewCount,
-      order: { id: inv.order.id, status: inv.order.status, paidAt: inv.order.paidAt, activeWeeks: inv.order.activeWeeks, totalAmount: inv.order.totalAmount },
+      order: { id: inv.order.id, status: inv.order.status, paidAt: inv.order.paidAt, activeWeeks: inv.order.activeWeeks, totalAmount: inv.order.totalAmount, draftExpiresAt: inv.order.draftExpiresAt },
       // Refund penuh: hanya sebelum publish & dalam jendela waktu (ditangani admin/CS).
       refundEligible:
         inv.order.status === 'PAID' && !inv.publishedAt && !!inv.order.paidAt && now - inv.order.paidAt.getTime() <= REFUND_WINDOW_HOURS * 3600 * 1000,

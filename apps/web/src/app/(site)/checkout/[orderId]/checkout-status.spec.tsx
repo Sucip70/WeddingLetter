@@ -44,6 +44,13 @@ describe('customer checkout status', () => {
     expect(html).not.toContain('Lanjutkan pembayaran');
   });
 
+  it('retains the payment receipt but removes edit access after draft deletion', () => {
+    const html = renderToStaticMarkup(createElement(CheckoutStatus, { initial: { ...order, status: 'PAID', invitation: { id: 'invitation-test', slug: 'andi-sinta', status: 'DELETED' } } }));
+    expect(html).toContain('Pembayaran diterima');
+    expect(html).toContain('Data undangan ini sudah dihapus');
+    expect(html).not.toContain('Atur &amp; publikasikan undangan');
+  });
+
   it('keeps automatic sync but never asks customers for gateway identifiers', () => {
     const source = readFileSync(new URL('./checkout-status.tsx', import.meta.url), 'utf8');
     expect(source).toContain('payments/${order.id}/sync');
