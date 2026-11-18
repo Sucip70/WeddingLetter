@@ -29,7 +29,16 @@ export class LifecycleService {
     if (inv.mediaFiles.some((m) => m.status === 'PENDING')) throw new ConflictException('Masih ada file yang belum selesai diunggah');
 
     const now = new Date();
+    if (inv.order.draftExpiresAt && inv.order.draftExpiresAt <= now) throw new ConflictException('Batas penyimpanan draf sudah berakhir. Hubungi bantuan');
     return this.prisma.$transaction(async (tx) => {
+      if (inv.order.draftExpiresAt) {
+        // Claim before touching media; races with draft cleanup cannot publish a deleted draft.
+        const claimed = await tx.invitation.updateMany({
+          where: { id: inv.id, status: 'DRAFT', publishedAt: null, order: { status: 'PAID', draftExpiresAt: { gt: now } } },
+          data: { status: 'ACTIVE', publishedAt: now },
+        });
+        if (!claimed.count) throw new ConflictException('Status draf telah berubah. Muat ulang halaman');
+      }
       for (const m of inv.mediaFiles.filter((x) => x.status === 'UPLOADED')) {
         await tx.mediaFile.update({ where: { id: m.id }, data: { status: 'ACTIVE', expiresAt: addMs(now, m.rentedWeeks * WEEK_MS) } });
       }
@@ -138,6 +147,46 @@ export class LifecycleService {
     });
     for (const inv of invitations) await this.deleteInvitation(inv.id);
     return { invitations: invitations.length, media: media.length };
+  }
+
+  // Only newly agreed paid drafts have a deletion deadline.
+  async purgeExpiredDrafts(now = new Date()) {
+    // No backfill: old paid drafts have no deadline and are never selected.
+    const due = await this.prisma.invitation.findMany({
+      where: { publishedAt: null, order: { kind: 'NEW', status: 'PAID', draftExpiresAt: { lte: now } },
+        OR: [{ status: 'DRAFT' }, { status: 'DELETED', mediaFiles: { some: { status: { not: 'DELETED' } } } }],
+      },
+      select: { id: true, status: true },
+    });
+    let count = 0;
+    for (const inv of due) {
+      if (inv.status === 'DRAFT') {
+        const claimed = await this.prisma.$transaction(async (tx) => {
+          const result = await tx.invitation.updateMany({
+            where: { id: inv.id, status: 'DRAFT', publishedAt: null, order: { kind: 'NEW', status: 'PAID', draftExpiresAt: { lte: now } } },
+            data: { status: 'DELETED', data: {}, layout: {}, features: {} },
+          });
+          if (result.count) {
+            await tx.rsvpGuest.deleteMany({ where: { invitationId: inv.id } });
+            await tx.invitationGuest.deleteMany({ where: { invitationId: inv.id } });
+          }
+          return result.count;
+        });
+        if (!claimed) continue;
+      }
+      // Failed object deletion remains retryable on the next run, even after
+      // the invitation content has been logically removed. Never mark it gone
+      // merely because the object store was temporarily unavailable.
+      const media = await this.prisma.mediaFile.findMany({ where: { invitationId: inv.id, status: { not: 'DELETED' } } });
+      for (const file of media) {
+        try {
+          await this.storage.delete(file.storageKey);
+          await this.prisma.mediaFile.update({ where: { id: file.id }, data: { status: 'DELETED', url: '' } });
+        } catch (error) { this.logger.error(`Pembersihan draf akan dicoba ulang: ${(error as Error).message}`); }
+      }
+      count++;
+    }
+    return count;
   }
 
   // Penggantian file yang tidak pernah selesai diunggah (> 24 jam) dibersihkan.

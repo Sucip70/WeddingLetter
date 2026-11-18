@@ -13,6 +13,8 @@ export const mediaDeclSchema = z.object({
 
 // Dipakai bersama oleh kalkulator (POST /pricing/quote) dan pembuatan order (POST /orders).
 export const orderInputSchema = z.object({
+  termsAccepted: z.boolean().optional(),
+  termsVersion: z.string().max(100).optional(),
   templateId: z.string().min(1),
   weeks: z.number().int().min(1).max(LIMITS.maxWeeks),
   data: z.record(z.string(), z.unknown()).default({}),
@@ -32,6 +34,8 @@ export const orderInputSchema = z.object({
 export type OrderInput = z.infer<typeof orderInputSchema>;
 
 export const extensionInputSchema = z.object({
+  termsAccepted: z.boolean().optional(),
+  termsVersion: z.string().max(100).optional(),
   weeks: z.number().int().min(1).max(LIMITS.maxWeeks),
   couponCode: z.string().trim().min(1).max(40).optional(),
 });

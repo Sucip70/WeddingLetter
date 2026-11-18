@@ -245,6 +245,13 @@ model Order {
   paymentToken        String?
   paymentUrl          String?
   paidAt              DateTime?
+  termsAcceptedAt     DateTime?
+  termsVersion        String?
+  termsSnapshot       Json?
+  draftRetentionDays  Int?
+  draftExpiresAt      DateTime?
+  draftReminder14At   DateTime?
+  draftReminder3At    DateTime?
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
 
@@ -258,6 +265,7 @@ model Order {
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
+  @@index([draftExpiresAt])
   @@map("orders")
 }
 

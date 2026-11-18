@@ -14,7 +14,7 @@ export class NotificationsService {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
       this.logger.warn(`[DEV] Email ke ${to} — ${subject}\n${text}`);
-      return;
+      return false;
     }
     try {
       const res = await fetch('https://api.resend.com/emails', {
@@ -22,9 +22,11 @@ export class NotificationsService {
         headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ from: process.env.MAIL_FROM ?? 'WeddingLetter <onboarding@resend.dev>', to, subject, text }),
       });
-      if (!res.ok) this.logger.error(`Resend gagal (${res.status}): ${await res.text()}`);
+      if (!res.ok) { this.logger.error(`Resend gagal (${res.status}): ${await res.text()}`); return false; }
+      return true;
     } catch (error) {
       this.logger.error(`Resend error: ${(error as Error).message}`);
+      return false;
     }
   }
 
@@ -54,6 +56,12 @@ export class NotificationsService {
       'Pembayaran diterima — WeddingLetter',
       `Halo ${user.name},\n\nPembayaran pesanan ${orderId} sebesar ${formatRupiah(total)} sudah kami terima.\nAtur & publikasikan undangan Anda di:\n${link}\n\nTerima kasih!`,
     );
+  }
+
+  async draftExpiryReminder(user: { name: string; email: string }, invitationId: string, deadline: Date) {
+    const date = deadline.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' });
+    return this.sendEmail(user.email, 'Publikasikan draf Anda sebelum tenggat — WeddingLetter',
+      `Halo ${user.name},\n\nDraf undangan berbayar Anda belum dipublikasikan. Publikasikan sebelum ${date} WIB melalui ${this.webUrl}/dashboard/invitations/${invitationId}. Setelah tenggat, draf dan berkas terkait dihapus permanen. Hubungi bantuan jika membutuhkan pertolongan.\n\nWeddingLetter`);
   }
 
   async expiryReminder(

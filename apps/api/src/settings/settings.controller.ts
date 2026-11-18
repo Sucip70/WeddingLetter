@@ -3,8 +3,9 @@ import { z } from 'zod';
 import { parseBody } from '../auth/auth.dto.js';
 import { AuthGuard, Roles } from '../auth/auth.guard.js';
 import { SettingsService } from './settings.service.js';
+import { legalSettingsSchema } from './legal-policy.js';
 
-const updateSchema = z.object({ supportWhatsapp: z.string().max(40) });
+const updateSchema = z.object({ supportWhatsapp: z.string().max(40).optional(), legal: legalSettingsSchema.optional() });
 
 // Publik: footer, beranda, dan dashboard memakai nomor ini untuk tautan bantuan. Kosong = belum ada nomor.
 @Controller('settings')
@@ -14,7 +15,7 @@ export class SettingsPublicController {
   @Get('public')
   @Header('Cache-Control', 'public, max-age=30')
   async publicSettings() {
-    return { supportWhatsapp: await this.settings.supportWhatsapp() };
+    return this.settings.publicSettings();
   }
 }
 
@@ -26,11 +27,11 @@ export class SettingsAdminController {
 
   @Get()
   async get() {
-    return { supportWhatsapp: await this.settings.supportWhatsapp() };
+    return this.settings.publicSettings();
   }
 
   @Put()
   update(@Body() body: unknown) {
-    return this.settings.setSupportWhatsapp(parseBody(updateSchema, body).supportWhatsapp);
+    return this.settings.update(parseBody(updateSchema, body));
   }
 }

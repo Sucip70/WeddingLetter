@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { authedFetch, requireUser } from '@/lib/session';
 import type { OrderDetail } from '@/lib/types';
 import { DevPay } from './dev-pay';
+import { devPaymentOrderId } from '@/lib/dev-payment-order';
 
 export const metadata: Metadata = { title: 'Simulasi pembayaran' };
 
@@ -12,7 +13,7 @@ export default async function DevPayPage({ params }: PageProps<'/dev/pay/[orderI
   const { orderId } = await params;
   const path = `/dev/pay/${orderId}`;
   await requireUser(path);
-  const order = await authedFetch<OrderDetail>(`/orders/${orderId}`, path);
+  const order = await authedFetch<OrderDetail>(`/orders/${devPaymentOrderId(orderId)}`, path);
   return (
     <div className="mx-auto max-w-lg px-4 py-16">
       <DevPay order={order} />

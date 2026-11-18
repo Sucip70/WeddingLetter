@@ -236,10 +236,13 @@ export class PaymentsService {
       return { alreadyPaid: false, closed: true };
     }
 
+    const paidAt = new Date();
     const paid = await this.prisma.$transaction(async (tx) => {
       const res = await tx.order.updateMany({
         where: { id: orderId, status: 'PENDING' },
-        data: { status: 'PAID', paidAt: new Date(), paymentProvider: info.provider, paymentRef: info.ref ?? null },
+        data: { status: 'PAID', paidAt, paymentProvider: info.provider, paymentRef: info.ref ?? null,
+          ...(order.kind === 'NEW' && order.draftRetentionDays ? { draftExpiresAt: new Date(paidAt.getTime() + order.draftRetentionDays * 86400000) } : {}),
+        },
       });
       if (res.count === 0) return false;
       if (order.kind === 'EXTENSION' && order.extendsInvitationId) {

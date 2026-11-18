@@ -8,6 +8,7 @@ import { formatDateTime, rupiah } from '@/lib/format';
 import { authedFetch } from '@/lib/session';
 import type { OrderStatus, QuoteLine } from '@/lib/types';
 import { OrderActions } from './order-actions';
+import type { LegalPolicy } from '@/lib/legal';
 
 export const metadata: Metadata = { title: 'Admin — detail pesanan' };
 
@@ -30,6 +31,10 @@ interface AdminOrder {
   invitation: { id: string; slug: string; status: string; publishedAt: string | null } | null;
   extendsInvitation: { id: string; slug: string } | null;
   lines: QuoteLine[];
+  termsVersion: string | null;
+  termsAcceptedAt: string | null;
+  termsSnapshot: LegalPolicy | null;
+  draftExpiresAt: string | null;
 }
 
 export default async function AdminOrderDetail({ params }: PageProps<'/admin/orders/[id]'>) {
@@ -47,6 +52,14 @@ export default async function AdminOrderDetail({ params }: PageProps<'/admin/ord
         <OrderStatusBadge status={o.status} />
       </div>
       <p className="mt-1 text-sm text-ink-soft">{o.id}</p>
+      {o.termsSnapshot && <Card className="mt-5 space-y-2 p-5 text-sm text-ink-soft">
+        <h2 className="font-semibold text-ink">Bukti persetujuan</h2>
+        <p className="break-all">Versi: {o.termsVersion}</p>
+        <p>Disetujui: {o.termsAcceptedAt && formatDateTime(o.termsAcceptedAt)}</p>
+        <p>Pengelola saat pembelian: {o.termsSnapshot.settings.ownerName}</p>
+        {o.draftExpiresAt && <p>Tenggat draf: {formatDateTime(o.draftExpiresAt)} WIB</p>}
+        <details><summary className="cursor-pointer font-medium text-rose">Baca salinan ketentuan pesanan</summary><div className="mt-4 space-y-4">{o.termsSnapshot.sections.map((s) => <section key={s.title}><h3 className="font-semibold text-ink">{s.title}</h3>{s.paragraphs.map((p) => <p key={p} className="mt-2 leading-relaxed">{p}</p>)}</section>)}</div></details>
+      </Card>}
 
       <div className="mt-6 grid gap-5 sm:grid-cols-2">
         <Card className="p-5">

@@ -43,6 +43,7 @@ export function CheckoutStatus({ initial }: { initial: OrderDetail }) {
 
   const unuploaded = order.media.some((m) => m.status === 'PENDING');
   const invitationId = order.invitation?.id;
+  const invitationDeleted = order.invitation?.status === 'DELETED';
 
   async function pay() {
     setBusy(true);
@@ -72,7 +73,7 @@ export function CheckoutStatus({ initial }: { initial: OrderDetail }) {
 
   const heading =
     order.status === 'PAID'
-      ? { title: 'Pembayaran diterima', body: order.kind === 'NEW' ? 'Undangan Anda sudah siap diatur. Lengkapi, lalu publikasikan saat Anda siap membagikannya.' : 'Masa aktif undangan Anda sudah diperpanjang.' }
+      ? { title: 'Pembayaran diterima', body: invitationDeleted ? 'Data undangan ini sudah dihapus. Catatan pembayaran dan bukti persetujuan pesanan tetap tersedia. Hubungi bantuan jika ada pertanyaan.' : order.kind === 'NEW' ? 'Undangan Anda sudah siap diatur. Lengkapi, lalu publikasikan saat Anda siap membagikannya.' : 'Masa aktif undangan Anda sudah diperpanjang.' }
       : order.status === 'PENDING'
         ? { title: 'Menunggu pembayaran', body: 'Selesaikan pembayaran untuk mengaktifkan pesanan. Halaman ini otomatis diperbarui setelah pembayaran tercatat.' }
         : { title: 'Pesanan tidak aktif', body: 'Pesanan ini sudah tidak bisa dibayar. Anda bisa membuat pesanan baru kapan saja.' };
@@ -86,10 +87,12 @@ export function CheckoutStatus({ initial }: { initial: OrderDetail }) {
       </div>
 
       <Card className="p-6"><OrderLines order={order} /></Card>
+      {order.kind === 'NEW' && order.status === 'PAID' && order.invitation?.status === 'DRAFT' && order.draftExpiresAt && <Alert tone="info">Draf belum dipublikasikan. Publikasikan paling lambat {new Date(order.draftExpiresAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} WIB. Setelah tenggat, draf dan berkas terkait dihapus permanen.</Alert>}
+      {order.agreement && <p className="text-center text-xs text-ink-soft"><Link href={`/checkout/${order.id}/terms`} target="_blank" rel="noopener noreferrer" className="underline">Lihat ketentuan yang Anda setujui</Link></p>}
 
       {error && <Alert>{error}</Alert>}
 
-      {order.status === 'PAID' && invitationId && (
+      {order.status === 'PAID' && invitationId && !invitationDeleted && (
         <div className="flex flex-wrap justify-center gap-3">
           <LinkButton href={`/dashboard/invitations/${invitationId}`} size="lg">{order.kind === 'NEW' ? 'Atur & publikasikan undangan' : 'Lihat undangan'}</LinkButton>
           <LinkButton href="/dashboard" variant="secondary" size="lg">Ke dashboard</LinkButton>
